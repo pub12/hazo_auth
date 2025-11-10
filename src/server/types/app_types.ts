@@ -1,0 +1,74 @@
+// file_description: define shared application level types for the hazo_auth server
+// section: request_context_types
+import type { Request } from "express";
+
+// section: logger_interface_definition
+export type logger_method = (
+  message: string,
+  data?: Record<string, unknown>
+) => void;
+
+export type logger_service = {
+  debug: logger_method;
+  info: logger_method;
+  warn: logger_method;
+  error: logger_method;
+};
+
+// section: configuration_types
+export type emailer_client = {
+  send_message: (
+    payload: Record<string, unknown>
+  ) => Promise<{ success: boolean }>;
+};
+
+export type handlebars_templates = Record<string, string>;
+
+export type password_policy = {
+  min_length: number;
+  requires_uppercase: boolean;
+  requires_lowercase: boolean;
+  requires_number: boolean;
+  requires_symbol: boolean;
+};
+
+export type token_settings = {
+  access_token_ttl_seconds: number;
+  refresh_token_ttl_seconds: number;
+};
+
+export type rate_limit_settings = {
+  max_attempts: number;
+  window_minutes: number;
+};
+
+export type captcha_settings =
+  | {
+      provider: "recaptcha_v2" | "recaptcha_v3" | "hcaptcha";
+      secret_key: string;
+    }
+  | undefined;
+
+export type runtime_configuration = {
+  permission_names: string[];
+  logger: logger_service;
+  emailer: emailer_client;
+  templates: handlebars_templates;
+  labels: Record<string, string>;
+  styles: Record<string, string>;
+  password_policy: password_policy;
+  token_settings: token_settings;
+  rate_limit: rate_limit_settings;
+  captcha: captcha_settings;
+};
+
+export type app_context = {
+  config: runtime_configuration;
+};
+
+// section: typed_request_wrapper
+export type context_request<T = unknown> = Request & {
+  body: T;
+  context: app_context;
+};
+
