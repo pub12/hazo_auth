@@ -2,7 +2,8 @@
 // section: imports
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import RegisterLayout from "@/components/layouts/register_layout";
+import RegisterLayout from "@/components/layouts/register";
+import { createLayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
 
 // section: helpers
 const render_register_layout = () =>
@@ -10,17 +11,26 @@ const render_register_layout = () =>
     React.createElement(RegisterLayout, {
       image_src: "/globe.svg",
       image_alt: "Alt text",
+      data_client: createLayoutDataClient({}),
     }),
   );
 
 // section: test_suite
 describe("register_layout", () => {
   // section: invalid_email_test
-  it("marks invalid email addresses as invalid", () => {
+  it("marks invalid email addresses as invalid only after blur", () => {
     render_register_layout();
 
     const email_input = screen.getByLabelText("Email address input field");
+    
+    // Error should not appear while typing
     fireEvent.change(email_input, { target: { value: "basad@as" } });
+    expect(
+      screen.queryByText("enter a valid email address"),
+    ).not.toBeInTheDocument();
+
+    // Error should appear after blur
+    fireEvent.blur(email_input);
     expect(
       screen.getByText("enter a valid email address"),
     ).toBeInTheDocument();
@@ -43,6 +53,7 @@ describe("register_layout", () => {
           require_number: true,
           require_special: true,
         },
+        data_client: createLayoutDataClient({}),
       }),
     );
 

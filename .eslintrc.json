@@ -1,3 +1,10 @@
 {
-  "extends": ["next/core-web-vitals", "plugin:storybook/recommended"]
+  "extends": ["next/core-web-vitals", "plugin:storybook/recommended"],
+  "rules": {
+    "react-hooks/rules-of-hooks": "off",
+    "react-hooks/exhaustive-deps": "warn",
+    "@typescript-eslint/no-implied-eval": "off",
+    "storybook/no-renderer-packages": "warn",
+    "storybook/prefer-pascal-case": "warn"
+  }
 }

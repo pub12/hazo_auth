@@ -1,7 +1,8 @@
 // file_description: showcase the register_layout component within storybook for review and testing
 // section: imports
 import type { Meta, StoryObj } from "@storybook/react";
-import RegisterLayout from "@/components/layouts/register_layout";
+import RegisterLayout from "@/components/layouts/register";
+import { createLayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
 
 // section: metadata
 const meta: Meta<typeof RegisterLayout> = {
@@ -15,6 +16,19 @@ const meta: Meta<typeof RegisterLayout> = {
 
 export default meta;
 
+// section: helpers
+// Create mock hazo_connect instance for Storybook (browser environment)
+// Note: Real SQLite database cannot be used in browser/Storybook context
+// This mock satisfies the LayoutDataClient interface requirements
+const create_storybook_hazo_connect = () => {
+  return {
+    healthCheck: async () => {
+      // Mock health check for Storybook - no-op in browser context
+      return Promise.resolve();
+    },
+  };
+};
+
 // section: stories
 type story = StoryObj<typeof RegisterLayout>;
 
@@ -26,6 +40,7 @@ export const default_state: story = {
     image_alt:
       "Decorative globe illustrating the global reach of the hazo authentication platform",
     image_background_color: "#e2e8f0",
+    data_client: createLayoutDataClient(create_storybook_hazo_connect()),
   },
   parameters: {
     docs: {
@@ -45,17 +60,26 @@ export const custom_configuration: story = {
       "Decorative globe illustrating the global reach of the hazo authentication platform",
     image_background_color: "#dbeafe",
     show_name_field: false,
+    data_client: createLayoutDataClient(create_storybook_hazo_connect()),
     labels: {
       heading: "Join the hazo beta now",
-      sub_heading: "Configure your secure workspace credentials in minutes.",
-      email_label: "Work email",
-      email_placeholder: "Enter your work email",
-      password_label: "Create password",
-      password_placeholder: "Choose a strong password now",
-      confirm_password_label: "Confirm password",
-      confirm_password_placeholder: "Re-enter the password",
-      register_button: "Create account",
-      cancel_button: "Cancel setup",
+      subHeading: "Configure your secure workspace credentials in minutes.",
+      submitButton: "Create account",
+      cancelButton: "Cancel setup",
+    },
+    field_overrides: {
+      email_address: {
+        label: "Work email",
+        placeholder: "Enter your work email",
+      },
+      password: {
+        label: "Create password",
+        placeholder: "Choose a strong password now",
+      },
+      confirm_password: {
+        label: "Confirm password",
+        placeholder: "Re-enter the password",
+      },
     },
     password_requirements: {
       minimum_length: 12,
@@ -65,10 +89,10 @@ export const custom_configuration: story = {
       require_special: true,
     },
     button_colors: {
-      register_background: "#5b21b6",
-      register_text: "#ffffff",
-      cancel_border: "#7c3aed",
-      cancel_text: "#5b21b6",
+      submitBackground: "#5b21b6",
+      submitText: "#ffffff",
+      cancelBorder: "#7c3aed",
+      cancelText: "#5b21b6",
     },
   },
   parameters: {

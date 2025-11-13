@@ -1,0 +1,85 @@
+// file_description: showcase the login_layout component within storybook for review and testing
+// section: imports
+import type { Meta, StoryObj } from "@storybook/react";
+import LoginLayout from "@/components/layouts/login";
+import { createLayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
+
+// section: metadata
+const meta: Meta<typeof LoginLayout> = {
+  title: "layouts/login_layout",
+  id: "forms-login-form",
+  component: LoginLayout,
+  parameters: {
+    layout: "centered",
+  },
+};
+
+export default meta;
+
+// section: helpers
+// Create mock hazo_connect instance for Storybook (browser environment)
+// Note: Real SQLite database cannot be used in browser/Storybook context
+// This mock satisfies the LayoutDataClient interface requirements
+const create_storybook_hazo_connect = () => {
+  return {
+    healthCheck: async () => {
+      // Mock health check for Storybook - no-op in browser context
+      return Promise.resolve();
+    },
+  };
+};
+
+// section: stories
+type story = StoryObj<typeof LoginLayout>;
+
+// section: default_story
+export const default_state: story = {
+  name: "default_state",
+  args: {
+    image_src: "/globe.svg",
+    image_alt:
+      "Decorative globe illustrating the global reach of the hazo authentication platform",
+    image_background_color: "#e2e8f0",
+    data_client: createLayoutDataClient(create_storybook_hazo_connect()),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Default presentation of the login layout with email and password fields.",
+      },
+    },
+  },
+};
+
+export const custom_configuration: story = {
+  name: "custom_configuration",
+  args: {
+    image_src: "/globe.svg",
+    image_alt:
+      "Decorative globe illustrating the global reach of the hazo authentication platform",
+    image_background_color: "#dbeafe",
+    data_client: createLayoutDataClient(create_storybook_hazo_connect()),
+    labels: {
+      heading: "Welcome back to hazo",
+      subHeading: "Sign in to continue to your secure workspace.",
+      submitButton: "Sign in",
+      cancelButton: "Cancel",
+    },
+    button_colors: {
+      submitBackground: "#5b21b6",
+      submitText: "#ffffff",
+      cancelBorder: "#7c3aed",
+      cancelText: "#5b21b6",
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Demonstrates how teams can customise labels, button styling, and background images for alternative login flows.",
+      },
+    },
+  },
+};
+

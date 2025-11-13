@@ -1,19 +1,26 @@
-// file_description: render the register page shell and mount the register layout component
+// file_description: render the register page shell and mount the register layout component within sidebar
 // section: imports
-import register_layout from "@/components/layouts/register_layout";
+import { SidebarLayoutWrapper } from "@/components/layouts/shared/components/sidebar_layout_wrapper";
+import { RegisterPageClient } from "./register_page_client";
+import { get_register_config } from "@/lib/register_config.server";
 
 // section: component
 export default function register_page() {
-  const RegisterLayout = register_layout;
+  // Read register configuration from hazo_auth_config.ini (server-side)
+  const registerConfig = get_register_config();
 
   return (
-    <div className="cls_register_page_wrapper flex min-h-screen items-center justify-center bg-slate-100 p-6">
-      <RegisterLayout
-        image_src="/globe.svg"
-        image_alt="Illustration of a globe representing secure authentication workflows"
-        image_background_color="#e2e8f0"
+    <SidebarLayoutWrapper>
+      <RegisterPageClient
+        showNameField={registerConfig.showNameField}
+        passwordRequirements={registerConfig.passwordRequirements}
+        alreadyLoggedInMessage={registerConfig.alreadyLoggedInMessage}
+        showLogoutButton={registerConfig.showLogoutButton}
+        showReturnHomeButton={registerConfig.showReturnHomeButton}
+        returnHomeButtonLabel={registerConfig.returnHomeButtonLabel}
+        returnHomePath={registerConfig.returnHomePath}
       />
-    </div>
+    </SidebarLayoutWrapper>
   );
 }
 

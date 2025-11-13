@@ -1,6 +1,7 @@
 // file_description: define the root layout wrapper for the ui_component project
 import type { Metadata } from "next";
 import local_font from "next/font/local";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 // section: typography_setup
@@ -35,6 +36,7 @@ export default function root_layout({
         className={`${geist_sans.variable} ${geist_mono.variable} antialiased`}
       >
         {children}
+        <Toaster />
       </body>
     </html>
   );

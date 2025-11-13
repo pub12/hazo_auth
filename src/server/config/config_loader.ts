@@ -206,11 +206,11 @@ const resolve_password_policy = (
     if (key === "min_length") {
       const parsed = Number(value);
       if (!Number.isNaN(parsed)) {
-        resolved[key] = parsed;
+        (resolved as any)[key] = parsed;
       }
       return;
     }
-    resolved[key] = value === "true";
+    (resolved as any)[key] = value === "true";
   };
 
   apply_value("min_length", auth_section.min_length);
@@ -290,7 +290,7 @@ const resolve_captcha = (
   if (captcha_section.provider && captcha_section.secret_key) {
     logger.info("config_captcha_from_file", { provider: captcha_section.provider });
     return {
-      provider: captcha_section.provider as captcha_settings["provider"],
+      provider: captcha_section.provider as "recaptcha_v2" | "recaptcha_v3" | "hcaptcha",
       secret_key: captcha_section.secret_key,
     };
   }
