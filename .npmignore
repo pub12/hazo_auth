@@ -1,0 +1,97 @@
+# Dependencies - MUST exclude node_modules
+node_modules/
+**/node_modules/
+package-lock.json
+**/package-lock.json
+
+# Testing
+__tests__/
+**/__tests__/
+coverage/
+**/coverage/
+*.test.ts
+*.test.tsx
+**/*.test.ts
+**/*.test.tsx
+jest.config.ts
+test-utils/
+**/test-utils/
+
+# Build outputs
+.next/
+**/.next/
+out/
+**/out/
+build/
+**/build/
+dist/
+**/dist/
+storybook-static/
+**/storybook-static/
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Development files
+.storybook/
+**/.storybook/
+*.log
+**/*.log
+.DS_Store
+**/.DS_Store
+
+# Large image libraries - now included in package
+# public/profile_pictures/library/ is included via files field in package.json
+
+# User uploads
+uploads/
+**/uploads/
+uploads/**
+**/uploads/**
+
+# Project-specific config files (users should copy from .example.ini files)
+hazo_auth_config.ini
+hazo_notify_config.ini
+**/hazo_auth_config.ini
+**/hazo_notify_config.ini
+
+# Environment and sensitive config files that shouldn't be published
+.env*
+**/.env*
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Git
+.git/
+**/.git/
+.gitignore
+**/.gitignore
+.gitattributes
+**/.gitattributes
+
+# IDE
+.vscode/
+**/.vscode/
+.idea/
+**/.idea/
+*.swp
+*.swo
+**/*.swp
+**/*.swo
+
+# Misc
+*.pem
+**/*.pem
+
+# Source maps
+*.map
+**/*.map
+
+# Temporary files
+*.tmp
+*.temp
+**/*.tmp
+**/*.temp
+
