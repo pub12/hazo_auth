@@ -4,6 +4,8 @@ import type { HazoConnectAdapter } from "hazo_connect";
 import { createCrudService } from "hazo_connect/server";
 import argon2 from "argon2";
 import { get_password_requirements_config } from "../password_requirements_config.server";
+import { send_template_email } from "./email_service";
+import { create_app_logger } from "../app_logger";
 
 // section: types
 export type PasswordChangeData = {
@@ -50,6 +52,8 @@ export async function change_password(
 
     const user = users[0];
     const password_hash = user.password_hash as string;
+    const email = user.email_address as string;
+    const user_name = user.name as string | undefined;
 
     // Verify current password
     try {
@@ -115,6 +119,24 @@ export async function change_password(
       password_hash: new_password_hash,
       changed_at: now,
     });
+
+    // Send password changed notification email
+    const email_result = await send_template_email("password_changed", email, {
+      user_email: email,
+      user_name: user_name,
+    });
+    
+    if (!email_result.success) {
+      const logger = create_app_logger();
+      logger.error("password_change_service_email_failed", {
+        filename: "password_change_service.ts",
+        line_number: 0,
+        user_id,
+        email,
+        error: email_result.error,
+        note: "Password was changed successfully but notification email failed to send",
+      });
+    }
 
     return {
       success: true,

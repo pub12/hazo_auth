@@ -30,7 +30,8 @@ const next_config = {
       if (Array.isArray(config.externals)) {
         config.externals.push("sql.js");
         // Exclude hazo_notify from Edge runtime bundles (middleware)
-        // hazo_notify is not used anymore - we're using console-based email service
+        // hazo_notify is only available in Node.js runtime (server bundles), not Edge runtime
+        // This ensures hazo_notify is loaded at runtime for API routes using Node.js runtime
         config.externals.push("hazo_notify");
       } else {
         config.externals = [config.externals, "sql.js", "hazo_notify"];

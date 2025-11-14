@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { create_app_logger } from "../app_logger";
 import { read_config_section } from "../config/config_loader.server";
+import type { EmailerConfig, SendEmailOptions } from "hazo_notify";
 
 // section: types
 export type EmailOptions = {
@@ -14,7 +15,7 @@ export type EmailOptions = {
   text_body?: string;
 };
 
-export type EmailTemplateType = "forgot_password" | "email_verification";
+export type EmailTemplateType = "forgot_password" | "email_verification" | "password_changed";
 
 export type EmailTemplateData = {
   token?: string;
@@ -28,6 +29,54 @@ export type EmailTemplateData = {
 // section: constants
 const DEFAULT_EMAIL_FROM = "noreply@hazo_auth.local";
 const DEFAULT_EMAIL_TEMPLATE_DIR = path.resolve(process.cwd(), "email_templates");
+
+// section: singleton
+/**
+ * Singleton instance for hazo_notify emailer configuration
+ * This is initialized once in instrumentation.ts and reused across all email sends
+ */
+let hazo_notify_config: EmailerConfig | null = null;
+
+/**
+ * Sets the hazo_notify emailer configuration instance
+ * This is called from instrumentation.ts during initialization
+ * @param config - The hazo_notify emailer configuration instance
+ */
+export function set_hazo_notify_instance(config: EmailerConfig): void {
+  hazo_notify_config = config;
+}
+
+/**
+ * Gets the hazo_notify emailer configuration instance
+ * If not set, loads it from config file as fallback
+ * @returns The hazo_notify emailer configuration instance
+ */
+async function get_hazo_notify_instance(): Promise<EmailerConfig> {
+  if (!hazo_notify_config) {
+    // Fallback: load from config file if not initialized
+    const logger = create_app_logger();
+    logger.warn("hazo_notify_instance_not_initialized", {
+      filename: "email_service.ts",
+      line_number: 0,
+      note: "hazo_notify instance not initialized in instrumentation.ts, loading from config file as fallback",
+    });
+    try {
+      // Dynamic import to avoid build-time issues with hazo_notify
+      const hazo_notify_module = await import("hazo_notify");
+      const { load_emailer_config } = hazo_notify_module;
+      hazo_notify_config = load_emailer_config();
+    } catch (error) {
+      const error_message = error instanceof Error ? error.message : "Unknown error";
+      logger.error("hazo_notify_config_load_failed", {
+        filename: "email_service.ts",
+        line_number: 0,
+        error: error_message,
+      });
+      throw new Error(`Failed to load hazo_notify config: ${error_message}`);
+    }
+  }
+  return hazo_notify_config;
+}
 
 // section: helpers
 /**
@@ -49,15 +98,45 @@ function get_email_template_directory(): string {
 
 /**
  * Gets email from address from config
+ * Priority: 1. hazo_auth__email.from_email, 2. hazo_notify_config.from_email
+ * @param notify_config - The hazo_notify configuration instance (for fallback)
  * @returns Email from address
  */
-function get_email_from(): string {
+async function get_email_from(notify_config: EmailerConfig): Promise<string> {
   const email_section = read_config_section("hazo_auth__email");
-  return email_section?.email_from || DEFAULT_EMAIL_FROM;
+  const hazo_auth_from_email = email_section?.from_email;
+  
+  // If set in hazo_auth_config.ini, use it (overrides hazo_notify config)
+  if (hazo_auth_from_email) {
+    return hazo_auth_from_email;
+  }
+  
+  // Fall back to hazo_notify config
+  return notify_config.from_email;
 }
 
 /**
- * Gets base URL for email links from config
+ * Gets email from name from config
+ * Priority: 1. hazo_auth__email.from_name, 2. hazo_notify_config.from_name
+ * @param notify_config - The hazo_notify configuration instance (for fallback)
+ * @returns Email from name
+ */
+async function get_email_from_name(notify_config: EmailerConfig): Promise<string> {
+  const email_section = read_config_section("hazo_auth__email");
+  const hazo_auth_from_name = email_section?.from_name;
+  
+  // If set in hazo_auth_config.ini, use it (overrides hazo_notify config)
+  if (hazo_auth_from_name) {
+    return hazo_auth_from_name;
+  }
+  
+  // Fall back to hazo_notify config
+  return notify_config.from_name;
+}
+
+/**
+ * Gets base URL for email links from config or environment variable
+ * Priority: 1. hazo_auth__email.base_url, 2. APP_DOMAIN_NAME, 3. NEXT_PUBLIC_APP_URL/APP_URL
  * @returns Base URL for email links
  */
 function get_base_url(): string {
@@ -68,7 +147,19 @@ function get_base_url(): string {
     return base_url.endsWith("/") ? base_url.slice(0, -1) : base_url;
   }
   
-  // Try to get from environment variable
+  // Try to get from APP_DOMAIN_NAME environment variable (adds protocol if needed)
+  const app_domain_name = process.env.APP_DOMAIN_NAME;
+  if (app_domain_name) {
+    // Ensure protocol is included (default to https if not specified)
+    const domain = app_domain_name.trim();
+    if (domain.startsWith("http://") || domain.startsWith("https://")) {
+      return domain.endsWith("/") ? domain.slice(0, -1) : domain;
+    }
+    // If no protocol, default to https
+    return `https://${domain}`;
+  }
+  
+  // Try to get from other environment variables (fallback)
   const env_base_url = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
   if (env_base_url) {
     return env_base_url.endsWith("/") ? env_base_url.slice(0, -1) : env_base_url;
@@ -157,6 +248,24 @@ function get_default_html_template(
 </html>
       `.trim();
     
+    case "password_changed":
+      return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Password Changed</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h1 style="color: #0f172a;">Password Changed Successfully</h1>
+  <p>Hello${data.user_name ? ` ${data.user_name}` : ""},</p>
+  <p>This email confirms that your password has been changed successfully.</p>
+  <p>If you did not make this change, please contact support immediately to secure your account.</p>
+  <p style="margin-top: 30px; color: #666; font-size: 12px;">This is an automated notification. Please do not reply to this email.</p>
+</body>
+</html>
+      `.trim();
+    
     default:
       return "<p>Email content</p>";
   }
@@ -197,6 +306,19 @@ ${data.reset_url || data.token || ""}
 This link will expire in 10 minutes.
 
 If you didn't request a password reset, you can safely ignore this email.
+      `.trim();
+    
+    case "password_changed":
+      return `
+Password Changed Successfully
+
+Hello${data.user_name ? ` ${data.user_name}` : ""},
+
+This email confirms that your password has been changed successfully.
+
+If you did not make this change, please contact support immediately to secure your account.
+
+This is an automated notification. Please do not reply to this email.
       `.trim();
     
     default:
@@ -282,6 +404,8 @@ function get_email_subject(template_type: EmailTemplateType): string {
       return "Verify Your Email Address";
     case "forgot_password":
       return "Reset Your Password";
+    case "password_changed":
+      return "Password Changed Successfully";
     default:
       return "Email from hazo_auth";
   }
@@ -315,7 +439,7 @@ function get_email_templates(
 }
 
 /**
- * Sends an email (currently outputs to console)
+ * Sends an email using hazo_notify
  * @param options - Email options (to, from, subject, html_body, text_body)
  * @returns Promise that resolves when email is sent
  */
@@ -323,30 +447,60 @@ export async function send_email(options: EmailOptions): Promise<{ success: bool
   const logger = create_app_logger();
   
   try {
-    // For now, just output to console
-    console.log("=".repeat(80));
-    console.log("EMAIL OUTPUT");
-    console.log("=".repeat(80));
-    console.log("From:", options.from);
-    console.log("To:", options.to);
-    console.log("Subject:", options.subject);
-    console.log("-".repeat(80));
-    console.log("HTML Body:");
-    console.log(options.html_body || "(no HTML body)");
-    console.log("-".repeat(80));
-    console.log("Text Body:");
-    console.log(options.text_body || "(no text body)");
-    console.log("=".repeat(80));
+    // Get hazo_notify configuration instance
+    const notify_config = await get_hazo_notify_instance();
     
-    logger.info("email_sent", {
-      filename: "email_service.ts",
-      line_number: 0,
+    // Dynamic import to avoid build-time issues with hazo_notify
+    const hazo_notify_module = await import("hazo_notify");
+    const { send_email: hazo_notify_send_email } = hazo_notify_module;
+    
+    // Get from email and from name (hazo_auth_config overrides hazo_notify_config)
+    // Priority: 1. options.from (explicit parameter), 2. hazo_auth_config.from_email, 3. hazo_notify_config.from_email
+    const from_email = options.from || await get_email_from(notify_config);
+    const from_name = await get_email_from_name(notify_config);
+    
+    // Prepare hazo_notify email options
+    const hazo_notify_options: SendEmailOptions = {
       to: options.to,
-      from: options.from,
       subject: options.subject,
-    });
+      content: {
+        ...(options.html_body && { html: options.html_body }),
+        ...(options.text_body && { text: options.text_body }),
+      },
+      // Use from_email and from_name (hazo_notify will use these instead of config defaults)
+      from: from_email,
+      from_name: from_name,
+    };
     
-    return { success: true };
+    // Send email using hazo_notify
+    const result = await hazo_notify_send_email(hazo_notify_options, notify_config);
+    
+    if (result.success) {
+      logger.info("email_sent", {
+        filename: "email_service.ts",
+        line_number: 0,
+        to: options.to,
+        from: options.from || notify_config.from_email,
+        subject: options.subject,
+        message_id: result.message_id,
+      });
+      
+      return { success: true };
+    } else {
+      const error_message = result.error || result.message || "Unknown error";
+      
+      logger.error("email_send_failed", {
+        filename: "email_service.ts",
+        line_number: 0,
+        to: options.to,
+        from: options.from || notify_config.from_email,
+        subject: options.subject,
+        error: error_message,
+        raw_response: result.raw_response,
+      });
+      
+      return { success: false, error: error_message };
+    }
   } catch (error) {
     const error_message = error instanceof Error ? error.message : "Unknown error";
     
@@ -395,10 +549,14 @@ export async function send_template_email(
     // Get email subject
     const subject = get_email_subject(template_type);
     
-    // Get email from address
-    const from = get_email_from();
+    // Get hazo_notify config instance
+    const notify_config = await get_hazo_notify_instance();
     
-    // Send email
+    // Get email from address and from name
+    // Priority: 1. hazo_auth_config.from_email/from_name, 2. hazo_notify_config.from_email/from_name
+    const from = await get_email_from(notify_config);
+    
+    // Send email (from_name is handled inside send_email function)
     return await send_email({
       to,
       from,

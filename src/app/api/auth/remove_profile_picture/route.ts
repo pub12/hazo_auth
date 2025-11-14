@@ -11,20 +11,26 @@ export async function DELETE(request: NextRequest) {
   const logger = create_app_logger();
 
   try {
-    // Get user info from cookies
-    const user_id = request.cookies.get("hazo_auth_user_id")?.value;
+    // Use centralized auth check
+    let user_id: string;
+    try {
+      const { require_auth } = await import("@/lib/auth/auth_utils.server");
+      const user = await require_auth(request);
+      user_id = user.user_id;
+    } catch (error) {
+      if (error instanceof Error && error.message === "Authentication required") {
+        logger.warn("profile_picture_remove_authentication_failed", {
+          filename: get_filename(),
+          line_number: get_line_number(),
+          error: "User not authenticated",
+        });
 
-    if (!user_id) {
-      logger.warn("profile_picture_remove_authentication_failed", {
-        filename: get_filename(),
-        line_number: get_line_number(),
-        error: "User not authenticated",
-      });
-
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+        return NextResponse.json(
+          { error: "Authentication required" },
+          { status: 401 }
+        );
+      }
+      throw error;
     }
 
     // Get singleton hazo_connect instance

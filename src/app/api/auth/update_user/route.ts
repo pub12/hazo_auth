@@ -5,26 +5,32 @@ import { get_hazo_connect_instance } from "@/lib/hazo_connect_instance.server";
 import { create_app_logger } from "@/lib/app_logger";
 import { update_user_profile } from "@/lib/services/user_update_service";
 import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
+import { require_auth } from "@/lib/auth/auth_utils.server";
 
 // section: api_handler
 export async function PATCH(request: NextRequest) {
   const logger = create_app_logger();
 
   try {
-    // Get user info from cookies
-    const user_id = request.cookies.get("hazo_auth_user_id")?.value;
+    // Use centralized auth check
+    let user_id: string;
+    try {
+      const user = await require_auth(request);
+      user_id = user.user_id;
+    } catch (error) {
+      if (error instanceof Error && error.message === "Authentication required") {
+        logger.warn("user_update_authentication_failed", {
+          filename: get_filename(),
+          line_number: get_line_number(),
+          error: "User not authenticated",
+        });
 
-    if (!user_id) {
-      logger.warn("user_update_authentication_failed", {
-        filename: get_filename(),
-        line_number: get_line_number(),
-        error: "User not authenticated",
-      });
-
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+        return NextResponse.json(
+          { error: "Authentication required" },
+          { status: 401 }
+        );
+      }
+      throw error;
     }
 
     const body = await request.json();

@@ -369,6 +369,24 @@ export async function reset_password(
     // Delete the used token
     await tokens_service.deleteById((matching_token as { id: unknown }).id);
 
+    // Send password changed notification email
+    const email_result = await send_template_email("password_changed", email, {
+      user_email: email,
+      user_name: user.name as string | undefined,
+    });
+    
+    if (!email_result.success) {
+      const logger = create_app_logger();
+      logger.error("password_reset_service_password_changed_email_failed", {
+        filename: "password_reset_service.ts",
+        line_number: 0,
+        user_id,
+        email,
+        error: email_result.error,
+        note: "Password was reset successfully but notification email failed to send",
+      });
+    }
+
     return {
       success: true,
       user_id,
