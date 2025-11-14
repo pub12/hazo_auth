@@ -5,6 +5,9 @@ import { get_library_categories, get_library_photos } from "@/lib/services/profi
 import { create_app_logger } from "@/lib/app_logger";
 import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
 
+// section: route_config
+export const dynamic = 'force-dynamic';
+
 // section: api_handler
 export async function GET(request: NextRequest) {
   const logger = create_app_logger();

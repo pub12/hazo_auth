@@ -140,6 +140,21 @@ export function ProfilePictureLibraryTab({
     return "L";
   };
 
+  // Map column count to Tailwind grid class
+  const getGridColumnsClass = (columns: number): string => {
+    const columnMap: Record<number, string> = {
+      1: "grid-cols-1",
+      2: "grid-cols-2",
+      3: "grid-cols-3",
+      4: "grid-cols-4",
+      5: "grid-cols-5",
+      6: "grid-cols-6",
+      7: "grid-cols-7",
+      8: "grid-cols-8",
+    };
+    return columnMap[columns] || "grid-cols-4";
+  };
+
   return (
     <div className="cls_profile_picture_library_tab flex flex-col gap-4">
       {/* Switch */}
@@ -213,7 +228,7 @@ export function ProfilePictureLibraryTab({
               <Loader2 className="h-6 w-6 text-slate-400 animate-spin" aria-hidden="true" />
             </div>
           ) : photos.length > 0 ? (
-            <div className={`cls_profile_picture_library_tab_photos_grid grid grid-cols-${libraryPhotoGridColumns} gap-3 overflow-y-auto p-4 border border-slate-200 rounded-lg bg-slate-50 min-h-[400px] max-h-[400px]`}>
+            <div className={`cls_profile_picture_library_tab_photos_grid grid ${getGridColumnsClass(libraryPhotoGridColumns)} gap-3 overflow-y-auto p-4 border border-slate-200 rounded-lg bg-slate-50 min-h-[400px] max-h-[400px]`}>
               {photos.map((photoUrl) => (
                 <button
                   key={photoUrl}
@@ -221,16 +236,21 @@ export function ProfilePictureLibraryTab({
                   onClick={() => handlePhotoClick(photoUrl)}
                   className={`
                     cls_profile_picture_library_tab_photo_thumbnail
-                    aspect-square rounded-lg overflow-hidden border-2 transition-colors
+                    aspect-square rounded-lg overflow-hidden border-2 transition-colors cursor-pointer
                     ${selectedPhoto === photoUrl ? "border-blue-500 ring-2 ring-blue-200" : "border-slate-200 hover:border-slate-300"}
                   `}
-                  aria-label={`Select ${photoUrl}`}
+                  aria-label={`Select photo ${photoUrl.split('/').pop()}`}
                 >
                   <img
                     src={photoUrl}
-                    alt="Library photo thumbnail"
+                    alt={`Library photo ${photoUrl.split('/').pop()}`}
                     className="cls_profile_picture_library_tab_photo_thumbnail_image w-full h-full object-cover"
                     loading="lazy"
+                    onError={(e) => {
+                      // Fallback if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
                   />
                 </button>
               ))}
@@ -256,6 +276,15 @@ export function ProfilePictureLibraryTab({
                   src={selectedPhoto}
                   alt="Selected library photo preview"
                   className="cls_profile_picture_library_tab_preview_image max-w-full max-h-[350px] rounded-lg object-contain"
+                  onError={(e) => {
+                    // Fallback if preview image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const wrapper = target.parentElement;
+                    if (wrapper) {
+                      wrapper.innerHTML = '<p class="text-sm text-red-500">Failed to load preview</p>';
+                    }
+                  }}
                 />
               </div>
               <p className="cls_profile_picture_library_tab_preview_text text-sm text-slate-600 text-center">

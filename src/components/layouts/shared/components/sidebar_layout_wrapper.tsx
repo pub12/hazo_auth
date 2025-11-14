@@ -17,11 +17,9 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar";
-import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, User, LogOut, Key, Settings } from "lucide-react";
-import { use_auth_status, trigger_auth_status_refresh } from "@/components/layouts/shared/hooks/use_auth_status";
-import { LogoutButton } from "@/components/layouts/shared/components/logout_button";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, Settings } from "lucide-react";
+import { use_auth_status } from "@/components/layouts/shared/hooks/use_auth_status";
+import { ProfilePicMenu } from "@/components/layouts/shared/components/profile_pic_menu";
 
 // section: types
 type SidebarLayoutWrapperProps = {
@@ -31,36 +29,6 @@ type SidebarLayoutWrapperProps = {
 // section: component
 export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
   const authStatus = use_auth_status();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || "Logout failed");
-      }
-
-      toast.success("Logged out successfully");
-      
-      // Trigger auth status refresh in all components (navbar, sidebar, etc.)
-      trigger_auth_status_refresh();
-      
-      // Refresh the page to update authentication state (cookies are cleared server-side)
-      router.refresh();
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Logout failed. Please try again.";
-      toast.error(errorMessage);
-    }
-  };
 
   return (
     <SidebarProvider>
@@ -171,16 +139,6 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem className="cls_sidebar_layout_logout_item">
-                    <SidebarMenuButton
-                      onClick={handleLogout}
-                      className="cls_sidebar_layout_logout_link flex items-center gap-2"
-                      aria-label="Logout"
-                    >
-                      <LogOut className="h-4 w-4" aria-hidden="true" />
-                      <span>Logout</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroup>
             )}
@@ -231,27 +189,7 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                 hazo reusable ui library workspace
               </h2>
             </div>
-            <div className="cls_sidebar_layout_auth_status flex items-center gap-3">
-              {authStatus.loading ? (
-                <span className="cls_sidebar_layout_auth_loading text-sm text-muted-foreground">
-                  Loading...
-                </span>
-              ) : authStatus.authenticated ? (
-                <>
-                  <div className="cls_sidebar_layout_user_info flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                    <span className="cls_sidebar_layout_user_name text-sm font-medium text-foreground">
-                      {authStatus.name || authStatus.email || "Logged in"}
-                    </span>
-                  </div>
-                  <LogoutButton size="sm" />
-                </>
-              ) : (
-                <span className="cls_sidebar_layout_not_logged_in text-sm text-muted-foreground">
-                  Not logged in
-                </span>
-              )}
-            </div>
+            <ProfilePicMenu className="cls_sidebar_layout_auth_status" avatar_size="sm" />
           </header>
           <main className="cls_sidebar_layout_main_content flex flex-1 items-center justify-center p-6">
             {children}
