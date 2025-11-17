@@ -30,7 +30,7 @@ export function LogoutButton({
     setIsLoggingOut(true);
 
     try {
-      const response = await fetch("/api/auth/logout", {
+      const response = await fetch("/api/hazo_auth/logout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

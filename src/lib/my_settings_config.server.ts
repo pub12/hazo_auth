@@ -106,7 +106,7 @@ export function get_my_settings_config(): MySettingsConfig {
   const savePasswordButtonLabel = get_config_value(section, "save_password_button_label", "Save Password");
   const unauthorizedMessage = get_config_value(section, "unauthorized_message", "You must be logged in to access this page.");
   const loginButtonLabel = get_config_value(section, "login_button_label", "Go to login");
-  const loginPath = get_config_value(section, "login_path", "/login");
+  const loginPath = get_config_value(section, "login_path", "/hazo_auth/login");
 
   return {
     userFields,

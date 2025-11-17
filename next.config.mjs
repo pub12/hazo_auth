@@ -1,4 +1,4 @@
-// file_description: configure next.js application settings for the ui_component project
+// file_description: configure next.js application settings for the hazo_auth project
 // section: imports
 import path from "path";
 import { fileURLToPath } from "url";

@@ -113,12 +113,12 @@ export function get_profile_pic_menu_config(): ProfilePicMenuConfig {
   const show_single_button = get_config_boolean(section, "show_single_button", false);
   const sign_up_label = get_config_value(section, "sign_up_label", "Sign Up");
   const sign_in_label = get_config_value(section, "sign_in_label", "Sign In");
-  const register_path = get_config_value(section, "register_path", "/register");
-  const login_path = get_config_value(section, "login_path", "/login");
+  const register_path = get_config_value(section, "register_path", "/hazo_auth/register");
+  const login_path = get_config_value(section, "login_path", "/hazo_auth/login");
 
   // Read menu paths
-  const settings_path = get_config_value(section, "settings_path", "/my_settings");
-  const logout_path = get_config_value(section, "logout_path", "/api/auth/logout");
+  const settings_path = get_config_value(section, "settings_path", "/hazo_auth/my_settings");
+  const logout_path = get_config_value(section, "logout_path", "/api/hazo_auth/logout");
 
   // Read custom menu items
   const custom_items_string = get_config_array(section, "custom_menu_items", []);

@@ -9,7 +9,7 @@ export async function register() {
       const hazo_notify_module = await import("hazo_notify");
       
       // Step 2: Load hazo_notify emailer configuration
-      // This reads from hazo_notify_config.ini in the ui_component directory (same location as hazo_auth_config.ini)
+      // This reads from hazo_notify_config.ini in the project root (same location as hazo_auth_config.ini)
       const { load_emailer_config } = hazo_notify_module;
       const notify_config = load_emailer_config();
       

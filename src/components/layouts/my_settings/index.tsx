@@ -94,7 +94,7 @@ export default function my_settings_layout({
   userFields,
   unauthorizedMessage = "You must be logged in to access this page.",
   loginButtonLabel = "Go to login",
-  loginPath = "/login",
+  loginPath = "/hazo_auth/login",
   heading = "Account Settings",
   subHeading = "Manage your profile, password, and email preferences.",
   profilePhotoLabel = "Profile Photo",

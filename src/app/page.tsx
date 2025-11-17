@@ -41,7 +41,7 @@ export default function home_page() {
                 <SidebarMenuItem className="cls_home_sidebar_test_login_item">
                   <SidebarMenuButton asChild>
                     <Link
-                      href="/login"
+                      href="/hazo_auth/login"
                       className="cls_home_sidebar_test_login_link flex items-center gap-2"
                       aria-label="Test login layout component"
                     >
@@ -53,7 +53,7 @@ export default function home_page() {
                 <SidebarMenuItem className="cls_home_sidebar_test_register_item">
                   <SidebarMenuButton asChild>
                     <Link
-                      href="/register"
+                      href="/hazo_auth/register"
                       className="cls_home_sidebar_test_register_link flex items-center gap-2"
                       aria-label="Test register layout component"
                     >
@@ -65,7 +65,7 @@ export default function home_page() {
                 <SidebarMenuItem className="cls_home_sidebar_test_forgot_password_item">
                   <SidebarMenuButton asChild>
                     <Link
-                      href="/forgot_password"
+                      href="/hazo_auth/forgot_password"
                       className="cls_home_sidebar_test_forgot_password_link flex items-center gap-2"
                       aria-label="Test forgot password layout component"
                     >
@@ -77,7 +77,7 @@ export default function home_page() {
                 <SidebarMenuItem className="cls_home_sidebar_test_email_verification_item">
                   <SidebarMenuButton asChild>
                     <Link
-                      href="/verify_email"
+                      href="/hazo_auth/verify_email"
                       className="cls_home_sidebar_test_email_verification_link flex items-center gap-2"
                       aria-label="Test email verification layout component"
                     >

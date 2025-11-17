@@ -176,7 +176,7 @@ function get_base_url(): string {
  */
 function get_verification_url(token: string): string {
   const base_url = get_base_url();
-  const path = "/verify_email";
+  const path = "/hazo_auth/verify_email";
   const url = base_url ? `${base_url}${path}?token=${encodeURIComponent(token)}` : `${path}?token=${encodeURIComponent(token)}`;
   return url;
 }
@@ -188,7 +188,7 @@ function get_verification_url(token: string): string {
  */
 function get_reset_password_url(token: string): string {
   const base_url = get_base_url();
-  const path = "/reset_password";
+  const path = "/hazo_auth/reset_password";
   const url = base_url ? `${base_url}${path}?token=${encodeURIComponent(token)}` : `${path}?token=${encodeURIComponent(token)}`;
   return url;
 }

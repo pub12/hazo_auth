@@ -1,4 +1,4 @@
-// file_description: provide shared utility helpers for the ui_component project
+// file_description: provide shared utility helpers for the hazo_auth project
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 

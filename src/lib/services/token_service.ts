@@ -206,9 +206,9 @@ export async function create_token(
       token_type,
       raw_token,
       test_url: token_type === "email_verification" 
-        ? `/verify_email?token=${raw_token}`
+        ? `/hazo_auth/verify_email?token=${raw_token}`
         : token_type === "password_reset"
-        ? `/reset_password?token=${raw_token}`
+        ? `/hazo_auth/reset_password?token=${raw_token}`
         : undefined,
     });
 

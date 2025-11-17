@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
     // Generate URL (relative to public or absolute)
     // For Next.js, we'll serve from a public route or use absolute path
     // For now, use a relative path that can be served via API or static file serving
-    const profilePictureUrl = `/api/auth/profile_picture/${fileName}`;
+    const profilePictureUrl = `/api/hazo_auth/profile_picture/${fileName}`;
 
     // Update user record
     const updateResult = await update_user_profile_picture(
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
       // Only delete if the old profile picture was an uploaded file
       if (oldSourceUI === "upload") {
         try {
-          // Extract filename from URL (e.g., /api/auth/profile_picture/user_id.jpg)
+          // Extract filename from URL (e.g., /api/hazo_auth/profile_picture/user_id.jpg)
           const oldFileName = oldProfilePictureUrl.split("/").pop();
           
           if (oldFileName) {

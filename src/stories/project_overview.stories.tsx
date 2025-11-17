@@ -1,4 +1,4 @@
-// file_description: provide a high level story describing the purpose of the ui_component workspace
+// file_description: provide a high level story describing the purpose of the hazo_auth workspace
 import type { Meta, StoryObj } from "@storybook/nextjs";
 
 // section: story_configuration

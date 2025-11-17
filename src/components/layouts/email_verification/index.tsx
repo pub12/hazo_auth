@@ -69,7 +69,7 @@ export default function email_verification_layout<TClient>({
   success_labels,
   error_labels,
   redirect_delay = 5,
-  login_path = "/login",
+  login_path = "/hazo_auth/login",
   data_client,
   already_logged_in_message,
   showLogoutButton = true,

@@ -19,11 +19,21 @@ export async function GET(request: NextRequest) {
     // Get singleton hazo_connect instance (initializes admin service if needed)
     get_hazo_connect_instance();
     
-    const service = getSqliteAdminService()
-    const schema = await service.getTableSchema(table)
-    return NextResponse.json({ data: schema })
+    let service;
+    try {
+      service = getSqliteAdminService();
+    } catch (serviceError) {
+      const errorMessage = serviceError instanceof Error ? serviceError.message : "Unknown error";
+      return NextResponse.json(
+        { error: `SQLite Admin Service not available: ${errorMessage}. Make sure enable_admin_ui is set to true in hazo_auth_config.ini.` },
+        { status: 500 }
+      );
+    }
+    
+    const schema = await service.getTableSchema(table);
+    return NextResponse.json({ data: schema });
   } catch (error) {
-    return toErrorResponse(error, `Failed to fetch schema for table '${table}'`)
+    return toErrorResponse(error, `Failed to fetch schema for table '${table}'`);
   }
 }
 

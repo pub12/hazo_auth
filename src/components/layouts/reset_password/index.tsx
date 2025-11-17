@@ -75,8 +75,8 @@ export default function reset_password_layout<TClient>({
   returnHomePath = "/",
   errorMessage = "Reset password link invalid or has expired. Please go to Reset Password page to get a new link.",
   successMessage = "Password reset successfully. Redirecting to login...",
-  loginPath = "/login",
-  forgotPasswordPath = "/forgot_password",
+  loginPath = "/hazo_auth/login",
+  forgotPasswordPath = "/hazo_auth/forgot_password",
 }: ResetPasswordLayoutProps<TClient>) {
   const fieldDefinitions = createResetPasswordFieldDefinitions(field_overrides);
   const resolvedLabels = resolveResetPasswordLabels(labels);

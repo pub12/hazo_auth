@@ -1,4 +1,4 @@
-/* file_description: define global tailwind layers and theme tokens for ui_component */
+/* file_description: define global tailwind layers and theme tokens for hazo_auth */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

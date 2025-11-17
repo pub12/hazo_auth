@@ -50,11 +50,11 @@ export function get_reset_password_config(): ResetPasswordConfig {
     "Password reset successfully. Redirecting to login..."
   );
 
-  // Read login path (defaults to "/login")
-  const loginPath = get_config_value(section, "login_path", "/login");
-
-  // Read forgot password path (defaults to "/forgot_password")
-  const forgotPasswordPath = get_config_value(section, "forgot_password_path", "/forgot_password");
+  // Read login path (defaults to "/hazo_auth/login")
+  const loginPath = get_config_value(section, "login_path", "/hazo_auth/login");
+  
+  // Read forgot password path (defaults to "/hazo_auth/forgot_password")
+  const forgotPasswordPath = get_config_value(section, "forgot_password_path", "/hazo_auth/forgot_password");
 
   // Get shared password requirements
   const passwordRequirements = get_password_requirements_config();

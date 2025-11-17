@@ -1,4 +1,4 @@
-// file_description: configure tailwindcss for the ui_component project
+// file_description: configure tailwindcss for the hazo_auth project
 import type { Config } from "tailwindcss";
 
 // section: tailwind_configuration

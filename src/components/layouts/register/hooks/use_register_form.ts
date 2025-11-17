@@ -194,7 +194,7 @@ export const use_register_form = <TClient,>({
       setErrors({});
 
       try {
-        const response = await fetch("/api/auth/register", {
+        const response = await fetch("/api/hazo_auth/register", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

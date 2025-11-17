@@ -181,7 +181,7 @@ export const use_login_form = <TClient,>({
         setClientIp(currentIp);
 
         // Attempt login via API route
-        const response = await fetch("/api/auth/login", {
+        const response = await fetch("/api/hazo_auth/login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -202,7 +202,7 @@ export const use_login_form = <TClient,>({
             const messageParam = encodeURIComponent(
               "Your email address has not been verified. Please verify your email to continue."
             );
-            router.push(`/verify_email?email=${emailParam}&message=${messageParam}`);
+            router.push(`/hazo_auth/verify_email?email=${emailParam}&message=${messageParam}`);
             return;
           }
 

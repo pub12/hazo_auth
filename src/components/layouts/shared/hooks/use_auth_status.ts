@@ -46,7 +46,7 @@ export function use_auth_status(): AuthStatus {
     setAuthStatus((prev) => ({ ...prev, loading: true }));
 
     try {
-      const response = await fetch("/api/auth/me", {
+      const response = await fetch("/api/hazo_auth/me", {
         method: "GET",
         credentials: "include",
       });

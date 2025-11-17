@@ -26,7 +26,7 @@ export type UnauthorizedGuardProps = {
 export function UnauthorizedGuard({
   message = "You must be logged in to access this page.",
   loginButtonLabel = "Go to login",
-  loginPath = "/login",
+  loginPath = "/hazo_auth/login",
   children,
 }: UnauthorizedGuardProps) {
   const router = useRouter();

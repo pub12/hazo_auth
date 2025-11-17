@@ -25,7 +25,13 @@ const allowedOperators: SqliteFilterOperator[] = [
 function ensureAdminServiceInitialized() {
   // Get singleton hazo_connect instance (initializes admin service if needed)
   get_hazo_connect_instance();
-  return getSqliteAdminService();
+  
+  try {
+    return getSqliteAdminService();
+  } catch (serviceError) {
+    const errorMessage = serviceError instanceof Error ? serviceError.message : "Unknown error";
+    throw new Error(`SQLite Admin Service not available: ${errorMessage}. Make sure enable_admin_ui is set to true in hazo_auth_config.ini.`);
+  }
 }
 
 export async function GET(request: NextRequest) {

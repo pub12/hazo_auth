@@ -113,7 +113,7 @@ export const use_forgot_password_form = <TClient,>({
       setErrors({});
 
       try {
-        const response = await fetch("/api/auth/forgot_password", {
+        const response = await fetch("/api/hazo_auth/forgot_password", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

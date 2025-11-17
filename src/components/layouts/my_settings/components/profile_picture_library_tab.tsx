@@ -57,7 +57,7 @@ export function ProfilePictureLibraryTab({
     const loadCategories = async () => {
       setLoadingCategories(true);
       try {
-        const response = await fetch("/api/auth/library_photos");
+        const response = await fetch("/api/hazo_auth/library_photos");
         const data = await response.json();
         if (data.success && data.categories) {
           setCategories(data.categories);
@@ -99,7 +99,7 @@ export function ProfilePictureLibraryTab({
     const loadPhotos = async () => {
       setLoadingPhotos(true);
       try {
-        const response = await fetch(`/api/auth/library_photos?category=${encodeURIComponent(selectedCategory)}`);
+        const response = await fetch(`/api/hazo_auth/library_photos?category=${encodeURIComponent(selectedCategory)}`);
         const data = await response.json();
         if (data.success && data.photos) {
           setPhotos(data.photos);

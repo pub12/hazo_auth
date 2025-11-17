@@ -62,7 +62,7 @@ export async function remove_user_profile_picture(
         const config = get_profile_picture_config();
 
         if (config.upload_photo_path) {
-          // Extract filename from URL (e.g., /api/auth/profile_picture/user_id.jpg)
+          // Extract filename from URL (e.g., /api/hazo_auth/profile_picture/user_id.jpg)
           const fileName = profile_picture_url.split("/").pop();
 
           if (fileName && fileName.startsWith(user_id)) {

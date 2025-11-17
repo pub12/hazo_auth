@@ -1,3 +1,4 @@
+# file_description: npm publish ignore rules for the hazo_auth package
 # Dependencies - MUST exclude node_modules
 node_modules/
 **/node_modules/

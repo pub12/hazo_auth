@@ -3,6 +3,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { create_app_logger } from "@/lib/app_logger";
 import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
+import { get_auth_cache } from "@/lib/auth/auth_cache";
+import { get_auth_utility_config } from "@/lib/auth_utility_config.server";
 
 // section: api_handler
 export async function POST(request: NextRequest) {
@@ -31,6 +33,31 @@ export async function POST(request: NextRequest) {
       expires: new Date(0),
       path: "/",
     });
+
+    // Invalidate user cache
+    if (user_id) {
+      try {
+        const config = get_auth_utility_config();
+        const cache = get_auth_cache(
+          config.cache_max_users,
+          config.cache_ttl_minutes,
+          config.cache_max_age_minutes,
+        );
+        cache.invalidate_user(user_id);
+      } catch (cache_error) {
+        // Log but don't fail logout if cache invalidation fails
+        const cache_error_message =
+          cache_error instanceof Error
+            ? cache_error.message
+            : "Unknown error";
+        logger.warn("logout_cache_invalidation_failed", {
+          filename: get_filename(),
+          line_number: get_line_number(),
+          user_id,
+          error: cache_error_message,
+        });
+      }
+    }
 
     if (user_email || user_id) {
       logger.info("logout_successful", {

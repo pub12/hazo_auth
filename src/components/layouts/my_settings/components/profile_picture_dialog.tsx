@@ -188,7 +188,7 @@ export function ProfilePictureDialog({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/auth/upload_profile_picture", {
+      const response = await fetch("/api/hazo_auth/upload_profile_picture", {
         method: "POST",
         credentials: "include",
         body: formData,

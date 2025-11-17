@@ -6,6 +6,8 @@ import { create_app_logger } from "@/lib/app_logger";
 import { change_password } from "@/lib/services/password_change_service";
 import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
 import { require_auth } from "@/lib/auth/auth_utils.server";
+import { get_auth_cache } from "@/lib/auth/auth_cache";
+import { get_auth_utility_config } from "@/lib/auth_utility_config.server";
 
 // section: api_handler
 export async function POST(request: NextRequest) {
@@ -73,6 +75,27 @@ export async function POST(request: NextRequest) {
         { error: result.error || "Failed to change password" },
         { status: 400 }
       );
+    }
+
+    // Invalidate user cache after password change
+    try {
+      const config = get_auth_utility_config();
+      const cache = get_auth_cache(
+        config.cache_max_users,
+        config.cache_ttl_minutes,
+        config.cache_max_age_minutes,
+      );
+      cache.invalidate_user(user_id);
+    } catch (cache_error) {
+      // Log but don't fail password change if cache invalidation fails
+      const cache_error_message =
+        cache_error instanceof Error ? cache_error.message : "Unknown error";
+      logger.warn("password_change_cache_invalidation_failed", {
+        filename: get_filename(),
+        line_number: get_line_number(),
+        user_id,
+        error: cache_error_message,
+      });
     }
 
     logger.info("password_change_successful", {

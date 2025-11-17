@@ -17,7 +17,7 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar";
-import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, Settings } from "lucide-react";
+import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, Settings, User } from "lucide-react";
 import { use_auth_status } from "@/components/layouts/shared/hooks/use_auth_status";
 import { ProfilePicMenu } from "@/components/layouts/shared/components/profile_pic_menu";
 
@@ -50,7 +50,7 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                 <SidebarMenuItem className="cls_sidebar_layout_test_login_item">
                   <SidebarMenuButton asChild>
                     <Link
-                      href="/login"
+                      href="/hazo_auth/login"
                       className="cls_sidebar_layout_test_login_link flex items-center gap-2"
                       aria-label="Test login layout component"
                     >
@@ -62,7 +62,7 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                 <SidebarMenuItem className="cls_sidebar_layout_test_register_item">
                   <SidebarMenuButton asChild>
                     <Link
-                      href="/register"
+                      href="/hazo_auth/register"
                       className="cls_sidebar_layout_test_register_link flex items-center gap-2"
                       aria-label="Test register layout component"
                     >
@@ -74,7 +74,7 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                 <SidebarMenuItem className="cls_sidebar_layout_test_forgot_password_item">
                   <SidebarMenuButton asChild>
                     <Link
-                      href="/forgot_password"
+                      href="/hazo_auth/forgot_password"
                       className="cls_sidebar_layout_test_forgot_password_link flex items-center gap-2"
                       aria-label="Test forgot password layout component"
                     >
@@ -86,7 +86,7 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                 <SidebarMenuItem className="cls_sidebar_layout_test_reset_password_item">
                   <SidebarMenuButton asChild>
                     <Link
-                      href="/reset_password"
+                      href="/hazo_auth/reset_password"
                       className="cls_sidebar_layout_test_reset_password_link flex items-center gap-2"
                       aria-label="Test reset password layout component"
                     >
@@ -98,7 +98,7 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                 <SidebarMenuItem className="cls_sidebar_layout_test_email_verification_item">
                   <SidebarMenuButton asChild>
                     <Link
-                      href="/verify_email"
+                      href="/hazo_auth/verify_email"
                       className="cls_sidebar_layout_test_email_verification_link flex items-center gap-2"
                       aria-label="Test email verification layout component"
                     >
@@ -119,6 +119,18 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem className="cls_sidebar_layout_user_management_item">
+                  <SidebarMenuButton asChild>
+                    <Link
+                      href="/hazo_auth/user_management"
+                      className="cls_sidebar_layout_user_management_link flex items-center gap-2"
+                      aria-label="Open User Management to manage users, roles, and permissions"
+                    >
+                      <User className="h-4 w-4" aria-hidden="true" />
+                      <span>User Management</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroup>
             {authStatus.authenticated && (
@@ -130,7 +142,7 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                   <SidebarMenuItem className="cls_sidebar_layout_my_settings_item">
                     <SidebarMenuButton asChild>
                       <Link
-                        href="/my_settings"
+                        href="/hazo_auth/my_settings"
                         className="cls_sidebar_layout_my_settings_link flex items-center gap-2"
                         aria-label="Open my settings page"
                       >

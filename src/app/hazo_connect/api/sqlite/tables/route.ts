@@ -10,11 +10,21 @@ export async function GET() {
     // Get singleton hazo_connect instance (initializes admin service if needed)
     get_hazo_connect_instance();
     
-    const service = getSqliteAdminService()
-    const tables = await service.listTables()
-    return NextResponse.json({ data: tables })
+    let service;
+    try {
+      service = getSqliteAdminService();
+    } catch (serviceError) {
+      const errorMessage = serviceError instanceof Error ? serviceError.message : "Unknown error";
+      return NextResponse.json(
+        { error: `SQLite Admin Service not available: ${errorMessage}. Make sure enable_admin_ui is set to true in hazo_auth_config.ini.` },
+        { status: 500 }
+      );
+    }
+    
+    const tables = await service.listTables();
+    return NextResponse.json({ data: tables });
   } catch (error) {
-    return toErrorResponse(error, "Failed to list SQLite tables")
+    return toErrorResponse(error, "Failed to list SQLite tables");
   }
 }
 

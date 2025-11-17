@@ -68,14 +68,13 @@ function get_hazo_connect_config(): {
       sqlite_path = path.normalize(sqlite_path);
     } else {
       // Fallback to test fixture database
-      const ui_component_path = path.resolve(
+      const fallback_sqlite_path = path.resolve(
         process.cwd(),
-        "ui_component",
         "__tests__",
         "fixtures",
         "hazo_auth.sqlite"
       );
-      sqlite_path = path.normalize(ui_component_path);
+      sqlite_path = path.normalize(fallback_sqlite_path);
     }
 
     // Log the resolved path for debugging

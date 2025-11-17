@@ -134,7 +134,7 @@ export function use_my_settings({
     }
 
     try {
-      const response = await fetch("/api/auth/update_user", {
+      const response = await fetch("/api/hazo_auth/update_user", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -171,7 +171,7 @@ export function use_my_settings({
     }
 
     try {
-      const response = await fetch("/api/auth/update_user", {
+      const response = await fetch("/api/hazo_auth/update_user", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -304,7 +304,7 @@ export function use_my_settings({
     }
 
     try {
-      const response = await fetch("/api/auth/change_password", {
+      const response = await fetch("/api/hazo_auth/change_password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -371,7 +371,7 @@ export function use_my_settings({
    */
   const handleProfilePictureSave = useCallback(async (profilePictureUrl: string, profileSource: "upload" | "library" | "gravatar") => {
     try {
-      const response = await fetch("/api/auth/update_user", {
+      const response = await fetch("/api/hazo_auth/update_user", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -408,7 +408,7 @@ export function use_my_settings({
    */
   const handleProfilePictureRemove = useCallback(async () => {
     try {
-      const response = await fetch("/api/auth/remove_profile_picture", {
+      const response = await fetch("/api/hazo_auth/remove_profile_picture", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

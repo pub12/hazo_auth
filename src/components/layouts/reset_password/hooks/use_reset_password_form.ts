@@ -54,7 +54,7 @@ const buildInitialValues = (): ResetPasswordFormValues => ({
 export const use_reset_password_form = <TClient,>({
   passwordRequirements,
   dataClient,
-  loginPath = "/login",
+  loginPath = "/hazo_auth/login",
 }: UseResetPasswordFormParams<TClient>): UseResetPasswordFormResult => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -85,7 +85,7 @@ export const use_reset_password_form = <TClient,>({
       setTokenError(null);
 
       try {
-        const response = await fetch(`/api/auth/validate_reset_token?token=${encodeURIComponent(tokenParam)}`, {
+        const response = await fetch(`/api/hazo_auth/validate_reset_token?token=${encodeURIComponent(tokenParam)}`, {
           method: "GET",
         });
 
@@ -217,7 +217,7 @@ export const use_reset_password_form = <TClient,>({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/reset_password", {
+      const response = await fetch("/api/hazo_auth/reset_password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -91,7 +91,19 @@ export default function SqliteAdminClient({
     try {
       const schemaResponse = await fetch(`/hazo_connect/api/sqlite/schema?table=${encodeURIComponent(tableName)}`)
       if (!schemaResponse.ok) {
-        throw new Error(await schemaResponse.text())
+        const contentType = schemaResponse.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await schemaResponse.json();
+          throw new Error(errorData.error || `Failed to fetch schema: ${schemaResponse.statusText}`);
+        } else {
+          const errorText = await schemaResponse.text();
+          throw new Error(`Failed to fetch schema: ${errorText.substring(0, 200)}`);
+        }
+      }
+      const contentType = schemaResponse.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await schemaResponse.text();
+        throw new Error(`Expected JSON but received ${contentType || "unknown content type"}. Response: ${text.substring(0, 200)}`);
       }
       const schemaJson = await schemaResponse.json()
       setSchema(schemaJson.data as TableSchema)
@@ -170,7 +182,20 @@ export default function SqliteAdminClient({
 
       const response = await fetch(`/hazo_connect/api/sqlite/data?${params.toString()}`)
       if (!response.ok) {
-        throw new Error(await response.text())
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to load data: ${response.statusText}`);
+        } else {
+          const errorText = await response.text();
+          throw new Error(`Failed to load data: ${errorText.substring(0, 200)}`);
+        }
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        throw new Error(`Expected JSON but received ${contentType || "unknown content type"}. Response: ${text.substring(0, 200)}`);
       }
 
       const json = (await response.json()) as DataResponse
@@ -197,7 +222,19 @@ export default function SqliteAdminClient({
     try {
       const response = await fetch("/hazo_connect/api/sqlite/tables")
       if (!response.ok) {
-        throw new Error(await response.text())
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to refresh tables: ${response.statusText}`);
+        } else {
+          const errorText = await response.text();
+          throw new Error(`Failed to refresh tables: ${errorText.substring(0, 200)}`);
+        }
+      }
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        throw new Error(`Expected JSON but received ${contentType || "unknown content type"}. Response: ${text.substring(0, 200)}`);
       }
       const json = await response.json()
       setTables(json.data ?? [])

@@ -35,18 +35,20 @@ export async function middleware(request: NextRequest) {
 
   // Public routes that don't require authentication
   const public_routes = [
-    "/login",
-    "/register",
-    "/forgot_password",
-    "/reset_password",
-    "/verify_email",
-    "/api/auth/login",
-    "/api/auth/register",
-    "/api/auth/forgot_password",
-    "/api/auth/reset_password",
-    "/api/auth/verify_email",
-    "/api/auth/validate_reset_token",
-    "/api/auth/me", // Allow /api/auth/me to be public (returns authenticated: false if not logged in)
+    "/hazo_auth/login",
+    "/hazo_auth/register",
+    "/hazo_auth/forgot_password",
+    "/hazo_auth/reset_password",
+    "/hazo_auth/verify_email",
+    "/api/hazo_auth/login",
+    "/api/hazo_auth/register",
+    "/api/hazo_auth/forgot_password",
+    "/api/hazo_auth/reset_password",
+    "/api/hazo_auth/verify_email",
+    "/api/hazo_auth/validate_reset_token",
+    "/api/hazo_auth/me", // Allow /api/hazo_auth/me to be public (returns authenticated: false if not logged in)
+    "/hazo_connect/api/sqlite", // SQLite Admin API routes (admin tool, should be accessible)
+    "/hazo_connect/sqlite_admin", // SQLite Admin UI page
   ];
 
   // Check if route is public
@@ -65,7 +67,7 @@ export async function middleware(request: NextRequest) {
 
   if (!has_cookies) {
     // Redirect to login if no cookies (not authenticated)
-    const login_url = new URL("/login", request.url);
+    const login_url = new URL("/hazo_auth/login", request.url);
     login_url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(login_url);
   }

@@ -47,7 +47,7 @@ const buildInitialValues = (initialEmail?: string): EmailVerificationFormValues 
 export const use_email_verification = <TClient,>({
   dataClient,
   redirectDelay = 5,
-  loginPath = "/login",
+  loginPath = "/hazo_auth/login",
 }: UseEmailVerificationParams<TClient>): UseEmailVerificationResult => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -91,7 +91,7 @@ export const use_email_verification = <TClient,>({
       setErrorMessage(undefined);
 
       try {
-        const response = await fetch(`/api/auth/verify_email?token=${encodeURIComponent(token)}`, {
+        const response = await fetch(`/api/hazo_auth/verify_email?token=${encodeURIComponent(token)}`, {
           method: "GET",
         });
 
@@ -131,7 +131,7 @@ export const use_email_verification = <TClient,>({
 
         // Try to extract email from error response if available
         try {
-          const response = await fetch(`/api/auth/verify_email?token=${encodeURIComponent(token)}`, {
+          const response = await fetch(`/api/hazo_auth/verify_email?token=${encodeURIComponent(token)}`, {
             method: "GET",
           });
           const data = await response.json();
@@ -221,7 +221,7 @@ export const use_email_verification = <TClient,>({
       setErrors({});
 
       try {
-        const response = await fetch("/api/auth/resend_verification", {
+        const response = await fetch("/api/hazo_auth/resend_verification", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
