@@ -3,10 +3,10 @@
 "use client";
 
 // section: imports
-import { use_auth_status } from "@/components/layouts/shared/hooks/use_auth_status";
-import { LogoutButton } from "@/components/layouts/shared/components/logout_button";
-import { Button } from "@/components/ui/button";
-import { TwoColumnAuthLayout } from "@/components/layouts/shared/components/two_column_auth_layout";
+import { use_auth_status } from "../hooks/use_auth_status";
+import { LogoutButton } from "./logout_button";
+import { Button } from "../../../ui/button";
+import { TwoColumnAuthLayout } from "./two_column_auth_layout";
 import { useRouter } from "next/navigation";
 import { Home } from "lucide-react";
 

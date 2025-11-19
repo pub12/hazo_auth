@@ -1,7 +1,7 @@
 // file_description: reusable wrapper component for form fields that standardizes label, input, and error message structure
 // section: imports
-import { Label } from "@/components/ui/label";
-import { FieldErrorMessage } from "@/components/layouts/shared/components/field_error_message";
+import { Label } from "../../../ui/label";
+import { FieldErrorMessage } from "./field_error_message";
 
 // section: types
 type FormFieldWrapperProps = {

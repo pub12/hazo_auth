@@ -16,10 +16,10 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarInset,
-} from "@/components/ui/sidebar";
+} from "../../../ui/sidebar";
 import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, Settings, User } from "lucide-react";
-import { use_auth_status } from "@/components/layouts/shared/hooks/use_auth_status";
-import { ProfilePicMenu } from "@/components/layouts/shared/components/profile_pic_menu";
+import { use_auth_status } from "../hooks/use_auth_status";
+import { ProfilePicMenu } from "./profile_pic_menu";
 
 // section: types
 type SidebarLayoutWrapperProps = {

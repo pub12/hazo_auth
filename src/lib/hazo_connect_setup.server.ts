@@ -166,8 +166,8 @@ export function get_hazo_connect_config_options(): {
   sqlitePath?: string;
   enableAdminUi?: boolean;
   readOnly?: boolean;
-  postgrestUrl?: string;
-  postgrestApiKey?: string;
+  baseUrl?: string;
+  apiKey?: string;
 } {
   const config = get_hazo_connect_config();
 

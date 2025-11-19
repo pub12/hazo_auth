@@ -4,9 +4,9 @@
 
 // section: imports
 import { Eye, EyeOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FieldErrorMessage } from "@/components/layouts/shared/components/field_error_message";
+import { Button } from "../../../ui/button";
+import { Input } from "../../../ui/input";
+import { FieldErrorMessage } from "./field_error_message";
 
 // section: types
 export type PasswordFieldProps = {

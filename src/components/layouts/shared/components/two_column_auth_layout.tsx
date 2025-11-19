@@ -1,6 +1,6 @@
 // file_description: reusable two-column authentication layout shell that combines visual panel and form content
 // section: imports
-import { VisualPanel } from "@/components/layouts/shared/components/visual_panel";
+import { VisualPanel } from "./visual_panel";
 
 // section: types
 type TwoColumnAuthLayoutProps = {

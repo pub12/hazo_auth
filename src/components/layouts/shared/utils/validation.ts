@@ -1,6 +1,6 @@
 // file_description: provide shared validation utilities for email and password fields across layout components
 // section: imports
-import type { PasswordRequirementOptions } from "@/components/layouts/shared/config/layout_customization";
+import type { PasswordRequirementOptions } from "../config/layout_customization";
 
 // section: constants
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
