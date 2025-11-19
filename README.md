@@ -655,6 +655,289 @@ You can also manually invalidate the cache using the API endpoint:
 // Body: { user_id?: string, role_ids?: number[], invalidate_all?: boolean }
 ```
 
+## Profile Picture Menu Widget
+
+The Profile Picture Menu is a versatile component for navbar or sidebar that automatically displays:
+- **When authenticated**: User's profile picture with a dropdown menu containing user info, settings link, logout, and custom menu items
+- **When not authenticated**: Sign Up and Sign In buttons (or a single button, configurable)
+
+### Basic Usage (Recommended)
+
+Use the `ProfilePicMenuWrapper` component which automatically loads configuration from `hazo_auth_config.ini`:
+
+```typescript
+// In your navbar or layout component
+import { ProfilePicMenuWrapper } from "hazo_auth/components/layouts/shared/components/profile_pic_menu_wrapper";
+
+export function Navbar() {
+  return (
+    <nav className="flex items-center justify-between p-4">
+      <div>Logo</div>
+      <ProfilePicMenuWrapper 
+        avatar_size="default" // "sm" | "default" | "lg"
+        className="ml-auto"
+      />
+    </nav>
+  );
+}
+```
+
+### Direct Usage (Manual Configuration)
+
+If you prefer to configure the component directly without using the config file:
+
+```typescript
+"use client";
+
+import { ProfilePicMenu } from "hazo_auth/components/layouts/shared/components/profile_pic_menu";
+
+export function Navbar() {
+  return (
+    <nav className="flex items-center justify-between p-4">
+      <div>Logo</div>
+      <ProfilePicMenu
+        show_single_button={false}
+        sign_up_label="Sign Up"
+        sign_in_label="Sign In"
+        register_path="/hazo_auth/register"
+        login_path="/hazo_auth/login"
+        settings_path="/hazo_auth/my_settings"
+        logout_path="/api/hazo_auth/logout"
+        avatar_size="default"
+        className="ml-auto"
+      />
+    </nav>
+  );
+}
+```
+
+### Configuration
+
+Configure the Profile Picture Menu in `hazo_auth_config.ini` under the `[hazo_auth__profile_pic_menu]` section:
+
+```ini
+[hazo_auth__profile_pic_menu]
+# Button configuration for unauthenticated users
+# Show only "Sign Up" button when true, show both "Sign Up" and "Sign In" buttons when false (default)
+show_single_button = false
+
+# Sign up button label
+sign_up_label = Sign Up
+
+# Sign in button label
+sign_in_label = Sign In
+
+# Register page path
+register_path = /hazo_auth/register
+
+# Login page path
+login_path = /hazo_auth/login
+
+# Settings page path (shown in dropdown menu when authenticated)
+settings_path = /hazo_auth/my_settings
+
+# Logout API endpoint path
+logout_path = /api/hazo_auth/logout
+
+# Custom menu items (optional)
+# Format: "type:label:value_or_href:order" for info/link, or "separator:order" for separator
+# Examples:
+#   - Info item: "info:Phone:+1234567890:3"
+#   - Link item: "link:My Account:/account:4"
+#   - Separator: "separator:2"
+# Custom items are added to the default menu items (name, email, separator, Settings, Logout)
+# Items are sorted by type (info first, then separators, then links) and then by order within each type
+custom_menu_items = 
+```
+
+### Component Props
+
+#### `ProfilePicMenuWrapper` Props
+
+- `className?: string` - Additional CSS classes
+- `avatar_size?: "sm" | "default" | "lg"` - Size of the profile picture avatar (default: "default")
+
+#### `ProfilePicMenu` Props
+
+- `show_single_button?: boolean` - Show only "Sign Up" button when true (default: false)
+- `sign_up_label?: string` - Label for sign up button (default: "Sign Up")
+- `sign_in_label?: string` - Label for sign in button (default: "Sign In")
+- `register_path?: string` - Path to registration page (default: "/hazo_auth/register")
+- `login_path?: string` - Path to login page (default: "/hazo_auth/login")
+- `settings_path?: string` - Path to settings page (default: "/hazo_auth/my_settings")
+- `logout_path?: string` - Path to logout API endpoint (default: "/api/hazo_auth/logout")
+- `custom_menu_items?: ProfilePicMenuMenuItem[]` - Array of custom menu items
+- `className?: string` - Additional CSS classes
+- `avatar_size?: "sm" | "default" | "lg"` - Size of the profile picture avatar (default: "default")
+
+### Custom Menu Items
+
+You can add custom menu items to the dropdown menu. Items are automatically sorted by type (info → separator → link) and then by order.
+
+**Menu Item Types:**
+
+1. **Info** - Display-only text (e.g., phone number, department)
+   - Format: `"info:label:value:order"`
+   - Example: `"info:Phone:+1234567890:3"`
+
+2. **Link** - Clickable menu item that navigates to a URL
+   - Format: `"link:label:href:order"`
+   - Example: `"link:My Account:/account:4"`
+
+3. **Separator** - Visual separator line
+   - Format: `"separator:order"`
+   - Example: `"separator:2"`
+
+**Example Configuration:**
+
+```ini
+[hazo_auth__profile_pic_menu]
+# Add custom menu items
+custom_menu_items = info:Phone:+1234567890:3,separator:2,link:My Account:/account:4,link:Help:/help:5
+```
+
+This will create a menu with:
+1. Default items (name, email, separator, Settings, Logout)
+2. Custom info item: "Phone: +1234567890" (order 3)
+3. Custom separator (order 2)
+4. Custom link: "My Account" → `/account` (order 4)
+5. Custom link: "Help" → `/help` (order 5)
+
+Items are sorted by type priority (info < separator < link) and then by order within each type.
+
+### Default Menu Items
+
+When authenticated, the dropdown menu automatically includes:
+- User's name (if available)
+- User's email address
+- Separator
+- Settings link (with Settings icon)
+- Logout link (with LogOut icon, triggers logout action)
+
+### Examples
+
+#### Example 1: Simple Navbar Integration
+
+```typescript
+// app/components/navbar.tsx
+import { ProfilePicMenuWrapper } from "hazo_auth/components/layouts/shared/components/profile_pic_menu_wrapper";
+
+export function Navbar() {
+  return (
+    <header className="border-b">
+      <nav className="container mx-auto flex items-center justify-between p-4">
+        <div className="text-xl font-bold">My App</div>
+        <ProfilePicMenuWrapper />
+      </nav>
+    </header>
+  );
+}
+```
+
+#### Example 2: Custom Styling and Size
+
+```typescript
+// app/components/navbar.tsx
+import { ProfilePicMenuWrapper } from "hazo_auth/components/layouts/shared/components/profile_pic_menu_wrapper";
+
+export function Navbar() {
+  return (
+    <header className="bg-slate-900 text-white">
+      <nav className="container mx-auto flex items-center justify-between p-4">
+        <div className="text-xl font-bold">My App</div>
+        <ProfilePicMenuWrapper 
+          avatar_size="sm"
+          className="bg-slate-800 rounded-lg p-2"
+        />
+      </nav>
+    </header>
+  );
+}
+```
+
+#### Example 3: With Custom Menu Items (Programmatic)
+
+```typescript
+"use client";
+
+import { ProfilePicMenu } from "hazo_auth/components/layouts/shared/components/profile_pic_menu";
+import type { ProfilePicMenuMenuItem } from "hazo_auth/lib/profile_pic_menu_config.server";
+
+export function Navbar() {
+  const customItems: ProfilePicMenuMenuItem[] = [
+    {
+      type: "info",
+      label: "Department",
+      value: "Engineering",
+      order: 3,
+      id: "dept_info",
+    },
+    {
+      type: "separator",
+      order: 2,
+      id: "custom_sep",
+    },
+    {
+      type: "link",
+      label: "Documentation",
+      href: "/docs",
+      order: 4,
+      id: "docs_link",
+    },
+  ];
+
+  return (
+    <nav className="flex items-center justify-between p-4">
+      <div>Logo</div>
+      <ProfilePicMenu
+        custom_menu_items={customItems}
+        avatar_size="default"
+      />
+    </nav>
+  );
+}
+```
+
+#### Example 4: Single Button Mode
+
+```typescript
+// In hazo_auth_config.ini
+[hazo_auth__profile_pic_menu]
+show_single_button = true
+sign_up_label = Get Started
+```
+
+When `show_single_button` is `true`, only the "Sign Up" button is shown for unauthenticated users (no "Sign In" button).
+
+### Behavior
+
+- **Loading State**: Shows a pulsing placeholder while checking authentication status
+- **Unauthenticated**: Shows Sign Up/Sign In buttons (or single button if configured)
+- **Authenticated**: Shows profile picture with dropdown menu
+- **Profile Picture Fallback**: If no profile picture is set, shows user's initials
+- **Logout**: Handles logout action, refreshes auth status, and redirects appropriately
+- **Responsive**: Works well in both navbar and sidebar layouts
+
+### Styling
+
+The component uses TailwindCSS classes and can be customized with:
+- `className` prop for additional styling
+- `avatar_size` prop for different avatar sizes
+- CSS class names prefixed with `cls_profile_pic_menu_*` for targeted styling
+
+Example custom styling:
+
+```css
+/* Target specific elements */
+.cls_profile_pic_menu_avatar {
+  border: 2px solid #3b82f6;
+}
+
+.cls_profile_pic_menu_dropdown {
+  min-width: 200px;
+}
+```
+
 ### Local Development (for package contributors)
 
 - `npm install` to install dependencies.
