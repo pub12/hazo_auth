@@ -16,7 +16,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarInset,
-} from "@/components/ui/sidebar";
+} from "../components/ui/sidebar";
 import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck } from "lucide-react";
 
 // section: page_component

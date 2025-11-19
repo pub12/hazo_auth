@@ -1,10 +1,10 @@
 // file_description: API route for hazo_get_auth utility (client-side calls)
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
-import { hazo_get_auth } from "@/lib/auth/hazo_get_auth.server";
-import { PermissionError } from "@/lib/auth/auth_types";
-import { create_app_logger } from "@/lib/app_logger";
-import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
+import { hazo_get_auth } from "../../../../lib/auth/hazo_get_auth.server";
+import { PermissionError } from "../../../../lib/auth/auth_types";
+import { create_app_logger } from "../../../../lib/app_logger";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
 
 // section: route_config
 export const dynamic = "force-dynamic";

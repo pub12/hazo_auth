@@ -4,8 +4,8 @@
 
 // section: imports
 import { useState, useEffect, useCallback } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { use_hazo_auth } from "@/components/layouts/shared/hooks/use_hazo_auth";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
+import { use_hazo_auth } from "../shared/hooks/use_hazo_auth";
 import {
   Table,
   TableBody,
@@ -13,9 +13,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+} from "../../ui/table";
+import { Button } from "../../ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "../../ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +25,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "../../ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -33,13 +33,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "../../ui/dialog";
+import { Input } from "../../ui/input";
+import { Label } from "../../ui/label";
 import { RolesMatrix } from "./components/roles_matrix";
 import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
 
 // section: types
 export type UserManagementLayoutProps = {

@@ -6,7 +6,7 @@ import {
   type SqliteFilterOperator,
   type SqliteWhereFilter
 } from "hazo_connect/server"
-import { get_hazo_connect_instance } from "@/lib/hazo_connect_instance.server"
+import { get_hazo_connect_instance } from "../../../../../lib/hazo_connect_instance.server"
 
 export const dynamic = "force-dynamic"
 const allowedOperators: SqliteFilterOperator[] = [

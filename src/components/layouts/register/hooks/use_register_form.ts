@@ -2,10 +2,10 @@
 // section: imports
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import type { LayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
-import type { PasswordRequirementOptions, PasswordRequirementOverrides } from "@/components/layouts/shared/config/layout_customization";
-import { REGISTER_FIELD_IDS, type RegisterFieldId } from "@/components/layouts/register/config/register_field_config";
-import { validateEmail, validatePassword } from "@/components/layouts/shared/utils/validation";
+import type { LayoutDataClient } from "../../shared/data/layout_data_client";
+import type { PasswordRequirementOptions, PasswordRequirementOverrides } from "../../shared/config/layout_customization";
+import { REGISTER_FIELD_IDS, type RegisterFieldId } from "../config/register_field_config";
+import { validateEmail, validatePassword } from "../../shared/utils/validation";
 
 // section: constants
 const PASSWORD_FIELDS: Array<RegisterFieldId> = [

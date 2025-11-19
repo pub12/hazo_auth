@@ -1,7 +1,7 @@
 // file_description: define the root layout wrapper for the hazo_auth project
 import type { Metadata } from "next";
 import local_font from "next/font/local";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "../components/ui/sonner";
 import "./globals.css";
 
 // section: typography_setup

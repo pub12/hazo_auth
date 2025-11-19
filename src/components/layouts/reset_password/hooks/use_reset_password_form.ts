@@ -3,10 +3,10 @@
 import { useCallback, useMemo, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { LayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
-import type { PasswordRequirementOptions } from "@/components/layouts/shared/config/layout_customization";
-import { RESET_PASSWORD_FIELD_IDS, type ResetPasswordFieldId } from "@/components/layouts/reset_password/config/reset_password_field_config";
-import { validatePassword } from "@/components/layouts/shared/utils/validation";
+import type { LayoutDataClient } from "../../shared/data/layout_data_client";
+import type { PasswordRequirementOptions } from "../../shared/config/layout_customization";
+import { RESET_PASSWORD_FIELD_IDS, type ResetPasswordFieldId } from "../config/reset_password_field_config";
+import { validatePassword } from "../../shared/utils/validation";
 
 // section: constants
 const PASSWORD_FIELDS: Array<ResetPasswordFieldId> = [

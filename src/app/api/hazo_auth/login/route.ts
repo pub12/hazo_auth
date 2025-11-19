@@ -1,11 +1,11 @@
 // file_description: API route for user login authentication using hazo_connect
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "@/lib/hazo_connect_instance.server";
-import { create_app_logger } from "@/lib/app_logger";
-import { authenticate_user } from "@/lib/services/login_service";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
+import { create_app_logger } from "../../../../lib/app_logger";
+import { authenticate_user } from "../../../../lib/services/login_service";
 import { createCrudService } from "hazo_connect/server";
-import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
 
 // section: api_handler
 export async function POST(request: NextRequest) {

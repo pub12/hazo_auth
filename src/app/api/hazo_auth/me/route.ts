@@ -1,7 +1,7 @@
 // file_description: API route to get current authenticated user information
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
-import { get_authenticated_user_with_response } from "@/lib/auth/auth_utils.server";
+import { get_authenticated_user_with_response } from "../../../../lib/auth/auth_utils.server";
 
 // section: api_handler
 export async function GET(request: NextRequest) {

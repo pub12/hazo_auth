@@ -1,8 +1,8 @@
 // file_description: showcase the register_layout component within storybook for review and testing
 // section: imports
 import type { Meta, StoryObj } from "@storybook/react";
-import RegisterLayout from "@/components/layouts/register";
-import { createLayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
+import RegisterLayout from "../components/layouts/register";
+import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
 
 // section: metadata
 const meta: Meta<typeof RegisterLayout> = {

@@ -3,30 +3,30 @@
 "use client";
 
 // section: imports
-import { Input } from "@/components/ui/input";
-import { PasswordField } from "@/components/layouts/shared/components/password_field";
-import { FormFieldWrapper } from "@/components/layouts/shared/components/form_field_wrapper";
-import { FormHeader } from "@/components/layouts/shared/components/form_header";
-import { FormActionButtons } from "@/components/layouts/shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "@/components/layouts/shared/components/two_column_auth_layout";
+import { Input } from "../../ui/input";
+import { PasswordField } from "../shared/components/password_field";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
+import { FormHeader } from "../shared/components/form_header";
+import { FormActionButtons } from "../shared/components/form_action_buttons";
+import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
 import { CheckCircle } from "lucide-react";
-import { AlreadyLoggedInGuard } from "@/components/layouts/shared/components/already_logged_in_guard";
+import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
 import {
   type ButtonPaletteOverrides,
   type LayoutFieldMapOverrides,
   type LayoutLabelOverrides,
-} from "@/components/layouts/shared/config/layout_customization";
+} from "../shared/config/layout_customization";
 import {
   LOGIN_FIELD_IDS,
   createLoginFieldDefinitions,
   resolveLoginButtonPalette,
   resolveLoginLabels,
-} from "@/components/layouts/login/config/login_field_config";
+} from "./config/login_field_config";
 import {
   use_login_form,
   type UseLoginFormResult,
-} from "@/components/layouts/login/hooks/use_login_form";
-import { type LayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
+} from "./hooks/use_login_form";
+import { type LayoutDataClient } from "../shared/data/layout_data_client";
 
 // section: types
 export type LoginLayoutProps<TClient = unknown> = {

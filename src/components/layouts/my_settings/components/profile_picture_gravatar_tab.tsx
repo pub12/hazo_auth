@@ -4,9 +4,9 @@
 
 // section: imports
 import { useState, useEffect } from "react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Switch } from "../../../ui/switch";
+import { Label } from "../../../ui/label";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
 import { Info } from "lucide-react";
 import gravatarUrl from "gravatar-url";
 

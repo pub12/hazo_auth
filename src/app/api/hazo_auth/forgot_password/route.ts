@@ -1,10 +1,10 @@
 // file_description: API route for password reset requests using hazo_connect
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "@/lib/hazo_connect_instance.server";
-import { create_app_logger } from "@/lib/app_logger";
-import { request_password_reset } from "@/lib/services/password_reset_service";
-import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
+import { create_app_logger } from "../../../../lib/app_logger";
+import { request_password_reset } from "../../../../lib/services/password_reset_service";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
 
 // section: api_handler
 export async function POST(request: NextRequest) {

@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import type { LayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
-import { EMAIL_VERIFICATION_FIELD_IDS, type EmailVerificationFieldId } from "@/components/layouts/email_verification/config/email_verification_field_config";
-import { validateEmail } from "@/components/layouts/shared/utils/validation";
+import type { LayoutDataClient } from "../../shared/data/layout_data_client";
+import { EMAIL_VERIFICATION_FIELD_IDS, type EmailVerificationFieldId } from "../config/email_verification_field_config";
+import { validateEmail } from "../../shared/utils/validation";
 
 // section: types
 export type EmailVerificationFormValues = Record<EmailVerificationFieldId, string>;

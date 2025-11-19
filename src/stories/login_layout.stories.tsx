@@ -1,8 +1,8 @@
 // file_description: showcase the login_layout component within storybook for review and testing
 // section: imports
 import type { Meta, StoryObj } from "@storybook/react";
-import LoginLayout from "@/components/layouts/login";
-import { createLayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
+import LoginLayout from "../components/layouts/login";
+import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
 
 // section: metadata
 const meta: Meta<typeof LoginLayout> = {

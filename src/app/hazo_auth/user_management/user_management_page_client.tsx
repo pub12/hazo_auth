@@ -3,7 +3,7 @@
 "use client";
 
 // section: imports
-import { UserManagementLayout } from "@/components/layouts/user_management";
+import { UserManagementLayout } from "../../../components/layouts/user_management";
 
 // section: component
 /**

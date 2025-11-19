@@ -1,11 +1,11 @@
 // file_description: API route for manual cache invalidation (admin endpoint)
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
-import { get_auth_cache } from "@/lib/auth/auth_cache";
-import { get_auth_utility_config } from "@/lib/auth_utility_config.server";
-import { create_app_logger } from "@/lib/app_logger";
-import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
-import { hazo_get_auth } from "@/lib/auth/hazo_get_auth.server";
+import { get_auth_cache } from "../../../../lib/auth/auth_cache";
+import { get_auth_utility_config } from "../../../../lib/auth_utility_config.server";
+import { create_app_logger } from "../../../../lib/app_logger";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
+import { hazo_get_auth } from "../../../../lib/auth/hazo_get_auth.server";
 
 // section: route_config
 export const dynamic = "force-dynamic";

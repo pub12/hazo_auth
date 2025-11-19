@@ -10,14 +10,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "../../../ui/dialog";
+import { Button } from "../../../ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../ui/tabs";
 import { ProfilePictureUploadTab } from "./profile_picture_upload_tab";
 import { ProfilePictureLibraryTab } from "./profile_picture_library_tab";
 import { ProfilePictureGravatarTab } from "./profile_picture_gravatar_tab";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn } from "../../../../lib/utils";
 
 // section: types
 export type ProfilePictureDialogProps = {

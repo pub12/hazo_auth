@@ -2,11 +2,11 @@
 // section: imports
 import { useCallback, useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { LayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
-import { LOGIN_FIELD_IDS, type LoginFieldId } from "@/components/layouts/login/config/login_field_config";
-import { validateEmail } from "@/components/layouts/shared/utils/validation";
-import { get_client_ip } from "@/components/layouts/shared/utils/ip_address";
-import { trigger_auth_status_refresh } from "@/components/layouts/shared/hooks/use_auth_status";
+import type { LayoutDataClient } from "../../shared/data/layout_data_client";
+import { LOGIN_FIELD_IDS, type LoginFieldId } from "../config/login_field_config";
+import { validateEmail } from "../../shared/utils/validation";
+import { get_client_ip } from "../../shared/utils/ip_address";
+import { trigger_auth_status_refresh } from "../../shared/hooks/use_auth_status";
 
 // section: types
 export type LoginFormValues = Record<LoginFieldId, string>;

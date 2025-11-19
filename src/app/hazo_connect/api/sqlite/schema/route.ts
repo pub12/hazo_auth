@@ -1,7 +1,7 @@
 // file_description: API route to get SQLite table schema for admin UI
 import { NextRequest, NextResponse } from "next/server"
 import { getSqliteAdminService } from "hazo_connect/server"
-import { get_hazo_connect_instance } from "@/lib/hazo_connect_instance.server"
+import { get_hazo_connect_instance } from "../../../../../lib/hazo_connect_instance.server"
 
 export const dynamic = "force-dynamic"
 

@@ -4,8 +4,8 @@
 
 // section: imports
 import { useState, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "../../../ui/button";
+import { Checkbox } from "../../../ui/checkbox";
 import {
   Table,
   TableBody,
@@ -13,7 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "../../../ui/table";
 import {
   Dialog,
   DialogContent,
@@ -21,12 +21,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "../../../ui/dialog";
+import { Input } from "../../../ui/input";
+import { Label } from "../../../ui/label";
 import { Plus, Save, Loader2, CircleCheck, CircleX } from "lucide-react";
 import { toast } from "sonner";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
 
 // section: types
 export type RolesMatrixData = {

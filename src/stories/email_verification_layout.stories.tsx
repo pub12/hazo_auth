@@ -1,8 +1,8 @@
 // file_description: showcase the email_verification_layout component within storybook for review and testing
 // section: imports
 import type { Meta, StoryObj } from "@storybook/react";
-import EmailVerificationLayout from "@/components/layouts/email_verification";
-import { createLayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
+import EmailVerificationLayout from "../components/layouts/email_verification";
+import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
 
 // section: metadata
 const meta: Meta<typeof EmailVerificationLayout> = {

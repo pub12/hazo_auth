@@ -4,11 +4,11 @@
 
 // section: imports
 import { useState, useCallback, useEffect } from "react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Switch } from "../../../ui/switch";
+import { Label } from "../../../ui/label";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
 import { Upload, X, Loader2, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../../ui/button";
 import imageCompression from "browser-image-compression";
 
 // section: types

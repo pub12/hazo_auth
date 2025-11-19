@@ -3,17 +3,17 @@
 "use client";
 
 // section: imports
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { FormFieldWrapper } from "@/components/layouts/shared/components/form_field_wrapper";
-import { FormHeader } from "@/components/layouts/shared/components/form_header";
-import { FormActionButtons } from "@/components/layouts/shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "@/components/layouts/shared/components/two_column_auth_layout";
+import { Input } from "../../ui/input";
+import { Button } from "../../ui/button";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
+import { FormHeader } from "../shared/components/form_header";
+import { FormActionButtons } from "../shared/components/form_action_buttons";
+import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
 import {
   type ButtonPaletteOverrides,
   type LayoutFieldMapOverrides,
   type LayoutLabelOverrides,
-} from "@/components/layouts/shared/config/layout_customization";
+} from "../shared/config/layout_customization";
 import {
   EMAIL_VERIFICATION_FIELD_IDS,
   createEmailVerificationFieldDefinitions,
@@ -23,14 +23,14 @@ import {
   EMAIL_VERIFICATION_ERROR_LABEL_DEFAULTS,
   type EmailVerificationSuccessLabels,
   type EmailVerificationErrorLabels,
-} from "@/components/layouts/email_verification/config/email_verification_field_config";
+} from "./config/email_verification_field_config";
 import {
   use_email_verification,
   type UseEmailVerificationResult,
-} from "@/components/layouts/email_verification/hooks/use_email_verification";
-import { type LayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
+} from "./hooks/use_email_verification";
+import { type LayoutDataClient } from "../shared/data/layout_data_client";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { AlreadyLoggedInGuard } from "@/components/layouts/shared/components/already_logged_in_guard";
+import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
 
 // section: types
 export type EmailVerificationLayoutProps<TClient = unknown> = {

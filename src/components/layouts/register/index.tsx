@@ -3,31 +3,31 @@
 "use client";
 
 // section: imports
-import { Input } from "@/components/ui/input";
-import { PasswordField } from "@/components/layouts/shared/components/password_field";
-import { FormFieldWrapper } from "@/components/layouts/shared/components/form_field_wrapper";
-import { FormHeader } from "@/components/layouts/shared/components/form_header";
-import { FormActionButtons } from "@/components/layouts/shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "@/components/layouts/shared/components/two_column_auth_layout";
-import { AlreadyLoggedInGuard } from "@/components/layouts/shared/components/already_logged_in_guard";
+import { Input } from "../../ui/input";
+import { PasswordField } from "../shared/components/password_field";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
+import { FormHeader } from "../shared/components/form_header";
+import { FormActionButtons } from "../shared/components/form_action_buttons";
+import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
+import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
 import {
   type ButtonPaletteOverrides,
   type LayoutFieldMapOverrides,
   type LayoutLabelOverrides,
   type PasswordRequirementOverrides,
-} from "@/components/layouts/shared/config/layout_customization";
+} from "../shared/config/layout_customization";
 import {
   REGISTER_FIELD_IDS,
   createRegisterFieldDefinitions,
   resolveRegisterButtonPalette,
   resolveRegisterLabels,
   resolveRegisterPasswordRequirements,
-} from "@/components/layouts/register/config/register_field_config";
+} from "./config/register_field_config";
 import {
   use_register_form,
   type UseRegisterFormResult,
-} from "@/components/layouts/register/hooks/use_register_form";
-import { type LayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
+} from "./hooks/use_register_form";
+import { type LayoutDataClient } from "../shared/data/layout_data_client";
 
 // section: types
 export type RegisterLayoutProps<TClient = unknown> = {

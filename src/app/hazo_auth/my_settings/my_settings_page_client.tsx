@@ -4,9 +4,9 @@
 
 // section: imports
 import { useEffect, useState } from "react";
-import my_settings_layout from "@/components/layouts/my_settings";
-import type { LayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
-import type { PasswordRequirementOptions } from "@/components/layouts/shared/config/layout_customization";
+import my_settings_layout from "../../../components/layouts/my_settings";
+import type { LayoutDataClient } from "../../../components/layouts/shared/data/layout_data_client";
+import type { PasswordRequirementOptions } from "../../../components/layouts/shared/config/layout_customization";
 
 // section: types
 type MySettingsPageClientProps = {

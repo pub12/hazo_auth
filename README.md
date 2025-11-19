@@ -27,7 +27,28 @@ After installing the package, you need to set up configuration files in your pro
    - Add `ZEPTOMAIL_API_KEY=your_api_key_here` (if using Zeptomail)
    - Add other sensitive configuration values as needed
 
-**Important:** The configuration files must be located in your project root directory (where `process.cwd()` points to), not inside `node_modules`. The package reads configuration from `process.cwd()` at runtime.
+**Important:** The configuration files must be located in your project root directory (where `process.cwd()` points to), not inside `node_modules`. The package reads configuration from `process.cwd()` at runtime, so storing them elsewhere (including `node_modules/hazo_auth`) will break runtime access.
+
+### Expose hazo_auth Routes in the Consumer App
+
+Because `src/app/hazo_auth` (pages) and `src/app/api/hazo_auth` (API routes) need to be part of the consuming Next.js app’s routing tree, make sure they exist in your project’s `src/app` directory. Two recommended approaches:
+
+1. **Create symlinks (preferred during development):**
+   ```bash
+   mkdir -p src/app/api src/app
+   ln -s ../../node_modules/hazo_auth/src/app/api/hazo_auth src/app/api/hazo_auth
+   ln -s ../../node_modules/hazo_auth/src/app/hazo_auth src/app/hazo_auth
+   ```
+   Adjust the relative paths if your project structure differs.
+
+2. **Copy the directories (useful for deployment or when symlinks cause issues):**
+   ```bash
+   cp -R node_modules/hazo_auth/src/app/api/hazo_auth src/app/api/hazo_auth
+   cp -R node_modules/hazo_auth/src/app/hazo_auth src/app/hazo_auth
+   ```
+   Add an npm script (e.g., `postinstall`) to automate copying after installations or updates.
+
+> The package expects these routes to live at `src/app/api/hazo_auth` and `src/app/hazo_auth` inside the consumer project. Without copying or linking them, Next.js won’t mount the auth pages or APIs.
 
 ## Authentication Service
 

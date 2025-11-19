@@ -1,10 +1,10 @@
 // file_description: API route for email verification using hazo_connect
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "@/lib/hazo_connect_instance.server";
-import { create_app_logger } from "@/lib/app_logger";
-import { verify_email_token } from "@/lib/services/email_verification_service";
-import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
+import { create_app_logger } from "../../../../lib/app_logger";
+import { verify_email_token } from "../../../../lib/services/email_verification_service";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
 
 // section: route_config
 export const dynamic = 'force-dynamic';

@@ -3,11 +3,11 @@
 "use client";
 
 // section: imports
-import { Button } from "@/components/ui/button";
+import { Button } from "../../ui/button";
 import { EditableField } from "./components/editable_field";
 import { ProfilePictureDisplay } from "./components/profile_picture_display";
 import { ProfilePictureDialog } from "./components/profile_picture_dialog";
-import { UnauthorizedGuard } from "@/components/layouts/shared/components/unauthorized_guard";
+import { UnauthorizedGuard } from "../shared/components/unauthorized_guard";
 import { use_my_settings } from "./hooks/use_my_settings";
 import {
   resolveMySettingsLabels,
@@ -17,10 +17,10 @@ import {
 import type { 
   PasswordRequirementOptions,
   ButtonPaletteOverrides,
-} from "@/components/layouts/shared/config/layout_customization";
+} from "../shared/config/layout_customization";
 import { formatDistanceToNow } from "date-fns";
-import { PasswordField } from "@/components/layouts/shared/components/password_field";
-import { FormFieldWrapper } from "@/components/layouts/shared/components/form_field_wrapper";
+import { PasswordField } from "../shared/components/password_field";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
 import { Pencil, Trash2 } from "lucide-react";
 
 // section: types

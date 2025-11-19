@@ -1,13 +1,13 @@
 // file_description: API route for changing user password
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "@/lib/hazo_connect_instance.server";
-import { create_app_logger } from "@/lib/app_logger";
-import { change_password } from "@/lib/services/password_change_service";
-import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
-import { require_auth } from "@/lib/auth/auth_utils.server";
-import { get_auth_cache } from "@/lib/auth/auth_cache";
-import { get_auth_utility_config } from "@/lib/auth_utility_config.server";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
+import { create_app_logger } from "../../../../lib/app_logger";
+import { change_password } from "../../../../lib/services/password_change_service";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
+import { require_auth } from "../../../../lib/auth/auth_utils.server";
+import { get_auth_cache } from "../../../../lib/auth/auth_cache";
+import { get_auth_utility_config } from "../../../../lib/auth_utility_config.server";
 
 // section: api_handler
 export async function POST(request: NextRequest) {

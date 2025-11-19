@@ -3,8 +3,8 @@
 "use client";
 
 // section: imports
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
+import { Button } from "../../../ui/button";
 import { Pencil } from "lucide-react";
 
 // section: types

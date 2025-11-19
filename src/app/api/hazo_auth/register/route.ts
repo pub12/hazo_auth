@@ -1,10 +1,10 @@
 // file_description: API route for user registration using hazo_connect to insert into hazo_users table
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "@/lib/hazo_connect_instance.server";
-import { create_app_logger } from "@/lib/app_logger";
-import { register_user } from "@/lib/services/registration_service";
-import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
+import { create_app_logger } from "../../../../lib/app_logger";
+import { register_user } from "../../../../lib/services/registration_service";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
 
 // section: api_handler
 export async function POST(request: NextRequest) {

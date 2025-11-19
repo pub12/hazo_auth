@@ -3,31 +3,31 @@
 "use client";
 
 // section: imports
-import { PasswordField } from "@/components/layouts/shared/components/password_field";
-import { FormFieldWrapper } from "@/components/layouts/shared/components/form_field_wrapper";
-import { FormHeader } from "@/components/layouts/shared/components/form_header";
-import { FormActionButtons } from "@/components/layouts/shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "@/components/layouts/shared/components/two_column_auth_layout";
+import { PasswordField } from "../shared/components/password_field";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
+import { FormHeader } from "../shared/components/form_header";
+import { FormActionButtons } from "../shared/components/form_action_buttons";
+import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { AlreadyLoggedInGuard } from "@/components/layouts/shared/components/already_logged_in_guard";
+import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
 import {
   type ButtonPaletteOverrides,
   type LayoutFieldMapOverrides,
   type LayoutLabelOverrides,
   type PasswordRequirementOverrides,
-} from "@/components/layouts/shared/config/layout_customization";
+} from "../shared/config/layout_customization";
 import {
   RESET_PASSWORD_FIELD_IDS,
   createResetPasswordFieldDefinitions,
   resolveResetPasswordButtonPalette,
   resolveResetPasswordLabels,
   resolveResetPasswordPasswordRequirements,
-} from "@/components/layouts/reset_password/config/reset_password_field_config";
+} from "./config/reset_password_field_config";
 import {
   use_reset_password_form,
   type UseResetPasswordFormResult,
-} from "@/components/layouts/reset_password/hooks/use_reset_password_form";
-import { type LayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
+} from "./hooks/use_reset_password_form";
+import { type LayoutDataClient } from "../shared/data/layout_data_client";
 import Link from "next/link";
 
 // section: types

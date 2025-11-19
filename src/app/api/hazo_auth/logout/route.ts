@@ -1,10 +1,10 @@
 // file_description: API route for user logout
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
-import { create_app_logger } from "@/lib/app_logger";
-import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
-import { get_auth_cache } from "@/lib/auth/auth_cache";
-import { get_auth_utility_config } from "@/lib/auth_utility_config.server";
+import { create_app_logger } from "../../../../lib/app_logger";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
+import { get_auth_cache } from "../../../../lib/auth/auth_cache";
+import { get_auth_utility_config } from "../../../../lib/auth_utility_config.server";
 
 // section: api_handler
 export async function POST(request: NextRequest) {

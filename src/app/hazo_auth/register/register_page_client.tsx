@@ -4,10 +4,10 @@
 
 // section: imports
 import { useEffect, useState } from "react";
-import register_layout from "@/components/layouts/register";
-import { createLayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
-import { create_sqlite_hazo_connect } from "@/lib/hazo_connect_setup";
-import type { LayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
+import register_layout from "../../../components/layouts/register";
+import { createLayoutDataClient } from "../../../components/layouts/shared/data/layout_data_client";
+import { create_sqlite_hazo_connect } from "../../../lib/hazo_connect_setup";
+import type { LayoutDataClient } from "../../../components/layouts/shared/data/layout_data_client";
 
 // section: types
 type RegisterPageClientProps = {

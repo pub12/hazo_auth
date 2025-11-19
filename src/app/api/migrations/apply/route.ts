@@ -1,11 +1,11 @@
 // file_description: API route to manually apply database migrations
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "@/lib/hazo_connect_instance.server";
-import { create_app_logger } from "@/lib/app_logger";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
+import { create_app_logger } from "../../../../lib/app_logger";
 import fs from "fs";
 import path from "path";
-import { get_filename, get_line_number } from "@/lib/utils/api_route_helpers";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
 
 // section: api_handler
 export async function POST(request: NextRequest) {

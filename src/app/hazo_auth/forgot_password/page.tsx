@@ -1,8 +1,8 @@
 // file_description: render the forgot password page shell and mount the forgot password layout component within sidebar
 // section: imports
-import { SidebarLayoutWrapper } from "@/components/layouts/shared/components/sidebar_layout_wrapper";
+import { SidebarLayoutWrapper } from "../../../components/layouts/shared/components/sidebar_layout_wrapper";
 import { ForgotPasswordPageClient } from "./forgot_password_page_client";
-import { get_forgot_password_config } from "@/lib/forgot_password_config.server";
+import { get_forgot_password_config } from "../../../lib/forgot_password_config.server";
 
 // section: component
 export default function forgot_password_page() {

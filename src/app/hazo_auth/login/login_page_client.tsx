@@ -4,11 +4,11 @@
 
 // section: imports
 import { useEffect, useState } from "react";
-import login_layout from "@/components/layouts/login";
-import { createLayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
-import { create_sqlite_hazo_connect } from "@/lib/hazo_connect_setup";
-import { create_app_logger } from "@/lib/app_logger";
-import type { LayoutDataClient } from "@/components/layouts/shared/data/layout_data_client";
+import login_layout from "../../../components/layouts/login";
+import { createLayoutDataClient } from "../../../components/layouts/shared/data/layout_data_client";
+import { create_sqlite_hazo_connect } from "../../../lib/hazo_connect_setup";
+import { create_app_logger } from "../../../lib/app_logger";
+import type { LayoutDataClient } from "../../../components/layouts/shared/data/layout_data_client";
 
 // section: types
 type LoginPageClientProps = {

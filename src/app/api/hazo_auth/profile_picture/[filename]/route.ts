@@ -1,7 +1,7 @@
 // file_description: API route to serve uploaded profile pictures
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
-import { get_profile_picture_config } from "@/lib/profile_picture_config.server";
+import { get_profile_picture_config } from "../../../../../lib/profile_picture_config.server";
 import fs from "fs";
 import path from "path";
 

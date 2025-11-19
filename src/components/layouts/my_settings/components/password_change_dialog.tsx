@@ -10,11 +10,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { PasswordField } from "@/components/layouts/shared/components/password_field";
-import { FormFieldWrapper } from "@/components/layouts/shared/components/form_field_wrapper";
-import type { PasswordRequirementOptions } from "@/components/layouts/shared/config/layout_customization";
+} from "../../../ui/dialog";
+import { Button } from "../../../ui/button";
+import { PasswordField } from "../../shared/components/password_field";
+import { FormFieldWrapper } from "../../shared/components/form_field_wrapper";
+import type { PasswordRequirementOptions } from "../../shared/config/layout_customization";
 
 // section: types
 export type ButtonPalette = {
