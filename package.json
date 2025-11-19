@@ -1,6 +1,6 @@
 {
   "name": "hazo_auth",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "files": [
     "src/**/*",
     "public/file.svg",
