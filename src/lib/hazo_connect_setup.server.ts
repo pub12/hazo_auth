@@ -100,8 +100,10 @@ function get_hazo_connect_config(): {
       hazo_connect_section?.postgrest_url ||
       process.env.HAZO_CONNECT_POSTGREST_URL ||
       process.env.POSTGREST_URL;
+    // API key must only come from environment variables for security
+    // Check multiple possible env var names for compatibility
     const postgrest_api_key =
-      hazo_connect_section?.postgrest_api_key ||
+      process.env.postgrest_api_key ||  // hazo_connect package expects this
       process.env.HAZO_CONNECT_POSTGREST_API_KEY ||
       process.env.POSTGREST_API_KEY;
 
@@ -141,10 +143,13 @@ export function create_sqlite_hazo_connect_server() {
   }
 
   if (config.type === "postgrest") {
+    // Ensure we have a value (empty string if not set, for PostgREST instances without auth)
+    const apiKey = config.postgrestApiKey || "";
+    
     return createHazoConnect({
       type: "postgrest",
       baseUrl: config.postgrestUrl!,
-      apiKey: config.postgrestApiKey,
+      apiKey: apiKey, // Pass empty string if not set
     });
   }
 
@@ -161,6 +166,8 @@ export function get_hazo_connect_config_options(): {
   sqlitePath?: string;
   enableAdminUi?: boolean;
   readOnly?: boolean;
+  postgrestUrl?: string;
+  postgrestApiKey?: string;
 } {
   const config = get_hazo_connect_config();
 
@@ -173,8 +180,15 @@ export function get_hazo_connect_config_options(): {
     };
   }
 
-  // PostgREST is not supported by the singleton API options yet
-  // Return empty object to let it use environment variables
+  if (config.type === "postgrest") {
+    return {
+      type: "postgrest",
+      baseUrl: config.postgrestUrl, // Corrected from postgrestUrl
+      apiKey: config.postgrestApiKey || "", // Corrected from postgrestApiKey and ensured string value
+    };
+  }
+
+  // Fallback: return empty object to let it use environment variables
   return {};
 }
 

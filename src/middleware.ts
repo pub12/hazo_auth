@@ -46,6 +46,7 @@ export async function middleware(request: NextRequest) {
     "/api/hazo_auth/reset_password",
     "/api/hazo_auth/verify_email",
     "/api/hazo_auth/validate_reset_token",
+    "/api/hazo_auth/resend_verification", // Allow resend verification email without auth
     "/api/hazo_auth/me", // Allow /api/hazo_auth/me to be public (returns authenticated: false if not logged in)
     "/hazo_connect/api/sqlite", // SQLite Admin API routes (admin tool, should be accessible)
     "/hazo_connect/sqlite_admin", // SQLite Admin UI page

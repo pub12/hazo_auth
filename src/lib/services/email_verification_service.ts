@@ -245,6 +245,12 @@ export async function resend_verification_email(
           error: email_result.error,
           note: "Verification token created but email failed to send",
         });
+        
+        // Return error if email sending failed (this is a technical error, not a security issue)
+        return {
+          success: false,
+          error: email_result.error || "Failed to send verification email",
+        };
       }
     }
 

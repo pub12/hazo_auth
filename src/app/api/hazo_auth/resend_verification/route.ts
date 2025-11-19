@@ -52,20 +52,21 @@ export async function POST(request: NextRequest) {
     });
 
     if (!result.success) {
-      logger.warn("resend_verification_failed", {
+      logger.error("resend_verification_failed", {
         filename: get_filename(),
         line_number: get_line_number(),
         email,
         error: result.error,
       });
 
-      // Still return 200 OK to prevent email enumeration attacks
+      // Return error response (500) when email sending fails
+      // This is a technical error, not a security issue, so we can reveal it
       return NextResponse.json(
         {
-          success: true,
-          message: "If an account with that email exists and is not verified, a verification link has been sent.",
+          success: false,
+          error: result.error || "Failed to resend verification email",
         },
-        { status: 200 }
+        { status: 500 }
       );
     }
 

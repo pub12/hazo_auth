@@ -38,36 +38,60 @@ export function get_hazo_connect_instance(): HazoConnectAdapter {
   try {
     // Get configuration from hazo_auth_config.ini (falls back to environment variables)
     const config_options = get_hazo_connect_config_options();
+    const logger = create_app_logger();
+    logger.debug("hazo_connect_singleton_attempt", {
+      filename: "hazo_connect_instance.server.ts",
+      line_number: 38,
+      config_options,
+      note: "Attempting to get singleton with these options",
+    });
     return getHazoConnectSingleton(config_options);
   } catch (error) {
+    const logger = create_app_logger();
+    const error_message = error instanceof Error ? error.message : "Unknown error";
+    logger.error("hazo_connect_singleton_failed", {
+      filename: "hazo_connect_instance.server.ts",
+      line_number: 45,
+      error: error_message,
+      error_stack: error instanceof Error ? error.stack : undefined,
+      note: "Falling back to manual singleton implementation",
+    });
+    
     // Fallback: Manual singleton implementation if new API fails
     // This should not happen with the updated package, but kept for safety
     if (!hazoConnectInstance) {
-      // Initialize admin service first (if not already done)
-      if (!isInitialized) {
+      // Get config options to determine database type
+      const config_options = get_hazo_connect_config_options();
+      const db_type = config_options.type;
+      
+      // Only initialize SQLite admin service for SQLite databases
+      if (db_type === "sqlite" && !isInitialized) {
         initializeAdminService({ enable_admin_ui: true });
         isInitialized = true;
       }
       
       // Create the adapter instance (reads from hazo_auth_config.ini)
+      // Note: Despite the name, this function supports both SQLite and PostgREST
       hazoConnectInstance = create_sqlite_hazo_connect_server();
 
       // Note: Database migrations should be applied manually via SQLite Admin UI
       // or through a separate migration script. The token_service has fallback
       // logic to work without the token_type column if migration hasn't been applied.
 
-      // Finalize initialization by getting the admin service.
-      try {
-        getSqliteAdminService();
-      } catch (adminError) {
-        const logger = create_app_logger();
-        const error_message = adminError instanceof Error ? adminError.message : "Unknown error";
-        logger.warn("hazo_connect_instance_admin_service_init_failed", {
-          filename: "hazo_connect_instance.server.ts",
-          line_number: 0,
-          error: error_message,
-          note: "Could not get SqliteAdminService during initialization, continuing...",
-        });
+      // Finalize initialization by getting the admin service (only for SQLite)
+      if (db_type === "sqlite") {
+        try {
+          getSqliteAdminService();
+        } catch (adminError) {
+          const logger = create_app_logger();
+          const error_message = adminError instanceof Error ? adminError.message : "Unknown error";
+          logger.warn("hazo_connect_instance_admin_service_init_failed", {
+            filename: "hazo_connect_instance.server.ts",
+            line_number: 0,
+            error: error_message,
+            note: "Could not get SqliteAdminService during initialization, continuing...",
+          });
+        }
       }
     }
     

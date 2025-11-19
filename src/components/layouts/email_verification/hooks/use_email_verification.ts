@@ -155,10 +155,10 @@ export const use_email_verification = <TClient,>({
       return true;
     }
 
-    const hasEmptyField = Object.values(values).some((fieldValue) => fieldValue.trim() === "");
-    const hasErrors = Object.keys(errors).length > 0;
-    return hasEmptyField || hasErrors;
-  }, [errors, values, isSubmitting]);
+    // Only disable if there are active errors
+    const hasErrors = !!errors[EMAIL_VERIFICATION_FIELD_IDS.EMAIL];
+    return hasErrors;
+  }, [errors, isSubmitting]);
 
   const handleFieldChange = useCallback((fieldId: EmailVerificationFieldId, value: string) => {
     setValues((previousValues) => {
@@ -231,7 +231,13 @@ export const use_email_verification = <TClient,>({
           }),
         });
 
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (jsonError) {
+          // If JSON parsing fails, the response is likely HTML (e.g., error page)
+          throw new Error("Server returned an invalid response. Please try again later.");
+        }
 
         if (!response.ok) {
           throw new Error(data.error || "Failed to resend verification email");
