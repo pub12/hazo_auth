@@ -3,6 +3,9 @@
 import type { HazoConnectAdapter } from "hazo_connect";
 import { createCrudService } from "hazo_connect/server";
 import argon2 from "argon2";
+import { create_app_logger } from "../app_logger";
+import { sanitize_error_for_user } from "../utils/error_sanitizer";
+import { get_filename, get_line_number } from "../utils/api_route_helpers";
 
 // section: types
 export type LoginData = {
@@ -15,6 +18,7 @@ export type LoginResult = {
   user_id?: string;
   error?: string;
   email_not_verified?: boolean;
+  stored_url_on_logon?: string | null;
 };
 
 // section: helpers
@@ -98,20 +102,32 @@ export async function authenticate_user(
         last_logon: now,
         login_attempts: 0,
         changed_at: now,
+        url_on_logon: null, // Clear the stored redirect URL after successful login
       }
     );
 
     return {
       success: true,
       user_id: user.id as string,
+      stored_url_on_logon: user.url_on_logon as string | null | undefined,
     };
   } catch (error) {
-    const error_message =
-      error instanceof Error ? error.message : "Unknown error";
+    const logger = create_app_logger();
+    const user_friendly_error = sanitize_error_for_user(error, {
+      logToConsole: true,
+      logToLogger: true,
+      logger,
+      context: {
+        filename: "login_service.ts",
+        line_number: get_line_number(),
+        email: data.email,
+        operation: "authenticate_user",
+      },
+    });
 
     return {
       success: false,
-      error: error_message,
+      error: user_friendly_error,
     };
   }
 }

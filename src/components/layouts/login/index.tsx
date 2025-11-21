@@ -3,6 +3,7 @@
 "use client";
 
 // section: imports
+import Link from "next/link";
 import { Input } from "../../ui/input";
 import { PasswordField } from "../shared/components/password_field";
 import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
@@ -50,6 +51,11 @@ export type LoginLayoutProps<TClient = unknown> = {
   showReturnHomeButton?: boolean;
   returnHomeButtonLabel?: string;
   returnHomePath?: string;
+  forgot_password_path?: string;
+  forgot_password_label?: string;
+  create_account_path?: string;
+  create_account_label?: string;
+  urlOnLogon?: string;
 };
 
 const ORDERED_FIELDS: LoginFieldId[] = [
@@ -76,6 +82,11 @@ export default function login_layout<TClient>({
   showReturnHomeButton = false,
   returnHomeButtonLabel = "Return home",
   returnHomePath = "/",
+  forgot_password_path = "/hazo_auth/forgot_password",
+  forgot_password_label = "Forgot password?",
+  create_account_path = "/hazo_auth/register",
+  create_account_label = "Create account",
+  urlOnLogon,
 }: LoginLayoutProps<TClient>) {
   const fieldDefinitions = createLoginFieldDefinitions(field_overrides);
   const resolvedLabels = resolveLoginLabels(labels);
@@ -86,6 +97,7 @@ export default function login_layout<TClient>({
     logger,
     redirectRoute,
     successMessage,
+    urlOnLogon: urlOnLogon,
   });
 
   const renderFields = (formState: UseLoginFormResult) => {
@@ -214,6 +226,22 @@ export default function login_layout<TClient>({
                 submitAriaLabel="Submit login form"
                 cancelAriaLabel="Cancel login form"
               />
+              <div className="cls_login_layout_support_links flex flex-col gap-1 text-sm text-muted-foreground">
+                <Link
+                  href={forgot_password_path}
+                  className="cls_login_layout_forgot_password_link text-primary underline-offset-4 hover:underline"
+                  aria-label="Go to forgot password page"
+                >
+                  {forgot_password_label}
+                </Link>
+                <Link
+                  href={create_account_path}
+                  className="cls_login_layout_create_account_link text-primary underline-offset-4 hover:underline"
+                  aria-label="Go to create account page"
+                >
+                  {create_account_label}
+                </Link>
+              </div>
             </form>
           </>
         }

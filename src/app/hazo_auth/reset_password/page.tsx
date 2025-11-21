@@ -1,6 +1,6 @@
 // file_description: render the reset password page shell and mount the reset password layout component within sidebar
 // section: imports
-import { SidebarLayoutWrapper } from "../../../components/layouts/shared/components/sidebar_layout_wrapper";
+import { AuthPageShell } from "../../../components/layouts/shared/components/auth_page_shell";
 import { ResetPasswordPageClient } from "./reset_password_page_client";
 import { get_reset_password_config } from "../../../lib/reset_password_config.server";
 
@@ -10,7 +10,7 @@ export default function reset_password_page() {
   const resetPasswordConfig = get_reset_password_config();
 
   return (
-    <SidebarLayoutWrapper>
+    <AuthPageShell>
       <ResetPasswordPageClient
         errorMessage={resetPasswordConfig.errorMessage}
         successMessage={resetPasswordConfig.successMessage}
@@ -23,7 +23,7 @@ export default function reset_password_page() {
         returnHomePath={resetPasswordConfig.returnHomePath}
         passwordRequirements={resetPasswordConfig.passwordRequirements}
       />
-    </SidebarLayoutWrapper>
+    </AuthPageShell>
   );
 }
 

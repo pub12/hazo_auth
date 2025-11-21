@@ -12,9 +12,8 @@ const customJestConfig: Config = {
     "^@/(.*)$": "<rootDir>/src/$1",
     "^hazo_config/dist/lib$": "<rootDir>/test-utils/mocks/hazo_config_lib.ts",
   },
-  setupFiles: ["dotenv/config"],
+  setupFiles: ["dotenv/config", "<rootDir>/jest.setup.ts"],
   setupFilesAfterEnv: ["@testing-library/jest-dom"],
 };
 
 export default createJestConfig(customJestConfig);
-

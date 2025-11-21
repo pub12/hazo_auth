@@ -19,6 +19,11 @@ type LoginPageClientProps = {
   showReturnHomeButton?: boolean;
   returnHomeButtonLabel?: string;
   returnHomePath?: string;
+  forgotPasswordPath?: string;
+  forgotPasswordLabel?: string;
+  createAccountPath?: string;
+  createAccountLabel?: string;
+  urlOnLogon?: string;
 };
 
 // section: component
@@ -30,6 +35,11 @@ export function LoginPageClient({
   showReturnHomeButton,
   returnHomeButtonLabel,
   returnHomePath,
+  forgotPasswordPath,
+  forgotPasswordLabel,
+  createAccountPath,
+  createAccountLabel,
+  urlOnLogon,
 }: LoginPageClientProps) {
   const [dataClient, setDataClient] = useState<LayoutDataClient<unknown> | null>(null);
   const [logger, setLogger] = useState<ReturnType<typeof create_app_logger> | null>(null);
@@ -65,6 +75,11 @@ export function LoginPageClient({
       showReturnHomeButton={showReturnHomeButton}
       returnHomeButtonLabel={returnHomeButtonLabel}
       returnHomePath={returnHomePath}
+      forgot_password_path={forgotPasswordPath}
+      forgot_password_label={forgotPasswordLabel}
+      create_account_path={createAccountPath}
+      create_account_label={createAccountLabel}
+      urlOnLogon={urlOnLogon}
     />
   );
 }

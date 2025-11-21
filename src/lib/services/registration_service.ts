@@ -10,12 +10,15 @@ import { get_profile_picture_config } from "../profile_picture_config.server";
 import { map_ui_source_to_db } from "./profile_picture_source_mapper";
 import { create_app_logger } from "../app_logger";
 import { send_template_email } from "./email_service";
+import { sanitize_error_for_user } from "../utils/error_sanitizer";
+import { get_filename, get_line_number } from "../utils/api_route_helpers";
 
 // section: types
 export type RegistrationData = {
   email: string;
   password: string;
   name?: string;
+  url_on_logon?: string;
 };
 
 export type RegistrationResult = {
@@ -36,7 +39,7 @@ export async function register_user(
   data: RegistrationData,
 ): Promise<RegistrationResult> {
   try {
-    const { email, password, name } = data;
+    const { email, password, name, url_on_logon } = data;
 
     // Create CRUD service for hazo_users table
     const users_service = createCrudService(adapter, "hazo_users");
@@ -75,6 +78,14 @@ export async function register_user(
     // Include name if provided
     if (name) {
       insert_data.name = name;
+    }
+
+    // Validate and include url_on_logon if provided
+    if (url_on_logon) {
+      // Ensure it's a relative path starting with / but not //
+      if (url_on_logon.startsWith("/") && !url_on_logon.startsWith("//")) {
+        insert_data.url_on_logon = url_on_logon;
+      }
     }
 
     // Set default profile picture if enabled
@@ -151,12 +162,22 @@ export async function register_user(
       user_id,
     };
   } catch (error) {
-    const error_message =
-      error instanceof Error ? error.message : "Unknown error";
+    const logger = create_app_logger();
+    const user_friendly_error = sanitize_error_for_user(error, {
+      logToConsole: true,
+      logToLogger: true,
+      logger,
+      context: {
+        filename: "registration_service.ts",
+        line_number: get_line_number(),
+        email: data.email,
+        operation: "register_user",
+      },
+    });
 
     return {
       success: false,
-      error: error_message,
+      error: user_friendly_error,
     };
   }
 }

@@ -25,6 +25,7 @@ export type UseLoginFormParams<TClient = unknown> = {
   };
   redirectRoute?: string;
   successMessage?: string;
+  urlOnLogon?: string;
 };
 
 export type UseLoginFormResult = {
@@ -62,6 +63,7 @@ export const use_login_form = <TClient,>({
   logger,
   redirectRoute,
   successMessage = "Successfully logged in",
+  urlOnLogon,
 }: UseLoginFormParams<TClient>): UseLoginFormResult => {
   const router = useRouter();
   const [values, setValues] = useState<LoginFormValues>(buildInitialValues);
@@ -87,10 +89,9 @@ export const use_login_form = <TClient,>({
   }, []);
 
   const isSubmitDisabled = useMemo(() => {
-    const hasEmptyField = Object.values(values).some((fieldValue) => fieldValue.trim() === "");
-    const hasErrors = Object.keys(errors).length > 0;
-    return hasEmptyField || hasErrors;
-  }, [errors, values]);
+    const allFieldsEmpty = Object.values(values).every((fieldValue) => fieldValue.trim() === "");
+    return allFieldsEmpty;
+  }, [values]);
 
   const togglePasswordVisibility = useCallback(() => {
     setPasswordVisibility((previous) => ({
@@ -189,6 +190,7 @@ export const use_login_form = <TClient,>({
           body: JSON.stringify({
             email,
             password,
+            url_on_logon: urlOnLogon,
           }),
         });
 
@@ -230,9 +232,12 @@ export const use_login_form = <TClient,>({
         // Refresh the page to update authentication state (cookies are set server-side)
         router.refresh();
 
-        // If redirect route is provided, redirect to it
-        if (redirectRoute) {
-          router.push(redirectRoute);
+        // Use redirectUrl from server response if available, otherwise fall back to redirectRoute prop
+        // The server logic already prioritizes: query param > stored DB value > config > default "/"
+        const finalRedirectUrl = data.redirectUrl || redirectRoute;
+
+        if (finalRedirectUrl) {
+          router.push(finalRedirectUrl);
         } else {
           // Otherwise, show success message
           setIsSuccess(true);

@@ -3,6 +3,9 @@
 import type { HazoConnectAdapter } from "hazo_connect";
 import { createCrudService } from "hazo_connect/server";
 import { map_ui_source_to_db, type ProfilePictureSourceUI } from "./profile_picture_source_mapper";
+import { create_app_logger } from "../app_logger";
+import { sanitize_error_for_user } from "../utils/error_sanitizer";
+import { get_filename, get_line_number } from "../utils/api_route_helpers";
 
 // section: types
 export type UserUpdateData = {
@@ -116,12 +119,22 @@ export async function update_user_profile(
       email_changed,
     };
   } catch (error) {
-    const error_message =
-      error instanceof Error ? error.message : "Unknown error";
+    const logger = create_app_logger();
+    const user_friendly_error = sanitize_error_for_user(error, {
+      logToConsole: true,
+      logToLogger: true,
+      logger,
+      context: {
+        filename: "user_update_service.ts",
+        line_number: get_line_number(),
+        user_id,
+        operation: "update_user_profile",
+      },
+    });
 
     return {
       success: false,
-      error: error_message,
+      error: user_friendly_error,
     };
   }
 }

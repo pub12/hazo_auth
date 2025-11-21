@@ -71,7 +71,12 @@ export function get_config_value(
   file_path?: string,
 ): string {
   const section = read_config_section(section_name, file_path);
-  return section?.[key]?.trim() || default_value;
+  // Optional chaining on section and section[key]
+  // If section is undefined, or key is undefined, fall back to default
+  if (!section || section[key] === undefined) {
+    return default_value;
+  }
+  return section[key].trim() || default_value;
 }
 
 /**
@@ -89,12 +94,12 @@ export function get_config_boolean(
   file_path?: string,
 ): boolean {
   const section = read_config_section(section_name, file_path);
-  const value = section?.[key]?.trim().toLowerCase();
   
-  if (value === undefined) {
+  if (!section || section[key] === undefined) {
     return default_value;
   }
   
+  const value = section[key].trim().toLowerCase();
   return value !== "false" && value !== "0" && value !== "";
 }
 
@@ -113,7 +118,12 @@ export function get_config_number(
   file_path?: string,
 ): number {
   const section = read_config_section(section_name, file_path);
-  const value = section?.[key]?.trim();
+  
+  if (!section || section[key] === undefined) {
+    return default_value;
+  }
+  
+  const value = section[key].trim();
   
   if (!value) {
     return default_value;
@@ -138,7 +148,12 @@ export function get_config_array(
   file_path?: string,
 ): string[] {
   const section = read_config_section(section_name, file_path);
-  const value = section?.[key]?.trim();
+  
+  if (!section || section[key] === undefined) {
+    return default_value;
+  }
+  
+  const value = section[key].trim();
   
   if (!value) {
     return default_value;

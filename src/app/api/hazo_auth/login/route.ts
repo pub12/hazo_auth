@@ -6,6 +6,7 @@ import { create_app_logger } from "../../../../lib/app_logger";
 import { authenticate_user } from "../../../../lib/services/login_service";
 import { createCrudService } from "hazo_connect/server";
 import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
+import { get_login_config } from "../../../../lib/login_config.server";
 
 // section: api_handler
 export async function POST(request: NextRequest) {
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, url_on_logon } = body;
 
     // Validate input
     if (!email || !password) {
@@ -106,6 +107,30 @@ export async function POST(request: NextRequest) {
     const user = users && users.length > 0 ? users[0] : null;
     const user_name = user?.name as string | undefined;
 
+    // Determine redirect URL priority:
+    // 1. url_on_logon from request body (if valid)
+    // 2. stored_url_on_logon from database (if available)
+    // 3. redirect_route_on_successful_login from config
+    // 4. Default to "/"
+
+    let redirectUrl = "/";
+
+    // Check priority 1: Request body
+    if (url_on_logon && typeof url_on_logon === "string" && url_on_logon.startsWith("/") && !url_on_logon.startsWith("//")) {
+      redirectUrl = url_on_logon;
+    } 
+    // Check priority 2: Stored URL from DB
+    else if (result.stored_url_on_logon && typeof result.stored_url_on_logon === "string") {
+      redirectUrl = result.stored_url_on_logon;
+    } 
+    // Check priority 3: Config
+    else {
+      const loginConfig = get_login_config();
+      if (loginConfig.redirectRoute) {
+        redirectUrl = loginConfig.redirectRoute;
+      }
+    }
+
     // Create response with cookies
     const response = NextResponse.json(
       {
@@ -114,6 +139,7 @@ export async function POST(request: NextRequest) {
         user_id: user_id,
         email,
         name: user_name,
+        redirectUrl,
       },
       { status: 200 }
     );

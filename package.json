@@ -31,6 +31,7 @@
     "build-storybook": "storybook build",
     "dev:server": "tsx src/server/index.ts",
     "migrate": "tsx scripts/apply_migration.ts",
+    "init-users": "tsx scripts/init_users.ts init_users",
     "test": "cross-env NODE_ENV=test POSTGREST_URL=http://209.38.26.241:4402 POSTGREST_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYXBpX3VzZXIifQ.zBoUGymrxTUk1DNYIGUCtQU4HFaWEHlbE9_8Y3hUaTw jest --runInBand",
     "test:watch": "cross-env NODE_ENV=test POSTGREST_URL=http://209.38.26.241:4402 POSTGREST_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYXBpX3VzZXIifQ.zBoUGymrxTUk1DNYIGUCtQU4HFaWEHlbE9_8Y3hUaTw jest --watch"
   },

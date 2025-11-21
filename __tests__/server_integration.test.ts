@@ -10,7 +10,3 @@ describe("server integration", () => {
     expect(response.body.status).toBe("ok");
   });
 });
-
-
-
-

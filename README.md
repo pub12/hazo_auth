@@ -50,6 +50,56 @@ Because `src/app/hazo_auth` (pages) and `src/app/api/hazo_auth` (API routes) nee
 
 > The package expects these routes to live at `src/app/api/hazo_auth` and `src/app/hazo_auth` inside the consumer project. Without copying or linking them, Next.js won’t mount the auth pages or APIs.
 
+### Choose the UI Shell (Test Sidebar vs Standalone)
+
+By default, the pages render inside the “test workspace” sidebar so you can quickly preview every flow. When you reuse the routes inside another project you’ll usually want a clean, standalone wrapper instead. Set this in `hazo_auth_config.ini`:
+
+```ini
+[hazo_auth__ui_shell]
+# Options: test_sidebar | standalone
+layout_mode = standalone 
+# Optional tweaks for the standalone header wrapper/classes:
+# standalone_heading = Welcome back
+# standalone_description = Your description here
+# standalone_wrapper_class = min-h-screen bg-background py-8
+# standalone_content_class = mx-auto w-full max-w-4xl rounded-2xl border bg-card
+```
+
+- `test_sidebar`: keeps the developer sidebar (perfect for the demo workspace or Storybook screenshots).
+- `standalone`: renders the page body directly so it inherits your own app shell, layout, and theme tokens.
+- The wrapper and content class overrides let you align spacing/borders with your design system without editing package code.
+
+Every route (`/hazo_auth/login`, `/hazo_auth/register`, etc.) automatically looks at this config, so switching modes is instant.
+
+### Using Just the Layout Components
+
+Prefer to drop the forms into your own routes without copying the provided pages? Import the layouts directly and feed them a `data_client` plus any label/button overrides:
+
+```tsx
+// app/(auth)/login/page.tsx in your project
+import login_layout from "hazo_auth/components/layouts/login";
+import { createLayoutDataClient } from "hazo_auth/components/layouts/shared/data/layout_data_client";
+import { create_sqlite_hazo_connect } from "hazo_auth/lib/hazo_connect_setup";
+
+export default async function LoginPage() {
+  const hazoConnect = create_sqlite_hazo_connect();
+  const dataClient = createLayoutDataClient(hazoConnect);
+  const LoginLayout = login_layout;
+
+  return (
+    <div className="my-app-shell">
+      <LoginLayout
+        image_src="/marketing/login-hero.svg"
+        data_client={dataClient}
+        redirectRoute="/dashboard"
+      />
+    </div>
+  );
+}
+```
+
+The same import pattern works for every layout under `components/layouts/*`, so you can mix-and-match pieces (profile picture dialog, password field, etc.) wherever you need them.
+
 ## Authentication Service
 
 The `hazo_auth` package provides a comprehensive authentication and authorization system with role-based access control (RBAC). The main authentication utility is `hazo_get_auth`, which provides user details, permissions, and permission checking with built-in caching and rate limiting.

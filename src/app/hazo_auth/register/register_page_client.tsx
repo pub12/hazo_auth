@@ -24,6 +24,9 @@ type RegisterPageClientProps = {
   showReturnHomeButton?: boolean;
   returnHomeButtonLabel?: string;
   returnHomePath?: string;
+  signInPath?: string;
+  signInLabel?: string;
+  urlOnLogon?: string;
 };
 
 // section: component
@@ -35,6 +38,9 @@ export function RegisterPageClient({
   showReturnHomeButton,
   returnHomeButtonLabel,
   returnHomePath,
+  signInPath,
+  signInLabel,
+  urlOnLogon,
 }: RegisterPageClientProps) {
   const [dataClient, setDataClient] = useState<LayoutDataClient<unknown> | null>(null);
 
@@ -66,6 +72,9 @@ export function RegisterPageClient({
       showReturnHomeButton={showReturnHomeButton}
       returnHomeButtonLabel={returnHomeButtonLabel}
       returnHomePath={returnHomePath}
+      signInPath={signInPath}
+      signInLabel={signInLabel}
+      urlOnLogon={urlOnLogon}
     />
   );
 }

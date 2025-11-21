@@ -5,6 +5,7 @@ import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance
 import { create_app_logger } from "../../../../lib/app_logger";
 import { register_user } from "../../../../lib/services/registration_service";
 import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
+import { sanitize_error_for_user } from "../../../../lib/utils/error_sanitizer";
 
 // section: api_handler
 export async function POST(request: NextRequest) {
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, email, password } = body;
+    const { name, email, password, url_on_logon } = body;
 
     // Validate input
     if (!email || !password) {
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
       email,
       password,
       name,
+      url_on_logon,
     });
 
     if (!result.success) {
@@ -87,18 +89,19 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    const error_message = error instanceof Error ? error.message : "Unknown error";
-    const error_stack = error instanceof Error ? error.stack : undefined;
-
-    logger.error("registration_error", {
-      filename: get_filename(),
-      line_number: get_line_number(),
-      error_message,
-      error_stack,
+    const user_friendly_error = sanitize_error_for_user(error, {
+      logToConsole: true,
+      logToLogger: true,
+      logger,
+      context: {
+        filename: get_filename(),
+        line_number: get_line_number(),
+        operation: "register_api_route",
+      },
     });
 
     return NextResponse.json(
-      { error: "Registration failed. Please try again." },
+      { error: user_friendly_error },
       { status: 500 }
     );
   }

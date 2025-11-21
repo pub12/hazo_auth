@@ -28,6 +28,7 @@ export type UseRegisterFormParams<TClient = unknown> = {
   passwordRequirements: PasswordRequirementOptions;
   passwordRequirementOverrides?: PasswordRequirementOverrides;
   dataClient: LayoutDataClient<TClient>;
+  urlOnLogon?: string;
 };
 
 export type UseRegisterFormResult = {
@@ -58,6 +59,7 @@ export const use_register_form = <TClient,>({
   showNameField,
   passwordRequirements,
   dataClient,
+  urlOnLogon,
 }: UseRegisterFormParams<TClient>): UseRegisterFormResult => {
   const [values, setValues] = useState<RegisterFormValues>(buildInitialValues);
   const [errors, setErrors] = useState<RegisterFormErrors>({});
@@ -203,6 +205,7 @@ export const use_register_form = <TClient,>({
             name: values[REGISTER_FIELD_IDS.NAME] || undefined,
             email: values[REGISTER_FIELD_IDS.EMAIL],
             password: values[REGISTER_FIELD_IDS.PASSWORD],
+            url_on_logon: urlOnLogon,
           }),
         });
 

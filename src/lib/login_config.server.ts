@@ -12,6 +12,10 @@ export type LoginConfig = {
   showReturnHomeButton: boolean;
   returnHomeButtonLabel: string;
   returnHomePath: string;
+  forgotPasswordPath: string;
+  forgotPasswordLabel: string;
+  createAccountPath: string;
+  createAccountLabel: string;
 };
 
 // section: helpers
@@ -30,6 +34,23 @@ export function get_login_config(): LoginConfig {
   // Read success message (defaults to "Successfully logged in")
   const successMessage = get_config_value(section, "success_message", "Successfully logged in");
 
+  const forgotPasswordPath = get_config_value(
+    section,
+    "forgot_password_path",
+    "/hazo_auth/forgot_password"
+  );
+  const forgotPasswordLabel = get_config_value(
+    section,
+    "forgot_password_label",
+    "Forgot password?"
+  );
+  const createAccountPath = get_config_value(section, "create_account_path", "/hazo_auth/register");
+  const createAccountLabel = get_config_value(
+    section,
+    "create_account_label",
+    "Create account"
+  );
+
   // Get shared already logged in config
   const alreadyLoggedInConfig = get_already_logged_in_config();
 
@@ -41,6 +62,10 @@ export function get_login_config(): LoginConfig {
     showReturnHomeButton: alreadyLoggedInConfig.showReturnHomeButton,
     returnHomeButtonLabel: alreadyLoggedInConfig.returnHomeButtonLabel,
     returnHomePath: alreadyLoggedInConfig.returnHomePath,
+    forgotPasswordPath,
+    forgotPasswordLabel,
+    createAccountPath,
+    createAccountLabel,
   };
 }
 

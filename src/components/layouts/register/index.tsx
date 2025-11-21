@@ -3,6 +3,7 @@
 "use client";
 
 // section: imports
+import Link from "next/link";
 import { Input } from "../../ui/input";
 import { PasswordField } from "../shared/components/password_field";
 import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
@@ -45,6 +46,9 @@ export type RegisterLayoutProps<TClient = unknown> = {
   showReturnHomeButton?: boolean;
   returnHomeButtonLabel?: string;
   returnHomePath?: string;
+  signInPath?: string;
+  signInLabel?: string;
+  urlOnLogon?: string;
 };
 
 const ORDERED_FIELDS: RegisterFieldId[] = [
@@ -72,6 +76,9 @@ export default function register_layout<TClient>({
   showReturnHomeButton = false,
   returnHomeButtonLabel = "Return home",
   returnHomePath = "/",
+  signInPath = "/hazo_auth/login",
+  signInLabel = "Sign in",
+  urlOnLogon,
 }: RegisterLayoutProps<TClient>) {
   const fieldDefinitions = createRegisterFieldDefinitions(field_overrides);
   const resolvedLabels = resolveRegisterLabels(labels);
@@ -84,6 +91,7 @@ export default function register_layout<TClient>({
     showNameField: show_name_field,
     passwordRequirements: resolvedPasswordRequirements,
     dataClient: data_client,
+    urlOnLogon: urlOnLogon,
   });
 
   const renderFields = (formState: UseRegisterFormResult) => {
@@ -193,6 +201,16 @@ export default function register_layout<TClient>({
                 submitAriaLabel="Submit registration form"
                 cancelAriaLabel="Cancel registration form"
               />
+              <div className="cls_register_layout_sign_in_link flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                <span>Already have an account?</span>
+                <Link
+                  href={signInPath}
+                  className="cls_register_layout_sign_in_link_text text-primary underline-offset-4 hover:underline"
+                  aria-label="Go to sign in page"
+                >
+                  {signInLabel}
+                </Link>
+              </div>
               {form.isSubmitting && (
                 <div className="cls_register_submitting_indicator text-sm text-slate-600 text-center">
                   Registering...
