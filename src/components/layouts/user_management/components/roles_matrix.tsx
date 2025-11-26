@@ -4,8 +4,8 @@
 
 // section: imports
 import { useState, useEffect, useMemo } from "react";
-import { Button } from "../../../ui/button";
-import { Checkbox } from "../../../ui/checkbox";
+import { Button } from "hazo_auth/components/ui/button";
+import { Checkbox } from "hazo_auth/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -13,7 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../../ui/table";
+} from "hazo_auth/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -21,12 +21,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../../../ui/dialog";
-import { Input } from "../../../ui/input";
-import { Label } from "../../../ui/label";
+} from "hazo_auth/components/ui/dialog";
+import { Input } from "hazo_auth/components/ui/input";
+import { Label } from "hazo_auth/components/ui/label";
 import { Plus, Save, Loader2, CircleCheck, CircleX } from "lucide-react";
 import { toast } from "sonner";
-import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "hazo_auth/components/ui/avatar";
 
 // section: types
 export type RolesMatrixData = {

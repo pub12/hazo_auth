@@ -3,8 +3,8 @@
 "use client";
 
 // section: imports
-import { use_auth_status } from "../hooks/use_auth_status";
-import { Button } from "../../../ui/button";
+import { use_auth_status } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
+import { Button } from "hazo_auth/components/ui/button";
 import { useRouter } from "next/navigation";
 import { LogIn } from "lucide-react";
 

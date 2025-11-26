@@ -4,7 +4,7 @@
 
 // section: imports
 import { useState, useEffect, useCallback } from "react";
-import type { HazoAuthResult } from "../../../../lib/auth/auth_types";
+import type { HazoAuthResult } from "hazo_auth/lib/auth/auth_types";
 
 // section: types
 

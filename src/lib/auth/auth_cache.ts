@@ -1,6 +1,6 @@
 // file_description: LRU cache implementation for hazo_get_auth with TTL and size limits
 // section: imports
-import type { HazoAuthUser } from "./auth_types";
+import type { HazoAuthUser } from "hazo_auth/lib/auth/auth_types";
 
 // section: types
 

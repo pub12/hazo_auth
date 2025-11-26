@@ -1,6 +1,6 @@
 // file_description: reset password layout specific configuration helpers
 // section: imports
-import type { LayoutFieldMap, LayoutFieldMapOverrides } from "../../shared/config/layout_customization";
+import type { LayoutFieldMap, LayoutFieldMapOverrides } from "hazo_auth/components/layouts/shared/config/layout_customization";
 import {
   resolveButtonPalette,
   resolveFieldDefinitions,
@@ -12,7 +12,7 @@ import {
   type PasswordRequirementOptions,
   type PasswordRequirementOverrides,
   resolvePasswordRequirements,
-} from "../../shared/config/layout_customization";
+} from "hazo_auth/components/layouts/shared/config/layout_customization";
 
 // section: field_identifiers
 export const RESET_PASSWORD_FIELD_IDS = {

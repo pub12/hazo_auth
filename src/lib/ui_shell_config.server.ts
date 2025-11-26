@@ -1,6 +1,6 @@
 // file_description: load ui shell layout settings from hazo_auth_config.ini
 // section: imports
-import { get_config_value } from "./config/config_loader.server";
+import { get_config_value } from "hazo_auth/lib/config/config_loader.server";
 
 // section: types
 export type UiShellLayoutMode = "test_sidebar" | "standalone";

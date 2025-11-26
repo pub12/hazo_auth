@@ -1,6 +1,6 @@
 // file_description: expose the logging facade used across the hazo_auth backend
 // section: imports
-import type { logger_method, logger_service } from "../types/app_types";
+import type { logger_method, logger_service } from "hazo_auth/server/types/app_types";
 
 // section: helper_functions
 const create_console_logger = (namespace: string): logger_service => {

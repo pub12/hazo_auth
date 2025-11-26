@@ -4,9 +4,9 @@
 
 // section: imports
 import { useState } from "react";
-import { Input } from "../../../ui/input";
-import { Label } from "../../../ui/label";
-import { Button } from "../../../ui/button";
+import { Input } from "hazo_auth/components/ui/input";
+import { Label } from "hazo_auth/components/ui/label";
+import { Button } from "hazo_auth/components/ui/button";
 import { Pencil, CheckCircle2, XCircle } from "lucide-react";
 
 // section: types

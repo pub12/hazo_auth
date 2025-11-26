@@ -1,6 +1,6 @@
 // file_description: email verification layout specific configuration helpers
 // section: imports
-import type { LayoutFieldMap, LayoutFieldMapOverrides } from "../../shared/config/layout_customization";
+import type { LayoutFieldMap, LayoutFieldMapOverrides } from "hazo_auth/components/layouts/shared/config/layout_customization";
 import {
   resolveButtonPalette,
   resolveFieldDefinitions,
@@ -9,7 +9,7 @@ import {
   type ButtonPaletteOverrides,
   type LayoutLabelDefaults,
   type LayoutLabelOverrides,
-} from "../../shared/config/layout_customization";
+} from "hazo_auth/components/layouts/shared/config/layout_customization";
 
 // section: field_identifiers
 export const EMAIL_VERIFICATION_FIELD_IDS = {

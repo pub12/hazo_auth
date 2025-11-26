@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import axios from "axios";
 import { HazoConfig } from "hazo_config/dist/lib";
-import { create_logger_service } from "../logging/logger_service";
+import { create_logger_service } from "hazo_auth/server/logging/logger_service";
 import type {
   app_context,
   captcha_settings,
@@ -13,7 +13,7 @@ import type {
   rate_limit_settings,
   runtime_configuration,
   token_settings,
-} from "../types/app_types";
+} from "hazo_auth/server/types/app_types";
 
 // section: schema_definitions
 type direct_configuration_input = {

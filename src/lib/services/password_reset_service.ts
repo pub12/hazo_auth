@@ -2,10 +2,10 @@
 // section: imports
 import type { HazoConnectAdapter } from "hazo_connect";
 import { createCrudService } from "hazo_connect/server";
-import { create_token } from "./token_service";
+import { create_token } from "hazo_auth/lib/services/token_service";
 import argon2 from "argon2";
-import { create_app_logger } from "../app_logger";
-import { send_template_email } from "./email_service";
+import { create_app_logger } from "hazo_auth/lib/app_logger";
+import { send_template_email } from "hazo_auth/lib/services/email_service";
 
 // section: types
 export type PasswordResetRequestData = {

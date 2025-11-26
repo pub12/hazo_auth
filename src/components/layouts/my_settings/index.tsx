@@ -3,24 +3,24 @@
 "use client";
 
 // section: imports
-import { Button } from "../../ui/button";
-import { EditableField } from "./components/editable_field";
-import { ProfilePictureDisplay } from "./components/profile_picture_display";
-import { ProfilePictureDialog } from "./components/profile_picture_dialog";
-import { UnauthorizedGuard } from "../shared/components/unauthorized_guard";
-import { use_my_settings } from "./hooks/use_my_settings";
+import { Button } from "hazo_auth/components/ui/button";
+import { EditableField } from "hazo_auth/components/layouts/my_settings/components/editable_field";
+import { ProfilePictureDisplay } from "hazo_auth/components/layouts/my_settings/components/profile_picture_display";
+import { ProfilePictureDialog } from "hazo_auth/components/layouts/my_settings/components/profile_picture_dialog";
+import { UnauthorizedGuard } from "hazo_auth/components/layouts/shared/components/unauthorized_guard";
+import { use_my_settings } from "hazo_auth/components/layouts/my_settings/hooks/use_my_settings";
 import {
   resolveMySettingsLabels,
   resolveMySettingsButtonPalette,
   type MySettingsLabelOverrides,
-} from "./config/my_settings_field_config";
+} from "hazo_auth/components/layouts/my_settings/config/my_settings_field_config";
 import type { 
   PasswordRequirementOptions,
   ButtonPaletteOverrides,
-} from "../shared/config/layout_customization";
+} from "hazo_auth/components/layouts/shared/config/layout_customization";
 import { formatDistanceToNow } from "date-fns";
-import { PasswordField } from "../shared/components/password_field";
-import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
+import { PasswordField } from "hazo_auth/components/layouts/shared/components/password_field";
+import { FormFieldWrapper } from "hazo_auth/components/layouts/shared/components/form_field_wrapper";
 import { Pencil, Trash2 } from "lucide-react";
 
 // section: types

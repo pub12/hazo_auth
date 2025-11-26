@@ -4,7 +4,7 @@
 
 // section: imports
 import { HelpCircle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "hazo_auth/components/ui/tooltip";
 
 // section: types
 export type HazoUITooltipProps = {

@@ -1,0 +1,1 @@
+{"version":3,"file":"user_fields_config.server.d.ts","sourceRoot":"","sources":["../../src/lib/user_fields_config.server.ts"],"names":[],"mappings":"AAKA,MAAM,MAAM,gBAAgB,GAAG;IAC7B,eAAe,EAAE,OAAO,CAAC;IACzB,gBAAgB,EAAE,OAAO,CAAC;IAC1B,mBAAmB,EAAE,OAAO,CAAC;CAC9B,CAAC;AAGF;;;;;GAKG;AACH,wBAAgB,sBAAsB,IAAI,gBAAgB,CAWzD"}

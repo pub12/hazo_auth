@@ -1,7 +1,41 @@
 {
   "name": "hazo_auth",
   "version": "1.3.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./components/*": {
+      "types": "./dist/components/*.d.ts",
+      "import": "./dist/components/*.js"
+    },
+    "./components/ui/*": {
+      "types": "./dist/components/ui/*.d.ts",
+      "import": "./dist/components/ui/*.js"
+    },
+    "./components/layouts/*": {
+      "types": "./dist/components/layouts/*.d.ts",
+      "import": "./dist/components/layouts/*.js"
+    },
+    "./lib/*": {
+      "types": "./dist/lib/*.d.ts",
+      "import": "./dist/lib/*.js"
+    },
+    "./hooks/*": {
+      "types": "./dist/hooks/*.d.ts",
+      "import": "./dist/hooks/*.js"
+    },
+    "./server/*": {
+      "types": "./dist/server/*.d.ts",
+      "import": "./dist/server/*.js"
+    }
+  },
   "files": [
+    "dist/**/*",
     "src/**/*",
     "public/file.svg",
     "public/globe.svg",
@@ -14,6 +48,7 @@
     "README.md",
     "LICENSE",
     "tsconfig.json",
+    "tsconfig.build.json",
     "tailwind.config.ts",
     "postcss.config.mjs",
     "next.config.mjs",
@@ -25,6 +60,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:pkg": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build:pkg",
     "start": "next start",
     "lint": "next lint",
     "storybook": "storybook dev -p 6006",

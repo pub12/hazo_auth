@@ -3,8 +3,8 @@
 "use client";
 
 // section: imports
-import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
-import { Button } from "../../../ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "hazo_auth/components/ui/avatar";
+import { Button } from "hazo_auth/components/ui/button";
 import { Pencil } from "lucide-react";
 
 // section: types

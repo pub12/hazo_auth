@@ -22,6 +22,18 @@ const next_config = {
   // Using webpack externals configuration instead (see webpack section below)
   // section: webpack_configuration
   webpack: (config, { isServer }) => {
+    // section: hazo_auth_alias_resolution
+    // Add hazo_auth/* alias to resolve to ./src/* during local development
+    // This allows package-style imports to work during development
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "hazo_auth/components": path.resolve(__dirname, "src/components"),
+      "hazo_auth/lib": path.resolve(__dirname, "src/lib"),
+      "hazo_auth/hooks": path.resolve(__dirname, "src/hooks"),
+      "hazo_auth/server": path.resolve(__dirname, "src/server"),
+      "hazo_auth/app": path.resolve(__dirname, "src/app"),
+    };
+
     // Exclude sql.js from webpack bundling for API routes
     // These packages use Node.js module.exports which doesn't work in webpack context
     if (isServer) {

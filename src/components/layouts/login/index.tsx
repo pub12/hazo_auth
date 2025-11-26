@@ -4,30 +4,30 @@
 
 // section: imports
 import Link from "next/link";
-import { Input } from "../../ui/input";
-import { PasswordField } from "../shared/components/password_field";
-import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
-import { FormHeader } from "../shared/components/form_header";
-import { FormActionButtons } from "../shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
+import { Input } from "hazo_auth/components/ui/input";
+import { PasswordField } from "hazo_auth/components/layouts/shared/components/password_field";
+import { FormFieldWrapper } from "hazo_auth/components/layouts/shared/components/form_field_wrapper";
+import { FormHeader } from "hazo_auth/components/layouts/shared/components/form_header";
+import { FormActionButtons } from "hazo_auth/components/layouts/shared/components/form_action_buttons";
+import { TwoColumnAuthLayout } from "hazo_auth/components/layouts/shared/components/two_column_auth_layout";
 import { CheckCircle } from "lucide-react";
-import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
+import { AlreadyLoggedInGuard } from "hazo_auth/components/layouts/shared/components/already_logged_in_guard";
 import {
   type ButtonPaletteOverrides,
   type LayoutFieldMapOverrides,
   type LayoutLabelOverrides,
-} from "../shared/config/layout_customization";
+} from "hazo_auth/components/layouts/shared/config/layout_customization";
 import {
   LOGIN_FIELD_IDS,
   createLoginFieldDefinitions,
   resolveLoginButtonPalette,
   resolveLoginLabels,
-} from "./config/login_field_config";
+} from "hazo_auth/components/layouts/login/config/login_field_config";
 import {
   use_login_form,
   type UseLoginFormResult,
-} from "./hooks/use_login_form";
-import { type LayoutDataClient } from "../shared/data/layout_data_client";
+} from "hazo_auth/components/layouts/login/hooks/use_login_form";
+import { type LayoutDataClient } from "hazo_auth/components/layouts/shared/data/layout_data_client";
 
 // section: types
 export type LoginLayoutProps<TClient = unknown> = {

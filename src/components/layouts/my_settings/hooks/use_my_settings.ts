@@ -4,9 +4,9 @@
 
 // section: imports
 import { useState, useEffect, useCallback } from "react";
-import { use_auth_status, trigger_auth_status_refresh } from "../../shared/hooks/use_auth_status";
+import { use_auth_status, trigger_auth_status_refresh } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
 import { toast } from "sonner";
-import type { PasswordRequirementOptions } from "../../shared/config/layout_customization";
+import type { PasswordRequirementOptions } from "hazo_auth/components/layouts/shared/config/layout_customization";
 
 // section: types
 export type PasswordFields = {

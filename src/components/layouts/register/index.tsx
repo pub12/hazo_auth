@@ -4,31 +4,31 @@
 
 // section: imports
 import Link from "next/link";
-import { Input } from "../../ui/input";
-import { PasswordField } from "../shared/components/password_field";
-import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
-import { FormHeader } from "../shared/components/form_header";
-import { FormActionButtons } from "../shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
-import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
+import { Input } from "hazo_auth/components/ui/input";
+import { PasswordField } from "hazo_auth/components/layouts/shared/components/password_field";
+import { FormFieldWrapper } from "hazo_auth/components/layouts/shared/components/form_field_wrapper";
+import { FormHeader } from "hazo_auth/components/layouts/shared/components/form_header";
+import { FormActionButtons } from "hazo_auth/components/layouts/shared/components/form_action_buttons";
+import { TwoColumnAuthLayout } from "hazo_auth/components/layouts/shared/components/two_column_auth_layout";
+import { AlreadyLoggedInGuard } from "hazo_auth/components/layouts/shared/components/already_logged_in_guard";
 import {
   type ButtonPaletteOverrides,
   type LayoutFieldMapOverrides,
   type LayoutLabelOverrides,
   type PasswordRequirementOverrides,
-} from "../shared/config/layout_customization";
+} from "hazo_auth/components/layouts/shared/config/layout_customization";
 import {
   REGISTER_FIELD_IDS,
   createRegisterFieldDefinitions,
   resolveRegisterButtonPalette,
   resolveRegisterLabels,
   resolveRegisterPasswordRequirements,
-} from "./config/register_field_config";
+} from "hazo_auth/components/layouts/register/config/register_field_config";
 import {
   use_register_form,
   type UseRegisterFormResult,
-} from "./hooks/use_register_form";
-import { type LayoutDataClient } from "../shared/data/layout_data_client";
+} from "hazo_auth/components/layouts/register/hooks/use_register_form";
+import { type LayoutDataClient } from "hazo_auth/components/layouts/shared/data/layout_data_client";
 
 // section: types
 export type RegisterLayoutProps<TClient = unknown> = {

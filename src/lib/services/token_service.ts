@@ -4,8 +4,8 @@ import type { HazoConnectAdapter } from "hazo_connect";
 import { createCrudService } from "hazo_connect/server";
 import { randomBytes, randomUUID } from "crypto";
 import argon2 from "argon2";
-import { read_config_section } from "../config/config_loader.server";
-import { create_app_logger } from "../app_logger";
+import { read_config_section } from "hazo_auth/lib/config/config_loader.server";
+import { create_app_logger } from "hazo_auth/lib/app_logger";
 
 // section: types
 export type TokenType = "refresh" | "password_reset" | "email_verification";

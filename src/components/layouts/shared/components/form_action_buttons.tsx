@@ -1,8 +1,8 @@
 // file_description: reusable form action buttons component with submit (positive, left) and cancel (negative, right) buttons
 // section: imports
 import { CircleCheckBig, CircleX } from "lucide-react";
-import { Button } from "../../../ui/button";
-import type { ButtonPaletteDefaults } from "../config/layout_customization";
+import { Button } from "hazo_auth/components/ui/button";
+import type { ButtonPaletteDefaults } from "hazo_auth/components/layouts/shared/config/layout_customization";
 
 // section: types
 type FormActionButtonsProps = {

@@ -4,11 +4,11 @@
 
 // section: imports
 import { useState, useCallback, useEffect } from "react";
-import { Switch } from "../../../ui/switch";
-import { Label } from "../../../ui/label";
-import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
+import { Switch } from "hazo_auth/components/ui/switch";
+import { Label } from "hazo_auth/components/ui/label";
+import { Avatar, AvatarImage, AvatarFallback } from "hazo_auth/components/ui/avatar";
 import { Upload, X, Loader2, Info } from "lucide-react";
-import { Button } from "../../../ui/button";
+import { Button } from "hazo_auth/components/ui/button";
 import imageCompression from "browser-image-compression";
 
 // section: types

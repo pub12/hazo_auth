@@ -2,36 +2,110 @@
 
 A reusable authentication UI component package powered by Next.js, TailwindCSS, and shadcn. It integrates `hazo_config` for configuration management and `hazo_connect` for data access, enabling future components to stay aligned with platform conventions.
 
-### Installation
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Configuration Setup](#configuration-setup)
+- [Database Setup](#database-setup)
+- [Using Components](#using-components)
+- [Authentication Service](#authentication-service)
+- [Profile Picture Menu Widget](#profile-picture-menu-widget)
+- [User Profile Service](#user-profile-service)
+- [Local Development](#local-development)
+
+---
+
+## Installation
 
 ```bash
 npm install hazo_auth
 ```
 
-### Configuration Setup
+---
+
+## Quick Start
+
+### 1. Install the package
+
+```bash
+npm install hazo_auth
+```
+
+### 2. Copy configuration files
+
+```bash
+cp node_modules/hazo_auth/hazo_auth_config.example.ini ./hazo_auth_config.ini
+cp node_modules/hazo_auth/hazo_notify_config.example.ini ./hazo_notify_config.ini
+```
+
+### 3. Set up environment variables
+
+Create a `.env.local` file:
+
+```env
+ZEPTOMAIL_API_KEY=your_api_key_here
+```
+
+### 4. Set up the database
+
+Run the database setup SQL script (see [Database Setup](#database-setup)).
+
+### 5. Import and use components
+
+```typescript
+// Import layout components
+import { LoginLayout } from "hazo_auth/components/layouts/login";
+import { RegisterLayout } from "hazo_auth/components/layouts/register";
+
+// Import UI components
+import { Button } from "hazo_auth/components/ui/button";
+import { Input } from "hazo_auth/components/ui/input";
+
+// Import hooks
+import { use_hazo_auth } from "hazo_auth/hooks/use_hazo_auth";
+import { use_auth_status } from "hazo_auth/hooks/use_auth_status";
+
+// Import server-side utilities
+import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
+import { get_authenticated_user } from "hazo_auth/lib/auth/auth_utils.server";
+```
+
+---
+
+## Configuration Setup
 
 After installing the package, you need to set up configuration files in your project root:
 
-1. **Copy the example config files to your project root:**
-   ```bash
-   cp node_modules/hazo_auth/hazo_auth_config.example.ini ./hazo_auth_config.ini
-   cp node_modules/hazo_auth/hazo_notify_config.example.ini ./hazo_notify_config.ini
-   ```
+### 1. Copy the example config files to your project root:
 
-2. **Customize the configuration files:**
-   - Edit `hazo_auth_config.ini` to configure authentication settings, database connection, UI labels, and more
-   - Edit `hazo_notify_config.ini` to configure email service settings (Zeptomail, SMTP, etc.)
+```bash
+cp node_modules/hazo_auth/hazo_auth_config.example.ini ./hazo_auth_config.ini
+cp node_modules/hazo_auth/hazo_notify_config.example.ini ./hazo_notify_config.ini
+```
 
-3. **Set up environment variables (recommended for sensitive data):**
-   - Create a `.env.local` file in your project root
-   - Add `ZEPTOMAIL_API_KEY=your_api_key_here` (if using Zeptomail)
-   - Add other sensitive configuration values as needed
+### 2. Customize the configuration files:
+
+- Edit `hazo_auth_config.ini` to configure authentication settings, database connection, UI labels, and more
+- Edit `hazo_notify_config.ini` to configure email service settings (Zeptomail, SMTP, etc.)
+
+### 3. Set up environment variables (recommended for sensitive data):
+
+- Create a `.env.local` file in your project root
+- Add `ZEPTOMAIL_API_KEY=your_api_key_here` (if using Zeptomail)
+- Add other sensitive configuration values as needed
 
 **Important:** The configuration files must be located in your project root directory (where `process.cwd()` points to), not inside `node_modules`. The package reads configuration from `process.cwd()` at runtime, so storing them elsewhere (including `node_modules/hazo_auth`) will break runtime access.
 
-### Database Setup
+---
 
-Before using `hazo_auth`, you need to create the required database tables. Run the following SQL scripts in your PostgreSQL database:
+## Database Setup
+
+Before using `hazo_auth`, you need to create the required database tables. The package supports both **PostgreSQL** (for production) and **SQLite** (for local development/testing).
+
+### PostgreSQL Setup
+
+Run the following SQL scripts in your PostgreSQL database:
 
 #### 1. Create the Profile Source Enum Type
 
@@ -65,6 +139,8 @@ CREATE TABLE hazo_users (
 CREATE INDEX idx_hazo_users_email ON hazo_users(email_address);
 ```
 
+**Note:** The `url_on_logon` field is used to store a custom redirect URL for users after successful login. This allows per-user customization of post-login navigation.
+
 #### 3. Create the Refresh Tokens Table
 
 ```sql
@@ -88,7 +164,7 @@ CREATE INDEX idx_hazo_refresh_tokens_token_type ON hazo_refresh_tokens(token_typ
 ```sql
 -- Permissions table for RBAC
 CREATE TABLE hazo_permissions (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     permission_name TEXT NOT NULL UNIQUE,
     description TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -101,7 +177,7 @@ CREATE TABLE hazo_permissions (
 ```sql
 -- Roles table for RBAC
 CREATE TABLE hazo_roles (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     role_name TEXT NOT NULL UNIQUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
@@ -113,8 +189,8 @@ CREATE TABLE hazo_roles (
 ```sql
 -- Junction table linking roles to permissions
 CREATE TABLE hazo_role_permissions (
-    role_id INTEGER NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
-    permission_id INTEGER NOT NULL REFERENCES hazo_permissions(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    permission_id UUID NOT NULL REFERENCES hazo_permissions(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     PRIMARY KEY (role_id, permission_id)
@@ -131,7 +207,7 @@ CREATE INDEX idx_hazo_role_permissions_permission_id ON hazo_role_permissions(pe
 -- Junction table linking users to roles
 CREATE TABLE hazo_user_roles (
     user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
-    role_id INTEGER NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     PRIMARY KEY (user_id, role_id)
@@ -142,13 +218,13 @@ CREATE INDEX idx_hazo_user_roles_user_id ON hazo_user_roles(user_id);
 CREATE INDEX idx_hazo_user_roles_role_id ON hazo_user_roles(role_id);
 ```
 
-#### Complete Setup Script
+### Complete PostgreSQL Setup Script
 
 For convenience, here's the complete SQL script to create all tables at once:
 
 ```sql
 -- ============================================
--- hazo_auth Database Setup Script
+-- hazo_auth Database Setup Script (PostgreSQL)
 -- ============================================
 
 -- 1. Create enum type
@@ -187,7 +263,7 @@ CREATE INDEX idx_hazo_refresh_tokens_token_type ON hazo_refresh_tokens(token_typ
 
 -- 4. Create permissions table
 CREATE TABLE hazo_permissions (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     permission_name TEXT NOT NULL UNIQUE,
     description TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -196,7 +272,7 @@ CREATE TABLE hazo_permissions (
 
 -- 5. Create roles table
 CREATE TABLE hazo_roles (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     role_name TEXT NOT NULL UNIQUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
@@ -204,8 +280,8 @@ CREATE TABLE hazo_roles (
 
 -- 6. Create role-permissions junction table
 CREATE TABLE hazo_role_permissions (
-    role_id INTEGER NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
-    permission_id INTEGER NOT NULL REFERENCES hazo_permissions(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    permission_id UUID NOT NULL REFERENCES hazo_permissions(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     PRIMARY KEY (role_id, permission_id)
@@ -216,7 +292,7 @@ CREATE INDEX idx_hazo_role_permissions_permission_id ON hazo_role_permissions(pe
 -- 7. Create user-roles junction table
 CREATE TABLE hazo_user_roles (
     user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
-    role_id INTEGER NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     PRIMARY KEY (user_id, role_id)
@@ -225,7 +301,80 @@ CREATE INDEX idx_hazo_user_roles_user_id ON hazo_user_roles(user_id);
 CREATE INDEX idx_hazo_user_roles_role_id ON hazo_user_roles(role_id);
 ```
 
-#### Initialize Default Permissions and Super User
+### SQLite Setup (for local development)
+
+For local development and testing, you can use SQLite. The SQLite schema is slightly different (no UUID type, TEXT used instead):
+
+```sql
+-- ============================================
+-- hazo_auth Database Setup Script (SQLite)
+-- ============================================
+
+-- Users table
+CREATE TABLE IF NOT EXISTS hazo_users (
+    id TEXT PRIMARY KEY,
+    email_address TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    name TEXT,
+    email_verified INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    login_attempts INTEGER NOT NULL DEFAULT 0,
+    last_logon TEXT,
+    profile_picture_url TEXT,
+    profile_source TEXT,
+    mfa_secret TEXT,
+    url_on_logon TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Refresh tokens table
+CREATE TABLE IF NOT EXISTS hazo_refresh_tokens (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL,
+    token_type TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Permissions table
+CREATE TABLE IF NOT EXISTS hazo_permissions (
+    id TEXT PRIMARY KEY,
+    permission_name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Roles table
+CREATE TABLE IF NOT EXISTS hazo_roles (
+    id TEXT PRIMARY KEY,
+    role_name TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Role-permissions junction table
+CREATE TABLE IF NOT EXISTS hazo_role_permissions (
+    role_id TEXT NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    permission_id TEXT NOT NULL REFERENCES hazo_permissions(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (role_id, permission_id)
+);
+
+-- User-roles junction table
+CREATE TABLE IF NOT EXISTS hazo_user_roles (
+    user_id TEXT NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
+    role_id TEXT NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, role_id)
+);
+```
+
+### Initialize Default Permissions and Super User
 
 After creating the tables, you can use the `init-users` script to set up default permissions and a super user:
 
@@ -238,30 +387,107 @@ This script reads from `hazo_auth_config.ini` and:
 2. Creates a `default_super_user_role` role with all permissions
 3. Assigns the role to the user specified in `default_super_user_email`
 
-### Expose hazo_auth Routes in the Consumer App
+### Apply Migrations
 
-Because `src/app/hazo_auth` (pages) and `src/app/api/hazo_auth` (API routes) need to be part of the consuming Next.js app’s routing tree, make sure they exist in your project’s `src/app` directory. Two recommended approaches:
+To apply database migrations (e.g., adding new fields):
 
-1. **Create symlinks (preferred during development):**
-   ```bash
-   mkdir -p src/app/api src/app
-   ln -s ../../node_modules/hazo_auth/src/app/api/hazo_auth src/app/api/hazo_auth
-   ln -s ../../node_modules/hazo_auth/src/app/hazo_auth src/app/hazo_auth
-   ```
-   Adjust the relative paths if your project structure differs.
+```bash
+# Apply a specific migration
+npx tsx scripts/apply_migration.ts migrations/003_add_url_on_logon_to_hazo_users.sql
 
-2. **Copy the directories (useful for deployment or when symlinks cause issues):**
-   ```bash
-   cp -R node_modules/hazo_auth/src/app/api/hazo_auth src/app/api/hazo_auth
-   cp -R node_modules/hazo_auth/src/app/hazo_auth src/app/hazo_auth
-   ```
-   Add an npm script (e.g., `postinstall`) to automate copying after installations or updates.
+# Or apply all pending migrations
+npx tsx scripts/apply_migration.ts
+```
 
-> The package expects these routes to live at `src/app/api/hazo_auth` and `src/app/hazo_auth` inside the consumer project. Without copying or linking them, Next.js won’t mount the auth pages or APIs.
+---
+
+## Using Components
+
+### Package Exports
+
+The package exports components through these paths:
+
+```typescript
+// Main entry point - exports all public APIs
+import { ... } from "hazo_auth";
+
+// Layout components
+import { LoginLayout } from "hazo_auth/components/layouts/login";
+import { RegisterLayout } from "hazo_auth/components/layouts/register";
+import { ForgotPasswordLayout } from "hazo_auth/components/layouts/forgot_password";
+import { ResetPasswordLayout } from "hazo_auth/components/layouts/reset_password";
+import { EmailVerificationLayout } from "hazo_auth/components/layouts/verify_email";
+import { MySettingsLayout } from "hazo_auth/components/layouts/my_settings";
+import { UserManagementLayout } from "hazo_auth/components/layouts/user_management";
+
+// UI components
+import { Button } from "hazo_auth/components/ui/button";
+import { Input } from "hazo_auth/components/ui/input";
+import { Avatar } from "hazo_auth/components/ui/avatar";
+// ... and more shadcn-based components
+
+// Shared layout components
+import { ProfilePicMenu } from "hazo_auth/components/layouts/shared/components/profile_pic_menu";
+import { ProfilePicMenuWrapper } from "hazo_auth/components/layouts/shared/components/profile_pic_menu_wrapper";
+import { FormActionButtons } from "hazo_auth/components/layouts/shared/components/form_action_buttons";
+
+// Hooks (client-side)
+import { use_hazo_auth } from "hazo_auth/hooks/use_hazo_auth";
+import { use_auth_status } from "hazo_auth/hooks/use_auth_status";
+import { use_login_form } from "hazo_auth/hooks/use_login_form";
+
+// Library utilities
+import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
+import { get_authenticated_user } from "hazo_auth/lib/auth/auth_utils.server";
+import { get_server_auth_user } from "hazo_auth/lib/auth/server_auth";
+
+// Server utilities
+import { get_hazo_connect_instance } from "hazo_auth/server/hazo_connect_instance.server";
+```
+
+### Using Layout Components
+
+Prefer to drop the forms into your own routes without using the pre-built pages? Import the layouts directly and feed them a `data_client` plus any label/button overrides:
+
+```tsx
+// app/(auth)/login/page.tsx in your project
+import { LoginLayout, createLayoutDataClient } from "hazo_auth";
+import { create_postgrest_hazo_connect } from "hazo_auth/lib/hazo_connect_setup";
+
+export default async function LoginPage() {
+  const hazoConnect = create_postgrest_hazo_connect();
+  const dataClient = createLayoutDataClient(hazoConnect);
+
+  return (
+    <div className="my-app-shell">
+      <LoginLayout
+        image_src="/marketing/login-hero.svg"
+        image_alt="Login hero image"
+        data_client={dataClient}
+        redirectRoute="/dashboard"
+      />
+    </div>
+  );
+}
+```
+
+**Available Layout Components:**
+- `LoginLayout` - Login form with email/password
+- `RegisterLayout` - Registration form with password requirements
+- `ForgotPasswordLayout` - Request password reset
+- `ResetPasswordLayout` - Set new password with token
+- `EmailVerificationLayout` - Verify email address
+- `MySettingsLayout` - User profile and settings
+- `UserManagementLayout` - Admin user/role management
+
+**Shared Components:**
+- `ProfilePicMenu` / `ProfilePicMenuWrapper` - Navbar profile menu
+- `FormActionButtons`, `FormFieldWrapper`, `PasswordField`
+- And more under `hazo_auth/components/layouts/shared/`
 
 ### Choose the UI Shell (Test Sidebar vs Standalone)
 
-By default, the pages render inside the “test workspace” sidebar so you can quickly preview every flow. When you reuse the routes inside another project you’ll usually want a clean, standalone wrapper instead. Set this in `hazo_auth_config.ini`:
+By default, the pages render inside the "test workspace" sidebar so you can quickly preview every flow. When you reuse the routes inside another project you'll usually want a clean, standalone wrapper instead. Set this in `hazo_auth_config.ini`:
 
 ```ini
 [hazo_auth__ui_shell]
@@ -278,36 +504,7 @@ layout_mode = standalone
 - `standalone`: renders the page body directly so it inherits your own app shell, layout, and theme tokens.
 - The wrapper and content class overrides let you align spacing/borders with your design system without editing package code.
 
-Every route (`/hazo_auth/login`, `/hazo_auth/register`, etc.) automatically looks at this config, so switching modes is instant.
-
-### Using Just the Layout Components
-
-Prefer to drop the forms into your own routes without copying the provided pages? Import the layouts directly and feed them a `data_client` plus any label/button overrides:
-
-```tsx
-// app/(auth)/login/page.tsx in your project
-import login_layout from "hazo_auth/components/layouts/login";
-import { createLayoutDataClient } from "hazo_auth/components/layouts/shared/data/layout_data_client";
-import { create_sqlite_hazo_connect } from "hazo_auth/lib/hazo_connect_setup";
-
-export default async function LoginPage() {
-  const hazoConnect = create_sqlite_hazo_connect();
-  const dataClient = createLayoutDataClient(hazoConnect);
-  const LoginLayout = login_layout;
-
-  return (
-    <div className="my-app-shell">
-      <LoginLayout
-        image_src="/marketing/login-hero.svg"
-        data_client={dataClient}
-        redirectRoute="/dashboard"
-      />
-    </div>
-  );
-}
-```
-
-The same import pattern works for every layout under `components/layouts/*`, so you can mix-and-match pieces (profile picture dialog, password field, etc.) wherever you need them.
+---
 
 ## Authentication Service
 
@@ -347,6 +544,7 @@ type HazoAuthResult =
         email_address: string;
         is_active: boolean;
         profile_picture_url: string | null;
+        url_on_logon: string | null;
       };
       permissions: string[];
       permission_ok: boolean;
@@ -391,6 +589,9 @@ export async function GET(request: NextRequest) {
     }
 
     // User is authenticated and has required permissions
+    // Access url_on_logon for custom redirect
+    const redirectUrl = authResult.user.url_on_logon || "/dashboard";
+    
     return NextResponse.json({
       message: "Access granted",
       user: authResult.user,
@@ -412,43 +613,13 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-**Non-strict mode (returns permission status without throwing):**
-
-```typescript
-// Check permissions without throwing errors
-const authResult = await hazo_get_auth(request, {
-  required_permissions: ["admin_user_management"],
-  strict: false, // Returns permission_ok: false if missing
-});
-
-if (authResult.authenticated && authResult.permission_ok) {
-  // User has required permissions
-} else if (authResult.authenticated) {
-  // User is authenticated but missing permissions
-  console.log("Missing permissions:", authResult.missing_permissions);
-} else {
-  // User is not authenticated
-}
-```
-
 #### `get_authenticated_user`
 
 Basic authentication check for API routes. Returns user info if authenticated, or `{ authenticated: false }` if not.
 
 **Location:** `src/lib/auth/auth_utils.server.ts`
 
-**Function Signature:**
 ```typescript
-import { get_authenticated_user } from "hazo_auth/lib/auth/auth_utils.server";
-import type { AuthResult } from "hazo_auth/lib/auth/auth_utils.server";
-
-async function get_authenticated_user(request: NextRequest): Promise<AuthResult>
-```
-
-**Example Usage:**
-
-```typescript
-import { NextRequest, NextResponse } from "next/server";
 import { get_authenticated_user } from "hazo_auth/lib/auth/auth_utils.server";
 
 export async function GET(request: NextRequest) {
@@ -469,88 +640,11 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-#### `require_auth`
-
-Requires authentication and throws an error if the user is not authenticated. Useful for protected API routes.
-
-**Location:** `src/lib/auth/auth_utils.server.ts`
-
-**Function Signature:**
-```typescript
-import { require_auth } from "hazo_auth/lib/auth/auth_utils.server";
-import type { AuthUser } from "hazo_auth/lib/auth/auth_utils.server";
-
-async function require_auth(request: NextRequest): Promise<AuthUser>
-```
-
-**Example Usage:**
-
-```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { require_auth } from "hazo_auth/lib/auth/auth_utils.server";
-
-export async function GET(request: NextRequest) {
-  try {
-    const user = await require_auth(request);
-    // User is guaranteed to be authenticated here
-    return NextResponse.json({ user_id: user.user_id, email: user.email });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Authentication required" },
-      { status: 401 }
-    );
-  }
-}
-```
-
-#### `is_authenticated`
-
-Simple boolean check for authentication status.
-
-**Location:** `src/lib/auth/auth_utils.server.ts`
-
-**Function Signature:**
-```typescript
-import { is_authenticated } from "hazo_auth/lib/auth/auth_utils.server";
-
-async function is_authenticated(request: NextRequest): Promise<boolean>
-```
-
-**Example Usage:**
-
-```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { is_authenticated } from "hazo_auth/lib/auth/auth_utils.server";
-
-export async function GET(request: NextRequest) {
-  const authenticated = await is_authenticated(request);
-  
-  if (!authenticated) {
-    return NextResponse.json(
-      { error: "Authentication required" },
-      { status: 401 }
-    );
-  }
-
-  // Continue with authenticated logic
-}
-```
-
 #### `get_server_auth_user`
 
 Gets authenticated user in server components and pages (uses Next.js `cookies()` function).
 
 **Location:** `src/lib/auth/server_auth.ts`
-
-**Function Signature:**
-```typescript
-import { get_server_auth_user } from "hazo_auth/lib/auth/server_auth";
-import type { ServerAuthResult } from "hazo_auth/lib/auth/server_auth";
-
-async function get_server_auth_user(): Promise<ServerAuthResult>
-```
-
-**Example Usage:**
 
 ```typescript
 // In a server component (src/app/dashboard/page.tsx)
@@ -578,36 +672,12 @@ export default async function DashboardPage() {
 
 React hook for fetching authentication status and permissions on the client side.
 
-**Location:** `src/components/layouts/shared/hooks/use_hazo_auth.ts`
-
-**Function Signature:**
-```typescript
-import { use_hazo_auth } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
-import type { UseHazoAuthOptions, UseHazoAuthResult } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
-
-function use_hazo_auth(options?: UseHazoAuthOptions): UseHazoAuthResult
-```
-
-**Options:**
-- `required_permissions?: string[]` - Array of permission names to check
-- `strict?: boolean` - If `true`, throws error when permissions are missing (default: `false`)
-- `skip?: boolean` - Skip fetch (for conditional use)
-
-**Return Type:**
-```typescript
-type UseHazoAuthResult = HazoAuthResult & {
-  loading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-};
-```
-
-**Example Usage:**
+**Location:** `src/hooks/use_hazo_auth.ts`
 
 ```typescript
 "use client";
 
-import { use_hazo_auth } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
+import { use_hazo_auth } from "hazo_auth/hooks/use_hazo_auth";
 
 export function ProtectedComponent() {
   const { authenticated, user, permissions, permission_ok, loading, error, refetch } = 
@@ -616,21 +686,10 @@ export function ProtectedComponent() {
       strict: false,
     });
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
-
-  if (!authenticated) {
-    return <div>Please log in to access this page.</div>;
-  }
-
-  if (!permission_ok) {
-    return <div>You don't have permission to access this page.</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!authenticated) return <div>Please log in to access this page.</div>;
+  if (!permission_ok) return <div>You don't have permission to access this page.</div>;
 
   return (
     <div>
@@ -642,298 +701,48 @@ export function ProtectedComponent() {
 }
 ```
 
-**Conditional Permission Checks:**
+#### `use_auth_status`
+
+Simpler hook for basic authentication status checking.
+
+**Location:** `src/hooks/use_auth_status.ts`
 
 ```typescript
 "use client";
 
-import { use_hazo_auth } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
+import { use_auth_status } from "hazo_auth/hooks/use_auth_status";
 
-export function ConditionalComponent() {
-  // Check multiple permissions
-  const userManagementAuth = use_hazo_auth({
-    required_permissions: ["admin_user_management"],
-  });
+export function UserGreeting() {
+  const { authenticated, name, email, loading } = use_auth_status();
 
-  const roleManagementAuth = use_hazo_auth({
-    required_permissions: ["admin_role_management"],
-  });
+  if (loading) return <div>Loading...</div>;
+  if (!authenticated) return <div>Please log in</div>;
 
-  return (
-    <div>
-      {userManagementAuth.permission_ok && (
-        <button>Manage Users</button>
-      )}
-      {roleManagementAuth.permission_ok && (
-        <button>Manage Roles</button>
-      )}
-    </div>
-  );
-}
-```
-
-#### `trigger_hazo_auth_refresh`
-
-Triggers a refresh of authentication status across all components using `use_hazo_auth`. Useful after login, logout, or permission changes.
-
-**Location:** `src/components/layouts/shared/hooks/use_hazo_auth.ts`
-
-**Function Signature:**
-```typescript
-import { trigger_hazo_auth_refresh } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
-
-function trigger_hazo_auth_refresh(): void
-```
-
-**Example Usage:**
-
-```typescript
-"use client";
-
-import { trigger_hazo_auth_refresh } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
-
-export function LogoutButton() {
-  const handleLogout = async () => {
-    await fetch("/api/hazo_auth/logout", { method: "POST" });
-    trigger_hazo_auth_refresh(); // Notify all components to refresh auth status
-    window.location.href = "/hazo_auth/login";
-  };
-
-  return <button onClick={handleLogout}>Logout</button>;
+  return <div>Welcome, {name || email}!</div>;
 }
 ```
 
 ### Configuration
 
-The authentication utility can be configured in `hazo_auth_config.ini` under the `[hazo_auth__auth_utility]` section:
+Configure the authentication utility in `hazo_auth_config.ini`:
 
 ```ini
 [hazo_auth__auth_utility]
 # Cache settings
-# Maximum number of users to cache (LRU eviction, default: 10000)
 cache_max_users = 10000
-
-# Cache TTL in minutes (default: 15)
 cache_ttl_minutes = 15
-
-# Force cache refresh if older than this many minutes (default: 30)
 cache_max_age_minutes = 30
 
-# Rate limiting for /api/hazo_auth/get_auth endpoint
-# Per-user rate limit (requests per minute, default: 100)
+# Rate limiting
 rate_limit_per_user = 100
-
-# Per-IP rate limit for unauthenticated requests (default: 200)
 rate_limit_per_ip = 200
 
 # Permission check behavior
-# Log all permission denials for security audit (default: true)
 log_permission_denials = true
-
-# User-friendly error messages
-# Enable mapping of technical permissions to user-friendly messages (default: true)
 enable_friendly_error_messages = true
-
-# Permission message mappings (optional, comma-separated: permission_name:user_message)
-# Example: admin_user_management:You don't have access to user management,admin_role_management:You don't have access to role management
-permission_error_messages = 
 ```
 
-### Testing Authentication and RBAC
-
-#### Testing User Authentication
-
-To test if a user is authenticated, use the `hazo_get_auth` function or the `use_hazo_auth` hook:
-
-```typescript
-// Server-side test
-const authResult = await hazo_get_auth(request);
-if (authResult.authenticated) {
-  console.log("User is authenticated:", authResult.user.email_address);
-  console.log("User permissions:", authResult.permissions);
-} else {
-  console.log("User is not authenticated");
-}
-
-// Client-side test
-const { authenticated, user, permissions } = use_hazo_auth();
-if (authenticated) {
-  console.log("User is authenticated:", user?.email_address);
-  console.log("User permissions:", permissions);
-}
-```
-
-#### Testing RBAC Permissions
-
-To test if a user has specific permissions:
-
-```typescript
-// Server-side - strict mode (throws error if missing)
-try {
-  const authResult = await hazo_get_auth(request, {
-    required_permissions: ["admin_user_management", "admin_role_management"],
-    strict: true,
-  });
-  // User has all required permissions
-  console.log("Access granted");
-} catch (error) {
-  if (error instanceof PermissionError) {
-    console.log("Missing permissions:", error.missing_permissions);
-    console.log("User permissions:", error.user_permissions);
-    console.log("User-friendly message:", error.user_friendly_message);
-  }
-}
-
-// Server-side - non-strict mode (returns status)
-const authResult = await hazo_get_auth(request, {
-  required_permissions: ["admin_user_management"],
-  strict: false,
-});
-
-if (authResult.authenticated && authResult.permission_ok) {
-  console.log("User has required permissions");
-} else if (authResult.authenticated) {
-  console.log("User is missing permissions:", authResult.missing_permissions);
-}
-
-// Client-side test
-const { permission_ok, missing_permissions, permissions } = use_hazo_auth({
-  required_permissions: ["admin_user_management"],
-});
-
-if (permission_ok) {
-  console.log("User has required permissions");
-} else {
-  console.log("Missing permissions:", missing_permissions);
-  console.log("User permissions:", permissions);
-}
-```
-
-#### Getting All User Permissions
-
-To get all permissions for the current user:
-
-```typescript
-// Server-side
-const authResult = await hazo_get_auth(request);
-if (authResult.authenticated) {
-  console.log("All user permissions:", authResult.permissions);
-  // Check if user has a specific permission
-  const hasPermission = authResult.permissions.includes("admin_user_management");
-}
-
-// Client-side
-const { permissions } = use_hazo_auth();
-console.log("All user permissions:", permissions);
-const hasPermission = permissions.includes("admin_user_management");
-```
-
-#### Testing in API Routes
-
-Example of a protected API route with permission checking:
-
-```typescript
-// src/app/api/admin/users/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
-import { PermissionError } from "hazo_auth/lib/auth/auth_types";
-
-export async function GET(request: NextRequest) {
-  try {
-    // Require authentication and specific permission
-    const authResult = await hazo_get_auth(request, {
-      required_permissions: ["admin_user_management"],
-      strict: true,
-    });
-
-    // Fetch users (only accessible to admins)
-    const users = await fetchUsers();
-    
-    return NextResponse.json({ users });
-  } catch (error) {
-    if (error instanceof PermissionError) {
-      return NextResponse.json(
-        {
-          error: "Permission denied",
-          missing_permissions: error.missing_permissions,
-          user_friendly_message: error.user_friendly_message,
-        },
-        { status: 403 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: "Authentication required" },
-      { status: 401 }
-    );
-  }
-}
-```
-
-#### Testing in React Components
-
-Example of a protected component with permission-based UI:
-
-```typescript
-"use client";
-
-import { use_hazo_auth } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
-
-export function AdminDashboard() {
-  const userManagementAuth = use_hazo_auth({
-    required_permissions: ["admin_user_management"],
-  });
-
-  const roleManagementAuth = use_hazo_auth({
-    required_permissions: ["admin_role_management"],
-  });
-
-  if (userManagementAuth.loading || roleManagementAuth.loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!userManagementAuth.authenticated) {
-    return <div>Please log in to access this page.</div>;
-  }
-
-  return (
-    <div>
-      <h1>Admin Dashboard</h1>
-      {userManagementAuth.permission_ok && (
-        <section>
-          <h2>User Management</h2>
-          {/* User management UI */}
-        </section>
-      )}
-      {roleManagementAuth.permission_ok && (
-        <section>
-          <h2>Role Management</h2>
-          {/* Role management UI */}
-        </section>
-      )}
-      {!userManagementAuth.permission_ok && !roleManagementAuth.permission_ok && (
-        <div>You don't have permission to access any admin features.</div>
-      )}
-    </div>
-  );
-}
-```
-
-### Cache Invalidation
-
-The authentication cache is automatically invalidated in the following scenarios:
-- User logout
-- Password change
-- User deactivation
-- Role assignment changes
-- Permission changes to roles
-
-You can also manually invalidate the cache using the API endpoint:
-
-```typescript
-// POST /api/hazo_auth/invalidate_cache
-// Body: { user_id?: string, role_ids?: number[], invalidate_all?: boolean }
-```
+---
 
 ## Profile Picture Menu Widget
 
@@ -962,261 +771,22 @@ export function Navbar() {
 }
 ```
 
-### Direct Usage (Manual Configuration)
-
-If you prefer to configure the component directly without using the config file:
-
-```typescript
-"use client";
-
-import { ProfilePicMenu } from "hazo_auth/components/layouts/shared/components/profile_pic_menu";
-
-export function Navbar() {
-  return (
-    <nav className="flex items-center justify-between p-4">
-      <div>Logo</div>
-      <ProfilePicMenu
-        show_single_button={false}
-        sign_up_label="Sign Up"
-        sign_in_label="Sign In"
-        register_path="/hazo_auth/register"
-        login_path="/hazo_auth/login"
-        settings_path="/hazo_auth/my_settings"
-        logout_path="/api/hazo_auth/logout"
-        avatar_size="default"
-        className="ml-auto"
-      />
-    </nav>
-  );
-}
-```
-
 ### Configuration
 
-Configure the Profile Picture Menu in `hazo_auth_config.ini` under the `[hazo_auth__profile_pic_menu]` section:
-
 ```ini
 [hazo_auth__profile_pic_menu]
-# Button configuration for unauthenticated users
-# Show only "Sign Up" button when true, show both "Sign Up" and "Sign In" buttons when false (default)
 show_single_button = false
-
-# Sign up button label
 sign_up_label = Sign Up
-
-# Sign in button label
 sign_in_label = Sign In
-
-# Register page path
 register_path = /hazo_auth/register
-
-# Login page path
 login_path = /hazo_auth/login
-
-# Settings page path (shown in dropdown menu when authenticated)
 settings_path = /hazo_auth/my_settings
-
-# Logout API endpoint path
 logout_path = /api/hazo_auth/logout
-
 # Custom menu items (optional)
-# Format: "type:label:value_or_href:order" for info/link, or "separator:order" for separator
-# Examples:
-#   - Info item: "info:Phone:+1234567890:3"
-#   - Link item: "link:My Account:/account:4"
-#   - Separator: "separator:2"
-# Custom items are added to the default menu items (name, email, separator, Settings, Logout)
-# Items are sorted by type (info first, then separators, then links) and then by order within each type
-custom_menu_items = 
+custom_menu_items = info:Phone:+1234567890:3,separator:2,link:My Account:/account:4
 ```
 
-### Component Props
-
-#### `ProfilePicMenuWrapper` Props
-
-- `className?: string` - Additional CSS classes
-- `avatar_size?: "sm" | "default" | "lg"` - Size of the profile picture avatar (default: "default")
-
-#### `ProfilePicMenu` Props
-
-- `show_single_button?: boolean` - Show only "Sign Up" button when true (default: false)
-- `sign_up_label?: string` - Label for sign up button (default: "Sign Up")
-- `sign_in_label?: string` - Label for sign in button (default: "Sign In")
-- `register_path?: string` - Path to registration page (default: "/hazo_auth/register")
-- `login_path?: string` - Path to login page (default: "/hazo_auth/login")
-- `settings_path?: string` - Path to settings page (default: "/hazo_auth/my_settings")
-- `logout_path?: string` - Path to logout API endpoint (default: "/api/hazo_auth/logout")
-- `custom_menu_items?: ProfilePicMenuMenuItem[]` - Array of custom menu items
-- `className?: string` - Additional CSS classes
-- `avatar_size?: "sm" | "default" | "lg"` - Size of the profile picture avatar (default: "default")
-
-### Custom Menu Items
-
-You can add custom menu items to the dropdown menu. Items are automatically sorted by type (info → separator → link) and then by order.
-
-**Menu Item Types:**
-
-1. **Info** - Display-only text (e.g., phone number, department)
-   - Format: `"info:label:value:order"`
-   - Example: `"info:Phone:+1234567890:3"`
-
-2. **Link** - Clickable menu item that navigates to a URL
-   - Format: `"link:label:href:order"`
-   - Example: `"link:My Account:/account:4"`
-
-3. **Separator** - Visual separator line
-   - Format: `"separator:order"`
-   - Example: `"separator:2"`
-
-**Example Configuration:**
-
-```ini
-[hazo_auth__profile_pic_menu]
-# Add custom menu items
-custom_menu_items = info:Phone:+1234567890:3,separator:2,link:My Account:/account:4,link:Help:/help:5
-```
-
-This will create a menu with:
-1. Default items (name, email, separator, Settings, Logout)
-2. Custom info item: "Phone: +1234567890" (order 3)
-3. Custom separator (order 2)
-4. Custom link: "My Account" → `/account` (order 4)
-5. Custom link: "Help" → `/help` (order 5)
-
-Items are sorted by type priority (info < separator < link) and then by order within each type.
-
-### Default Menu Items
-
-When authenticated, the dropdown menu automatically includes:
-- User's name (if available)
-- User's email address
-- Separator
-- Settings link (with Settings icon)
-- Logout link (with LogOut icon, triggers logout action)
-
-### Examples
-
-#### Example 1: Simple Navbar Integration
-
-```typescript
-// app/components/navbar.tsx
-import { ProfilePicMenuWrapper } from "hazo_auth/components/layouts/shared/components/profile_pic_menu_wrapper";
-
-export function Navbar() {
-  return (
-    <header className="border-b">
-      <nav className="container mx-auto flex items-center justify-between p-4">
-        <div className="text-xl font-bold">My App</div>
-        <ProfilePicMenuWrapper />
-      </nav>
-    </header>
-  );
-}
-```
-
-#### Example 2: Custom Styling and Size
-
-```typescript
-// app/components/navbar.tsx
-import { ProfilePicMenuWrapper } from "hazo_auth/components/layouts/shared/components/profile_pic_menu_wrapper";
-
-export function Navbar() {
-  return (
-    <header className="bg-slate-900 text-white">
-      <nav className="container mx-auto flex items-center justify-between p-4">
-        <div className="text-xl font-bold">My App</div>
-        <ProfilePicMenuWrapper 
-          avatar_size="sm"
-          className="bg-slate-800 rounded-lg p-2"
-        />
-      </nav>
-    </header>
-  );
-}
-```
-
-#### Example 3: With Custom Menu Items (Programmatic)
-
-```typescript
-"use client";
-
-import { ProfilePicMenu } from "hazo_auth/components/layouts/shared/components/profile_pic_menu";
-import type { ProfilePicMenuMenuItem } from "hazo_auth/lib/profile_pic_menu_config.server";
-
-export function Navbar() {
-  const customItems: ProfilePicMenuMenuItem[] = [
-    {
-      type: "info",
-      label: "Department",
-      value: "Engineering",
-      order: 3,
-      id: "dept_info",
-    },
-    {
-      type: "separator",
-      order: 2,
-      id: "custom_sep",
-    },
-    {
-      type: "link",
-      label: "Documentation",
-      href: "/docs",
-      order: 4,
-      id: "docs_link",
-    },
-  ];
-
-  return (
-    <nav className="flex items-center justify-between p-4">
-      <div>Logo</div>
-      <ProfilePicMenu
-        custom_menu_items={customItems}
-        avatar_size="default"
-      />
-    </nav>
-  );
-}
-```
-
-#### Example 4: Single Button Mode
-
-```typescript
-// In hazo_auth_config.ini
-[hazo_auth__profile_pic_menu]
-show_single_button = true
-sign_up_label = Get Started
-```
-
-When `show_single_button` is `true`, only the "Sign Up" button is shown for unauthenticated users (no "Sign In" button).
-
-### Behavior
-
-- **Loading State**: Shows a pulsing placeholder while checking authentication status
-- **Unauthenticated**: Shows Sign Up/Sign In buttons (or single button if configured)
-- **Authenticated**: Shows profile picture with dropdown menu
-- **Profile Picture Fallback**: If no profile picture is set, shows user's initials
-- **Logout**: Handles logout action, refreshes auth status, and redirects appropriately
-- **Responsive**: Works well in both navbar and sidebar layouts
-
-### Styling
-
-The component uses TailwindCSS classes and can be customized with:
-- `className` prop for additional styling
-- `avatar_size` prop for different avatar sizes
-- CSS class names prefixed with `cls_profile_pic_menu_*` for targeted styling
-
-Example custom styling:
-
-```css
-/* Target specific elements */
-.cls_profile_pic_menu_avatar {
-  border: 2px solid #3b82f6;
-}
-
-.cls_profile_pic_menu_dropdown {
-  min-width: 200px;
-}
-```
+---
 
 ## User Profile Service
 
@@ -1228,53 +798,13 @@ Retrieves basic profile information for multiple users in a single batch call.
 
 **Location:** `src/lib/services/user_profiles_service.ts`
 
-**Function Signature:**
 ```typescript
 import { hazo_get_user_profiles } from "hazo_auth/lib/services/user_profiles_service";
-import type { GetProfilesResult, UserProfileInfo } from "hazo_auth/lib/services/user_profiles_service";
-
-async function hazo_get_user_profiles(
-  adapter: HazoConnectAdapter,
-  user_ids: string[],
-): Promise<GetProfilesResult>
-```
-
-**Return Type:**
-```typescript
-type UserProfileInfo = {
-  user_id: string;
-  profile_picture_url: string | null;
-  email: string;
-  name: string | null;
-  days_since_created: number;
-};
-
-type GetProfilesResult = {
-  success: boolean;
-  profiles: UserProfileInfo[];
-  not_found_ids: string[];
-  error?: string;
-};
-```
-
-**Features:**
-- **Batch Retrieval:** Fetches multiple user profiles in a single database query
-- **Deduplication:** Automatically removes duplicate user IDs from input
-- **Not Found Tracking:** Returns list of user IDs that were not found in the database
-- **Profile Picture:** Returns the resolved profile picture URL (Gravatar, library, or uploaded)
-- **Account Age:** Calculates days since account creation
-
-**Example Usage:**
-
-```typescript
-// In an API route or server component
-import { hazo_get_user_profiles } from "hazo_auth/lib/services/user_profiles_service";
-import { get_hazo_connect_instance } from "hazo_auth/lib/hazo_connect_instance.server";
+import { get_hazo_connect_instance } from "hazo_auth/server/hazo_connect_instance.server";
 
 export async function GET(request: NextRequest) {
   const adapter = get_hazo_connect_instance();
   
-  // Get profiles for multiple users (e.g., chat participants)
   const result = await hazo_get_user_profiles(adapter, [
     "user-id-1",
     "user-id-2",
@@ -1285,8 +815,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: result.error }, { status: 500 });
   }
 
-  // result.profiles contains found user profiles
-  // result.not_found_ids contains IDs that weren't found
   return NextResponse.json({
     profiles: result.profiles,
     not_found: result.not_found_ids,
@@ -1294,24 +822,105 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-**Use Cases:**
-- Chat applications displaying participant information
-- User lists with profile pictures and names
-- Activity feeds showing user details
-- Any feature requiring batch user profile lookups
+---
 
-### Local Development (for package contributors)
+## Local Development (for package contributors)
 
-- `npm install` to install dependencies.
-- `npm run dev` launches the Next.js app at `http://localhost:3000`.
-- `npm run storybook` launches Storybook at `http://localhost:6006`.
+### Prerequisites
+
+- Node.js 18+
+- npm 9+
+
+### Setup
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd hazo_auth
+
+# Install dependencies
+npm install
+
+# Copy configuration files
+cp hazo_auth_config.example.ini hazo_auth_config.ini
+cp hazo_notify_config.example.ini hazo_notify_config.ini
+```
+
+### Development Commands
+
+```bash
+# Start development server
+npm run dev
+
+# Run Storybook
+npm run storybook
+
+# Build the package for distribution
+npm run build:pkg
+
+# Run tests
+npm test
+
+# Initialize database users/roles
+npm run init-users
+
+# Apply database migrations
+npx tsx scripts/apply_migration.ts [migration_file_path]
+```
 
 ### Project Structure
 
-- `src/app` contains the application shell and route composition.
-- `src/lib` is the home for shared utilities and authentication functions.
-- `src/components` contains React components and hooks.
-- `src/stories` holds Storybook stories for documenting components.
+```
+hazo_auth/
+├── src/
+│   ├── app/              # Next.js app directory (demo pages)
+│   ├── components/       # React components
+│   │   ├── layouts/      # Layout components (login, register, etc.)
+│   │   └── ui/           # Reusable UI components (shadcn-based)
+│   ├── hooks/            # Client-side React hooks
+│   ├── lib/              # Shared utilities and services
+│   │   ├── auth/         # Authentication utilities
+│   │   ├── config/       # Configuration loaders
+│   │   └── services/     # Business logic services
+│   ├── server/           # Server-only utilities
+│   └── index.ts          # Main entry point
+├── dist/                 # Compiled package output
+├── migrations/           # Database migration files
+├── scripts/              # Utility scripts
+├── __tests__/            # Test files and fixtures
+└── public/               # Static assets
+```
+
+### Building the Package
+
+The package is built using TypeScript with a separate build configuration:
+
+```bash
+npm run build:pkg
+```
+
+This compiles the `src/` directory to `dist/` with:
+- Type declarations (`.d.ts` files)
+- ES modules output
+- Excludes Next.js app directory and Storybook stories
+
+### Package Exports
+
+The `package.json` exports field defines the public API:
+
+```json
+{
+  "exports": {
+    ".": "./dist/index.js",
+    "./components/*": "./dist/components/*.js",
+    "./components/ui/*": "./dist/components/ui/*.js",
+    "./components/layouts/*": "./dist/components/layouts/*.js",
+    "./lib/*": "./dist/lib/*.js",
+    "./hooks/*": "./dist/hooks/*.js",
+    "./server/*": "./dist/server/*.js"
+  }
+}
+```
 
 ### Next Steps
 
