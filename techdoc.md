@@ -318,6 +318,37 @@ All API routes follow a consistent pattern:
   - Invalidates existing tokens of same type for user
   - Returns raw token for sending to user (email, etc.)
 
+### User Profiles Service
+
+- **File:** `src/lib/services/user_profiles_service.ts`
+- **Function:** `hazo_get_user_profiles(adapter, user_ids)`
+- **Purpose:** Batch retrieval of basic user profile information for chat applications and similar use cases
+- **Return Type:**
+  ```typescript
+  type UserProfileInfo = {
+    user_id: string;
+    profile_picture_url: string | null;
+    email: string;
+    name: string | null;
+    days_since_created: number;
+  };
+
+  type GetProfilesResult = {
+    success: boolean;
+    profiles: UserProfileInfo[];
+    not_found_ids: string[];
+    error?: string;
+  };
+  ```
+- **Features:**
+  - Batch retrieval using single database query with `in` filter
+  - Automatic deduplication of input user IDs
+  - Returns list of user IDs that were not found (`not_found_ids`)
+  - Profile picture URL is returned directly from database (already resolved)
+  - Calculates `days_since_created` using `date-fns` `differenceInDays`
+  - Error handling with `sanitize_error_for_user` for user-friendly messages
+  - Logging of successful retrievals and errors
+
 ## Constraints
 
 - All database interactions must use `hazo_connect` adapter passed as parameter

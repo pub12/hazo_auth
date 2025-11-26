@@ -245,7 +245,7 @@ export const use_register_form = <TClient,>({
         setIsSubmitting(false);
       }
     },
-    [values, passwordRequirements, dataClient],
+    [values, passwordRequirements, dataClient, urlOnLogon],
   );
 
   const handleCancel = useCallback(() => {

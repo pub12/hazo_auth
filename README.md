@@ -29,6 +29,215 @@ After installing the package, you need to set up configuration files in your pro
 
 **Important:** The configuration files must be located in your project root directory (where `process.cwd()` points to), not inside `node_modules`. The package reads configuration from `process.cwd()` at runtime, so storing them elsewhere (including `node_modules/hazo_auth`) will break runtime access.
 
+### Database Setup
+
+Before using `hazo_auth`, you need to create the required database tables. Run the following SQL scripts in your PostgreSQL database:
+
+#### 1. Create the Profile Source Enum Type
+
+```sql
+-- Enum type for profile picture source
+CREATE TYPE hazo_enum_profile_source_enum AS ENUM ('gravatar', 'custom', 'predefined');
+```
+
+#### 2. Create the Users Table
+
+```sql
+-- Main users table
+CREATE TABLE hazo_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email_address TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    name TEXT,
+    email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    login_attempts INTEGER NOT NULL DEFAULT 0,
+    last_logon TIMESTAMP WITH TIME ZONE,
+    profile_picture_url TEXT,
+    profile_source hazo_enum_profile_source_enum,
+    mfa_secret TEXT,
+    url_on_logon TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Index for email lookups
+CREATE INDEX idx_hazo_users_email ON hazo_users(email_address);
+```
+
+#### 3. Create the Refresh Tokens Table
+
+```sql
+-- Refresh tokens table (used for password reset, email verification, etc.)
+CREATE TABLE hazo_refresh_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL,
+    token_type TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Index for token lookups
+CREATE INDEX idx_hazo_refresh_tokens_user_id ON hazo_refresh_tokens(user_id);
+CREATE INDEX idx_hazo_refresh_tokens_token_type ON hazo_refresh_tokens(token_type);
+```
+
+#### 4. Create the Permissions Table
+
+```sql
+-- Permissions table for RBAC
+CREATE TABLE hazo_permissions (
+    id SERIAL PRIMARY KEY,
+    permission_name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+```
+
+#### 5. Create the Roles Table
+
+```sql
+-- Roles table for RBAC
+CREATE TABLE hazo_roles (
+    id SERIAL PRIMARY KEY,
+    role_name TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+```
+
+#### 6. Create the Role-Permissions Junction Table
+
+```sql
+-- Junction table linking roles to permissions
+CREATE TABLE hazo_role_permissions (
+    role_id INTEGER NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    permission_id INTEGER NOT NULL REFERENCES hazo_permissions(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (role_id, permission_id)
+);
+
+-- Indexes for lookups
+CREATE INDEX idx_hazo_role_permissions_role_id ON hazo_role_permissions(role_id);
+CREATE INDEX idx_hazo_role_permissions_permission_id ON hazo_role_permissions(permission_id);
+```
+
+#### 7. Create the User-Roles Junction Table
+
+```sql
+-- Junction table linking users to roles
+CREATE TABLE hazo_user_roles (
+    user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
+    role_id INTEGER NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, role_id)
+);
+
+-- Indexes for lookups
+CREATE INDEX idx_hazo_user_roles_user_id ON hazo_user_roles(user_id);
+CREATE INDEX idx_hazo_user_roles_role_id ON hazo_user_roles(role_id);
+```
+
+#### Complete Setup Script
+
+For convenience, here's the complete SQL script to create all tables at once:
+
+```sql
+-- ============================================
+-- hazo_auth Database Setup Script
+-- ============================================
+
+-- 1. Create enum type
+CREATE TYPE hazo_enum_profile_source_enum AS ENUM ('gravatar', 'custom', 'predefined');
+
+-- 2. Create users table
+CREATE TABLE hazo_users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email_address TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    name TEXT,
+    email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    login_attempts INTEGER NOT NULL DEFAULT 0,
+    last_logon TIMESTAMP WITH TIME ZONE,
+    profile_picture_url TEXT,
+    profile_source hazo_enum_profile_source_enum,
+    mfa_secret TEXT,
+    url_on_logon TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_hazo_users_email ON hazo_users(email_address);
+
+-- 3. Create refresh tokens table
+CREATE TABLE hazo_refresh_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL,
+    token_type TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_hazo_refresh_tokens_user_id ON hazo_refresh_tokens(user_id);
+CREATE INDEX idx_hazo_refresh_tokens_token_type ON hazo_refresh_tokens(token_type);
+
+-- 4. Create permissions table
+CREATE TABLE hazo_permissions (
+    id SERIAL PRIMARY KEY,
+    permission_name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- 5. Create roles table
+CREATE TABLE hazo_roles (
+    id SERIAL PRIMARY KEY,
+    role_name TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- 6. Create role-permissions junction table
+CREATE TABLE hazo_role_permissions (
+    role_id INTEGER NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    permission_id INTEGER NOT NULL REFERENCES hazo_permissions(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (role_id, permission_id)
+);
+CREATE INDEX idx_hazo_role_permissions_role_id ON hazo_role_permissions(role_id);
+CREATE INDEX idx_hazo_role_permissions_permission_id ON hazo_role_permissions(permission_id);
+
+-- 7. Create user-roles junction table
+CREATE TABLE hazo_user_roles (
+    user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
+    role_id INTEGER NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, role_id)
+);
+CREATE INDEX idx_hazo_user_roles_user_id ON hazo_user_roles(user_id);
+CREATE INDEX idx_hazo_user_roles_role_id ON hazo_user_roles(role_id);
+```
+
+#### Initialize Default Permissions and Super User
+
+After creating the tables, you can use the `init-users` script to set up default permissions and a super user:
+
+```bash
+npm run init-users
+```
+
+This script reads from `hazo_auth_config.ini` and:
+1. Creates default permissions from `application_permission_list_defaults`
+2. Creates a `default_super_user_role` role with all permissions
+3. Assigns the role to the user specified in `default_super_user_email`
+
 ### Expose hazo_auth Routes in the Consumer App
 
 Because `src/app/hazo_auth` (pages) and `src/app/api/hazo_auth` (API routes) need to be part of the consuming Next.js app’s routing tree, make sure they exist in your project’s `src/app` directory. Two recommended approaches:
@@ -1008,6 +1217,88 @@ Example custom styling:
   min-width: 200px;
 }
 ```
+
+## User Profile Service
+
+The `hazo_auth` package provides a batch user profile retrieval service for applications that need basic user information, such as chat applications or user lists.
+
+### `hazo_get_user_profiles`
+
+Retrieves basic profile information for multiple users in a single batch call.
+
+**Location:** `src/lib/services/user_profiles_service.ts`
+
+**Function Signature:**
+```typescript
+import { hazo_get_user_profiles } from "hazo_auth/lib/services/user_profiles_service";
+import type { GetProfilesResult, UserProfileInfo } from "hazo_auth/lib/services/user_profiles_service";
+
+async function hazo_get_user_profiles(
+  adapter: HazoConnectAdapter,
+  user_ids: string[],
+): Promise<GetProfilesResult>
+```
+
+**Return Type:**
+```typescript
+type UserProfileInfo = {
+  user_id: string;
+  profile_picture_url: string | null;
+  email: string;
+  name: string | null;
+  days_since_created: number;
+};
+
+type GetProfilesResult = {
+  success: boolean;
+  profiles: UserProfileInfo[];
+  not_found_ids: string[];
+  error?: string;
+};
+```
+
+**Features:**
+- **Batch Retrieval:** Fetches multiple user profiles in a single database query
+- **Deduplication:** Automatically removes duplicate user IDs from input
+- **Not Found Tracking:** Returns list of user IDs that were not found in the database
+- **Profile Picture:** Returns the resolved profile picture URL (Gravatar, library, or uploaded)
+- **Account Age:** Calculates days since account creation
+
+**Example Usage:**
+
+```typescript
+// In an API route or server component
+import { hazo_get_user_profiles } from "hazo_auth/lib/services/user_profiles_service";
+import { get_hazo_connect_instance } from "hazo_auth/lib/hazo_connect_instance.server";
+
+export async function GET(request: NextRequest) {
+  const adapter = get_hazo_connect_instance();
+  
+  // Get profiles for multiple users (e.g., chat participants)
+  const result = await hazo_get_user_profiles(adapter, [
+    "user-id-1",
+    "user-id-2",
+    "user-id-3",
+  ]);
+
+  if (!result.success) {
+    return NextResponse.json({ error: result.error }, { status: 500 });
+  }
+
+  // result.profiles contains found user profiles
+  // result.not_found_ids contains IDs that weren't found
+  return NextResponse.json({
+    profiles: result.profiles,
+    not_found: result.not_found_ids,
+  });
+}
+```
+
+**Use Cases:**
+- Chat applications displaying participant information
+- User lists with profile pictures and names
+- Activity feeds showing user details
+- Any feature requiring batch user profile lookups
 
 ### Local Development (for package contributors)
 

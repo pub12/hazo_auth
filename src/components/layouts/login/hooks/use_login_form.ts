@@ -256,7 +256,7 @@ export const use_login_form = <TClient,>({
         setIsSuccess(false);
       }
     },
-    [values, clientIp, log_login_attempt, redirectRoute, router],
+    [values, clientIp, log_login_attempt, redirectRoute, router, urlOnLogon],
   );
 
   const handleCancel = useCallback(() => {
