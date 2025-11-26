@@ -16,7 +16,7 @@ type InitSummary = {
   role: {
     inserted: boolean;
     existing: boolean;
-    role_id: number | null;
+    role_id: string | null;
   };
   role_permissions: {
     inserted: number;
@@ -115,7 +115,7 @@ async function init_users(): Promise<void> {
     console.log();
 
     // 2. Add permissions to hazo_permissions table
-    const permission_id_map: Record<string, number> = {};
+    const permission_id_map: Record<string, string> = {};
     const now = new Date().toISOString();
 
     for (const permission_name of permission_names) {
@@ -129,7 +129,7 @@ async function init_users(): Promise<void> {
 
       if (Array.isArray(existing_permissions) && existing_permissions.length > 0) {
         const existing_permission = existing_permissions[0];
-        const perm_id = existing_permission.id as number;
+        const perm_id = existing_permission.id as string;
         permission_id_map[trimmed_name] = perm_id;
         summary.permissions.existing.push(trimmed_name);
         console.log(`✓ Permission already exists: ${trimmed_name} (ID: ${perm_id})`);
@@ -143,8 +143,8 @@ async function init_users(): Promise<void> {
         });
 
         const perm_id = Array.isArray(new_permission)
-          ? (new_permission[0] as { id: number }).id
-          : (new_permission as { id: number }).id;
+          ? (new_permission[0] as { id: string }).id
+          : (new_permission as { id: string }).id;
         permission_id_map[trimmed_name] = perm_id;
         summary.permissions.inserted.push(trimmed_name);
         console.log(`✓ Inserted permission: ${trimmed_name} (ID: ${perm_id})`);
@@ -159,9 +159,9 @@ async function init_users(): Promise<void> {
       role_name,
     });
 
-    let role_id: number;
+    let role_id: string;
     if (Array.isArray(existing_roles) && existing_roles.length > 0) {
-      role_id = existing_roles[0].id as number;
+      role_id = existing_roles[0].id as string;
       summary.role.existing = true;
       summary.role.role_id = role_id;
       console.log(`✓ Role already exists: ${role_name} (ID: ${role_id})`);
@@ -173,8 +173,8 @@ async function init_users(): Promise<void> {
       });
 
       role_id = Array.isArray(new_role)
-        ? (new_role[0] as { id: number }).id
-        : (new_role as { id: number }).id;
+        ? (new_role[0] as { id: string }).id
+        : (new_role as { id: string }).id;
       summary.role.inserted = true;
       summary.role.role_id = role_id;
       console.log(`✓ Created role: ${role_name} (ID: ${role_id})`);
