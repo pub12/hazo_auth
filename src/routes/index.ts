@@ -15,17 +15,17 @@ export { POST as loginPOST } from "hazo_auth/app/api/hazo_auth/login/route";
 export { POST as registerPOST } from "hazo_auth/app/api/hazo_auth/register/route";
 export { POST as forgotPasswordPOST } from "hazo_auth/app/api/hazo_auth/forgot_password/route";
 export { POST as resetPasswordPOST } from "hazo_auth/app/api/hazo_auth/reset_password/route";
-export { POST as verifyEmailPOST } from "hazo_auth/app/api/hazo_auth/verify_email/route";
+export { GET as verifyEmailGET } from "hazo_auth/app/api/hazo_auth/verify_email/route";
 export { POST as resendVerificationPOST } from "hazo_auth/app/api/hazo_auth/resend_verification/route";
 export { POST as logoutPOST } from "hazo_auth/app/api/hazo_auth/logout/route";
 export { POST as getAuthPOST } from "hazo_auth/app/api/hazo_auth/get_auth/route";
-export { GET as mePOST } from "hazo_auth/app/api/hazo_auth/me/route";
+export { GET as meGET } from "hazo_auth/app/api/hazo_auth/me/route";
 export { POST as changePasswordPOST } from "hazo_auth/app/api/hazo_auth/change_password/route";
-export { POST as updateUserPOST } from "hazo_auth/app/api/hazo_auth/update_user/route";
+export { PATCH as updateUserPATCH } from "hazo_auth/app/api/hazo_auth/update_user/route";
 export { POST as invalidateCachePOST } from "hazo_auth/app/api/hazo_auth/invalidate_cache/route";
 export { GET as libraryPhotosGET } from "hazo_auth/app/api/hazo_auth/library_photos/route";
 export { POST as uploadProfilePicturePOST } from "hazo_auth/app/api/hazo_auth/upload_profile_picture/route";
-export { POST as removeProfilePicturePOST } from "hazo_auth/app/api/hazo_auth/remove_profile_picture/route";
+export { DELETE as removeProfilePictureDELETE } from "hazo_auth/app/api/hazo_auth/remove_profile_picture/route";
 export { GET as validateResetTokenGET } from "hazo_auth/app/api/hazo_auth/validate_reset_token/route";
 
 // section: shell_exports

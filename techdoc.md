@@ -81,7 +81,7 @@ import { LoginLayout, use_hazo_auth } from "hazo_auth";
 import { Button } from "hazo_auth/components/ui/button";
 import { LoginLayout } from "hazo_auth/components/layouts/login";
 import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
-import { use_auth_status } from "hazo_auth/hooks/use_auth_status";
+import { use_auth_status } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
 ```
 
 **Within the package source code:**
@@ -431,8 +431,8 @@ Located in `src/components/ui/`, these are shadcn-based components:
 ```typescript
 "use client";
 
-import { use_hazo_auth } from "hazo_auth/hooks/use_hazo_auth";
-import { use_auth_status } from "hazo_auth/hooks/use_auth_status";
+import { use_hazo_auth } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
+import { use_auth_status } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
 
 // With permissions checking
 function AdminPanel() {

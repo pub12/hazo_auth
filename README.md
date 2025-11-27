@@ -62,9 +62,17 @@ import { RegisterLayout } from "hazo_auth/components/layouts/register";
 import { Button } from "hazo_auth/components/ui/button";
 import { Input } from "hazo_auth/components/ui/input";
 
-// Import hooks
-import { use_hazo_auth } from "hazo_auth/hooks/use_hazo_auth";
-import { use_auth_status } from "hazo_auth/hooks/use_auth_status";
+// Import shared components and hooks (recommended - uses barrel exports)
+import { 
+  ProfilePicMenu, 
+  ProfilePicMenuWrapper,
+  use_hazo_auth, 
+  use_auth_status 
+} from "hazo_auth/components/layouts/shared";
+
+// OR import hooks directly
+import { use_hazo_auth } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
+import { use_auth_status } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
 
 // Import server-side utilities
 import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
@@ -426,15 +434,23 @@ import { Input } from "hazo_auth/components/ui/input";
 import { Avatar } from "hazo_auth/components/ui/avatar";
 // ... and more shadcn-based components
 
-// Shared layout components
+// Shared layout components and hooks (barrel import - recommended)
+import { 
+  ProfilePicMenu,
+  ProfilePicMenuWrapper,
+  FormActionButtons,
+  use_hazo_auth,
+  use_auth_status 
+} from "hazo_auth/components/layouts/shared";
+
+// OR import individual components directly
 import { ProfilePicMenu } from "hazo_auth/components/layouts/shared/components/profile_pic_menu";
 import { ProfilePicMenuWrapper } from "hazo_auth/components/layouts/shared/components/profile_pic_menu_wrapper";
 import { FormActionButtons } from "hazo_auth/components/layouts/shared/components/form_action_buttons";
 
-// Hooks (client-side)
-import { use_hazo_auth } from "hazo_auth/hooks/use_hazo_auth";
-import { use_auth_status } from "hazo_auth/hooks/use_auth_status";
-import { use_login_form } from "hazo_auth/hooks/use_login_form";
+// OR import hooks directly
+import { use_hazo_auth } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
+import { use_auth_status } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
 
 // Library utilities
 import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
@@ -677,7 +693,7 @@ React hook for fetching authentication status and permissions on the client side
 ```typescript
 "use client";
 
-import { use_hazo_auth } from "hazo_auth/hooks/use_hazo_auth";
+import { use_hazo_auth } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
 
 export function ProtectedComponent() {
   const { authenticated, user, permissions, permission_ok, loading, error, refetch } = 
@@ -710,7 +726,7 @@ Simpler hook for basic authentication status checking.
 ```typescript
 "use client";
 
-import { use_auth_status } from "hazo_auth/hooks/use_auth_status";
+import { use_auth_status } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
 
 export function UserGreeting() {
   const { authenticated, name, email, loading } = use_auth_status();
