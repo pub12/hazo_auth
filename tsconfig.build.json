@@ -25,6 +25,7 @@
     "src/hooks/**/*",
     "src/server/**/*",
     "src/cli/**/*",
+    "src/page_components/**/*",
     "src/index.ts"
   ],
   "exclude": [

@@ -22,6 +22,7 @@ export { PATCH as updateUserPATCH } from "./update_user.js";
 export { POST as uploadProfilePicturePOST } from "./upload_profile_picture.js";
 export { DELETE as removeProfilePictureDELETE } from "./remove_profile_picture.js";
 export { GET as libraryPhotosGET } from "./library_photos.js";
+export { GET as libraryPhotoGET } from "./library_photo.js";
 export { GET as profilePictureFilenameGET } from "./profile_picture_filename.js";
 
 // Auth utility routes

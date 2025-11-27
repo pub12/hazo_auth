@@ -33,27 +33,69 @@ npm run build:pkg  # Runs: tsc -p tsconfig.build.json
 
 ### Package Exports
 
-The `package.json` exports field defines the public API. Only main entry points are exposed:
+The `package.json` exports field defines the public API:
 
 ```json
 {
   "exports": {
     ".": "./dist/index.js",
+    "./pages": "./dist/page_components/index.js",
+    "./pages/login": "./dist/page_components/login.js",
+    "./pages/register": "./dist/page_components/register.js",
+    "./pages/forgot_password": "./dist/page_components/forgot_password.js",
+    "./pages/reset_password": "./dist/page_components/reset_password.js",
+    "./pages/verify_email": "./dist/page_components/verify_email.js",
+    "./pages/my_settings": "./dist/page_components/my_settings.js",
     "./components/layouts/login": "./dist/components/layouts/login/index.js",
     "./components/layouts/register": "./dist/components/layouts/register/index.js",
-    "./components/layouts/forgot_password": "./dist/components/layouts/forgot_password/index.js",
-    "./components/layouts/reset_password": "./dist/components/layouts/reset_password/index.js",
-    "./components/layouts/email_verification": "./dist/components/layouts/email_verification/index.js",
-    "./components/layouts/my_settings": "./dist/components/layouts/my_settings/index.js",
-    "./components/layouts/user_management": "./dist/components/layouts/user_management/index.js",
     "./components/layouts/shared": "./dist/components/layouts/shared/index.js",
     "./lib/auth/hazo_get_auth.server": "./dist/lib/auth/hazo_get_auth.server.js",
-    "./server": "./dist/server/index.js"
+    "./server": "./dist/server/index.js",
+    "./server/routes": "./dist/server/routes/index.js"
   }
 }
 ```
+**Note:** The `./pages/*` exports point to `dist/page_components/*` to avoid conflicts with Next.js Pages Router.
 
 **Important:** Internal modules (like UI components, utility functions) are not exposed. They are used internally via relative imports and re-exported through the public entry points.
+
+### CLI Commands
+
+The package provides CLI commands for setup and route generation:
+
+```bash
+npx hazo_auth init                    # Initialize project (creates dirs, copies config)
+npx hazo_auth generate-routes         # Generate API routes only
+npx hazo_auth generate-routes --pages # Generate API routes + page routes
+npx hazo_auth validate                # Check setup and configuration
+npx hazo_auth --help                  # Show all commands
+```
+
+### Zero-Config Page Components
+
+The package provides zero-config page components in `src/pages/`:
+
+| Component | Import Path | Description |
+|-----------|-------------|-------------|
+| `LoginPage` | `hazo_auth/pages/login` | Zero-config login page |
+| `RegisterPage` | `hazo_auth/pages/register` | Zero-config register page |
+| `ForgotPasswordPage` | `hazo_auth/pages/forgot_password` | Zero-config forgot password page |
+| `ResetPasswordPage` | `hazo_auth/pages/reset_password` | Zero-config reset password page |
+| `VerifyEmailPage` | `hazo_auth/pages/verify_email` | Zero-config email verification page |
+| `MySettingsPage` | `hazo_auth/pages/my_settings` | Zero-config my settings page |
+
+**Usage:**
+```typescript
+// app/hazo_auth/login/page.tsx
+import { LoginPage } from "hazo_auth/pages/login";
+export default LoginPage;
+```
+
+All page components:
+- Work out-of-the-box with no required props
+- Use sensible defaults for all configuration
+- Accept optional props for customization
+- Handle client-side initialization of `hazo_connect`
 
 ### Import Patterns
 
@@ -110,8 +152,13 @@ The `tsconfig.json` paths and `next.config.mjs` webpack aliases are only used fo
 hazo_auth/
 ├── src/
 │   ├── app/                    # Next.js app directory (demo/dev only, not in package)
-│   │   ├── api/auth/           # API routes
-│   │   └── */page.tsx          # Demo pages
+│   │   ├── api/hazo_auth/      # API routes
+│   │   └── hazo_auth/*/page.tsx # Demo pages
+│   ├── cli/                    # CLI commands
+│   │   ├── index.ts            # CLI entry point
+│   │   ├── init.ts             # Init command
+│   │   ├── generate.ts         # Route generation
+│   │   └── validate.ts         # Setup validation
 │   ├── components/
 │   │   ├── layouts/            # Layout components
 │   │   │   ├── login/          # Login layout
@@ -125,6 +172,14 @@ hazo_auth/
 │   │   │       ├── components/ # Reusable form components
 │   │   │       └── hooks/      # Layout-specific hooks
 │   │   ├── ui/                 # shadcn UI components
+│   │   └── index.ts            # Barrel export
+│   ├── page_components/        # Zero-config page components (exposed as hazo_auth/pages/*)
+│   │   ├── login.tsx
+│   │   ├── register.tsx
+│   │   ├── forgot_password.tsx
+│   │   ├── reset_password.tsx
+│   │   ├── verify_email.tsx
+│   │   ├── my_settings.tsx
 │   │   └── index.ts            # Barrel export
 │   ├── hooks/                  # Client-side React hooks
 │   │   ├── use_hazo_auth.ts
@@ -687,6 +742,16 @@ Test utilities are available for:
 | `storybook` | `npm run storybook` | Start Storybook |
 | `test` | `npm test` | Run tests |
 | `init-users` | `npm run init-users` | Initialize default permissions and super user |
+
+### CLI Commands (for consuming projects)
+
+| Command | Description |
+|---------|-------------|
+| `npx hazo_auth init` | Initialize project (creates directories, copies config files) |
+| `npx hazo_auth generate-routes` | Generate API routes in consuming project |
+| `npx hazo_auth generate-routes --pages` | Generate API routes + page routes |
+| `npx hazo_auth validate` | Check setup and configuration |
+| `npx hazo_auth --help` | Show help and all available commands |
 
 ### Migration Script
 

@@ -2,6 +2,33 @@
 
 This checklist provides step-by-step instructions for setting up the `hazo_auth` package in your Next.js project. AI assistants can follow this guide to ensure complete and correct setup.
 
+## Quick Start (Recommended)
+
+The fastest way to set up hazo_auth:
+
+```bash
+# 1. Install the package
+npm install hazo_auth
+
+# 2. Initialize project (creates directories, copies config files)
+npx hazo_auth init
+
+# 3. Generate API routes and pages
+npx hazo_auth generate-routes --pages
+
+# 4. Set up environment variables
+cp .env.local.example .env.local
+# Edit .env.local and add ZEPTOMAIL_API_KEY
+
+# 5. Start dev server and test
+npm run dev
+# Visit http://localhost:3000/hazo_auth/login
+```
+
+If this works, skip to [Phase 6: Verification Tests](#phase-6-verification-tests).
+
+---
+
 ## Pre-flight Checks
 
 Before starting, verify your project meets these requirements:
@@ -33,7 +60,25 @@ ls node_modules/hazo_auth/package.json
 # Expected: file exists
 ```
 
-### Step 1.2: Copy configuration files
+### Step 1.2: Initialize project (Recommended)
+
+Use the CLI to automatically set up directories and copy config files:
+
+```bash
+npx hazo_auth init
+```
+
+This command:
+- Creates `public/profile_pictures/library/` directory
+- Creates `public/profile_pictures/uploads/` directory
+- Creates `data/` directory (for SQLite database)
+- Copies `hazo_auth_config.ini` and `hazo_notify_config.ini`
+- Copies profile picture library images
+- Creates `.env.local.example` template
+
+### Step 1.2b: Manual config setup (Alternative)
+
+If you prefer manual setup:
 
 ```bash
 cp node_modules/hazo_auth/hazo_auth_config.example.ini ./hazo_auth_config.ini
@@ -424,86 +469,92 @@ export { GET } from "hazo_auth/server/routes/profile_picture_filename";
 
 Create page files for each auth flow.
 
-### Step 5.1: Create auth pages
+### Step 5.1: Generate pages automatically (Recommended)
 
-**Login page** - `app/(auth)/login/page.tsx`:
-```typescript
-import { LoginLayout } from "hazo_auth/components/layouts/login";
-
-export default function LoginPage() {
-  return <LoginLayout />;
-}
+```bash
+npx hazo_auth generate-routes --pages
 ```
 
-**Register page** - `app/(auth)/register/page.tsx`:
-```typescript
-import { RegisterLayout } from "hazo_auth/components/layouts/register";
+This generates both API routes and page routes. The generated pages use zero-config components that work out of the box.
 
-export default function RegisterPage() {
-  return <RegisterLayout />;
-}
+**Generated pages:**
+```
+app/hazo_auth/
+├── login/page.tsx
+├── register/page.tsx
+├── forgot_password/page.tsx
+├── reset_password/page.tsx
+├── verify_email/page.tsx
+└── my_settings/page.tsx
 ```
 
-**Forgot password page** - `app/(auth)/forgot-password/page.tsx`:
-```typescript
-import { ForgotPasswordLayout } from "hazo_auth/components/layouts/forgot_password";
+### Step 5.2: Manual page creation (Alternative)
 
-export default function ForgotPasswordPage() {
-  return <ForgotPasswordLayout />;
-}
+If you prefer manual setup or need custom paths, create these files:
+
+**Login page** - `app/hazo_auth/login/page.tsx`:
+```typescript
+import { LoginPage } from "hazo_auth/pages/login";
+export default LoginPage;
 ```
 
-**Reset password page** - `app/(auth)/reset-password/page.tsx`:
+**Register page** - `app/hazo_auth/register/page.tsx`:
 ```typescript
-import { ResetPasswordLayout } from "hazo_auth/components/layouts/reset_password";
-
-export default function ResetPasswordPage() {
-  return <ResetPasswordLayout />;
-}
+import { RegisterPage } from "hazo_auth/pages/register";
+export default RegisterPage;
 ```
 
-**Email verification page** - `app/(auth)/verify-email/page.tsx`:
+**Forgot password page** - `app/hazo_auth/forgot_password/page.tsx`:
 ```typescript
-import { EmailVerificationLayout } from "hazo_auth/components/layouts/email_verification";
-
-export default function VerifyEmailPage() {
-  return <EmailVerificationLayout />;
-}
+import { ForgotPasswordPage } from "hazo_auth/pages/forgot_password";
+export default ForgotPasswordPage;
 ```
 
-**My settings page** - `app/(auth)/my-settings/page.tsx`:
+**Reset password page** - `app/hazo_auth/reset_password/page.tsx`:
 ```typescript
-import { MySettingsLayout } from "hazo_auth/components/layouts/my_settings";
-
-export default function MySettingsPage() {
-  return <MySettingsLayout />;
-}
+import { ResetPasswordPage } from "hazo_auth/pages/reset_password";
+export default ResetPasswordPage;
 ```
 
-### Step 5.2: Create layout for auth pages (optional)
-
-`app/(auth)/layout.tsx`:
+**Email verification page** - `app/hazo_auth/verify_email/page.tsx`:
 ```typescript
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+import { VerifyEmailPage } from "hazo_auth/pages/verify_email";
+export default VerifyEmailPage;
+```
+
+**My settings page** - `app/hazo_auth/my_settings/page.tsx`:
+```typescript
+import { MySettingsPage } from "hazo_auth/pages/my_settings";
+export default MySettingsPage;
+```
+
+### Step 5.3: Custom page routes (Advanced)
+
+If you need custom paths or want to wrap pages with your own layout:
+
+```typescript
+// app/(auth)/login/page.tsx
+import { LoginPage } from "hazo_auth/pages/login";
+
+export default function CustomLoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      {children}
+    <div className="min-h-screen flex items-center justify-center">
+      <LoginPage 
+        redirectRoute="/dashboard"
+        successMessage="Welcome back!"
+      />
     </div>
   );
 }
 ```
 
 **Checklist:**
-- [ ] Login page created (`/login`)
-- [ ] Register page created (`/register`)
-- [ ] Forgot password page created (`/forgot-password`)
-- [ ] Reset password page created (`/reset-password`)
-- [ ] Email verification page created (`/verify-email`)
-- [ ] My settings page created (`/my-settings`)
+- [ ] Login page created (`/hazo_auth/login`)
+- [ ] Register page created (`/hazo_auth/register`)
+- [ ] Forgot password page created (`/hazo_auth/forgot_password`)
+- [ ] Reset password page created (`/hazo_auth/reset_password`)
+- [ ] Email verification page created (`/hazo_auth/verify_email`)
+- [ ] My settings page created (`/hazo_auth/my_settings`)
 
 ---
 
@@ -578,15 +629,22 @@ curl -s http://localhost:3000/api/hazo_auth/library_photos | jq
 **Expected response:**
 ```json
 {
-  "photos": [
-    {"url": "/profile_pictures/library/...", "name": "..."},
-    ...
-  ]
+  "success": true,
+  "categories": ["Cars", "Young Cartoons"],
+  "source": "project"
 }
 ```
 
-**If library photos not showing:**
-- Copy profile pictures from `node_modules/hazo_auth/public/profile_pictures/library/` to `public/profile_pictures/library/`
+The `source` field indicates where photos are served from:
+- `"project"` - Photos are in your project's `public/profile_pictures/library/`
+- `"node_modules"` - Photos are served from `node_modules/hazo_auth/public/` via API route
+
+**Test paginated photos:**
+```bash
+curl -s "http://localhost:3000/api/hazo_auth/library_photos?category=Cars&page=1&page_size=5" | jq
+```
+
+**Note:** Library photos work automatically whether they're copied to your project or still in node_modules. The API will serve them from node_modules as a fallback.
 
 ### Test 6: Visit Pages in Browser
 
@@ -596,10 +654,10 @@ npm run dev
 ```
 
 Visit each page and verify it loads:
-- [ ] `http://localhost:3000/login` - Login form displays
-- [ ] `http://localhost:3000/register` - Registration form displays
-- [ ] `http://localhost:3000/forgot-password` - Forgot password form displays
-- [ ] `http://localhost:3000/my-settings` - Settings page displays (after login)
+- [ ] `http://localhost:3000/hazo_auth/login` - Login form displays
+- [ ] `http://localhost:3000/hazo_auth/register` - Registration form displays
+- [ ] `http://localhost:3000/hazo_auth/forgot_password` - Forgot password form displays
+- [ ] `http://localhost:3000/hazo_auth/my_settings` - Settings page displays (after login)
 
 ---
 
@@ -620,13 +678,26 @@ Visit each page and verify it loads:
 **Symptoms:** Avatar shows fallback initials, library photos empty.
 
 **Solutions:**
-1. Copy library photos:
+1. **Run init command** (copies library photos automatically):
+   ```bash
+   npx hazo_auth init
+   ```
+
+2. **Or manually copy library photos:**
    ```bash
    mkdir -p public/profile_pictures/library
    cp -r node_modules/hazo_auth/public/profile_pictures/library/* public/profile_pictures/library/
    ```
-2. Verify `library_photos` API route exists
-3. Check file permissions on `public/profile_pictures/`
+
+3. **Check API response source:**
+   ```bash
+   curl -s http://localhost:3000/api/hazo_auth/library_photos | jq '.source'
+   ```
+   - If `"node_modules"` - Photos are being served from the package (slower but works)
+   - If `"project"` - Photos are in your public folder (optimal)
+
+4. Verify `library_photos` and `library_photo` API routes exist
+5. Check file permissions on `public/profile_pictures/`
 
 ### Issue: Database connection failed
 

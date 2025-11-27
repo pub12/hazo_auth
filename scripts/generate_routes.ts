@@ -6,17 +6,21 @@
 // Re-export from CLI module for local development
 export { generate_routes } from "../src/cli/generate";
 
-import { generate_routes } from "../src/cli/generate";
+import { generate_routes, type GenerateOptions } from "../src/cli/generate";
 
 // Parse CLI arguments
-function parse_args(): { dir?: string; help?: boolean } {
-  const args: { dir?: string; help?: boolean } = {};
+function parse_args(): GenerateOptions & { help?: boolean } {
+  const args: GenerateOptions & { help?: boolean } = {};
   
   for (const arg of process.argv.slice(2)) {
     if (arg === "--help" || arg === "-h") {
       args.help = true;
     } else if (arg.startsWith("--dir=")) {
       args.dir = arg.replace("--dir=", "");
+    } else if (arg === "--pages") {
+      args.pages = true;
+    } else if (arg === "--all") {
+      args.all = true;
     }
   }
 
@@ -32,12 +36,15 @@ Usage:
 
 Options:
   --dir=<path>    Specify the app directory (default: auto-detect app/ or src/app/)
+  --pages         Generate page routes in addition to API routes
+  --all           Generate everything (API routes + pages)
   --help, -h      Show this help message
 
 Examples:
   npx hazo_auth generate-routes
+  npx hazo_auth generate-routes --pages
+  npx hazo_auth generate-routes --all
   npx hazo_auth generate-routes --dir=src/app
-  npx hazo_auth generate-routes --dir=app
 `);
 }
 
@@ -53,5 +60,6 @@ if (is_main) {
     process.exit(0);
   }
 
-  generate_routes(args.dir);
+  const { help, ...options } = args;
+  generate_routes(options);
 }

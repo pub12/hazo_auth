@@ -4,25 +4,29 @@
 // section: imports
 import { run_validation } from "./validate.js";
 import { generate_routes } from "./generate.js";
+import { handle_init } from "./init.js";
 // section: constants
-const VERSION = "1.5.0";
+const VERSION = "1.6.0";
 const HELP_TEXT = `
 \x1b[1m🐸 hazo_auth CLI v${VERSION}\x1b[0m
 
 Usage: hazo_auth <command> [options]
 
 Commands:
+  init               Initialize hazo_auth in your project (creates directories, copies config)
   validate           Check your hazo_auth setup and configuration
-  generate-routes    Generate API route files in your project
+  generate-routes    Generate API route files and pages in your project
 
 Options:
   --help, -h         Show this help message
   --version, -v      Show version number
 
 Examples:
+  npx hazo_auth init
   npx hazo_auth validate
   npx hazo_auth generate-routes
-  npx hazo_auth generate-routes --dir=src/app
+  npx hazo_auth generate-routes --pages
+  npx hazo_auth generate-routes --all --dir=src/app
 
 Documentation:
   https://github.com/your-repo/hazo_auth/blob/main/SETUP_CHECKLIST.md
@@ -61,33 +65,42 @@ async function handle_validate() {
     process.exit(summary.failed > 0 ? 1 : 0);
 }
 function handle_generate_routes(args) {
-    // Parse --dir argument
-    let dir;
+    const options = {};
     for (const arg of args) {
         if (arg.startsWith("--dir=")) {
-            dir = arg.replace("--dir=", "");
+            options.dir = arg.replace("--dir=", "");
+        }
+        else if (arg === "--pages") {
+            options.pages = true;
+        }
+        else if (arg === "--all") {
+            options.all = true;
         }
         else if (arg === "--help" || arg === "-h") {
             console.log(`
 hazo_auth generate-routes
 
-Generate API route files in your Next.js project.
+Generate API route files and page files in your Next.js project.
 
 Usage:
   hazo_auth generate-routes [options]
 
 Options:
   --dir=<path>    Specify the app directory (default: auto-detect)
+  --pages         Generate page routes in addition to API routes
+  --all           Generate everything (API routes + pages)
   --help, -h      Show this help message
 
 Examples:
-  hazo_auth generate-routes
-  hazo_auth generate-routes --dir=src/app
+  hazo_auth generate-routes               # API routes only
+  hazo_auth generate-routes --pages       # API routes + pages
+  hazo_auth generate-routes --all         # Same as --pages
+  hazo_auth generate-routes --dir=src/app # Specify app directory
 `);
             return;
         }
     }
-    generate_routes(dir);
+    generate_routes(options);
 }
 // section: main
 async function main() {
@@ -96,12 +109,52 @@ async function main() {
         show_version();
         return;
     }
-    if (help || !command) {
+    // Show main help only if no command specified
+    if (!command) {
         show_help();
         return;
     }
+    // If help is requested but command exists, pass help to command handler
+    // Commands can show their own help
+    if (help) {
+        args.push("--help");
+    }
     switch (command) {
+        case "init":
+            if (help) {
+                console.log(`
+hazo_auth init
+
+Initialize hazo_auth in your project.
+
+Actions:
+  - Creates public/profile_pictures/library/ directory
+  - Creates public/profile_pictures/uploads/ directory
+  - Creates data/ directory (for SQLite)
+  - Copies hazo_auth_config.ini and hazo_notify_config.ini
+  - Copies profile picture library images
+  - Creates .env.local.example template
+`);
+                return;
+            }
+            handle_init();
+            break;
         case "validate":
+            if (help) {
+                console.log(`
+hazo_auth validate
+
+Check your hazo_auth setup and configuration.
+
+This command verifies:
+  - Config files exist and are readable
+  - Required config values are set
+  - Environment variables are configured
+  - Database connection works
+  - Required directories exist
+`);
+                return;
+            }
             await handle_validate();
             break;
         case "generate-routes":

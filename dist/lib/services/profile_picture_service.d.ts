@@ -5,6 +5,14 @@ export type DefaultProfilePictureResult = {
     profile_picture_url: string;
     profile_source: ProfilePictureSource;
 };
+export type LibraryPhotosResult = {
+    photos: string[];
+    total: number;
+    page: number;
+    page_size: number;
+    has_more: boolean;
+    source: "project" | "node_modules";
+};
 /**
  * Generates Gravatar URL from email address
  * @param email - User's email address
@@ -18,11 +26,35 @@ export declare function get_gravatar_url(email: string, size?: number): string;
  */
 export declare function get_library_categories(): string[];
 /**
- * Gets photos in a specific library category
+ * Gets photos in a specific library category with pagination support
  * @param category - Category name
- * @returns Array of photo URLs (relative to public directory)
+ * @param page - Page number (1-indexed, default 1)
+ * @param page_size - Number of photos per page (default 20, max 100)
+ * @returns Object with photos array and pagination info
+ */
+export declare function get_library_photos_paginated(category: string, page?: number, page_size?: number): LibraryPhotosResult;
+/**
+ * Gets photos in a specific library category (legacy non-paginated version)
+ * @param category - Category name
+ * @returns Array of photo URLs (relative to public directory or API route)
  */
 export declare function get_library_photos(category: string): string[];
+/**
+ * Gets the physical file path for a library photo (used for serving from node_modules)
+ * @param category - Category name
+ * @param filename - Photo filename
+ * @returns Full file path or null if not found
+ */
+export declare function get_library_photo_path(category: string, filename: string): string | null;
+/**
+ * Gets the source of library photos (for diagnostic purposes)
+ * @returns Source type or null if no library found
+ */
+export declare function get_library_source(): "project" | "node_modules" | null;
+/**
+ * Clears the library path cache (useful for testing or after copying files)
+ */
+export declare function clear_library_cache(): void;
 /**
  * Gets default profile picture based on configuration priority
  * @param user_email - User's email address

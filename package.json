@@ -55,6 +55,34 @@
     "./server/routes": {
       "types": "./dist/server/routes/index.d.ts",
       "import": "./dist/server/routes/index.js"
+    },
+    "./pages": {
+      "types": "./dist/page_components/index.d.ts",
+      "import": "./dist/page_components/index.js"
+    },
+    "./pages/login": {
+      "types": "./dist/page_components/login.d.ts",
+      "import": "./dist/page_components/login.js"
+    },
+    "./pages/register": {
+      "types": "./dist/page_components/register.d.ts",
+      "import": "./dist/page_components/register.js"
+    },
+    "./pages/forgot_password": {
+      "types": "./dist/page_components/forgot_password.d.ts",
+      "import": "./dist/page_components/forgot_password.js"
+    },
+    "./pages/reset_password": {
+      "types": "./dist/page_components/reset_password.d.ts",
+      "import": "./dist/page_components/reset_password.js"
+    },
+    "./pages/verify_email": {
+      "types": "./dist/page_components/verify_email.d.ts",
+      "import": "./dist/page_components/verify_email.js"
+    },
+    "./pages/my_settings": {
+      "types": "./dist/page_components/my_settings.d.ts",
+      "import": "./dist/page_components/my_settings.js"
     }
   },
   "files": [

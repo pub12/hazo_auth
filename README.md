@@ -26,32 +26,61 @@ npm install hazo_auth
 
 ## Quick Start
 
-### 1. Install the package
+The fastest way to get started is using the CLI commands:
 
 ```bash
+# 1. Install the package
 npm install hazo_auth
+
+# 2. Initialize your project (creates directories, copies config files)
+npx hazo_auth init
+
+# 3. Generate API routes and pages
+npx hazo_auth generate-routes --pages
+
+# 4. Set up environment variables
+cp .env.local.example .env.local
+# Edit .env.local and add your ZEPTOMAIL_API_KEY
+
+# 5. Start your dev server
+npm run dev
 ```
 
-### 2. Copy configuration files
+That's it! Visit `http://localhost:3000/hazo_auth/login` to see the login page.
+
+### CLI Commands
 
 ```bash
-cp node_modules/hazo_auth/hazo_auth_config.example.ini ./hazo_auth_config.ini
-cp node_modules/hazo_auth/hazo_notify_config.example.ini ./hazo_notify_config.ini
+npx hazo_auth init                  # Initialize project (creates dirs, copies config)
+npx hazo_auth generate-routes       # Generate API routes only
+npx hazo_auth generate-routes --pages  # Generate API routes + pages
+npx hazo_auth validate              # Check your setup and configuration
+npx hazo_auth --help                # Show all commands
 ```
 
-### 3. Set up environment variables
+### Using Zero-Config Page Components
 
-Create a `.env.local` file:
+The generated pages import from `hazo_auth/pages/*` which provides zero-config components:
 
-```env
-ZEPTOMAIL_API_KEY=your_api_key_here
+```typescript
+// Generated app/hazo_auth/login/page.tsx
+import { LoginPage } from "hazo_auth/pages/login";
+export default LoginPage;
 ```
 
-### 4. Set up the database
+Available zero-config pages:
+- `LoginPage` - Login form with sensible defaults
+- `RegisterPage` - Registration with password requirements
+- `ForgotPasswordPage` - Password reset request
+- `ResetPasswordPage` - Set new password
+- `VerifyEmailPage` - Email verification
+- `MySettingsPage` - User profile and settings
 
-Run the database setup SQL script (see [Database Setup](#database-setup)).
+All pages work out-of-the-box with no props required!
 
-### 5. Import and use components
+### Manual Setup (Advanced)
+
+If you prefer manual control, you can use the layout components directly:
 
 ```typescript
 // Import layout components
@@ -415,7 +444,25 @@ The package exports components through these paths:
 // Main entry point - exports all public APIs
 import { ... } from "hazo_auth";
 
-// Layout components - one export per auth flow
+// Zero-config page components (recommended for quick setup)
+import { LoginPage } from "hazo_auth/pages/login";
+import { RegisterPage } from "hazo_auth/pages/register";
+import { ForgotPasswordPage } from "hazo_auth/pages/forgot_password";
+import { ResetPasswordPage } from "hazo_auth/pages/reset_password";
+import { VerifyEmailPage } from "hazo_auth/pages/verify_email";
+import { MySettingsPage } from "hazo_auth/pages/my_settings";
+
+// Or import all pages at once
+import { 
+  LoginPage, 
+  RegisterPage, 
+  ForgotPasswordPage,
+  ResetPasswordPage,
+  VerifyEmailPage,
+  MySettingsPage 
+} from "hazo_auth/pages";
+
+// Layout components - for custom implementations
 import { LoginLayout } from "hazo_auth/components/layouts/login";
 import { RegisterLayout } from "hazo_auth/components/layouts/register";
 import { ForgotPasswordLayout } from "hazo_auth/components/layouts/forgot_password";
@@ -903,22 +950,21 @@ This compiles the `src/` directory to `dist/` with:
 
 ### Package Exports
 
-The `package.json` exports field defines the public API. The package exposes only the main entry points:
+The `package.json` exports field defines the public API:
 
 ```json
 {
   "exports": {
     ".": "./dist/index.js",
+    "./pages": "./dist/page_components/index.js",
+    "./pages/login": "./dist/page_components/login.js",
+    "./pages/register": "./dist/page_components/register.js",
     "./components/layouts/login": "./dist/components/layouts/login/index.js",
     "./components/layouts/register": "./dist/components/layouts/register/index.js",
-    "./components/layouts/forgot_password": "./dist/components/layouts/forgot_password/index.js",
-    "./components/layouts/reset_password": "./dist/components/layouts/reset_password/index.js",
-    "./components/layouts/email_verification": "./dist/components/layouts/email_verification/index.js",
-    "./components/layouts/my_settings": "./dist/components/layouts/my_settings/index.js",
-    "./components/layouts/user_management": "./dist/components/layouts/user_management/index.js",
     "./components/layouts/shared": "./dist/components/layouts/shared/index.js",
     "./lib/auth/hazo_get_auth.server": "./dist/lib/auth/hazo_get_auth.server.js",
-    "./server": "./dist/server/index.js"
+    "./server": "./dist/server/index.js",
+    "./server/routes": "./dist/server/routes/index.js"
   }
 }
 ```
