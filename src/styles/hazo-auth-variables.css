@@ -1,0 +1,61 @@
+/* 
+ * file_description: CSS custom properties for hazo_auth theming
+ * 
+ * These variables provide dark mode support for hazo_auth components.
+ * 
+ * To customize, add these variables to your app's global CSS:
+ * 
+ * :root {
+ *   --hazo-bg-subtle: #your-light-bg;
+ *   --hazo-text-primary: #your-light-text;
+ * }
+ * .dark {
+ *   --hazo-bg-subtle: #your-dark-bg;
+ *   --hazo-text-primary: #your-dark-text;
+ * }
+ */
+
+/* section: light_mode_defaults */
+:root {
+  /* Background colors */
+  --hazo-bg-subtle: #f8fafc;      /* slate-50 */
+  --hazo-bg-muted: #f1f5f9;       /* slate-100 */
+  --hazo-bg-emphasis: #e2e8f0;    /* slate-200 */
+  
+  /* Text colors */
+  --hazo-text-primary: #0f172a;   /* slate-900 */
+  --hazo-text-secondary: #334155; /* slate-700 */
+  --hazo-text-muted: #64748b;     /* slate-500 */
+  --hazo-text-subtle: #94a3b8;    /* slate-400 */
+  
+  /* Border colors */
+  --hazo-border: #e2e8f0;         /* slate-200 */
+  --hazo-border-emphasis: #cbd5e1;/* slate-300 */
+  
+  /* Interactive states */
+  --hazo-ring: #3b82f6;           /* blue-500 */
+  --hazo-ring-light: #bfdbfe;     /* blue-200 */
+}
+
+/* section: dark_mode_overrides */
+.dark {
+  /* Background colors */
+  --hazo-bg-subtle: #18181b;      /* zinc-900 */
+  --hazo-bg-muted: #27272a;       /* zinc-800 */
+  --hazo-bg-emphasis: #3f3f46;    /* zinc-700 */
+  
+  /* Text colors */
+  --hazo-text-primary: #fafafa;   /* zinc-50 */
+  --hazo-text-secondary: #d4d4d8; /* zinc-300 */
+  --hazo-text-muted: #a1a1aa;     /* zinc-400 */
+  --hazo-text-subtle: #71717a;    /* zinc-500 */
+  
+  /* Border colors */
+  --hazo-border: #3f3f46;         /* zinc-700 */
+  --hazo-border-emphasis: #52525b;/* zinc-600 */
+  
+  /* Interactive states */
+  --hazo-ring: #60a5fa;           /* blue-400 */
+  --hazo-ring-light: #1e3a5f;     /* blue-900-ish */
+}
+

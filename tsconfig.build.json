@@ -26,7 +26,8 @@
     "src/server/**/*",
     "src/cli/**/*",
     "src/page_components/**/*",
-    "src/index.ts"
+    "src/index.ts",
+    "src/client.ts"
   ],
   "exclude": [
     "node_modules",

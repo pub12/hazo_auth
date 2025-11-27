@@ -1,7 +1,12 @@
 // file_description: init command for hazo_auth
 // Creates directories and copies config files to consuming projects
+import { fileURLToPath } from "url";
 import * as fs from "fs";
 import * as path from "path";
+// section: esm_shim
+// ESM-compatible __dirname shim
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 // section: constants
 const REQUIRED_DIRECTORIES = [
     "public/profile_pictures/library",

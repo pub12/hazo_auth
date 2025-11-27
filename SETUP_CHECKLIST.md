@@ -60,7 +60,61 @@ ls node_modules/hazo_auth/package.json
 # Expected: file exists
 ```
 
-### Step 1.2: Initialize project (Recommended)
+### Step 1.2: Install Required shadcn/ui Components
+
+hazo_auth uses shadcn/ui components. Install the required dependencies:
+
+**For all auth pages (login, register, etc.):**
+```bash
+npx shadcn@latest add button input label
+```
+
+**For My Settings page:**
+```bash
+npx shadcn@latest add dialog tabs switch avatar dropdown-menu
+```
+
+**For toast notifications:**
+```bash
+npx shadcn@latest add sonner
+```
+
+**Add Toaster to your app layout:**
+
+Edit `app/layout.tsx` and add the Toaster component:
+
+```tsx
+import { Toaster } from "sonner";
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Toaster />
+      </body>
+    </html>
+  );
+}
+```
+
+### Step 1.4: Enable Dark Mode Support (Optional)
+
+hazo_auth components support dark mode via CSS custom properties. Add the CSS variables to your global styles:
+
+**Copy the CSS variables file:**
+```bash
+cp node_modules/hazo_auth/src/styles/hazo-auth-variables.css ./app/hazo-auth-theme.css
+```
+
+**Import in your global styles (`app/globals.css`):**
+```css
+@import "./hazo-auth-theme.css";
+```
+
+Or add the variables directly to your CSS - see the file for all available variables.
+
+### Step 1.5: Initialize project (Recommended)
 
 Use the CLI to automatically set up directories and copy config files:
 

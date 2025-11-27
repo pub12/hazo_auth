@@ -1,8 +1,14 @@
 // file_description: init command for hazo_auth
 // Creates directories and copies config files to consuming projects
 
+import { fileURLToPath } from "url";
 import * as fs from "fs";
 import * as path from "path";
+
+// section: esm_shim
+// ESM-compatible __dirname shim
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // section: types
 type InitResult = {
@@ -246,4 +252,3 @@ export function handle_init(): void {
   console.log("  4. Run \x1b[36mnpx hazo_auth validate\x1b[0m to check your setup");
   console.log();
 }
-

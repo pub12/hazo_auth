@@ -29,5 +29,5 @@ export function ProfilePictureDisplay({ profilePictureUrl, name, email, onEdit, 
         return "?";
     };
     const initials = getInitials();
-    return (_jsx("div", { className: "cls_profile_picture_display", children: _jsxs(Avatar, { className: "cls_profile_picture_display_avatar h-32 w-32", children: [_jsx(AvatarImage, { src: profilePictureUrl, alt: name ? `Profile picture of ${name}` : "Profile picture", className: "cls_profile_picture_display_image" }), _jsx(AvatarFallback, { className: "cls_profile_picture_display_fallback bg-slate-200 text-slate-600 text-3xl", children: initials })] }) }));
+    return (_jsx("div", { className: "cls_profile_picture_display", children: _jsxs(Avatar, { className: "cls_profile_picture_display_avatar h-32 w-32", children: [_jsx(AvatarImage, { src: profilePictureUrl, alt: name ? `Profile picture of ${name}` : "Profile picture", className: "cls_profile_picture_display_image" }), _jsx(AvatarFallback, { className: "cls_profile_picture_display_fallback bg-[var(--hazo-bg-emphasis)] text-[var(--hazo-text-muted)] text-3xl", children: initials })] }) }));
 }

@@ -231,7 +231,7 @@ export function PasswordChangeDialog({
             }
           />
           {passwordRequirementsList.length > 0 && (
-            <div className="cls_password_change_dialog_requirements text-xs text-slate-600">
+            <div className="cls_password_change_dialog_requirements text-xs text-[var(--hazo-text-muted)]">
               <p className="cls_password_change_dialog_requirements_label font-medium mb-1">
                 Password requirements:
               </p>

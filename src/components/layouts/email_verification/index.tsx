@@ -31,6 +31,7 @@ import {
 import { type LayoutDataClient } from "../shared/data/layout_data_client";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
+import Link from "next/link";
 
 // section: types
 export type EmailVerificationLayoutProps<TClient = unknown> = {
@@ -44,6 +45,7 @@ export type EmailVerificationLayoutProps<TClient = unknown> = {
   error_labels?: Partial<EmailVerificationErrorLabels>;
   redirect_delay?: number;
   login_path?: string;
+  sign_in_label?: string;
   already_logged_in_message?: string;
   showLogoutButton?: boolean;
   showReturnHomeButton?: boolean;
@@ -70,6 +72,7 @@ export default function email_verification_layout<TClient>({
   error_labels,
   redirect_delay = 5,
   login_path = "/hazo_auth/login",
+  sign_in_label = "Sign in",
   data_client,
   already_logged_in_message,
   showLogoutButton = true,
@@ -287,6 +290,15 @@ export default function email_verification_layout<TClient>({
                 </div>
               )}
             </form>
+            <div className="cls_email_verification_sign_in_link mt-4 text-center text-sm text-slate-600">
+              Already verified?{" "}
+              <Link
+                href={login_path}
+                className="font-medium text-slate-900 hover:underline"
+              >
+                {sign_in_label}
+              </Link>
+            </div>
           </div>
         </>
       }

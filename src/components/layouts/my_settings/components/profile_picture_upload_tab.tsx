@@ -207,7 +207,7 @@ export function ProfilePictureUploadTab({
         />
         <Label
           htmlFor="use-upload"
-          className="cls_profile_picture_upload_tab_switch_label text-sm font-medium text-slate-700 cursor-pointer"
+          className="cls_profile_picture_upload_tab_switch_label text-sm font-medium text-[var(--hazo-text-secondary)] cursor-pointer"
         >
           Use uploaded photo
         </Label>
@@ -226,7 +226,7 @@ export function ProfilePictureUploadTab({
       <div className="cls_profile_picture_upload_tab_content grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left column: Dropzone */}
         <div className="cls_profile_picture_upload_tab_dropzone_container flex flex-col gap-2">
-          <Label className="cls_profile_picture_upload_tab_dropzone_label text-sm font-medium text-slate-700">
+          <Label className="cls_profile_picture_upload_tab_dropzone_label text-sm font-medium text-[var(--hazo-text-secondary)]">
             Upload Photo
           </Label>
           <div
@@ -235,8 +235,8 @@ export function ProfilePictureUploadTab({
               flex flex-col items-center justify-center
               border-2 border-dashed rounded-lg p-8
               transition-colors
-              ${dragActive ? "border-blue-500 bg-blue-50" : "border-slate-300 bg-slate-50"}
-              ${disabled || !uploadEnabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-slate-400"}
+              ${dragActive ? "border-blue-500 bg-blue-50" : "border-[var(--hazo-border-emphasis)] bg-[var(--hazo-bg-subtle)]"}
+              ${disabled || !uploadEnabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-[var(--hazo-border-emphasis)]"}
             `}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -257,11 +257,11 @@ export function ProfilePictureUploadTab({
               className="hidden"
               aria-label="Upload profile picture"
             />
-            <Upload className="h-8 w-8 text-slate-400 mb-2" aria-hidden="true" />
-            <p className="cls_profile_picture_upload_tab_dropzone_text text-sm text-slate-600 text-center">
+            <Upload className="h-8 w-8 text-[var(--hazo-text-subtle)] mb-2" aria-hidden="true" />
+            <p className="cls_profile_picture_upload_tab_dropzone_text text-sm text-[var(--hazo-text-muted)] text-center">
               Drag and drop an image here, or click to select
             </p>
-            <p className="cls_profile_picture_upload_tab_dropzone_hint text-xs text-slate-500 text-center mt-1">
+            <p className="cls_profile_picture_upload_tab_dropzone_hint text-xs text-[var(--hazo-text-muted)] text-center mt-1">
               JPG or PNG, max {Math.round(maxSize / 1024)}KB
             </p>
           </div>
@@ -274,21 +274,21 @@ export function ProfilePictureUploadTab({
 
         {/* Right column: Preview */}
         <div className="cls_profile_picture_upload_tab_preview_container flex flex-col gap-2">
-          <Label className="cls_profile_picture_upload_tab_preview_label text-sm font-medium text-slate-700">
+          <Label className="cls_profile_picture_upload_tab_preview_label text-sm font-medium text-[var(--hazo-text-secondary)]">
             {isNewImage ? "Preview (new)" : "Preview (current)"}
           </Label>
-          <div className="cls_profile_picture_upload_tab_preview_content flex flex-col items-center justify-center border border-slate-200 rounded-lg p-6 bg-slate-50 min-h-[200px]">
+          <div className="cls_profile_picture_upload_tab_preview_content flex flex-col items-center justify-center border border-[var(--hazo-border)] rounded-lg p-6 bg-[var(--hazo-bg-subtle)] min-h-[200px]">
             {compressing ? (
               <div className="cls_profile_picture_upload_tab_compressing flex flex-col items-center gap-2">
-                <Loader2 className="h-8 w-8 text-slate-400 animate-spin" aria-hidden="true" />
-                <p className="cls_profile_picture_upload_tab_compressing_text text-sm text-slate-600">
+                <Loader2 className="h-8 w-8 text-[var(--hazo-text-subtle)] animate-spin" aria-hidden="true" />
+                <p className="cls_profile_picture_upload_tab_compressing_text text-sm text-[var(--hazo-text-muted)]">
                   Compressing image...
                 </p>
               </div>
             ) : uploading ? (
               <div className="cls_profile_picture_upload_tab_uploading flex flex-col items-center gap-2">
-                <Loader2 className="h-8 w-8 text-slate-400 animate-spin" aria-hidden="true" />
-                <p className="cls_profile_picture_upload_tab_uploading_text text-sm text-slate-600">
+                <Loader2 className="h-8 w-8 text-[var(--hazo-text-subtle)] animate-spin" aria-hidden="true" />
+                <p className="cls_profile_picture_upload_tab_uploading_text text-sm text-[var(--hazo-text-muted)]">
                   Uploading...
                 </p>
               </div>
@@ -301,7 +301,7 @@ export function ProfilePictureUploadTab({
                       alt="Uploaded profile picture preview"
                       className="cls_profile_picture_upload_tab_preview_avatar_image"
                     />
-                    <AvatarFallback className="cls_profile_picture_upload_tab_preview_avatar_fallback bg-slate-200 text-slate-600 text-3xl">
+                    <AvatarFallback className="cls_profile_picture_upload_tab_preview_avatar_fallback bg-[var(--hazo-bg-emphasis)] text-[var(--hazo-text-muted)] text-3xl">
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>
@@ -310,24 +310,24 @@ export function ProfilePictureUploadTab({
                     onClick={handleRemove}
                     variant="ghost"
                     size="icon"
-                    className="cls_profile_picture_upload_tab_preview_remove absolute -top-2 -right-2 rounded-full h-6 w-6 border border-slate-300 bg-white hover:bg-slate-50"
+                    className="cls_profile_picture_upload_tab_preview_remove absolute -top-2 -right-2 rounded-full h-6 w-6 border border-[var(--hazo-border-emphasis)] bg-white hover:bg-[var(--hazo-bg-subtle)]"
                     aria-label="Remove preview"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
-                <p className="cls_profile_picture_upload_tab_preview_success_text text-sm text-slate-600 text-center">
+                <p className="cls_profile_picture_upload_tab_preview_success_text text-sm text-[var(--hazo-text-muted)] text-center">
                   Preview of your uploaded photo
                 </p>
               </div>
             ) : (
               <div className="cls_profile_picture_upload_tab_preview_empty flex flex-col items-center gap-2">
                 <Avatar className="cls_profile_picture_upload_tab_preview_empty_avatar h-32 w-32">
-                  <AvatarFallback className="cls_profile_picture_upload_tab_preview_empty_avatar_fallback bg-slate-200 text-slate-600 text-3xl">
+                  <AvatarFallback className="cls_profile_picture_upload_tab_preview_empty_avatar_fallback bg-[var(--hazo-bg-emphasis)] text-[var(--hazo-text-muted)] text-3xl">
                     {getInitials()}
                   </AvatarFallback>
                 </Avatar>
-                <p className="cls_profile_picture_upload_tab_preview_empty_text text-sm text-slate-500 text-center">
+                <p className="cls_profile_picture_upload_tab_preview_empty_text text-sm text-[var(--hazo-text-muted)] text-center">
                   Upload an image to see preview
                 </p>
               </div>

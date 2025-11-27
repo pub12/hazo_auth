@@ -81,14 +81,14 @@ export function ProfilePictureGravatarTab({
         />
         <Label
           htmlFor="use-gravatar"
-          className="cls_profile_picture_gravatar_tab_switch_label text-sm font-medium text-slate-700 cursor-pointer"
+          className="cls_profile_picture_gravatar_tab_switch_label text-sm font-medium text-[var(--hazo-text-secondary)] cursor-pointer"
         >
           Use Gravatar photo
         </Label>
       </div>
 
       {/* Preview */}
-      <div className="cls_profile_picture_gravatar_tab_preview flex flex-col items-center gap-4 p-6 border border-slate-200 rounded-lg bg-slate-50">
+      <div className="cls_profile_picture_gravatar_tab_preview flex flex-col items-center gap-4 p-6 border border-[var(--hazo-border)] rounded-lg bg-[var(--hazo-bg-subtle)]">
         {gravatarExists === true ? (
           <>
             <Avatar className="cls_profile_picture_gravatar_tab_avatar h-32 w-32">
@@ -97,28 +97,28 @@ export function ProfilePictureGravatarTab({
                 alt="Gravatar profile picture"
                 className="cls_profile_picture_gravatar_tab_avatar_image"
               />
-              <AvatarFallback className="cls_profile_picture_gravatar_tab_avatar_fallback bg-slate-200 text-slate-600 text-3xl">
+              <AvatarFallback className="cls_profile_picture_gravatar_tab_avatar_fallback bg-[var(--hazo-bg-emphasis)] text-[var(--hazo-text-muted)] text-3xl">
                 {getInitials()}
               </AvatarFallback>
             </Avatar>
-            <p className="cls_profile_picture_gravatar_tab_success_text text-sm text-slate-600 text-center">
+            <p className="cls_profile_picture_gravatar_tab_success_text text-sm text-[var(--hazo-text-muted)] text-center">
               Your Gravatar is available and will be used as your profile picture.
             </p>
           </>
         ) : gravatarExists === false ? (
           <>
             <div className="cls_profile_picture_gravatar_tab_no_gravatar flex flex-col items-center gap-4">
-              <div className="cls_profile_picture_gravatar_tab_no_gravatar_icon flex items-center justify-center w-16 h-16 rounded-full bg-slate-100">
-                <Info className="h-8 w-8 text-slate-400" aria-hidden="true" />
+              <div className="cls_profile_picture_gravatar_tab_no_gravatar_icon flex items-center justify-center w-16 h-16 rounded-full bg-[var(--hazo-bg-muted)]">
+                <Info className="h-8 w-8 text-[var(--hazo-text-subtle)]" aria-hidden="true" />
               </div>
               <div className="cls_profile_picture_gravatar_tab_no_gravatar_content flex flex-col gap-2 text-center">
-                <p className="cls_profile_picture_gravatar_tab_no_gravatar_title text-sm font-medium text-slate-900">
+                <p className="cls_profile_picture_gravatar_tab_no_gravatar_title text-sm font-medium text-[var(--hazo-text-primary)]">
                   No Gravatar found
                 </p>
-                <p className="cls_profile_picture_gravatar_tab_no_gravatar_message text-sm text-slate-600">
+                <p className="cls_profile_picture_gravatar_tab_no_gravatar_message text-sm text-[var(--hazo-text-muted)]">
                   {gravatarSetupMessage} <span className="font-semibold">{email}</span>:
                 </p>
-                <ol className="cls_profile_picture_gravatar_tab_no_gravatar_steps text-sm text-slate-600 list-decimal list-inside space-y-1 mt-2">
+                <ol className="cls_profile_picture_gravatar_tab_no_gravatar_steps text-sm text-[var(--hazo-text-muted)] list-decimal list-inside space-y-1 mt-2">
                   <li>Visit <a href="https://gravatar.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 underline">gravatar.com</a></li>
                   <li>Sign up or log in with your email: <span className="font-mono text-xs">{email}</span></li>
                   <li>Upload a profile picture</li>
@@ -130,7 +130,7 @@ export function ProfilePictureGravatarTab({
         ) : (
           <>
             <div className="cls_profile_picture_gravatar_tab_loading flex items-center justify-center">
-              <p className="cls_profile_picture_gravatar_tab_loading_text text-sm text-slate-600">
+              <p className="cls_profile_picture_gravatar_tab_loading_text text-sm text-[var(--hazo-text-muted)]">
                 Checking Gravatar...
               </p>
             </div>

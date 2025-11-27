@@ -169,7 +169,7 @@ export function ProfilePictureLibraryTab({
         />
         <Label
           htmlFor="use-library"
-          className="cls_profile_picture_library_tab_switch_label text-sm font-medium text-slate-700 cursor-pointer"
+          className="cls_profile_picture_library_tab_switch_label text-sm font-medium text-[var(--hazo-text-secondary)] cursor-pointer"
         >
           Use library photo
         <HazoUITooltip
@@ -184,12 +184,12 @@ export function ProfilePictureLibraryTab({
       <div className="cls_profile_picture_library_tab_content grid grid-cols-12 gap-4">
         {/* Left column: Category tabs (25% - 3 columns) */}
         <div className="cls_profile_picture_library_tab_categories_container flex flex-col gap-2 col-span-3">
-          <Label className="cls_profile_picture_library_tab_categories_label text-sm font-medium text-slate-700">
+          <Label className="cls_profile_picture_library_tab_categories_label text-sm font-medium text-[var(--hazo-text-secondary)]">
             Categories
           </Label>
           {loadingCategories ? (
-            <div className="cls_profile_picture_library_tab_loading flex items-center justify-center p-8 border border-slate-200 rounded-lg bg-slate-50 min-h-[400px]">
-              <Loader2 className="h-6 w-6 text-slate-400 animate-spin" aria-hidden="true" />
+            <div className="cls_profile_picture_library_tab_loading flex items-center justify-center p-8 border border-[var(--hazo-border)] rounded-lg bg-[var(--hazo-bg-subtle)] min-h-[400px]">
+              <Loader2 className="h-6 w-6 text-[var(--hazo-text-subtle)] animate-spin" aria-hidden="true" />
             </div>
           ) : categories.length > 0 ? (
             <VerticalTabs
@@ -210,8 +210,8 @@ export function ProfilePictureLibraryTab({
               </VerticalTabsList>
             </VerticalTabs>
           ) : (
-            <div className="cls_profile_picture_library_tab_no_categories flex items-center justify-center p-8 border border-slate-200 rounded-lg bg-slate-50 min-h-[400px]">
-              <p className="cls_profile_picture_library_tab_no_categories_text text-sm text-slate-600">
+            <div className="cls_profile_picture_library_tab_no_categories flex items-center justify-center p-8 border border-[var(--hazo-border)] rounded-lg bg-[var(--hazo-bg-subtle)] min-h-[400px]">
+              <p className="cls_profile_picture_library_tab_no_categories_text text-sm text-[var(--hazo-text-muted)]">
                 No categories available
               </p>
             </div>
@@ -220,15 +220,15 @@ export function ProfilePictureLibraryTab({
 
         {/* Middle column: Photo grid (50% - 6 columns) */}
         <div className="cls_profile_picture_library_tab_photos_container flex flex-col gap-2 col-span-6">
-          <Label className="cls_profile_picture_library_tab_photos_label text-sm font-medium text-slate-700">
+          <Label className="cls_profile_picture_library_tab_photos_label text-sm font-medium text-[var(--hazo-text-secondary)]">
             Photos
           </Label>
           {loadingPhotos ? (
-            <div className="cls_profile_picture_library_tab_photos_loading flex items-center justify-center p-8 border border-slate-200 rounded-lg bg-slate-50 min-h-[400px]">
-              <Loader2 className="h-6 w-6 text-slate-400 animate-spin" aria-hidden="true" />
+            <div className="cls_profile_picture_library_tab_photos_loading flex items-center justify-center p-8 border border-[var(--hazo-border)] rounded-lg bg-[var(--hazo-bg-subtle)] min-h-[400px]">
+              <Loader2 className="h-6 w-6 text-[var(--hazo-text-subtle)] animate-spin" aria-hidden="true" />
             </div>
           ) : photos.length > 0 ? (
-            <div className={`cls_profile_picture_library_tab_photos_grid grid ${getGridColumnsClass(libraryPhotoGridColumns)} gap-3 overflow-y-auto p-4 border border-slate-200 rounded-lg bg-slate-50 min-h-[400px] max-h-[400px]`}>
+            <div className={`cls_profile_picture_library_tab_photos_grid grid ${getGridColumnsClass(libraryPhotoGridColumns)} gap-3 overflow-y-auto p-4 border border-[var(--hazo-border)] rounded-lg bg-[var(--hazo-bg-subtle)] min-h-[400px] max-h-[400px]`}>
               {photos.map((photoUrl) => (
                 <button
                   key={photoUrl}
@@ -237,7 +237,7 @@ export function ProfilePictureLibraryTab({
                   className={`
                     cls_profile_picture_library_tab_photo_thumbnail
                     aspect-square rounded-lg overflow-hidden border-2 transition-colors cursor-pointer
-                    ${selectedPhoto === photoUrl ? "border-blue-500 ring-2 ring-blue-200" : "border-slate-200 hover:border-slate-300"}
+                    ${selectedPhoto === photoUrl ? "border-blue-500 ring-2 ring-blue-200" : "border-[var(--hazo-border)] hover:border-[var(--hazo-border-emphasis)]"}
                   `}
                   aria-label={`Select photo ${photoUrl.split('/').pop()}`}
                 >
@@ -256,8 +256,8 @@ export function ProfilePictureLibraryTab({
               ))}
             </div>
           ) : (
-            <div className="cls_profile_picture_library_tab_no_photos flex items-center justify-center p-8 border border-slate-200 rounded-lg bg-slate-50 min-h-[400px]">
-              <p className="cls_profile_picture_library_tab_no_photos_text text-sm text-slate-600">
+            <div className="cls_profile_picture_library_tab_no_photos flex items-center justify-center p-8 border border-[var(--hazo-border)] rounded-lg bg-[var(--hazo-bg-subtle)] min-h-[400px]">
+              <p className="cls_profile_picture_library_tab_no_photos_text text-sm text-[var(--hazo-text-muted)]">
                 No photos in this category
               </p>
             </div>
@@ -266,11 +266,11 @@ export function ProfilePictureLibraryTab({
 
         {/* Right column: Preview (25% - 3 columns) */}
         <div className="cls_profile_picture_library_tab_preview_container flex flex-col gap-2 col-span-3">
-          <Label className="cls_profile_picture_library_tab_preview_label text-sm font-medium text-slate-700">
+          <Label className="cls_profile_picture_library_tab_preview_label text-sm font-medium text-[var(--hazo-text-secondary)]">
             Preview
           </Label>
           {selectedPhoto ? (
-            <div className="cls_profile_picture_library_tab_preview flex flex-col items-center gap-4 p-4 border border-slate-200 rounded-lg bg-slate-50 min-h-[400px] justify-center">
+            <div className="cls_profile_picture_library_tab_preview flex flex-col items-center gap-4 p-4 border border-[var(--hazo-border)] rounded-lg bg-[var(--hazo-bg-subtle)] min-h-[400px] justify-center">
               <div className="cls_profile_picture_library_tab_preview_image_wrapper w-full flex items-center justify-center">
                 <img
                   src={selectedPhoto}
@@ -287,18 +287,18 @@ export function ProfilePictureLibraryTab({
                   }}
                 />
               </div>
-              <p className="cls_profile_picture_library_tab_preview_text text-sm text-slate-600 text-center">
+              <p className="cls_profile_picture_library_tab_preview_text text-sm text-[var(--hazo-text-muted)] text-center">
                 Selected photo preview
               </p>
             </div>
           ) : (
-            <div className="cls_profile_picture_library_tab_preview_empty flex flex-col items-center justify-center gap-2 p-8 border border-slate-200 rounded-lg bg-slate-50 min-h-[400px]">
+            <div className="cls_profile_picture_library_tab_preview_empty flex flex-col items-center justify-center gap-2 p-8 border border-[var(--hazo-border)] rounded-lg bg-[var(--hazo-bg-subtle)] min-h-[400px]">
               <Avatar className="cls_profile_picture_library_tab_preview_empty_avatar h-32 w-32">
-                <AvatarFallback className="cls_profile_picture_library_tab_preview_empty_avatar_fallback bg-slate-200 text-slate-600 text-3xl">
+                <AvatarFallback className="cls_profile_picture_library_tab_preview_empty_avatar_fallback bg-[var(--hazo-bg-emphasis)] text-[var(--hazo-text-muted)] text-3xl">
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>
-              <p className="cls_profile_picture_library_tab_preview_empty_text text-sm text-slate-500 text-center">
+              <p className="cls_profile_picture_library_tab_preview_empty_text text-sm text-[var(--hazo-text-muted)] text-center">
                 Select a photo to see preview
               </p>
             </div>

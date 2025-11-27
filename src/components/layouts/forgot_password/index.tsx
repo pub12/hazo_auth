@@ -25,6 +25,7 @@ import {
   type UseForgotPasswordFormResult,
 } from "./hooks/use_forgot_password_form";
 import { type LayoutDataClient } from "../shared/data/layout_data_client";
+import Link from "next/link";
 
 // section: types
 export type ForgotPasswordLayoutProps<TClient = unknown> = {
@@ -35,6 +36,8 @@ export type ForgotPasswordLayoutProps<TClient = unknown> = {
   labels?: LayoutLabelOverrides;
   button_colors?: ButtonPaletteOverrides;
   data_client: LayoutDataClient<TClient>;
+  sign_in_path?: string;
+  sign_in_label?: string;
   alreadyLoggedInMessage?: string;
   showLogoutButton?: boolean;
   showReturnHomeButton?: boolean;
@@ -57,6 +60,8 @@ export default function forgot_password_layout<TClient>({
   labels,
   button_colors,
   data_client,
+  sign_in_path = "/hazo_auth/login",
+  sign_in_label = "Sign in",
   alreadyLoggedInMessage = "You are already logged in",
   showLogoutButton = true,
   showReturnHomeButton = false,
@@ -159,6 +164,15 @@ export default function forgot_password_layout<TClient>({
                 </div>
               )}
             </form>
+            <div className="cls_forgot_password_sign_in_link mt-4 text-center text-sm text-slate-600">
+              Remember your password?{" "}
+              <Link
+                href={sign_in_path}
+                className="font-medium text-slate-900 hover:underline"
+              >
+                {sign_in_label}
+              </Link>
+            </div>
           </>
         }
       />

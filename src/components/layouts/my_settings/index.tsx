@@ -123,20 +123,20 @@ export default function my_settings_layout({
       loginButtonLabel={loginButtonLabel}
       loginPath={loginPath}
     >
-      <div className="cls_my_settings_layout flex flex-col gap-6 p-6 max-w-4xl mx-auto min-h-screen bg-slate-50">
+      <div className="cls_my_settings_layout flex flex-col gap-6 p-6 max-w-4xl mx-auto min-h-screen bg-[var(--hazo-bg-subtle)]">
         {/* Header Section */}
         <div className="cls_my_settings_layout_header flex flex-col gap-2">
-          <h1 className="cls_my_settings_layout_heading text-3xl font-bold text-slate-900">
+          <h1 className="cls_my_settings_layout_heading text-3xl font-bold text-[var(--hazo-text-primary)]">
             {heading}
           </h1>
-          <p className="cls_my_settings_layout_subheading text-slate-600">
+          <p className="cls_my_settings_layout_subheading text-[var(--hazo-text-muted)]">
             {subHeading}
           </p>
         </div>
 
         {/* Profile Photo Section */}
-        <div className="cls_my_settings_layout_profile_photo_section bg-white rounded-lg border border-slate-200 p-6">
-          <h2 className="cls_my_settings_layout_section_heading text-lg font-semibold text-slate-900 mb-4">
+        <div className="cls_my_settings_layout_profile_photo_section bg-white rounded-lg border border-[var(--hazo-border)] p-6">
+          <h2 className="cls_my_settings_layout_section_heading text-lg font-semibold text-[var(--hazo-text-primary)] mb-4">
             {profilePhotoLabel}
           </h2>
           <div className="cls_my_settings_layout_profile_photo_content flex flex-col items-center">
@@ -176,8 +176,8 @@ export default function my_settings_layout({
         </div>
 
         {/* Profile Information Section */}
-        <div className="cls_my_settings_layout_profile_information_section bg-white rounded-lg border border-slate-200 p-6">
-          <h2 className="cls_my_settings_layout_section_heading text-lg font-semibold text-slate-900 mb-4">
+        <div className="cls_my_settings_layout_profile_information_section bg-white rounded-lg border border-[var(--hazo-border)] p-6">
+          <h2 className="cls_my_settings_layout_section_heading text-lg font-semibold text-[var(--hazo-text-primary)] mb-4">
             {profileInformationLabel}
           </h2>
           <div className="cls_my_settings_layout_profile_information_fields grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -213,8 +213,8 @@ export default function my_settings_layout({
 
         {/* Password Section */}
         {userFields.show_password_field && (
-          <div className="cls_my_settings_layout_password_section bg-white rounded-lg border border-slate-200 p-6">
-            <h2 className="cls_my_settings_layout_section_heading text-lg font-semibold text-slate-900 mb-4">
+          <div className="cls_my_settings_layout_password_section bg-white rounded-lg border border-[var(--hazo-border)] p-6">
+            <h2 className="cls_my_settings_layout_section_heading text-lg font-semibold text-[var(--hazo-text-primary)] mb-4">
               {passwordLabel}
             </h2>
             <div className="cls_my_settings_layout_password_fields flex flex-col gap-6">

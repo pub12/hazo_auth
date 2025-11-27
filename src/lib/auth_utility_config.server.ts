@@ -80,12 +80,12 @@ export function get_auth_utility_config(): AuthUtilityConfig {
   const cache_ttl_minutes = get_config_number(
     section_name,
     "cache_ttl_minutes",
-    15,
+    5, // Default: 5 minutes
   );
   const cache_max_age_minutes = get_config_number(
     section_name,
     "cache_max_age_minutes",
-    30,
+    10, // Default: 10 minutes (force refresh threshold)
   );
 
   // Rate limiting

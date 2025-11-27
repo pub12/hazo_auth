@@ -193,7 +193,7 @@ export function ProfilePicMenu({
   if (authStatus.loading) {
     return (
       <div className={`cls_profile_pic_menu ${className || ""}`}>
-        <div className="h-10 w-10 rounded-full bg-slate-200 animate-pulse" />
+        <div className="h-10 w-10 rounded-full bg-[var(--hazo-bg-emphasis)] animate-pulse" />
       </div>
     );
   }
@@ -241,7 +241,7 @@ export function ProfilePicMenu({
                 alt={authStatus.name ? `Profile picture of ${authStatus.name}` : "Profile picture"}
                 className="cls_profile_pic_menu_image"
               />
-              <AvatarFallback className="cls_profile_pic_menu_fallback bg-slate-200 text-slate-600">
+              <AvatarFallback className="cls_profile_pic_menu_fallback bg-[var(--hazo-bg-emphasis)] text-[var(--hazo-text-muted)]">
                 {getInitials()}
               </AvatarFallback>
             </Avatar>

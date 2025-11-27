@@ -40,8 +40,8 @@ export function get_auth_utility_config() {
     const section_name = "hazo_auth__auth_utility";
     // Cache settings
     const cache_max_users = get_config_number(section_name, "cache_max_users", 10000);
-    const cache_ttl_minutes = get_config_number(section_name, "cache_ttl_minutes", 15);
-    const cache_max_age_minutes = get_config_number(section_name, "cache_max_age_minutes", 30);
+    const cache_ttl_minutes = get_config_number(section_name, "cache_ttl_minutes", 5);
+    const cache_max_age_minutes = get_config_number(section_name, "cache_max_age_minutes", 10);
     // Rate limiting
     const rate_limit_per_user = get_config_number(section_name, "rate_limit_per_user", 100);
     const rate_limit_per_ip = get_config_number(section_name, "rate_limit_per_ip", 200);

@@ -1,0 +1,1 @@
+{"version":3,"file":"user_profiles_config.server.d.ts","sourceRoot":"","sources":["../../src/lib/user_profiles_config.server.ts"],"names":[],"mappings":"AAQA;;GAEG;AACH,MAAM,MAAM,uBAAuB,GAAG;IACpC,aAAa,EAAE,OAAO,CAAC;IACvB,iBAAiB,EAAE,MAAM,CAAC;IAC1B,iBAAiB,EAAE,MAAM,CAAC;CAC3B,CAAC;AAIF;;;;GAIG;AACH,wBAAgB,8BAA8B,IAAI,uBAAuB,CA6BxE"}

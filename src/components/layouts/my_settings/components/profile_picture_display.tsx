@@ -56,7 +56,7 @@ export function ProfilePictureDisplay({
           alt={name ? `Profile picture of ${name}` : "Profile picture"}
           className="cls_profile_picture_display_image"
         />
-        <AvatarFallback className="cls_profile_picture_display_fallback bg-slate-200 text-slate-600 text-3xl">
+        <AvatarFallback className="cls_profile_picture_display_fallback bg-[var(--hazo-bg-emphasis)] text-[var(--hazo-text-muted)] text-3xl">
           {initials}
         </AvatarFallback>
       </Avatar>

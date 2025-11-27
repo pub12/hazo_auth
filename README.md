@@ -106,6 +106,132 @@ import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
 
 ---
 
+## Required Dependencies
+
+hazo_auth uses shadcn/ui components. Install the required dependencies in your project:
+
+```bash
+# Required for all auth pages
+npx shadcn@latest add button input label
+
+# Required for My Settings page
+npx shadcn@latest add dialog tabs switch avatar dropdown-menu
+
+# Required for toast notifications
+npx shadcn@latest add sonner
+```
+
+**Add Toaster to your app layout:**
+
+```tsx
+// app/layout.tsx
+import { Toaster } from "sonner";
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Toaster />
+      </body>
+    </html>
+  );
+}
+```
+
+---
+
+## Client vs Server Imports
+
+hazo_auth provides separate entry points for client and server code to avoid bundling Node.js modules in the browser:
+
+### Client Components
+
+For client components (browser-safe, no Node.js dependencies):
+
+```typescript
+// Use hazo_auth/client for client components
+import { 
+  ProfilePicMenu, 
+  use_auth_status, 
+  use_hazo_auth,
+  cn 
+} from "hazo_auth/client";
+```
+
+### Server Components / API Routes
+
+For server-side code (API routes, Server Components):
+
+```typescript
+// Use the main hazo_auth export for server-side code
+import { hazo_get_auth, get_config_value } from "hazo_auth";
+import { hazo_get_user_profiles } from "hazo_auth";
+```
+
+### Why This Matters
+
+If you import from the main `hazo_auth` entry in a client component, you'll get bundling errors like:
+```
+Module not found: Can't resolve 'fs'
+```
+
+Use `hazo_auth/client` to avoid this.
+
+---
+
+## Dark Mode / Theming
+
+hazo_auth supports dark mode via CSS custom properties. To enable dark mode:
+
+### 1. Import the theme CSS
+
+Copy the variables file to your project:
+
+```bash
+cp node_modules/hazo_auth/src/styles/hazo-auth-variables.css ./app/hazo-auth-theme.css
+```
+
+Import in your `globals.css`:
+
+```css
+@import "./hazo-auth-theme.css";
+```
+
+### 2. CSS Variables Reference
+
+You can customize the theme by overriding these variables:
+
+```css
+:root {
+  /* Backgrounds */
+  --hazo-bg-subtle: #f8fafc;      /* Light background */
+  --hazo-bg-muted: #f1f5f9;       /* Slightly darker background */
+  
+  /* Text */
+  --hazo-text-primary: #0f172a;   /* Primary text */
+  --hazo-text-secondary: #334155; /* Secondary text */
+  --hazo-text-muted: #64748b;     /* Muted/subtle text */
+  
+  /* Borders */
+  --hazo-border: #e2e8f0;         /* Standard border */
+}
+
+.dark {
+  /* Dark mode overrides */
+  --hazo-bg-subtle: #18181b;
+  --hazo-bg-muted: #27272a;
+  --hazo-text-primary: #fafafa;
+  --hazo-text-secondary: #d4d4d8;
+  --hazo-text-muted: #a1a1aa;
+  --hazo-border: #3f3f46;
+}
+```
+
+The dark class is typically added by next-themes or similar theme providers.
+
+---
+
 ## Configuration Setup
 
 After installing the package, you need to set up configuration files in your project root:

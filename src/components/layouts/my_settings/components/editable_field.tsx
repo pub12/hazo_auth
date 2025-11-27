@@ -99,7 +99,7 @@ export function EditableField({
 
   return (
     <div className="cls_editable_field flex flex-col gap-2">
-      <Label htmlFor={`editable-field-${label}`} className="cls_editable_field_label text-sm font-medium text-slate-700">
+      <Label htmlFor={`editable-field-${label}`} className="cls_editable_field_label text-sm font-medium text-[var(--hazo-text-secondary)]">
         {label}
       </Label>
       <div className="cls_editable_field_input_container flex items-center gap-2">
@@ -149,7 +149,7 @@ export function EditableField({
               disabled
               placeholder={value ? undefined : placeholder || "Not set"}
               aria-label={ariaLabel || label}
-              className="cls_editable_field_display flex-1 bg-slate-50 cursor-not-allowed"
+              className="cls_editable_field_display flex-1 bg-[var(--hazo-bg-subtle)] cursor-not-allowed"
             />
             {!disabled && (
               <Button
@@ -157,7 +157,7 @@ export function EditableField({
                 onClick={handleEdit}
                 variant="ghost"
                 size="icon"
-                className="cls_editable_field_edit_button text-slate-600 hover:text-slate-700 hover:bg-slate-50"
+                className="cls_editable_field_edit_button text-[var(--hazo-text-muted)] hover:text-[var(--hazo-text-secondary)] hover:bg-[var(--hazo-bg-subtle)]"
                 aria-label={`Edit ${label}`}
               >
                 <Pencil className="h-5 w-5" aria-hidden="true" />
