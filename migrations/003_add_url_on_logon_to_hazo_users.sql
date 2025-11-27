@@ -6,3 +6,4 @@ ALTER TABLE hazo_users
 ADD COLUMN url_on_logon TEXT;
 
 
+

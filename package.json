@@ -1,9 +1,12 @@
 {
   "name": "hazo_auth",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
+  "bin": {
+    "hazo_auth": "./dist/cli/index.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -48,36 +51,28 @@
     "./server": {
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.js"
+    },
+    "./server/routes": {
+      "types": "./dist/server/routes/index.d.ts",
+      "import": "./dist/server/routes/index.js"
     }
   },
   "files": [
     "dist/**/*",
-    "src/**/*",
-    "public/file.svg",
-    "public/globe.svg",
-    "public/next.svg",
-    "public/vercel.svg",
-    "public/window.svg",
     "public/profile_pictures/library/**/*",
     "hazo_auth_config.example.ini",
     "hazo_notify_config.example.ini",
     "README.md",
-    "LICENSE",
-    "tsconfig.json",
-    "tsconfig.build.json",
-    "tailwind.config.ts",
-    "postcss.config.mjs",
-    "next.config.mjs",
-    "components.json",
-    "instrumentation.ts",
-    "migrations/**/*",
-    "scripts/**/*"
+    "SETUP_CHECKLIST.md",
+    "LICENSE"
   ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "build:pkg": "tsc -p tsconfig.build.json",
     "prepublishOnly": "npm run build:pkg",
+    "validate": "tsx scripts/validate_setup.ts",
+    "generate-routes": "tsx scripts/generate_routes.ts",
     "start": "next start",
     "lint": "next lint",
     "storybook": "storybook dev -p 6006",
