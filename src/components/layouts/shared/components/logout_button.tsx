@@ -5,10 +5,10 @@
 // section: imports
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "hazo_auth/components/ui/button";
+import { Button } from "../../../ui/button";
 import { LogOut } from "lucide-react";
 import { toast } from "sonner";
-import { trigger_auth_status_refresh } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
+import { trigger_auth_status_refresh } from "../hooks/use_auth_status";
 
 // section: types
 export type LogoutButtonProps = {

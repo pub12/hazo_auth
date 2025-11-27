@@ -1,4 +1,4 @@
-import type { HazoAuthResult } from "hazo_auth/lib/auth/auth_types";
+import type { HazoAuthResult } from "../../../../lib/auth/auth_types";
 /**
  * Options for use_hazo_auth hook
  */

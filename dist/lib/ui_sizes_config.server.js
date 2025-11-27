@@ -1,6 +1,6 @@
 // file_description: server-only helper to read UI size configuration from hazo_auth_config.ini
 // section: imports
-import { get_config_number } from "hazo_auth/lib/config/config_loader.server";
+import { get_config_number } from "./config/config_loader.server";
 // section: helpers
 /**
  * Reads UI size configuration from hazo_auth_config.ini file

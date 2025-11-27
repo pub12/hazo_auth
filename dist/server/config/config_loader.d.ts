@@ -1,4 +1,4 @@
-import type { app_context, captcha_settings, logger_service, password_policy, rate_limit_settings, runtime_configuration, token_settings } from "hazo_auth/server/types/app_types";
+import type { app_context, captcha_settings, logger_service, password_policy, rate_limit_settings, runtime_configuration, token_settings } from "../types/app_types";
 type direct_configuration_input = {
     permission_names?: string[];
     templates?: Record<string, string>;

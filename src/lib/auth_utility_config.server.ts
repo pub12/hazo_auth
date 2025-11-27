@@ -5,7 +5,7 @@ import {
   get_config_number,
   get_config_boolean,
   get_config_array,
-} from "hazo_auth/lib/config/config_loader.server";
+} from "./config/config_loader.server";
 
 // section: types
 

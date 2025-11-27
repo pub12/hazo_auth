@@ -10,11 +10,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "hazo_auth/components/ui/dialog";
-import { Button } from "hazo_auth/components/ui/button";
-import { PasswordField } from "hazo_auth/components/layouts/shared/components/password_field";
-import { FormFieldWrapper } from "hazo_auth/components/layouts/shared/components/form_field_wrapper";
-import type { PasswordRequirementOptions } from "hazo_auth/components/layouts/shared/config/layout_customization";
+} from "../../../ui/dialog";
+import { Button } from "../../../ui/button";
+import { PasswordField } from "../../shared/components/password_field";
+import { FormFieldWrapper } from "../../shared/components/form_field_wrapper";
+import type { PasswordRequirementOptions } from "../../shared/config/layout_customization";
 
 // section: types
 export type ButtonPalette = {

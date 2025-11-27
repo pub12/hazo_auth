@@ -1,8 +1,8 @@
 import { createCrudService } from "hazo_connect/server";
 import argon2 from "argon2";
-import { get_password_requirements_config } from "hazo_auth/lib/password_requirements_config.server";
-import { send_template_email } from "hazo_auth/lib/services/email_service";
-import { create_app_logger } from "hazo_auth/lib/app_logger";
+import { get_password_requirements_config } from "../password_requirements_config.server";
+import { send_template_email } from "./email_service";
+import { create_app_logger } from "../app_logger";
 // section: helpers
 /**
  * Changes a user's password

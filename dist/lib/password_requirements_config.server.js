@@ -1,6 +1,6 @@
 // file_description: server-only helper to read shared password requirements configuration from hazo_auth_config.ini
 // section: imports
-import { get_config_number, get_config_boolean } from "hazo_auth/lib/config/config_loader.server";
+import { get_config_number, get_config_boolean } from "./config/config_loader.server";
 // section: helpers
 /**
  * Reads shared password requirements configuration from hazo_auth_config.ini file

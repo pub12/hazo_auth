@@ -4,15 +4,15 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
 import Link from "next/link";
-import { Input } from "hazo_auth/components/ui/input";
-import { PasswordField } from "hazo_auth/components/layouts/shared/components/password_field";
-import { FormFieldWrapper } from "hazo_auth/components/layouts/shared/components/form_field_wrapper";
-import { FormHeader } from "hazo_auth/components/layouts/shared/components/form_header";
-import { FormActionButtons } from "hazo_auth/components/layouts/shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "hazo_auth/components/layouts/shared/components/two_column_auth_layout";
-import { AlreadyLoggedInGuard } from "hazo_auth/components/layouts/shared/components/already_logged_in_guard";
-import { REGISTER_FIELD_IDS, createRegisterFieldDefinitions, resolveRegisterButtonPalette, resolveRegisterLabels, resolveRegisterPasswordRequirements, } from "hazo_auth/components/layouts/register/config/register_field_config";
-import { use_register_form, } from "hazo_auth/components/layouts/register/hooks/use_register_form";
+import { Input } from "../../ui/input";
+import { PasswordField } from "../shared/components/password_field";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
+import { FormHeader } from "../shared/components/form_header";
+import { FormActionButtons } from "../shared/components/form_action_buttons";
+import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
+import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
+import { REGISTER_FIELD_IDS, createRegisterFieldDefinitions, resolveRegisterButtonPalette, resolveRegisterLabels, resolveRegisterPasswordRequirements, } from "./config/register_field_config";
+import { use_register_form, } from "./hooks/use_register_form";
 const ORDERED_FIELDS = [
     REGISTER_FIELD_IDS.NAME,
     REGISTER_FIELD_IDS.EMAIL,

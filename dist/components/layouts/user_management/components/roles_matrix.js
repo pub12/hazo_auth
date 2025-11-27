@@ -4,15 +4,15 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
 import { useState, useEffect } from "react";
-import { Button } from "hazo_auth/components/ui/button";
-import { Checkbox } from "hazo_auth/components/ui/checkbox";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "hazo_auth/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "hazo_auth/components/ui/dialog";
-import { Input } from "hazo_auth/components/ui/input";
-import { Label } from "hazo_auth/components/ui/label";
+import { Button } from "../../../ui/button";
+import { Checkbox } from "../../../ui/checkbox";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "../../../ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "../../../ui/dialog";
+import { Input } from "../../../ui/input";
+import { Label } from "../../../ui/label";
 import { Plus, Loader2, CircleCheck, CircleX } from "lucide-react";
 import { toast } from "sonner";
-import { Avatar, AvatarImage, AvatarFallback } from "hazo_auth/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
 // section: component
 /**
  * Roles matrix component - reusable internal component for roles-permissions matrix

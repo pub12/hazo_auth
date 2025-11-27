@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { EMAIL_VERIFICATION_FIELD_IDS } from "hazo_auth/components/layouts/email_verification/config/email_verification_field_config";
-import { validateEmail } from "hazo_auth/components/layouts/shared/utils/validation";
+import { EMAIL_VERIFICATION_FIELD_IDS } from "../config/email_verification_field_config";
+import { validateEmail } from "../../shared/utils/validation";
 // section: helpers
 const buildInitialValues = (initialEmail) => ({
     [EMAIL_VERIFICATION_FIELD_IDS.EMAIL]: initialEmail || "",

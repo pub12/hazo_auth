@@ -57,12 +57,13 @@ Run the database setup SQL script (see [Database Setup](#database-setup)).
 // Import layout components
 import { LoginLayout } from "hazo_auth/components/layouts/login";
 import { RegisterLayout } from "hazo_auth/components/layouts/register";
+import { ForgotPasswordLayout } from "hazo_auth/components/layouts/forgot_password";
+import { ResetPasswordLayout } from "hazo_auth/components/layouts/reset_password";
+import { EmailVerificationLayout } from "hazo_auth/components/layouts/email_verification";
+import { MySettingsLayout } from "hazo_auth/components/layouts/my_settings";
+import { UserManagementLayout } from "hazo_auth/components/layouts/user_management";
 
-// Import UI components
-import { Button } from "hazo_auth/components/ui/button";
-import { Input } from "hazo_auth/components/ui/input";
-
-// Import shared components and hooks (recommended - uses barrel exports)
+// Import shared components and hooks from barrel export
 import { 
   ProfilePicMenu, 
   ProfilePicMenuWrapper,
@@ -70,13 +71,8 @@ import {
   use_auth_status 
 } from "hazo_auth/components/layouts/shared";
 
-// OR import hooks directly
-import { use_hazo_auth } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
-import { use_auth_status } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
-
 // Import server-side utilities
 import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
-import { get_authenticated_user } from "hazo_auth/lib/auth/auth_utils.server";
 ```
 
 ---
@@ -419,20 +415,14 @@ The package exports components through these paths:
 // Main entry point - exports all public APIs
 import { ... } from "hazo_auth";
 
-// Layout components
+// Layout components - one export per auth flow
 import { LoginLayout } from "hazo_auth/components/layouts/login";
 import { RegisterLayout } from "hazo_auth/components/layouts/register";
 import { ForgotPasswordLayout } from "hazo_auth/components/layouts/forgot_password";
 import { ResetPasswordLayout } from "hazo_auth/components/layouts/reset_password";
-import { EmailVerificationLayout } from "hazo_auth/components/layouts/verify_email";
+import { EmailVerificationLayout } from "hazo_auth/components/layouts/email_verification";
 import { MySettingsLayout } from "hazo_auth/components/layouts/my_settings";
 import { UserManagementLayout } from "hazo_auth/components/layouts/user_management";
-
-// UI components
-import { Button } from "hazo_auth/components/ui/button";
-import { Input } from "hazo_auth/components/ui/input";
-import { Avatar } from "hazo_auth/components/ui/avatar";
-// ... and more shadcn-based components
 
 // Shared layout components and hooks (barrel import - recommended)
 import { 
@@ -443,23 +433,14 @@ import {
   use_auth_status 
 } from "hazo_auth/components/layouts/shared";
 
-// OR import individual components directly
-import { ProfilePicMenu } from "hazo_auth/components/layouts/shared/components/profile_pic_menu";
-import { ProfilePicMenuWrapper } from "hazo_auth/components/layouts/shared/components/profile_pic_menu_wrapper";
-import { FormActionButtons } from "hazo_auth/components/layouts/shared/components/form_action_buttons";
-
-// OR import hooks directly
-import { use_hazo_auth } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
-import { use_auth_status } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
-
-// Library utilities
+// Server-side authentication utility
 import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
-import { get_authenticated_user } from "hazo_auth/lib/auth/auth_utils.server";
-import { get_server_auth_user } from "hazo_auth/lib/auth/server_auth";
 
 // Server utilities
-import { get_hazo_connect_instance } from "hazo_auth/server/hazo_connect_instance.server";
+import { ... } from "hazo_auth/server";
 ```
+
+**Note:** The package uses relative imports internally. Consumers should only import from the exposed entry points listed above. Do not import from internal paths like `hazo_auth/components/ui/*` - these are internal modules.
 
 ### Using Layout Components
 
@@ -922,21 +903,27 @@ This compiles the `src/` directory to `dist/` with:
 
 ### Package Exports
 
-The `package.json` exports field defines the public API:
+The `package.json` exports field defines the public API. The package exposes only the main entry points:
 
 ```json
 {
   "exports": {
     ".": "./dist/index.js",
-    "./components/*": "./dist/components/*.js",
-    "./components/ui/*": "./dist/components/ui/*.js",
-    "./components/layouts/*": "./dist/components/layouts/*.js",
-    "./lib/*": "./dist/lib/*.js",
-    "./hooks/*": "./dist/hooks/*.js",
-    "./server/*": "./dist/server/*.js"
+    "./components/layouts/login": "./dist/components/layouts/login/index.js",
+    "./components/layouts/register": "./dist/components/layouts/register/index.js",
+    "./components/layouts/forgot_password": "./dist/components/layouts/forgot_password/index.js",
+    "./components/layouts/reset_password": "./dist/components/layouts/reset_password/index.js",
+    "./components/layouts/email_verification": "./dist/components/layouts/email_verification/index.js",
+    "./components/layouts/my_settings": "./dist/components/layouts/my_settings/index.js",
+    "./components/layouts/user_management": "./dist/components/layouts/user_management/index.js",
+    "./components/layouts/shared": "./dist/components/layouts/shared/index.js",
+    "./lib/auth/hazo_get_auth.server": "./dist/lib/auth/hazo_get_auth.server.js",
+    "./server": "./dist/server/index.js"
   }
 }
 ```
+
+**Important:** The package uses relative imports internally, so consuming projects do not need to configure webpack aliases or TypeScript paths. Simply install the package and import from the exposed entry points.
 
 ### Next Steps
 

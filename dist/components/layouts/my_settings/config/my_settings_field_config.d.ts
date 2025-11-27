@@ -1,4 +1,4 @@
-import { type ButtonPaletteDefaults, type ButtonPaletteOverrides } from "hazo_auth/components/layouts/shared/config/layout_customization";
+import { type ButtonPaletteDefaults, type ButtonPaletteOverrides } from "../../shared/config/layout_customization";
 export declare const MY_SETTINGS_FIELD_IDS: {
     readonly NAME: "name";
     readonly EMAIL: "email_address";

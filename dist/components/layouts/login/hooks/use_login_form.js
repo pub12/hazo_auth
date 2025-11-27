@@ -2,10 +2,10 @@
 // section: imports
 import { useCallback, useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { LOGIN_FIELD_IDS } from "hazo_auth/components/layouts/login/config/login_field_config";
-import { validateEmail } from "hazo_auth/components/layouts/shared/utils/validation";
-import { get_client_ip } from "hazo_auth/components/layouts/shared/utils/ip_address";
-import { trigger_auth_status_refresh } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
+import { LOGIN_FIELD_IDS } from "../config/login_field_config";
+import { validateEmail } from "../../shared/utils/validation";
+import { get_client_ip } from "../../shared/utils/ip_address";
+import { trigger_auth_status_refresh } from "../../shared/hooks/use_auth_status";
 // section: helpers
 const buildInitialValues = () => ({
     [LOGIN_FIELD_IDS.EMAIL]: "",

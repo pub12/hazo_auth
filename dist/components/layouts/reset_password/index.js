@@ -3,15 +3,15 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
-import { PasswordField } from "hazo_auth/components/layouts/shared/components/password_field";
-import { FormFieldWrapper } from "hazo_auth/components/layouts/shared/components/form_field_wrapper";
-import { FormHeader } from "hazo_auth/components/layouts/shared/components/form_header";
-import { FormActionButtons } from "hazo_auth/components/layouts/shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "hazo_auth/components/layouts/shared/components/two_column_auth_layout";
+import { PasswordField } from "../shared/components/password_field";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
+import { FormHeader } from "../shared/components/form_header";
+import { FormActionButtons } from "../shared/components/form_action_buttons";
+import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { AlreadyLoggedInGuard } from "hazo_auth/components/layouts/shared/components/already_logged_in_guard";
-import { RESET_PASSWORD_FIELD_IDS, createResetPasswordFieldDefinitions, resolveResetPasswordButtonPalette, resolveResetPasswordLabels, resolveResetPasswordPasswordRequirements, } from "hazo_auth/components/layouts/reset_password/config/reset_password_field_config";
-import { use_reset_password_form, } from "hazo_auth/components/layouts/reset_password/hooks/use_reset_password_form";
+import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
+import { RESET_PASSWORD_FIELD_IDS, createResetPasswordFieldDefinitions, resolveResetPasswordButtonPalette, resolveResetPasswordLabels, resolveResetPasswordPasswordRequirements, } from "./config/reset_password_field_config";
+import { use_reset_password_form, } from "./hooks/use_reset_password_form";
 import Link from "next/link";
 const ORDERED_FIELDS = [
     RESET_PASSWORD_FIELD_IDS.PASSWORD,

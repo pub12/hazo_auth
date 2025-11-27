@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import type { HazoAuthResult, HazoAuthOptions } from "hazo_auth/lib/auth/auth_types";
+import type { HazoAuthResult, HazoAuthOptions } from "./auth_types";
 /**
  * Main hazo_get_auth function for server-side use in API routes
  * Returns user details, permissions, and checks required permissions

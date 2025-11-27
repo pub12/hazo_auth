@@ -5,7 +5,7 @@
 // section: imports
 import * as React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
-import { cn } from "hazo_auth/lib/utils";
+import { cn } from "../../lib/utils";
 
 // section: components
 const VerticalTabs = TabsPrimitive.Root;

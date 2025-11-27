@@ -5,9 +5,9 @@
 // section: imports
 import type { HazoConnectAdapter } from "hazo_connect";
 import { getHazoConnectSingleton } from "hazo_connect/nextjs/setup";
-import { create_sqlite_hazo_connect_server, get_hazo_connect_config_options } from "hazo_auth/lib/hazo_connect_setup.server";
+import { create_sqlite_hazo_connect_server, get_hazo_connect_config_options } from "./hazo_connect_setup.server";
 import { initializeAdminService, getSqliteAdminService } from "hazo_connect/server";
-import { create_app_logger } from "hazo_auth/lib/app_logger";
+import { create_app_logger } from "./app_logger";
 
 // section: singleton_state
 let hazoConnectInstance: HazoConnectAdapter | null = null;

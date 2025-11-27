@@ -2,8 +2,8 @@
 // section: imports
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { FORGOT_PASSWORD_FIELD_IDS } from "hazo_auth/components/layouts/forgot_password/config/forgot_password_field_config";
-import { validateEmail } from "hazo_auth/components/layouts/shared/utils/validation";
+import { FORGOT_PASSWORD_FIELD_IDS } from "../config/forgot_password_field_config";
+import { validateEmail } from "../../shared/utils/validation";
 // section: helpers
 const buildInitialValues = () => ({
     [FORGOT_PASSWORD_FIELD_IDS.EMAIL]: "",

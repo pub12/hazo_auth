@@ -4,9 +4,9 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
 import { useState, useEffect } from "react";
-import { Switch } from "hazo_auth/components/ui/switch";
-import { Label } from "hazo_auth/components/ui/label";
-import { Avatar, AvatarImage, AvatarFallback } from "hazo_auth/components/ui/avatar";
+import { Switch } from "../../../ui/switch";
+import { Label } from "../../../ui/label";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
 import { Info } from "lucide-react";
 import gravatarUrl from "gravatar-url";
 // section: component

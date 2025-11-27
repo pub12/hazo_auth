@@ -3,9 +3,9 @@
 import type { HazoConnectAdapter } from "hazo_connect";
 import { createCrudService } from "hazo_connect/server";
 import argon2 from "argon2";
-import { create_app_logger } from "hazo_auth/lib/app_logger";
-import { sanitize_error_for_user } from "hazo_auth/lib/utils/error_sanitizer";
-import { get_filename, get_line_number } from "hazo_auth/lib/utils/api_route_helpers";
+import { create_app_logger } from "../app_logger";
+import { sanitize_error_for_user } from "../utils/error_sanitizer";
+import { get_filename, get_line_number } from "../utils/api_route_helpers";
 
 // section: types
 export type LoginData = {

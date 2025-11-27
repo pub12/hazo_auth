@@ -1,8 +1,8 @@
 import { createCrudService } from "hazo_connect/server";
-import { map_ui_source_to_db } from "hazo_auth/lib/services/profile_picture_source_mapper";
-import { create_app_logger } from "hazo_auth/lib/app_logger";
-import { sanitize_error_for_user } from "hazo_auth/lib/utils/error_sanitizer";
-import { get_line_number } from "hazo_auth/lib/utils/api_route_helpers";
+import { map_ui_source_to_db } from "./profile_picture_source_mapper";
+import { create_app_logger } from "../app_logger";
+import { sanitize_error_for_user } from "../utils/error_sanitizer";
+import { get_line_number } from "../utils/api_route_helpers";
 // section: helpers
 /**
  * Updates user profile information (name, email)

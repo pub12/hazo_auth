@@ -1,4 +1,4 @@
-import { create_app_logger } from "hazo_auth/lib/app_logger";
+import { create_app_logger } from "../app_logger";
 export type ErrorSanitizationOptions = {
     logToConsole?: boolean;
     logToLogger?: boolean;

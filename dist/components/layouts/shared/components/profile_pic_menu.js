@@ -6,12 +6,12 @@ import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-run
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Avatar, AvatarImage, AvatarFallback } from "hazo_auth/components/ui/avatar";
-import { Button } from "hazo_auth/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, } from "hazo_auth/components/ui/dropdown-menu";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
+import { Button } from "../../../ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, } from "../../../ui/dropdown-menu";
 import { Settings, LogOut } from "lucide-react";
 import { toast } from "sonner";
-import { use_auth_status, trigger_auth_status_refresh } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
+import { use_auth_status, trigger_auth_status_refresh } from "../hooks/use_auth_status";
 // section: component
 /**
  * Profile picture menu component

@@ -4,10 +4,10 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from "hazo_auth/components/ui/dialog";
-import { Button } from "hazo_auth/components/ui/button";
-import { PasswordField } from "hazo_auth/components/layouts/shared/components/password_field";
-import { FormFieldWrapper } from "hazo_auth/components/layouts/shared/components/form_field_wrapper";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from "../../../ui/dialog";
+import { Button } from "../../../ui/button";
+import { PasswordField } from "../../shared/components/password_field";
+import { FormFieldWrapper } from "../../shared/components/form_field_wrapper";
 // section: component
 /**
  * Dialog component for changing password

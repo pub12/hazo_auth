@@ -1,9 +1,9 @@
 // file_description: server-side auth utilities for server components and pages
 // section: imports
 import { cookies } from "next/headers";
-import { get_hazo_connect_instance } from "hazo_auth/lib/hazo_connect_instance.server";
+import { get_hazo_connect_instance } from "../hazo_connect_instance.server";
 import { createCrudService } from "hazo_connect/server";
-import { map_db_source_to_ui } from "hazo_auth/lib/services/profile_picture_source_mapper";
+import { map_db_source_to_ui } from "../services/profile_picture_source_mapper";
 // section: functions
 /**
  * Gets authenticated user in server components/pages

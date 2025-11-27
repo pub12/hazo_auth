@@ -1,5 +1,5 @@
-import type { LayoutFieldMap, LayoutFieldMapOverrides } from "hazo_auth/components/layouts/shared/config/layout_customization";
-import { type ButtonPaletteDefaults, type ButtonPaletteOverrides, type LayoutLabelDefaults, type LayoutLabelOverrides } from "hazo_auth/components/layouts/shared/config/layout_customization";
+import type { LayoutFieldMap, LayoutFieldMapOverrides } from "../../shared/config/layout_customization";
+import { type ButtonPaletteDefaults, type ButtonPaletteOverrides, type LayoutLabelDefaults, type LayoutLabelOverrides } from "../../shared/config/layout_customization";
 export declare const EMAIL_VERIFICATION_FIELD_IDS: {
     readonly EMAIL: "email_address";
 };

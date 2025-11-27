@@ -4,14 +4,14 @@ import type { HazoConnectAdapter } from "hazo_connect";
 import { createCrudService } from "hazo_connect/server";
 import argon2 from "argon2";
 import { randomUUID } from "crypto";
-import { create_token } from "hazo_auth/lib/services/token_service";
-import { get_default_profile_picture } from "hazo_auth/lib/services/profile_picture_service";
-import { get_profile_picture_config } from "hazo_auth/lib/profile_picture_config.server";
-import { map_ui_source_to_db } from "hazo_auth/lib/services/profile_picture_source_mapper";
-import { create_app_logger } from "hazo_auth/lib/app_logger";
-import { send_template_email } from "hazo_auth/lib/services/email_service";
-import { sanitize_error_for_user } from "hazo_auth/lib/utils/error_sanitizer";
-import { get_filename, get_line_number } from "hazo_auth/lib/utils/api_route_helpers";
+import { create_token } from "./token_service";
+import { get_default_profile_picture } from "./profile_picture_service";
+import { get_profile_picture_config } from "../profile_picture_config.server";
+import { map_ui_source_to_db } from "./profile_picture_source_mapper";
+import { create_app_logger } from "../app_logger";
+import { send_template_email } from "./email_service";
+import { sanitize_error_for_user } from "../utils/error_sanitizer";
+import { get_filename, get_line_number } from "../utils/api_route_helpers";
 
 // section: types
 export type RegistrationData = {

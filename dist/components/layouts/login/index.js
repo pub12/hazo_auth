@@ -4,16 +4,16 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
 import Link from "next/link";
-import { Input } from "hazo_auth/components/ui/input";
-import { PasswordField } from "hazo_auth/components/layouts/shared/components/password_field";
-import { FormFieldWrapper } from "hazo_auth/components/layouts/shared/components/form_field_wrapper";
-import { FormHeader } from "hazo_auth/components/layouts/shared/components/form_header";
-import { FormActionButtons } from "hazo_auth/components/layouts/shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "hazo_auth/components/layouts/shared/components/two_column_auth_layout";
+import { Input } from "../../ui/input";
+import { PasswordField } from "../shared/components/password_field";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
+import { FormHeader } from "../shared/components/form_header";
+import { FormActionButtons } from "../shared/components/form_action_buttons";
+import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
 import { CheckCircle } from "lucide-react";
-import { AlreadyLoggedInGuard } from "hazo_auth/components/layouts/shared/components/already_logged_in_guard";
-import { LOGIN_FIELD_IDS, createLoginFieldDefinitions, resolveLoginButtonPalette, resolveLoginLabels, } from "hazo_auth/components/layouts/login/config/login_field_config";
-import { use_login_form, } from "hazo_auth/components/layouts/login/hooks/use_login_form";
+import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
+import { LOGIN_FIELD_IDS, createLoginFieldDefinitions, resolveLoginButtonPalette, resolveLoginLabels, } from "./config/login_field_config";
+import { use_login_form, } from "./hooks/use_login_form";
 const ORDERED_FIELDS = [
     LOGIN_FIELD_IDS.EMAIL,
     LOGIN_FIELD_IDS.PASSWORD,

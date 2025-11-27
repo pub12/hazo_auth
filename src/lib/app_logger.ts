@@ -1,6 +1,6 @@
 // file_description: client-accessible wrapper for the main app logging service
 // section: imports
-import { create_logger_service } from "hazo_auth/server/logging/logger_service";
+import { create_logger_service } from "../server/logging/logger_service";
 
 // section: constants
 const APP_NAMESPACE = "hazo_auth_ui";

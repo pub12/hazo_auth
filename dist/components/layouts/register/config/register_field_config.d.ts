@@ -1,5 +1,5 @@
-import type { LayoutFieldMap, LayoutFieldMapOverrides } from "hazo_auth/components/layouts/shared/config/layout_customization";
-import { type ButtonPaletteDefaults, type ButtonPaletteOverrides, type LayoutLabelDefaults, type LayoutLabelOverrides, type PasswordRequirementOptions, type PasswordRequirementOverrides } from "hazo_auth/components/layouts/shared/config/layout_customization";
+import type { LayoutFieldMap, LayoutFieldMapOverrides } from "../../shared/config/layout_customization";
+import { type ButtonPaletteDefaults, type ButtonPaletteOverrides, type LayoutLabelDefaults, type LayoutLabelOverrides, type PasswordRequirementOptions, type PasswordRequirementOverrides } from "../../shared/config/layout_customization";
 export declare const REGISTER_FIELD_IDS: {
     readonly NAME: "name";
     readonly EMAIL: "email_address";

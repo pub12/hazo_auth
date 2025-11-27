@@ -1,9 +1,9 @@
 // file_description: server component that chooses between sidebar shell and standalone shell
 // section: imports
 import type { ReactNode } from "react";
-import { SidebarLayoutWrapper } from "hazo_auth/components/layouts/shared/components/sidebar_layout_wrapper";
-import { StandaloneLayoutWrapper } from "hazo_auth/components/layouts/shared/components/standalone_layout_wrapper";
-import { get_ui_shell_config } from "hazo_auth/lib/ui_shell_config.server";
+import { SidebarLayoutWrapper } from "./sidebar_layout_wrapper";
+import { StandaloneLayoutWrapper } from "./standalone_layout_wrapper";
+import { get_ui_shell_config } from "../../../../lib/ui_shell_config.server";
 
 // section: types
 type AuthPageShellProps = {

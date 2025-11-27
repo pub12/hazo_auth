@@ -1,4 +1,4 @@
-import type { ButtonPaletteDefaults } from "hazo_auth/components/layouts/shared/config/layout_customization";
+import type { ButtonPaletteDefaults } from "../config/layout_customization";
 type FormActionButtonsProps = {
     submitLabel: string;
     cancelLabel: string;

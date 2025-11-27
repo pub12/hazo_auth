@@ -13,7 +13,7 @@ var __rest = (this && this.__rest) || function (s, e) {
 import { jsx as _jsx } from "react/jsx-runtime";
 import * as React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
-import { cn } from "hazo_auth/lib/utils";
+import { cn } from "../../lib/utils";
 const Tabs = TabsPrimitive.Root;
 const TabsList = React.forwardRef((_a, ref) => {
     var { className } = _a, props = __rest(_a, ["className"]);

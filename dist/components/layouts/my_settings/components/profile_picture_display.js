@@ -3,7 +3,7 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
-import { Avatar, AvatarImage, AvatarFallback } from "hazo_auth/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
 // section: component
 /**
  * Profile picture display component

@@ -33,42 +33,27 @@ npm run build:pkg  # Runs: tsc -p tsconfig.build.json
 
 ### Package Exports
 
-The `package.json` exports field defines the public API:
+The `package.json` exports field defines the public API. Only main entry points are exposed:
 
 ```json
 {
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./components/*": {
-      "types": "./dist/components/*.d.ts",
-      "import": "./dist/components/*.js"
-    },
-    "./components/ui/*": {
-      "types": "./dist/components/ui/*.d.ts",
-      "import": "./dist/components/ui/*.js"
-    },
-    "./components/layouts/*": {
-      "types": "./dist/components/layouts/*.d.ts",
-      "import": "./dist/components/layouts/*.js"
-    },
-    "./lib/*": {
-      "types": "./dist/lib/*.d.ts",
-      "import": "./dist/lib/*.js"
-    },
-    "./hooks/*": {
-      "types": "./dist/hooks/*.d.ts",
-      "import": "./dist/hooks/*.js"
-    },
-    "./server/*": {
-      "types": "./dist/server/*.d.ts",
-      "import": "./dist/server/*.js"
-    }
+    ".": "./dist/index.js",
+    "./components/layouts/login": "./dist/components/layouts/login/index.js",
+    "./components/layouts/register": "./dist/components/layouts/register/index.js",
+    "./components/layouts/forgot_password": "./dist/components/layouts/forgot_password/index.js",
+    "./components/layouts/reset_password": "./dist/components/layouts/reset_password/index.js",
+    "./components/layouts/email_verification": "./dist/components/layouts/email_verification/index.js",
+    "./components/layouts/my_settings": "./dist/components/layouts/my_settings/index.js",
+    "./components/layouts/user_management": "./dist/components/layouts/user_management/index.js",
+    "./components/layouts/shared": "./dist/components/layouts/shared/index.js",
+    "./lib/auth/hazo_get_auth.server": "./dist/lib/auth/hazo_get_auth.server.js",
+    "./server": "./dist/server/index.js"
   }
 }
 ```
+
+**Important:** Internal modules (like UI components, utility functions) are not exposed. They are used internally via relative imports and re-exported through the public entry points.
 
 ### Import Patterns
 
@@ -77,54 +62,43 @@ The `package.json` exports field defines the public API:
 // Main entry point
 import { LoginLayout, use_hazo_auth } from "hazo_auth";
 
-// Specific exports
-import { Button } from "hazo_auth/components/ui/button";
+// Layout components
 import { LoginLayout } from "hazo_auth/components/layouts/login";
+import { RegisterLayout } from "hazo_auth/components/layouts/register";
+
+// Shared components and hooks (recommended - uses barrel exports)
+import { 
+  ProfilePicMenu, 
+  use_hazo_auth, 
+  use_auth_status 
+} from "hazo_auth/components/layouts/shared";
+
+// Server-side authentication
 import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
-import { use_auth_status } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
 ```
 
 **Within the package source code:**
 ```typescript
-// Package-style imports (resolved via tsconfig paths during dev, package.json exports in prod)
-import { Button } from "hazo_auth/components/ui/button";
-import { cn } from "hazo_auth/lib/utils";
-
-// Relative imports for closely related files
-import { SomeLocalComponent } from "./some_local_component";
+// Relative imports are used throughout the package
+import { Button } from "../../ui/button";
+import { cn } from "../../../lib/utils";
+import { use_auth_status } from "../hooks/use_auth_status";
 ```
 
-**Important:** The package uses package-style imports internally (e.g., `hazo_auth/components/ui/button`) rather than relative imports (e.g., `../../../ui/button`). This ensures imports work correctly both during development and when the package is consumed.
+**Important:** The package uses **relative imports internally**, not package-style imports. This ensures the compiled `dist/` output contains relative paths that work correctly in consuming projects without any webpack alias configuration.
 
-### Self-Reference Resolution
+### Module Resolution
 
-During development, TypeScript resolves package imports via `tsconfig.json` paths:
+The compiled package output (`dist/`) contains relative imports, so consuming projects do not need any special webpack configuration. Simply install the package and import from the exposed entry points.
 
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "hazo_auth/*": ["./src/*"]
-    }
-  }
-}
+**Example consuming project usage:**
+```typescript
+// No webpack aliases needed!
+import { LoginLayout } from "hazo_auth/components/layouts/login";
+import { ProfilePicMenu, use_auth_status } from "hazo_auth/components/layouts/shared";
 ```
 
-Next.js webpack configuration also aliases these paths in `next.config.mjs`:
-
-```javascript
-webpack: (config, { isServer }) => {
-  config.resolve.alias = {
-    ...config.resolve.alias,
-    "hazo_auth": path.resolve(__dirname, "./src"),
-    "hazo_auth/components": path.resolve(__dirname, "./src/components"),
-    "hazo_auth/lib": path.resolve(__dirname, "./src/lib"),
-    "hazo_auth/hooks": path.resolve(__dirname, "./src/hooks"),
-    "hazo_auth/server": path.resolve(__dirname, "./src/server")
-  };
-  return config;
-}
-```
+The `tsconfig.json` paths and `next.config.mjs` webpack aliases are only used for the local Next.js development app (`src/app/`) within the package repository, not for consuming projects.
 
 ---
 
@@ -431,8 +405,8 @@ Located in `src/components/ui/`, these are shadcn-based components:
 ```typescript
 "use client";
 
-import { use_hazo_auth } from "hazo_auth/components/layouts/shared/hooks/use_hazo_auth";
-import { use_auth_status } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
+// Import from barrel export (recommended)
+import { use_hazo_auth, use_auth_status } from "hazo_auth/components/layouts/shared";
 
 // With permissions checking
 function AdminPanel() {
@@ -677,8 +651,8 @@ Client-side components use toast notifications (Sonner) for user-facing errors i
 4. All user-facing messages and sizes must be configurable via config file
 5. Client components cannot directly import server-side config - values must be passed as props
 6. API routes must use shared `get_filename()` and `get_line_number()` helpers for logging
-7. Internal imports should use package-style imports (e.g., `hazo_auth/components/ui/button`)
-8. Export statements in barrel files must use explicit `.js` extensions for ES module compatibility
+7. **Internal imports must use relative paths** (e.g., `../../ui/button`) so the compiled output works correctly in consuming projects
+8. Only the main entry points are exposed via `package.json` exports - internal modules are not directly importable by consumers
 
 ---
 
@@ -731,7 +705,8 @@ npx tsx scripts/apply_migration.ts
 ### Common Issues
 
 **1. "Module not found" errors when consuming the package:**
-- Ensure you're importing from the correct paths (e.g., `hazo_auth/components/ui/button`)
+- Ensure you're importing from exposed entry points only (e.g., `hazo_auth/components/layouts/login`, not `hazo_auth/components/ui/button`)
+- Internal modules like UI components are not directly importable - use barrel exports from `hazo_auth/components/layouts/shared`
 - Check that the package is built (`npm run build:pkg`)
 
 **2. Configuration not loading:**

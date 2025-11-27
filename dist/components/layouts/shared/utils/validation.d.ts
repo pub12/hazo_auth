@@ -1,4 +1,4 @@
-import type { PasswordRequirementOptions } from "hazo_auth/components/layouts/shared/config/layout_customization";
+import type { PasswordRequirementOptions } from "../config/layout_customization";
 /**
  * Validates an email address format
  * @param email - The email address to validate

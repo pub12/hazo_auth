@@ -1,7 +1,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
-import { SidebarLayoutWrapper } from "hazo_auth/components/layouts/shared/components/sidebar_layout_wrapper";
-import { StandaloneLayoutWrapper } from "hazo_auth/components/layouts/shared/components/standalone_layout_wrapper";
-import { get_ui_shell_config } from "hazo_auth/lib/ui_shell_config.server";
+import { SidebarLayoutWrapper } from "./sidebar_layout_wrapper";
+import { StandaloneLayoutWrapper } from "./standalone_layout_wrapper";
+import { get_ui_shell_config } from "../../../../lib/ui_shell_config.server";
 // section: component
 export function AuthPageShell({ children }) {
     const uiShellConfig = get_ui_shell_config();

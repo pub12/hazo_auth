@@ -1,6 +1,6 @@
 // file_description: utility functions for sanitizing error messages for user display
 // section: imports
-import { create_app_logger } from "hazo_auth/lib/app_logger";
+import { create_app_logger } from "../app_logger";
 
 // section: constants
 const USER_FRIENDLY_ERROR_MESSAGE = "We are facing some issues in our system, please try again later.";

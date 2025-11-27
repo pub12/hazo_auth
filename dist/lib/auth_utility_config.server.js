@@ -1,6 +1,6 @@
 // file_description: server-only helper to read auth utility configuration from hazo_auth_config.ini
 // section: imports
-import { get_config_value, get_config_number, get_config_boolean, } from "hazo_auth/lib/config/config_loader.server";
+import { get_config_value, get_config_number, get_config_boolean, } from "./config/config_loader.server";
 // section: helpers
 /**
  * Parses permission error messages from config string

@@ -1,4 +1,4 @@
-import { resolveButtonPalette, resolveFieldDefinitions, resolveLabels, } from "hazo_auth/components/layouts/shared/config/layout_customization";
+import { resolveButtonPalette, resolveFieldDefinitions, resolveLabels, } from "../../shared/config/layout_customization";
 // section: field_identifiers
 export const FORGOT_PASSWORD_FIELD_IDS = {
     EMAIL: "email_address",

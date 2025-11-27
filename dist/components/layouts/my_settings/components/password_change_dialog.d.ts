@@ -1,4 +1,4 @@
-import type { PasswordRequirementOptions } from "hazo_auth/components/layouts/shared/config/layout_customization";
+import type { PasswordRequirementOptions } from "../../shared/config/layout_customization";
 export type ButtonPalette = {
     submitBackground: string;
     submitText: string;

@@ -3,15 +3,15 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
-import { Button } from "hazo_auth/components/ui/button";
-import { EditableField } from "hazo_auth/components/layouts/my_settings/components/editable_field";
-import { ProfilePictureDisplay } from "hazo_auth/components/layouts/my_settings/components/profile_picture_display";
-import { ProfilePictureDialog } from "hazo_auth/components/layouts/my_settings/components/profile_picture_dialog";
-import { UnauthorizedGuard } from "hazo_auth/components/layouts/shared/components/unauthorized_guard";
-import { use_my_settings } from "hazo_auth/components/layouts/my_settings/hooks/use_my_settings";
-import { resolveMySettingsLabels, resolveMySettingsButtonPalette, } from "hazo_auth/components/layouts/my_settings/config/my_settings_field_config";
-import { PasswordField } from "hazo_auth/components/layouts/shared/components/password_field";
-import { FormFieldWrapper } from "hazo_auth/components/layouts/shared/components/form_field_wrapper";
+import { Button } from "../../ui/button";
+import { EditableField } from "./components/editable_field";
+import { ProfilePictureDisplay } from "./components/profile_picture_display";
+import { ProfilePictureDialog } from "./components/profile_picture_dialog";
+import { UnauthorizedGuard } from "../shared/components/unauthorized_guard";
+import { use_my_settings } from "./hooks/use_my_settings";
+import { resolveMySettingsLabels, resolveMySettingsButtonPalette, } from "./config/my_settings_field_config";
+import { PasswordField } from "../shared/components/password_field";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
 import { Pencil, Trash2 } from "lucide-react";
 // section: component
 /**

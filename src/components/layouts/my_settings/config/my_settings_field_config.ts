@@ -1,12 +1,12 @@
 // file_description: my settings layout specific configuration helpers
 // section: imports
-import type { LayoutFieldMap } from "hazo_auth/components/layouts/shared/config/layout_customization";
+import type { LayoutFieldMap } from "../../shared/config/layout_customization";
 import {
   resolveButtonPalette,
   type ButtonPaletteDefaults,
   type ButtonPaletteOverrides,
   type PasswordRequirementOptions,
-} from "hazo_auth/components/layouts/shared/config/layout_customization";
+} from "../../shared/config/layout_customization";
 
 // section: field_identifiers
 export const MY_SETTINGS_FIELD_IDS = {

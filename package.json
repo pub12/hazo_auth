@@ -9,141 +9,45 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./components": {
-      "types": "./dist/components/index.d.ts",
-      "import": "./dist/components/index.js"
-    },
-    "./components/*": {
-      "types": "./dist/components/*.d.ts",
-      "import": "./dist/components/*.js"
-    },
-    "./components/ui/*": {
-      "types": "./dist/components/ui/*.d.ts",
-      "import": "./dist/components/ui/*.js"
-    },
-    "./components/layouts": {
-      "types": "./dist/components/layouts/index.d.ts",
-      "import": "./dist/components/layouts/index.js"
-    },
-    "./components/layouts/*": {
-      "types": "./dist/components/layouts/*.d.ts",
-      "import": "./dist/components/layouts/*.js"
-    },
     "./components/layouts/login": {
       "types": "./dist/components/layouts/login/index.d.ts",
       "import": "./dist/components/layouts/login/index.js"
-    },
-    "./components/layouts/login/*": {
-      "types": "./dist/components/layouts/login/*.d.ts",
-      "import": "./dist/components/layouts/login/*.js"
     },
     "./components/layouts/register": {
       "types": "./dist/components/layouts/register/index.d.ts",
       "import": "./dist/components/layouts/register/index.js"
     },
-    "./components/layouts/register/*": {
-      "types": "./dist/components/layouts/register/*.d.ts",
-      "import": "./dist/components/layouts/register/*.js"
-    },
     "./components/layouts/forgot_password": {
       "types": "./dist/components/layouts/forgot_password/index.d.ts",
       "import": "./dist/components/layouts/forgot_password/index.js"
-    },
-    "./components/layouts/forgot_password/*": {
-      "types": "./dist/components/layouts/forgot_password/*.d.ts",
-      "import": "./dist/components/layouts/forgot_password/*.js"
     },
     "./components/layouts/reset_password": {
       "types": "./dist/components/layouts/reset_password/index.d.ts",
       "import": "./dist/components/layouts/reset_password/index.js"
     },
-    "./components/layouts/reset_password/*": {
-      "types": "./dist/components/layouts/reset_password/*.d.ts",
-      "import": "./dist/components/layouts/reset_password/*.js"
-    },
-    "./components/layouts/verify_email": {
-      "types": "./dist/components/layouts/verify_email/index.d.ts",
-      "import": "./dist/components/layouts/verify_email/index.js"
-    },
-    "./components/layouts/verify_email/*": {
-      "types": "./dist/components/layouts/verify_email/*.d.ts",
-      "import": "./dist/components/layouts/verify_email/*.js"
-    },
     "./components/layouts/email_verification": {
       "types": "./dist/components/layouts/email_verification/index.d.ts",
       "import": "./dist/components/layouts/email_verification/index.js"
-    },
-    "./components/layouts/email_verification/*": {
-      "types": "./dist/components/layouts/email_verification/*.d.ts",
-      "import": "./dist/components/layouts/email_verification/*.js"
     },
     "./components/layouts/my_settings": {
       "types": "./dist/components/layouts/my_settings/index.d.ts",
       "import": "./dist/components/layouts/my_settings/index.js"
     },
-    "./components/layouts/my_settings/*": {
-      "types": "./dist/components/layouts/my_settings/*.d.ts",
-      "import": "./dist/components/layouts/my_settings/*.js"
-    },
     "./components/layouts/user_management": {
       "types": "./dist/components/layouts/user_management/index.d.ts",
       "import": "./dist/components/layouts/user_management/index.js"
-    },
-    "./components/layouts/user_management/*": {
-      "types": "./dist/components/layouts/user_management/*.d.ts",
-      "import": "./dist/components/layouts/user_management/*.js"
     },
     "./components/layouts/shared": {
       "types": "./dist/components/layouts/shared/index.d.ts",
       "import": "./dist/components/layouts/shared/index.js"
     },
-    "./components/layouts/shared/*": {
-      "types": "./dist/components/layouts/shared/*.d.ts",
-      "import": "./dist/components/layouts/shared/*.js"
-    },
-    "./components/layouts/shared/components/*": {
-      "types": "./dist/components/layouts/shared/components/*.d.ts",
-      "import": "./dist/components/layouts/shared/components/*.js"
-    },
-    "./components/layouts/shared/hooks/*": {
-      "types": "./dist/components/layouts/shared/hooks/*.d.ts",
-      "import": "./dist/components/layouts/shared/hooks/*.js"
-    },
-    "./lib": {
-      "types": "./dist/lib/index.d.ts",
-      "import": "./dist/lib/index.js"
-    },
-    "./lib/*": {
-      "types": "./dist/lib/*.d.ts",
-      "import": "./dist/lib/*.js"
-    },
-    "./lib/auth/*": {
-      "types": "./dist/lib/auth/*.d.ts",
-      "import": "./dist/lib/auth/*.js"
-    },
-    "./lib/config/*": {
-      "types": "./dist/lib/config/*.d.ts",
-      "import": "./dist/lib/config/*.js"
-    },
-    "./lib/services/*": {
-      "types": "./dist/lib/services/*.d.ts",
-      "import": "./dist/lib/services/*.js"
-    },
-    "./lib/utils/*": {
-      "types": "./dist/lib/utils/*.d.ts",
-      "import": "./dist/lib/utils/*.js"
-    },
-    "./hooks/*": {
-      "types": "./dist/hooks/*.d.ts",
-      "import": "./dist/hooks/*.js"
+    "./lib/auth/hazo_get_auth.server": {
+      "types": "./dist/lib/auth/hazo_get_auth.server.d.ts",
+      "import": "./dist/lib/auth/hazo_get_auth.server.js"
     },
     "./server": {
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.js"
-    },
-    "./server/*": {
-      "types": "./dist/server/*.d.ts",
-      "import": "./dist/server/*.js"
     }
   },
   "files": [

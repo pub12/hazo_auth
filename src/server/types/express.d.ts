@@ -1,5 +1,5 @@
 // file_description: augment express request with hazo_auth context
-import type { app_context } from "hazo_auth/server/types/app_types";
+import type { app_context } from "./app_types";
 
 declare global {
   namespace Express {

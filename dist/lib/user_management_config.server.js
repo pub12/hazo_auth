@@ -1,6 +1,6 @@
 // file_description: server-only helper to read user management configuration from hazo_auth_config.ini
 // section: imports
-import { get_config_array, read_config_section } from "hazo_auth/lib/config/config_loader.server";
+import { get_config_array, read_config_section } from "./config/config_loader.server";
 // section: helpers
 /**
  * Reads user management configuration from hazo_auth_config.ini file

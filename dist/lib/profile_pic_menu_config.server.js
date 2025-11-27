@@ -1,6 +1,6 @@
 // file_description: server-only helper to read profile picture menu configuration from hazo_auth_config.ini
 // section: imports
-import { get_config_value, get_config_boolean, get_config_array } from "hazo_auth/lib/config/config_loader.server";
+import { get_config_value, get_config_boolean, get_config_array } from "./config/config_loader.server";
 // section: helpers
 /**
  * Parses custom menu items from config string

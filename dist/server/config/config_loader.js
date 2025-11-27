@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import axios from "axios";
 import { HazoConfig } from "hazo_config/dist/lib";
-import { create_logger_service } from "hazo_auth/server/logging/logger_service";
+import { create_logger_service } from "../logging/logger_service";
 const is_string_record = (value) => !!value &&
     typeof value === "object" &&
     !Array.isArray(value) &&

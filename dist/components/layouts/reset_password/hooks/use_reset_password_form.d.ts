@@ -1,6 +1,6 @@
-import type { LayoutDataClient } from "hazo_auth/components/layouts/shared/data/layout_data_client";
-import type { PasswordRequirementOptions } from "hazo_auth/components/layouts/shared/config/layout_customization";
-import { type ResetPasswordFieldId } from "hazo_auth/components/layouts/reset_password/config/reset_password_field_config";
+import type { LayoutDataClient } from "../../shared/data/layout_data_client";
+import type { PasswordRequirementOptions } from "../../shared/config/layout_customization";
+import { type ResetPasswordFieldId } from "../config/reset_password_field_config";
 export type ResetPasswordFormValues = Record<ResetPasswordFieldId, string>;
 export type ResetPasswordFormErrors = Partial<Record<ResetPasswordFieldId, string | string[]>>;
 export type PasswordVisibilityState = Record<Extract<ResetPasswordFieldId, "password" | "confirm_password">, boolean>;

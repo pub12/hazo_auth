@@ -4,12 +4,12 @@
 
 // section: imports
 import { useState, useEffect } from "react";
-import { Switch } from "hazo_auth/components/ui/switch";
-import { Label } from "hazo_auth/components/ui/label";
-import { Avatar, AvatarFallback } from "hazo_auth/components/ui/avatar";
-import { VerticalTabs, VerticalTabsList, VerticalTabsTrigger, VerticalTabsContent } from "hazo_auth/components/ui/vertical-tabs";
+import { Switch } from "../../../ui/switch";
+import { Label } from "../../../ui/label";
+import { Avatar, AvatarFallback } from "../../../ui/avatar";
+import { VerticalTabs, VerticalTabsList, VerticalTabsTrigger, VerticalTabsContent } from "../../../ui/vertical-tabs";
 import { Loader2 } from "lucide-react";
-import { HazoUITooltip } from "hazo_auth/components/ui/hazo_ui_tooltip";
+import { HazoUITooltip } from "../../../ui/hazo_ui_tooltip";
 
 // section: types
 export type ProfilePictureLibraryTabProps = {

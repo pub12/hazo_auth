@@ -1,12 +1,12 @@
 import { createCrudService } from "hazo_connect/server";
 import gravatarUrl from "gravatar-url";
-import { get_profile_picture_config } from "hazo_auth/lib/profile_picture_config.server";
-import { get_ui_sizes_config } from "hazo_auth/lib/ui_sizes_config.server";
-import { get_file_types_config } from "hazo_auth/lib/file_types_config.server";
-import { create_app_logger } from "hazo_auth/lib/app_logger";
+import { get_profile_picture_config } from "../profile_picture_config.server";
+import { get_ui_sizes_config } from "../ui_sizes_config.server";
+import { get_file_types_config } from "../file_types_config.server";
+import { create_app_logger } from "../app_logger";
 import path from "path";
 import fs from "fs";
-import { map_ui_source_to_db } from "hazo_auth/lib/services/profile_picture_source_mapper";
+import { map_ui_source_to_db } from "./profile_picture_source_mapper";
 // section: helpers
 /**
  * Generates Gravatar URL from email address

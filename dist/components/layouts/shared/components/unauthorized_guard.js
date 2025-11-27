@@ -3,8 +3,8 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
-import { use_auth_status } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
-import { Button } from "hazo_auth/components/ui/button";
+import { use_auth_status } from "../hooks/use_auth_status";
+import { Button } from "../../../ui/button";
 import { useRouter } from "next/navigation";
 import { LogIn } from "lucide-react";
 // section: component

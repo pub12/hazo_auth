@@ -2,9 +2,9 @@
 // section: imports
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import type { LayoutDataClient } from "hazo_auth/components/layouts/shared/data/layout_data_client";
-import { FORGOT_PASSWORD_FIELD_IDS, type ForgotPasswordFieldId } from "hazo_auth/components/layouts/forgot_password/config/forgot_password_field_config";
-import { validateEmail } from "hazo_auth/components/layouts/shared/utils/validation";
+import type { LayoutDataClient } from "../../shared/data/layout_data_client";
+import { FORGOT_PASSWORD_FIELD_IDS, type ForgotPasswordFieldId } from "../config/forgot_password_field_config";
+import { validateEmail } from "../../shared/utils/validation";
 
 // section: types
 export type ForgotPasswordFormValues = Record<ForgotPasswordFieldId, string>;

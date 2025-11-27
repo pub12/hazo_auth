@@ -1,7 +1,7 @@
 import { createCrudService } from "hazo_connect/server";
-import { map_db_source_to_ui } from "hazo_auth/lib/services/profile_picture_source_mapper";
-import { get_profile_picture_config } from "hazo_auth/lib/profile_picture_config.server";
-import { create_app_logger } from "hazo_auth/lib/app_logger";
+import { map_db_source_to_ui } from "./profile_picture_source_mapper";
+import { get_profile_picture_config } from "../profile_picture_config.server";
+import { create_app_logger } from "../app_logger";
 import fs from "fs";
 import path from "path";
 // section: helpers

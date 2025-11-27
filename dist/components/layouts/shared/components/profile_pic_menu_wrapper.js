@@ -1,8 +1,8 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // file_description: server wrapper component that loads profile picture menu configuration and passes to client component
 // section: imports
-import { ProfilePicMenu } from "hazo_auth/components/layouts/shared/components/profile_pic_menu";
-import { get_profile_pic_menu_config } from "hazo_auth/lib/profile_pic_menu_config.server";
+import { ProfilePicMenu } from "./profile_pic_menu";
+import { get_profile_pic_menu_config } from "../../../../lib/profile_pic_menu_config.server";
 // section: component
 /**
  * Server wrapper component that loads profile picture menu configuration from hazo_auth_config.ini

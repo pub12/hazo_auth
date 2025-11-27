@@ -3,10 +3,10 @@
 "use client";
 
 // section: imports
-import { use_auth_status } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
-import { LogoutButton } from "hazo_auth/components/layouts/shared/components/logout_button";
-import { Button } from "hazo_auth/components/ui/button";
-import { TwoColumnAuthLayout } from "hazo_auth/components/layouts/shared/components/two_column_auth_layout";
+import { use_auth_status } from "../hooks/use_auth_status";
+import { LogoutButton } from "./logout_button";
+import { Button } from "../../../ui/button";
+import { TwoColumnAuthLayout } from "./two_column_auth_layout";
 import { useRouter } from "next/navigation";
 import { Home } from "lucide-react";
 

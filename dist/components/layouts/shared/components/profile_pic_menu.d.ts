@@ -1,4 +1,4 @@
-import type { ProfilePicMenuMenuItem } from "hazo_auth/lib/profile_pic_menu_config.server";
+import type { ProfilePicMenuMenuItem } from "../../../../lib/profile_pic_menu_config.server";
 export type ProfilePicMenuProps = {
     show_single_button?: boolean;
     sign_up_label?: string;

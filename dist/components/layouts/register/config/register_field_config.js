@@ -1,4 +1,4 @@
-import { resolveButtonPalette, resolveFieldDefinitions, resolveLabels, resolvePasswordRequirements, } from "hazo_auth/components/layouts/shared/config/layout_customization";
+import { resolveButtonPalette, resolveFieldDefinitions, resolveLabels, resolvePasswordRequirements, } from "../../shared/config/layout_customization";
 // section: field_identifiers
 export const REGISTER_FIELD_IDS = {
     NAME: "name",

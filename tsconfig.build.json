@@ -10,9 +10,6 @@
     "isolatedModules": true,
     "incremental": true,
     "baseUrl": ".",
-    "paths": {
-      "hazo_auth/*": ["./src/*"]
-    },
     "outDir": "dist",
     "declaration": true,
     "declarationMap": true,

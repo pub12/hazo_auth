@@ -3,7 +3,7 @@
 "use client";
 
 // section: imports
-import { cn } from "hazo_auth/lib/utils";
+import { cn } from "../../../../lib/utils";
 
 // section: types
 export type StandaloneLayoutWrapperProps = {

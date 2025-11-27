@@ -1,6 +1,6 @@
-import { type ButtonPaletteOverrides, type LayoutFieldMapOverrides, type LayoutLabelOverrides } from "hazo_auth/components/layouts/shared/config/layout_customization";
-import { type EmailVerificationSuccessLabels, type EmailVerificationErrorLabels } from "hazo_auth/components/layouts/email_verification/config/email_verification_field_config";
-import { type LayoutDataClient } from "hazo_auth/components/layouts/shared/data/layout_data_client";
+import { type ButtonPaletteOverrides, type LayoutFieldMapOverrides, type LayoutLabelOverrides } from "../shared/config/layout_customization";
+import { type EmailVerificationSuccessLabels, type EmailVerificationErrorLabels } from "./config/email_verification_field_config";
+import { type LayoutDataClient } from "../shared/data/layout_data_client";
 export type EmailVerificationLayoutProps<TClient = unknown> = {
     image_src: string;
     image_alt: string;

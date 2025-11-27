@@ -3,14 +3,14 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
-import { Input } from "hazo_auth/components/ui/input";
-import { FormFieldWrapper } from "hazo_auth/components/layouts/shared/components/form_field_wrapper";
-import { FormHeader } from "hazo_auth/components/layouts/shared/components/form_header";
-import { FormActionButtons } from "hazo_auth/components/layouts/shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "hazo_auth/components/layouts/shared/components/two_column_auth_layout";
-import { AlreadyLoggedInGuard } from "hazo_auth/components/layouts/shared/components/already_logged_in_guard";
-import { FORGOT_PASSWORD_FIELD_IDS, createForgotPasswordFieldDefinitions, resolveForgotPasswordButtonPalette, resolveForgotPasswordLabels, } from "hazo_auth/components/layouts/forgot_password/config/forgot_password_field_config";
-import { use_forgot_password_form, } from "hazo_auth/components/layouts/forgot_password/hooks/use_forgot_password_form";
+import { Input } from "../../ui/input";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
+import { FormHeader } from "../shared/components/form_header";
+import { FormActionButtons } from "../shared/components/form_action_buttons";
+import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
+import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
+import { FORGOT_PASSWORD_FIELD_IDS, createForgotPasswordFieldDefinitions, resolveForgotPasswordButtonPalette, resolveForgotPasswordLabels, } from "./config/forgot_password_field_config";
+import { use_forgot_password_form, } from "./hooks/use_forgot_password_form";
 const ORDERED_FIELDS = [
     FORGOT_PASSWORD_FIELD_IDS.EMAIL,
 ];

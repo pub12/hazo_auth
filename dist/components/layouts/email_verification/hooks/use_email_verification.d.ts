@@ -1,5 +1,5 @@
-import type { LayoutDataClient } from "hazo_auth/components/layouts/shared/data/layout_data_client";
-import { type EmailVerificationFieldId } from "hazo_auth/components/layouts/email_verification/config/email_verification_field_config";
+import type { LayoutDataClient } from "../../shared/data/layout_data_client";
+import { type EmailVerificationFieldId } from "../config/email_verification_field_config";
 export type EmailVerificationFormValues = Record<EmailVerificationFieldId, string>;
 export type EmailVerificationFormErrors = Partial<Record<EmailVerificationFieldId, string>> & {
     submit?: string;

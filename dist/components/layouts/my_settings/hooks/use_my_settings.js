@@ -3,7 +3,7 @@
 "use client";
 // section: imports
 import { useState, useCallback } from "react";
-import { use_auth_status, trigger_auth_status_refresh } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
+import { use_auth_status, trigger_auth_status_refresh } from "../../shared/hooks/use_auth_status";
 import { toast } from "sonner";
 // section: helpers
 /**

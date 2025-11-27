@@ -1,7 +1,7 @@
 import { createCrudService } from "hazo_connect/server";
 import { differenceInDays } from "date-fns";
-import { create_app_logger } from "hazo_auth/lib/app_logger";
-import { sanitize_error_for_user } from "hazo_auth/lib/utils/error_sanitizer";
+import { create_app_logger } from "../app_logger";
+import { sanitize_error_for_user } from "../utils/error_sanitizer";
 // section: helpers
 /**
  * Retrieves basic profile information for multiple users in a single batch call

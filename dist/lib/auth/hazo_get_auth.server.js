@@ -1,11 +1,11 @@
-import { get_hazo_connect_instance } from "hazo_auth/lib/hazo_connect_instance.server";
+import { get_hazo_connect_instance } from "../hazo_connect_instance.server";
 import { createCrudService } from "hazo_connect/server";
-import { create_app_logger } from "hazo_auth/lib/app_logger";
-import { get_filename, get_line_number } from "hazo_auth/lib/utils/api_route_helpers";
-import { PermissionError } from "hazo_auth/lib/auth/auth_types";
-import { get_auth_cache } from "hazo_auth/lib/auth/auth_cache";
-import { get_rate_limiter } from "hazo_auth/lib/auth/auth_rate_limiter";
-import { get_auth_utility_config } from "hazo_auth/lib/auth_utility_config.server";
+import { create_app_logger } from "../app_logger";
+import { get_filename, get_line_number } from "../utils/api_route_helpers";
+import { PermissionError } from "./auth_types";
+import { get_auth_cache } from "./auth_cache";
+import { get_rate_limiter } from "./auth_rate_limiter";
+import { get_auth_utility_config } from "../auth_utility_config.server";
 // section: helpers
 /**
  * Gets client IP address from request

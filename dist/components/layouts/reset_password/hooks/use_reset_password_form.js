@@ -3,8 +3,8 @@
 import { useCallback, useMemo, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { RESET_PASSWORD_FIELD_IDS } from "hazo_auth/components/layouts/reset_password/config/reset_password_field_config";
-import { validatePassword } from "hazo_auth/components/layouts/shared/utils/validation";
+import { RESET_PASSWORD_FIELD_IDS } from "../config/reset_password_field_config";
+import { validatePassword } from "../../shared/utils/validation";
 // section: constants
 const PASSWORD_FIELDS = [
     RESET_PASSWORD_FIELD_IDS.PASSWORD,

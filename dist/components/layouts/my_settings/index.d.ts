@@ -1,5 +1,5 @@
-import { type MySettingsLabelOverrides } from "hazo_auth/components/layouts/my_settings/config/my_settings_field_config";
-import type { PasswordRequirementOptions, ButtonPaletteOverrides } from "hazo_auth/components/layouts/shared/config/layout_customization";
+import { type MySettingsLabelOverrides } from "./config/my_settings_field_config";
+import type { PasswordRequirementOptions, ButtonPaletteOverrides } from "../shared/config/layout_customization";
 export type MySettingsLayoutProps = {
     labels?: MySettingsLabelOverrides;
     button_colors?: ButtonPaletteOverrides;

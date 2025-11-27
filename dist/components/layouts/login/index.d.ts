@@ -1,5 +1,5 @@
-import { type ButtonPaletteOverrides, type LayoutFieldMapOverrides, type LayoutLabelOverrides } from "hazo_auth/components/layouts/shared/config/layout_customization";
-import { type LayoutDataClient } from "hazo_auth/components/layouts/shared/data/layout_data_client";
+import { type ButtonPaletteOverrides, type LayoutFieldMapOverrides, type LayoutLabelOverrides } from "../shared/config/layout_customization";
+import { type LayoutDataClient } from "../shared/data/layout_data_client";
 export type LoginLayoutProps<TClient = unknown> = {
     image_src: string;
     image_alt: string;

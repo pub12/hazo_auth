@@ -6,20 +6,20 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Avatar, AvatarImage, AvatarFallback } from "hazo_auth/components/ui/avatar";
-import { Button } from "hazo_auth/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
+import { Button } from "../../../ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "hazo_auth/components/ui/dropdown-menu";
+} from "../../../ui/dropdown-menu";
 import { Settings, LogOut } from "lucide-react";
 import { toast } from "sonner";
-import { use_auth_status, trigger_auth_status_refresh } from "hazo_auth/components/layouts/shared/hooks/use_auth_status";
+import { use_auth_status, trigger_auth_status_refresh } from "../hooks/use_auth_status";
 // Type-only import from server file is safe (types are erased at runtime)
-import type { ProfilePicMenuMenuItem } from "hazo_auth/lib/profile_pic_menu_config.server";
+import type { ProfilePicMenuMenuItem } from "../../../../lib/profile_pic_menu_config.server";
 
 // section: types
 export type ProfilePicMenuProps = {

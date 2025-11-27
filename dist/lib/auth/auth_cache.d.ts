@@ -1,4 +1,4 @@
-import type { HazoAuthUser } from "hazo_auth/lib/auth/auth_types";
+import type { HazoAuthUser } from "./auth_types";
 /**
  * Cache entry structure
  */
