@@ -7,6 +7,9 @@ export type AuthStatusData = {
     last_logon?: string;
     profile_picture_url?: string;
     profile_source?: "upload" | "library" | "gravatar" | "custom";
+    permissions?: string[];
+    permission_ok?: boolean;
+    missing_permissions?: string[];
     loading: boolean;
 };
 export type AuthStatus = AuthStatusData & {

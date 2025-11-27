@@ -1,4 +1,5 @@
 // file_description: profile picture menu component for navbar or sidebar - shows profile picture when logged in, or sign up/sign in buttons when not logged in
+// Supports both dropdown (navbar) and sidebar variants
 // section: client_directive
 "use client";
 
@@ -15,6 +16,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../../../ui/dropdown-menu";
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from "../../../ui/sidebar";
 import { Settings, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { use_auth_status, trigger_auth_status_refresh } from "../hooks/use_auth_status";
@@ -33,13 +41,17 @@ export type ProfilePicMenuProps = {
   custom_menu_items?: ProfilePicMenuMenuItem[];
   className?: string;
   avatar_size?: "default" | "sm" | "lg";
+  variant?: "dropdown" | "sidebar"; // New prop: render as dropdown (navbar) or sidebar menu
+  sidebar_group_label?: string; // Label for sidebar variant group (default: "Account")
 };
 
 // section: component
 /**
  * Profile picture menu component
  * Shows user profile picture when authenticated, or sign up/sign in buttons when not authenticated
- * Clicking profile picture opens dropdown menu with user info and actions
+ * Supports two variants:
+ * - "dropdown" (default): Clicking profile picture opens dropdown menu (for navbar/header)
+ * - "sidebar": Shows profile picture and name in sidebar, clicking opens dropdown menu (for sidebar navigation)
  * @param props - Component props including configuration options
  * @returns Profile picture menu component
  */
@@ -54,6 +66,8 @@ export function ProfilePicMenu({
   custom_menu_items = [],
   className,
   avatar_size = "default",
+  variant = "dropdown",
+  sidebar_group_label = "Account",
 }: ProfilePicMenuProps) {
   const router = useRouter();
   const authStatus = use_auth_status();
@@ -191,6 +205,18 @@ export function ProfilePicMenu({
 
   // Show loading state
   if (authStatus.loading) {
+    if (variant === "sidebar") {
+      return (
+        <SidebarGroup className={`cls_profile_pic_menu_sidebar ${className || ""}`}>
+          <SidebarGroupLabel>{sidebar_group_label}</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <div className="h-10 w-10 rounded-full bg-[var(--hazo-bg-emphasis)] animate-pulse" />
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+      );
+    }
     return (
       <div className={`cls_profile_pic_menu ${className || ""}`}>
         <div className="h-10 w-10 rounded-full bg-[var(--hazo-bg-emphasis)] animate-pulse" />
@@ -200,6 +226,41 @@ export function ProfilePicMenu({
 
   // Not authenticated - show sign up/sign in buttons
   if (!authStatus.authenticated) {
+    if (variant === "sidebar") {
+      return (
+        <SidebarGroup className={`cls_profile_pic_menu_sidebar ${className || ""}`}>
+          <SidebarGroupLabel>{sidebar_group_label}</SidebarGroupLabel>
+          <SidebarMenu>
+            {show_single_button ? (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href={register_path} className="cls_profile_pic_menu_sign_up">
+                    {sign_up_label}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ) : (
+              <>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href={register_path} className="cls_profile_pic_menu_sign_up">
+                      {sign_up_label}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href={login_path} className="cls_profile_pic_menu_sign_in">
+                      {sign_in_label}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </>
+            )}
+          </SidebarMenu>
+        </SidebarGroup>
+      );
+    }
     return (
       <div className={`cls_profile_pic_menu flex items-center gap-2 ${className || ""}`}>
         {show_single_button ? (
@@ -226,7 +287,116 @@ export function ProfilePicMenu({
     );
   }
 
-  // Authenticated - show profile picture with dropdown menu
+  // Authenticated - render based on variant
+  if (variant === "sidebar") {
+    // Sidebar variant: show profile picture and name only, clicking opens dropdown
+    return (
+      <SidebarGroup className={`cls_profile_pic_menu_sidebar ${className || ""}`}>
+        <SidebarGroupLabel className="cls_profile_pic_menu_sidebar_label">
+          {sidebar_group_label}
+        </SidebarGroupLabel>
+        <SidebarMenu className="cls_profile_pic_menu_sidebar_menu">
+          <SidebarMenuItem className="cls_profile_pic_menu_sidebar_user_info">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="cls_profile_pic_menu_sidebar_trigger w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-md"
+                  aria-label="Profile menu"
+                >
+                  <div className="cls_profile_pic_menu_sidebar_user flex items-center gap-3 px-2 py-2 hover:bg-sidebar-accent rounded-md transition-colors">
+                    <Avatar className={`cls_profile_pic_menu_avatar ${avatarSizeClasses[avatar_size]} cursor-pointer`}>
+                      <AvatarImage
+                        src={authStatus.profile_picture_url}
+                        alt={authStatus.name ? `Profile picture of ${authStatus.name}` : "Profile picture"}
+                        className="cls_profile_pic_menu_image"
+                      />
+                      <AvatarFallback className="cls_profile_pic_menu_fallback bg-[var(--hazo-bg-emphasis)] text-[var(--hazo-text-muted)]">
+                        {getInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                    {authStatus.name && (
+                      <span className="cls_profile_pic_menu_sidebar_user_name text-sm font-medium text-sidebar-foreground truncate">
+                        {authStatus.name}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="cls_profile_pic_menu_dropdown w-56">
+                {menuItems.map((item) => {
+                  if (item.type === "separator") {
+                    return <DropdownMenuSeparator key={item.id} className="cls_profile_pic_menu_separator" />;
+                  }
+
+                  if (item.type === "info") {
+                    return (
+                      <div key={item.id} className="cls_profile_pic_menu_info">
+                        {item.value && (
+                          <div className="cls_profile_pic_menu_info_value px-2 py-1.5 text-sm text-foreground">
+                            {item.value}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  if (item.type === "link") {
+                    // Special handling for logout
+                    if (item.id === "default_logout") {
+                      return (
+                        <DropdownMenuItem
+                          key={item.id}
+                          onClick={handleLogout}
+                          disabled={isLoggingOut}
+                          className="cls_profile_pic_menu_logout cursor-pointer text-destructive focus:text-destructive"
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          {isLoggingOut ? "Logging out..." : item.label}
+                        </DropdownMenuItem>
+                      );
+                    }
+
+                    // Special handling for settings
+                    if (item.id === "default_settings") {
+                      return (
+                        <DropdownMenuItem
+                          key={item.id}
+                          asChild
+                          className="cls_profile_pic_menu_settings cursor-pointer"
+                        >
+                          <Link href={item.href || settings_path}>
+                            <Settings className="mr-2 h-4 w-4" />
+                            {item.label}
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    }
+
+                    // Generic link handling
+                    return (
+                      <DropdownMenuItem
+                        key={item.id}
+                        asChild
+                        className="cls_profile_pic_menu_link cursor-pointer"
+                      >
+                        <Link href={item.href || "#"}>
+                          {item.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  }
+
+                  return null;
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroup>
+    );
+  }
+
+  // Default dropdown variant: show profile picture with dropdown menu
   return (
     <div className={`cls_profile_pic_menu ${className || ""}`}>
       <DropdownMenu>

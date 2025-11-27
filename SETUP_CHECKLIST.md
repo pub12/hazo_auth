@@ -616,18 +616,50 @@ export default function CustomLoginPage() {
 
 Run these tests to verify your setup is working correctly.
 
-### Test 1: API Health Check
+### Test 1: API Health Check - Standardized `/api/hazo_auth/me` Endpoint
+
+**⚠️ IMPORTANT: Use `/api/hazo_auth/me` for all client-side authentication checks. It always returns a standardized format with permissions.**
 
 ```bash
 curl -s http://localhost:3000/api/hazo_auth/me | jq
 ```
 
-**Expected response:**
+**Expected response (not authenticated):**
 ```json
 {
   "authenticated": false
 }
 ```
+
+**Expected response (authenticated - standardized format):**
+```json
+{
+  "authenticated": true,
+  "user_id": "28fe0aff-29c7-407e-b92e-bf11a6a3332f",
+  "email": "test@example.com",
+  "name": "Test User",
+  "email_verified": false,
+  "last_logon": "2025-01-27T16:18:00.054Z",
+  "profile_picture_url": "https://gravatar.com/avatar/...",
+  "profile_source": "gravatar",
+  "user": {
+    "id": "28fe0aff-29c7-407e-b92e-bf11a6a3332f",
+    "email_address": "test@example.com",
+    "name": "Test User",
+    "is_active": true,
+    "profile_picture_url": "https://gravatar.com/avatar/..."
+  },
+  "permissions": [],
+  "permission_ok": true
+}
+```
+
+**Key Points:**
+- ✅ Always returns the same standardized format
+- ✅ Always includes `permissions` and `permission_ok` fields
+- ✅ Top-level fields (`user_id`, `email`, `name`) for backward compatibility
+- ✅ `user` object contains full user details
+- ✅ Use this endpoint instead of `/api/hazo_auth/get_auth` for client-side code
 
 ### Test 2: Registration API
 

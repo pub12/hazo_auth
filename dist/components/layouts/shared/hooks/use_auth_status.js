@@ -21,6 +21,7 @@ export function use_auth_status() {
         loading: true,
     });
     const checkAuth = useCallback(async () => {
+        var _a;
         setAuthStatus((prev) => (Object.assign(Object.assign({}, prev), { loading: true })));
         try {
             const response = await fetch("/api/hazo_auth/me", {
@@ -38,6 +39,9 @@ export function use_auth_status() {
                     last_logon: data.last_logon,
                     profile_picture_url: data.profile_picture_url,
                     profile_source: data.profile_source,
+                    permissions: data.permissions || [],
+                    permission_ok: (_a = data.permission_ok) !== null && _a !== void 0 ? _a : true,
+                    missing_permissions: data.missing_permissions,
                     loading: false,
                 });
             }

@@ -426,8 +426,10 @@ Located in `src/components/layouts/shared/components/`:
 - `FormActionButtons` - Save/Cancel button group
 - `FormFieldWrapper` - Input field with edit mode
 - `PasswordField` - Password input with visibility toggle
-- `ProfilePicMenu` - Profile picture dropdown menu
-- `ProfilePicMenuWrapper` - Wrapper with config loading
+- `ProfilePicMenu` - Profile picture menu component with dropdown and sidebar variants
+  - `variant="dropdown"` (default): Renders as clickable avatar with dropdown menu (for navbar/header)
+  - `variant="sidebar"`: Shows profile picture and name in sidebar, clicking opens dropdown menu (for sidebar navigation)
+- `ProfilePicMenuWrapper` - Server wrapper with config loading (supports both variants)
 - `AlreadyLoggedInGuard` - Guard for logged-in users
 - `UnauthorizedGuard` - Guard for unauthorized users
 
@@ -439,7 +441,104 @@ Located in `src/components/ui/`, these are shadcn-based components:
 - `Dialog`, `AlertDialog`, `Sheet`, `Popover`, `Tooltip`
 - `Avatar`, `Badge`, `Card`, `Separator`
 - `Form`, `Tabs`, `Table`
+- `Sidebar`, `SidebarGroup`, `SidebarMenu`, `SidebarMenuItem` (for sidebar variant)
 - And more...
+
+---
+
+## ProfilePicMenu Component
+
+The `ProfilePicMenu` component is a versatile widget that displays user authentication state and provides account actions. It supports two rendering variants:
+
+### Variants
+
+#### Dropdown Variant (Default)
+- **Use case**: Navbar, header, or top navigation
+- **Behavior**: Clickable avatar opens a dropdown menu
+- **Props**: `variant="dropdown"` (default)
+
+```typescript
+import { ProfilePicMenu } from "hazo_auth/components/layouts/shared";
+
+<ProfilePicMenu 
+  variant="dropdown"
+  avatar_size="sm"
+  className="ml-auto"
+/>
+```
+
+#### Sidebar Variant
+- **Use case**: Sidebar navigation
+- **Behavior**: Shows profile picture and name in a `SidebarGroup`. Clicking opens a dropdown menu with account actions
+- **Props**: `variant="sidebar"`
+
+```typescript
+import { ProfilePicMenu } from "hazo_auth/components/layouts/shared";
+import { SidebarContent } from "hazo_auth/components/ui/sidebar";
+
+<SidebarContent>
+  {/* Other sidebar groups */}
+  <ProfilePicMenu 
+    variant="sidebar"
+    avatar_size="sm"
+    sidebar_group_label="Account"
+  />
+</SidebarContent>
+```
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `variant` | `"dropdown" \| "sidebar"` | `"dropdown"` | Rendering variant |
+| `avatar_size` | `"sm" \| "default" \| "lg"` | `"default"` | Avatar size |
+| `sidebar_group_label` | `string` | `"Account"` | Label for sidebar variant group |
+| `show_single_button` | `boolean` | `false` | Show single button when not authenticated |
+| `sign_up_label` | `string` | `"Sign Up"` | Sign up button label |
+| `sign_in_label` | `string` | `"Sign In"` | Sign in button label |
+| `register_path` | `string` | `"/hazo_auth/register"` | Registration page path |
+| `login_path` | `string` | `"/hazo_auth/login"` | Login page path |
+| `settings_path` | `string` | `"/hazo_auth/my_settings"` | Settings page path |
+| `logout_path` | `string` | `"/api/hazo_auth/logout"` | Logout API endpoint |
+| `custom_menu_items` | `ProfilePicMenuMenuItem[]` | `[]` | Custom menu items |
+| `className` | `string` | `undefined` | Additional CSS classes |
+
+### Menu Item Types
+
+Menu items support three types:
+
+1. **`info`**: Display-only information (name, email)
+2. **`separator`**: Visual separator between menu sections
+3. **`link`**: Clickable menu item with navigation
+
+### Configuration
+
+The component can be configured via `hazo_auth_config.ini`:
+
+```ini
+[hazo_auth__profile_pic_menu]
+show_single_button = false
+sign_up_label = Sign Up
+sign_in_label = Sign In
+register_path = /hazo_auth/register
+login_path = /hazo_auth/login
+settings_path = /hazo_auth/my_settings
+logout_path = /api/hazo_auth/logout
+custom_menu_items = info:Phone:+1234567890:3,separator:2,link:My Account:/account:4
+```
+
+### Server Wrapper
+
+Use `ProfilePicMenuWrapper` to automatically load configuration:
+
+```typescript
+import { ProfilePicMenuWrapper } from "hazo_auth/components/layouts/shared";
+
+<ProfilePicMenuWrapper 
+  variant="sidebar"
+  avatar_size="sm"
+/>
+```
 
 ---
 
@@ -573,16 +672,63 @@ export async function POST(request: NextRequest) {
 
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/auth/register` | POST | User registration |
-| `/api/auth/login` | POST | User login |
-| `/api/auth/logout` | POST | User logout |
-| `/api/auth/me` | GET | Get current user info |
-| `/api/auth/get_auth` | POST | Get auth with permissions |
-| `/api/auth/forgot_password` | POST | Request password reset |
-| `/api/auth/reset_password` | POST | Reset password with token |
-| `/api/auth/validate_reset_token` | GET | Validate reset token |
-| `/api/auth/verify_email` | GET | Verify email with token |
-| `/api/auth/resend_verification` | POST | Resend verification email |
+| `/api/hazo_auth/register` | POST | User registration |
+| `/api/hazo_auth/login` | POST | User login |
+| `/api/hazo_auth/logout` | POST | User logout |
+| `/api/hazo_auth/me` | GET | **Standardized user info with permissions (RECOMMENDED)** |
+| `/api/hazo_auth/get_auth` | POST | Get auth with permissions (server-side utility endpoint) |
+| `/api/hazo_auth/forgot_password` | POST | Request password reset |
+| `/api/hazo_auth/reset_password` | POST | Reset password with token |
+| `/api/hazo_auth/validate_reset_token` | GET | Validate reset token |
+| `/api/hazo_auth/verify_email` | GET | Verify email with token |
+| `/api/hazo_auth/resend_verification` | POST | Resend verification email |
+
+#### `/api/hazo_auth/me` - Standardized Endpoint
+
+**⚠️ IMPORTANT: Use this endpoint for all client-side authentication checks.**
+
+The `/api/hazo_auth/me` endpoint is the **standardized endpoint** that ensures consistent response format across all projects. It always includes permissions and user information in a unified structure.
+
+**Response Format (Authenticated):**
+```typescript
+{
+  authenticated: true,
+  // Top-level fields (for backward compatibility)
+  user_id: string,
+  email: string,
+  name: string | null,
+  email_verified: boolean,
+  last_logon: string | undefined,
+  profile_picture_url: string | null,
+  profile_source: "upload" | "library" | "gravatar" | "custom" | undefined,
+  // Permissions (always included)
+  user: {
+    id: string,
+    email_address: string,
+    name: string | null,
+    is_active: boolean,
+    profile_picture_url: string | null,
+  },
+  permissions: string[],
+  permission_ok: boolean,
+  missing_permissions?: string[],
+}
+```
+
+**Response Format (Not Authenticated):**
+```typescript
+{
+  authenticated: false
+}
+```
+
+**Why Use `/api/hazo_auth/me`?**
+- ✅ **Standardized format** - Always returns the same structure
+- ✅ **Always includes permissions** - No need for separate permission checks
+- ✅ **Backward compatible** - Top-level fields work with existing code
+- ✅ **Single source of truth** - Prevents downstream variations
+
+**Implementation:** The endpoint uses `hazo_get_auth()` internally and adds additional user fields (email_verified, last_logon, profile_source) from the database to provide a comprehensive response.
 
 ### Profile Management Routes
 
@@ -654,6 +800,28 @@ const authResult = await hazo_get_auth(request, {
 
 // authResult.user.url_on_logon contains custom redirect URL
 ```
+
+**Client-Side Authentication (Recommended):**
+
+For client-side code, use the standardized `/api/hazo_auth/me` endpoint:
+
+```typescript
+// Client-side (React component)
+const response = await fetch("/api/hazo_auth/me", {
+  method: "GET",
+  credentials: "include",
+});
+
+const data = await response.json();
+
+if (data.authenticated) {
+  console.log("User:", data.user);
+  console.log("Permissions:", data.permissions);
+  console.log("Permission OK:", data.permission_ok);
+}
+```
+
+The `use_auth_status` hook automatically uses this endpoint and includes permissions in its return value.
 
 ### Route Protection (Middleware)
 

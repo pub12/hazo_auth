@@ -15,6 +15,9 @@ export type AuthStatusData = {
   last_logon?: string;
   profile_picture_url?: string;
   profile_source?: "upload" | "library" | "gravatar" | "custom";
+  permissions?: string[];
+  permission_ok?: boolean;
+  missing_permissions?: string[];
   loading: boolean;
 };
 
@@ -63,6 +66,9 @@ export function use_auth_status(): AuthStatus {
           last_logon: data.last_logon,
           profile_picture_url: data.profile_picture_url,
           profile_source: data.profile_source,
+          permissions: data.permissions || [],
+          permission_ok: data.permission_ok ?? true,
+          missing_permissions: data.missing_permissions,
           loading: false,
         });
       } else {

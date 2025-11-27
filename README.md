@@ -680,6 +680,76 @@ layout_mode = standalone
 
 The `hazo_auth` package provides a comprehensive authentication and authorization system with role-based access control (RBAC). The main authentication utility is `hazo_get_auth`, which provides user details, permissions, and permission checking with built-in caching and rate limiting.
 
+### Client-Side API Endpoint (Recommended)
+
+#### `/api/hazo_auth/me` (GET) - Standardized User Info Endpoint
+
+**⚠️ IMPORTANT: Use this endpoint for all client-side authentication checks. It always returns the same standardized format with permissions.**
+
+This is the **standardized endpoint** that ensures consistent response format across all projects. It always includes permissions and user information in a unified structure.
+
+**Endpoint:** `GET /api/hazo_auth/me`
+
+**Response Format (Authenticated):**
+```typescript
+{
+  authenticated: true,
+  // Top-level fields (for backward compatibility)
+  user_id: string,
+  email: string,
+  name: string | null,
+  email_verified: boolean,
+  last_logon: string | undefined,
+  profile_picture_url: string | null,
+  profile_source: "upload" | "library" | "gravatar" | "custom" | undefined,
+  // Permissions (always included)
+  user: {
+    id: string,
+    email_address: string,
+    name: string | null,
+    is_active: boolean,
+    profile_picture_url: string | null,
+  },
+  permissions: string[],
+  permission_ok: boolean,
+  missing_permissions?: string[],
+}
+```
+
+**Response Format (Not Authenticated):**
+```typescript
+{
+  authenticated: false
+}
+```
+
+**Example Usage:**
+
+```typescript
+// Client-side (React component)
+const response = await fetch("/api/hazo_auth/me", {
+  method: "GET",
+  credentials: "include",
+});
+
+const data = await response.json();
+
+if (data.authenticated) {
+  console.log("User:", data.user);
+  console.log("Email:", data.email);
+  console.log("Permissions:", data.permissions);
+  console.log("Permission OK:", data.permission_ok);
+}
+```
+
+**Why Use `/api/hazo_auth/me`?**
+- ✅ **Standardized format** - Always returns the same structure
+- ✅ **Always includes permissions** - No need for separate permission checks
+- ✅ **Backward compatible** - Top-level fields work with existing code
+- ✅ **Single source of truth** - Prevents downstream variations
+
+**Note:** The `use_auth_status` hook automatically uses this endpoint and includes permissions in its return value.
+
 ### Server-Side Functions
 
 #### `hazo_get_auth` (Recommended)
@@ -917,12 +987,21 @@ enable_friendly_error_messages = true
 ## Profile Picture Menu Widget
 
 The Profile Picture Menu is a versatile component for navbar or sidebar that automatically displays:
-- **When authenticated**: User's profile picture with a dropdown menu containing user info, settings link, logout, and custom menu items
+- **When authenticated**: User's profile picture with a dropdown menu (navbar) or sidebar menu (sidebar) containing user info, settings link, logout, and custom menu items
 - **When not authenticated**: Sign Up and Sign In buttons (or a single button, configurable)
+
+### Variants
+
+The component supports two rendering variants:
+
+- **`dropdown`** (default): Renders as a clickable avatar that opens a dropdown menu. Use this for navbar/header contexts.
+- **`sidebar`**: Shows profile picture and name in a sidebar group. Clicking opens a dropdown menu with account actions. Use this inside `SidebarContent` for sidebar navigation.
 
 ### Basic Usage (Recommended)
 
 Use the `ProfilePicMenuWrapper` component which automatically loads configuration from `hazo_auth_config.ini`:
+
+#### Dropdown Variant (Navbar/Header)
 
 ```typescript
 // In your navbar or layout component
@@ -935,10 +1014,63 @@ export function Navbar() {
       <ProfilePicMenuWrapper 
         avatar_size="default" // "sm" | "default" | "lg"
         className="ml-auto"
+        // variant="dropdown" is the default
       />
     </nav>
   );
 }
+```
+
+#### Sidebar Variant
+
+The sidebar variant shows only the profile picture and name. Clicking opens a dropdown menu with account actions:
+
+```typescript
+// In your sidebar component
+import { ProfilePicMenu } from "hazo_auth/components/layouts/shared";
+import { SidebarContent } from "hazo_auth/components/ui/sidebar";
+
+export function Sidebar() {
+  return (
+    <SidebarContent>
+      {/* Other sidebar groups */}
+      
+      {/* Profile menu as sidebar variant - shows avatar + name, clicking opens dropdown */}
+      <ProfilePicMenu 
+        variant="sidebar"
+        avatar_size="sm"
+        sidebar_group_label="Account" // Optional: defaults to "Account"
+        className="mt-auto" // Optional: push to bottom
+      />
+    </SidebarContent>
+  );
+}
+```
+
+### Direct Usage (Advanced)
+
+If you need more control, use `ProfilePicMenu` directly:
+
+```typescript
+import { ProfilePicMenu } from "hazo_auth/components/layouts/shared";
+
+// Dropdown variant (navbar)
+<ProfilePicMenu 
+  variant="dropdown"
+  avatar_size="sm"
+  settings_path="/settings"
+  logout_path="/api/logout"
+/>
+
+// Sidebar variant
+<ProfilePicMenu 
+  variant="sidebar"
+  avatar_size="sm"
+  sidebar_group_label="My Account"
+  custom_menu_items={[
+    { type: "link", label: "Dashboard", href: "/dashboard", order: 1, id: "dashboard" }
+  ]}
+/>
 ```
 
 ### Configuration

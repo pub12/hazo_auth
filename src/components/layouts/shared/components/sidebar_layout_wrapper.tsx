@@ -17,7 +17,7 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "../../../ui/sidebar";
-import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, Settings, User } from "lucide-react";
+import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, User } from "lucide-react";
 import { use_auth_status } from "../hooks/use_auth_status";
 import { ProfilePicMenu } from "./profile_pic_menu";
 
@@ -133,27 +133,13 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroup>
-            {authStatus.authenticated && (
-              <SidebarGroup className="cls_sidebar_layout_account_group">
-                <SidebarGroupLabel className="cls_sidebar_layout_group_label">
-                  Account
-                </SidebarGroupLabel>
-                <SidebarMenu className="cls_sidebar_layout_account_menu">
-                  <SidebarMenuItem className="cls_sidebar_layout_my_settings_item">
-                    <SidebarMenuButton asChild>
-                      <Link
-                        href="/hazo_auth/my_settings"
-                        className="cls_sidebar_layout_my_settings_link flex items-center gap-2"
-                        aria-label="Open my settings page"
-                      >
-                        <Settings className="h-4 w-4" aria-hidden="true" />
-                        <span>My Settings</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroup>
-            )}
+            {/* Profile menu in sidebar variant - shows user info and account actions */}
+            <ProfilePicMenu 
+              variant="sidebar" 
+              avatar_size="sm"
+              className="cls_sidebar_layout_profile_menu"
+              sidebar_group_label="Account"
+            />
             <SidebarGroup className="cls_sidebar_layout_resources_group">
               <SidebarGroupLabel className="cls_sidebar_layout_group_label">
                 Resources
