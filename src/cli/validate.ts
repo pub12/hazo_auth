@@ -49,6 +49,20 @@ const REQUIRED_API_ROUTES = [
   { path: "api/hazo_auth/get_auth", method: "POST" },
   { path: "api/hazo_auth/validate_reset_token", method: "POST" },
   { path: "api/hazo_auth/profile_picture/[filename]", method: "GET" },
+  // User management routes
+  { path: "api/hazo_auth/user_management/users", method: "GET" },
+  { path: "api/hazo_auth/user_management/users", method: "PATCH" },
+  { path: "api/hazo_auth/user_management/users", method: "POST" },
+  { path: "api/hazo_auth/user_management/permissions", method: "GET" },
+  { path: "api/hazo_auth/user_management/permissions", method: "POST" },
+  { path: "api/hazo_auth/user_management/permissions", method: "PUT" },
+  { path: "api/hazo_auth/user_management/permissions", method: "DELETE" },
+  { path: "api/hazo_auth/user_management/roles", method: "GET" },
+  { path: "api/hazo_auth/user_management/roles", method: "POST" },
+  { path: "api/hazo_auth/user_management/roles", method: "PUT" },
+  { path: "api/hazo_auth/user_management/users/roles", method: "GET" },
+  { path: "api/hazo_auth/user_management/users/roles", method: "POST" },
+  { path: "api/hazo_auth/user_management/users/roles", method: "PUT" },
 ];
 
 // section: helpers

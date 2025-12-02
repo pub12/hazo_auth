@@ -392,6 +392,41 @@ SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'hazo_%';
 
 ---
 
+## Phase 3.1: Configure Default Permissions (Optional)
+
+The `hazo_auth_config.ini` file includes default permissions that will be available in the Permissions tab. These defaults are already configured when you run `npx hazo_auth init`.
+
+**Default permissions included:**
+- `admin_user_management`
+- `admin_role_management`
+- `admin_permission_management`
+
+**To customize permissions:**
+
+Edit `hazo_auth_config.ini`:
+```ini
+[hazo_auth__user_management]
+application_permission_list_defaults = admin_user_management,admin_role_management,admin_permission_management
+```
+
+**To initialize permissions and create a super user:**
+
+After setting up your database and configuring permissions, you can run:
+```bash
+npm run init-users
+```
+
+This script will:
+1. Create all permissions from `application_permission_list_defaults`
+2. Create a `default_super_user_role` role with all permissions
+3. Assign the role to the user specified in `default_super_user_email` (configure in `[hazo_auth__initial_setup]` section)
+
+**Checklist:**
+- [ ] Default permissions configured in `hazo_auth_config.ini` (already set by default)
+- [ ] `default_super_user_email` configured if you want to use `init-users` script
+
+---
+
 ## Phase 4: API Routes
 
 Create API route files in your project. Each file re-exports handlers from hazo_auth.
@@ -427,8 +462,14 @@ app/api/hazo_auth/
 ├── library_photos/route.ts
 ├── get_auth/route.ts
 ├── validate_reset_token/route.ts
-└── profile_picture/
-    └── [filename]/route.ts
+├── profile_picture/
+│   └── [filename]/route.ts
+└── user_management/
+    ├── users/route.ts
+    ├── permissions/route.ts
+    ├── roles/route.ts
+    └── users/
+        └── roles/route.ts
 ```
 
 **Example route file content:**
@@ -513,9 +554,34 @@ export { POST } from "hazo_auth/server/routes/validate_reset_token";
 export { GET } from "hazo_auth/server/routes/profile_picture_filename";
 ```
 
+**User Management routes (optional - required if using UserManagementLayout):**
+
+`app/api/hazo_auth/user_management/users/route.ts`:
+```typescript
+export { GET, PATCH, POST } from "hazo_auth/server/routes";
+```
+
+`app/api/hazo_auth/user_management/permissions/route.ts`:
+```typescript
+export { GET, POST, PUT, DELETE } from "hazo_auth/server/routes";
+```
+
+`app/api/hazo_auth/user_management/roles/route.ts`:
+```typescript
+export { GET, POST, PUT } from "hazo_auth/server/routes";
+```
+
+`app/api/hazo_auth/user_management/users/roles/route.ts`:
+```typescript
+export { GET, POST, PUT } from "hazo_auth/server/routes";
+```
+
+**Note:** The `generate-routes` command automatically creates all user_management routes. These routes are required if you plan to use the `UserManagementLayout` component for managing users, roles, and permissions.
+
 **Checklist:**
-- [ ] All 16 API route files created
-- [ ] Each file exports the correct HTTP method (POST, GET, PATCH, DELETE)
+- [ ] All 16 core API route files created
+- [ ] User management routes created (if using UserManagementLayout)
+- [ ] Each file exports the correct HTTP method (POST, GET, PATCH, DELETE, PUT)
 
 ---
 

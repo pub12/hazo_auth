@@ -648,7 +648,52 @@ export default async function LoginPage() {
 - `ResetPasswordLayout` - Set new password with token
 - `EmailVerificationLayout` - Verify email address
 - `MySettingsLayout` - User profile and settings
-- `UserManagementLayout` - Admin user/role management
+- `UserManagementLayout` - Admin user/role management (requires user_management API routes)
+
+### User Management Component
+
+The `UserManagementLayout` component provides a comprehensive admin interface for managing users, roles, and permissions. It requires the user_management API routes to be set up in your project.
+
+**Required Permissions:**
+- `admin_user_management` - Access to Users tab
+- `admin_role_management` - Access to Roles tab
+- `admin_permission_management` - Access to Permissions tab
+
+**Required API Routes:**
+The `UserManagementLayout` component requires the following API routes to be created in your project:
+
+```typescript
+// app/api/hazo_auth/user_management/users/route.ts
+export { GET, PATCH, POST } from "hazo_auth/server/routes";
+
+// app/api/hazo_auth/user_management/permissions/route.ts
+export { GET, POST, PUT, DELETE } from "hazo_auth/server/routes";
+
+// app/api/hazo_auth/user_management/roles/route.ts
+export { GET, POST, PUT } from "hazo_auth/server/routes";
+
+// app/api/hazo_auth/user_management/users/roles/route.ts
+export { GET, POST, PUT } from "hazo_auth/server/routes";
+```
+
+**Note:** These routes are automatically created when you run `npx hazo_auth generate-routes`. The routes handle:
+- **Users:** List users, deactivate users, send password reset emails
+- **Permissions:** List permissions (from DB and config), migrate config permissions to DB, create/update/delete permissions
+- **Roles:** List roles with permissions, create roles, update role-permission assignments
+- **User Roles:** Get user roles, assign roles to users, bulk update user role assignments
+
+**Example Usage:**
+
+```tsx
+// app/hazo_auth/user_management/page.tsx
+import { UserManagementLayout } from "hazo_auth/components/layouts/user_management";
+
+export default function UserManagementPage() {
+  return <UserManagementLayout />;
+}
+```
+
+The component automatically shows/hides tabs based on the user's permissions, so users will only see the tabs they have access to.
 
 **Shared Components:**
 - `ProfilePicMenu` / `ProfilePicMenuWrapper` - Navbar profile menu

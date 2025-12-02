@@ -29,3 +29,9 @@ export { GET as profilePictureFilenameGET } from "./profile_picture_filename.js"
 export { POST as getAuthPOST } from "./get_auth.js";
 export { POST as invalidateCachePOST } from "./invalidate_cache.js";
 
+// User management routes
+export { GET as userManagementUsersGET, PATCH as userManagementUsersPATCH, POST as userManagementUsersPOST } from "./user_management_users.js";
+export { GET as userManagementPermissionsGET, POST as userManagementPermissionsPOST, PUT as userManagementPermissionsPUT, DELETE as userManagementPermissionsDELETE } from "./user_management_permissions.js";
+export { GET as userManagementRolesGET, POST as userManagementRolesPOST, PUT as userManagementRolesPUT } from "./user_management_roles.js";
+export { GET as userManagementUsersRolesGET, POST as userManagementUsersRolesPOST, PUT as userManagementUsersRolesPUT } from "./user_management_users_roles.js";
+
