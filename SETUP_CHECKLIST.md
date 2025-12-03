@@ -196,6 +196,7 @@ HAZO_CONNECT_POSTGREST_API_KEY=your_postgrest_api_key_here
 
 # Required for JWT authentication
 JWT_SECRET=your_secure_random_string_at_least_32_characters
+# Note: JWT_SECRET is required for JWT session token functionality (Edge-compatible proxy/middleware authentication)
 ```
 
 **Generate a secure JWT secret:**
@@ -216,7 +217,7 @@ from_name = Your App Name
 **Checklist:**
 - [ ] `.env.local` file created
 - [ ] `ZEPTOMAIL_API_KEY` set (or email will not work)
-- [ ] `JWT_SECRET` set
+- [ ] `JWT_SECRET` set (required for JWT session tokens - Edge-compatible proxy/middleware authentication)
 - [ ] `from_email` configured in `hazo_notify_config.ini`
 
 ---
@@ -675,6 +676,85 @@ export default function CustomLoginPage() {
 - [ ] Reset password page created (`/hazo_auth/reset_password`)
 - [ ] Email verification page created (`/hazo_auth/verify_email`)
 - [ ] My settings page created (`/hazo_auth/my_settings`)
+
+---
+
+## Phase 5.1: Proxy/Middleware Setup (Optional)
+
+**Note:** Next.js is migrating from `middleware.ts` to `proxy.ts` (see [Next.js documentation](https://nextjs.org/docs/messages/middleware-to-proxy)). The functionality remains the same - both work, but `proxy.ts` is the new convention.
+
+If you want to protect routes at the Edge Runtime level (before pages load), create a proxy/middleware file:
+
+### Step 5.1.1: Create Proxy File (Recommended)
+
+Create `proxy.ts` in your project root (or `middleware.ts` - both work):
+
+```typescript
+// proxy.ts (or middleware.ts)
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { validate_session_cookie } from "hazo_auth/server/middleware";
+
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  // Protect your routes (e.g., /members, /dashboard, etc.)
+  if (pathname.startsWith("/members")) {
+    const { valid } = await validate_session_cookie(request);
+    
+    if (!valid) {
+      const login_url = new URL("/hazo_auth/login", request.url);
+      login_url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(login_url);
+    }
+  }
+  
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};
+```
+
+### Step 5.1.2: Simple Cookie Check (Alternative)
+
+If you prefer a simpler approach without JWT validation:
+
+```typescript
+// proxy.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  if (pathname.startsWith("/members")) {
+    const user_id = request.cookies.get("hazo_auth_user_id")?.value;
+    const user_email = request.cookies.get("hazo_auth_user_email")?.value;
+    
+    if (!user_id || !user_email) {
+      const login_url = new URL("/hazo_auth/login", request.url);
+      login_url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(login_url);
+    }
+  }
+  
+  return NextResponse.next();
+}
+```
+
+**Important Notes:**
+- Proxy/middleware runs in Edge Runtime (cannot use Node.js APIs like SQLite)
+- JWT validation (`validate_session_cookie`) provides better security
+- Simple cookie check is faster but doesn't validate token integrity
+- Full user validation (e.g., deactivated accounts) happens in API routes/layouts
+- Both `proxy.ts` and `middleware.ts` work - Next.js recommends `proxy.ts`
+
+**Checklist:**
+- [ ] Proxy/middleware file created (optional - only if you need route protection)
+- [ ] Protected routes configured
+- [ ] JWT validation used (recommended) or simple cookie check
 
 ---
 

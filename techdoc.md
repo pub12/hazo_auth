@@ -9,6 +9,7 @@ The `hazo_auth` package is a reusable authentication UI component package for Ne
 - Role-based access control (RBAC) with permissions
 - Configurable UI components based on shadcn/ui
 - Integration with `hazo_config` for configuration and `hazo_connect` for data access
+- **JWT Session Tokens** (v1.6.6+): Edge-compatible authentication for Next.js proxy/middleware files
 
 ---
 
@@ -823,13 +824,53 @@ if (data.authenticated) {
 
 The `use_auth_status` hook automatically uses this endpoint and includes permissions in its return value.
 
-### Route Protection (Middleware)
+### Route Protection (Proxy/Middleware)
 
-The `src/middleware.ts` automatically protects routes:
+**Note:** Next.js is migrating from `middleware.ts` to `proxy.ts` (see [Next.js documentation](https://nextjs.org/docs/messages/middleware-to-proxy)). The functionality remains the same.
 
-- **Public Routes:** `/login`, `/register`, `/forgot_password`, etc.
-- **Protected Routes:** All other routes require authentication cookies
-- Redirects to `/login?redirect=<original_path>` if not authenticated
+#### JWT Session Tokens (v1.6.6+)
+
+**New Feature:** hazo_auth now issues JWT session tokens on login for Edge-compatible authentication:
+
+- **Cookie Name:** `hazo_auth_session`
+- **Token Type:** JWT (signed with `JWT_SECRET`)
+- **Expiry:** 30 days (configurable)
+- **Payload:** `{ user_id, email, iat, exp }`
+- **Validation:** Signature and expiry checked without database access (Edge-compatible)
+
+#### Using in Proxy/Middleware
+
+**Recommended: JWT Validation**
+
+```typescript
+// proxy.ts (or middleware.ts)
+import { validate_session_cookie } from "hazo_auth/server/middleware";
+
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  if (pathname.startsWith("/members")) {
+    const { valid } = await validate_session_cookie(request);
+    if (!valid) {
+      return NextResponse.redirect(new URL("/hazo_auth/login", request.url));
+    }
+  }
+  
+  return NextResponse.next();
+}
+```
+
+**Edge Runtime Limitations:**
+- Proxy/middleware runs in Edge Runtime (cannot use Node.js APIs like SQLite)
+- `hazo_get_auth` cannot be used directly (requires database access)
+- JWT validation works in Edge Runtime (no database needed)
+- Full user validation happens in API routes/layouts
+
+#### Backward Compatibility
+
+- Existing `hazo_auth_user_id` and `hazo_auth_user_email` cookies still work
+- `hazo_get_auth` falls back to simple cookies if JWT not present
+- Both authentication methods supported simultaneously
 
 ---
 

@@ -61,7 +61,8 @@ export const use_register_form = <TClient,>({
   dataClient,
   urlOnLogon,
 }: UseRegisterFormParams<TClient>): UseRegisterFormResult => {
-  const [values, setValues] = useState<RegisterFormValues>(buildInitialValues);
+  const initialValues = useMemo(() => buildInitialValues(), []);
+  const [values, setValues] = useState<RegisterFormValues>(initialValues);
   const [errors, setErrors] = useState<RegisterFormErrors>({});
   const [passwordVisibility, setPasswordVisibility] = useState<PasswordVisibilityState>({
     password: false,
@@ -70,21 +71,49 @@ export const use_register_form = <TClient,>({
   const [emailTouched, setEmailTouched] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  // Check if form has been edited (changed from initial state)
+  const isFormEdited = useMemo(() => {
+    return Object.entries(values).some(([fieldId, fieldValue]) => {
+      if (fieldId === REGISTER_FIELD_IDS.NAME && !showNameField) {
+        return false;
+      }
+      return fieldValue.trim() !== initialValues[fieldId as RegisterFieldId].trim();
+    });
+  }, [values, initialValues, showNameField]);
+
   const isSubmitDisabled = useMemo(() => {
+    // Disable if submitting
     if (isSubmitting) {
       return true;
     }
 
+    // Disable if form hasn't been edited
+    if (!isFormEdited) {
+      return true;
+    }
+
+    // Disable if there are validation errors (excluding submit errors)
+    const validationErrors = { ...errors };
+    delete validationErrors.submit;
+    const hasErrors = Object.keys(validationErrors).length > 0;
+    if (hasErrors) {
+      return true;
+    }
+
+    // Disable if required fields are empty
     const hasEmptyField = Object.entries(values).some(([fieldId, fieldValue]) => {
       if (fieldId === REGISTER_FIELD_IDS.NAME && !showNameField) {
         return false;
       }
       return fieldValue.trim() === "";
     });
+    if (hasEmptyField) {
+      return true;
+    }
 
-    const hasErrors = Object.keys(errors).length > 0;
-    return hasEmptyField || hasErrors;
-  }, [errors, showNameField, values, isSubmitting]);
+    // Enable if form is edited, has no errors, and all required fields are filled
+    return false;
+  }, [errors, showNameField, values, isSubmitting, isFormEdited]);
 
   const togglePasswordVisibility = useCallback((fieldId: "password" | "confirm_password") => {
     setPasswordVisibility((previous) => ({
@@ -221,7 +250,8 @@ export const use_register_form = <TClient,>({
         });
 
         // Reset form on success
-        setValues(buildInitialValues());
+        const resetValues = buildInitialValues();
+        setValues(resetValues);
         setErrors({});
         setPasswordVisibility({
           password: false,
@@ -249,7 +279,8 @@ export const use_register_form = <TClient,>({
   );
 
   const handleCancel = useCallback(() => {
-    setValues(buildInitialValues());
+    const resetValues = buildInitialValues();
+    setValues(resetValues);
     setErrors({});
     setPasswordVisibility({
       password: false,

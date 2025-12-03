@@ -60,6 +60,10 @@
       "types": "./dist/server/routes/index.d.ts",
       "import": "./dist/server/routes/index.js"
     },
+    "./server/middleware": {
+      "types": "./dist/server/middleware.d.ts",
+      "import": "./dist/server/middleware.js"
+    },
     "./pages": {
       "types": "./dist/page_components/index.d.ts",
       "import": "./dist/page_components/index.js"
@@ -145,6 +149,7 @@
     "hazo_notify": "^1.0.0",
     "helmet": "^8.1.0",
     "ini": "^6.0.0",
+    "jose": "^5.9.6",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.553.0",
     "mime-types": "^3.0.1",

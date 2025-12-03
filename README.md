@@ -2,6 +2,10 @@
 
 A reusable authentication UI component package powered by Next.js, TailwindCSS, and shadcn. It integrates `hazo_config` for configuration management and `hazo_connect` for data access, enabling future components to stay aligned with platform conventions.
 
+### What's New (v1.6.6+)
+
+- **JWT Session Tokens for Edge-Compatible Authentication**: hazo_auth now issues JWT session tokens on login, enabling secure Edge Runtime authentication in Next.js proxy/middleware files. This provides better security than simple cookie checks while maintaining high performance. See [Proxy/Middleware Authentication](#proxymiddleware-authentication) for details.
+
 ## Table of Contents
 
 - [Installation](#installation)
@@ -10,6 +14,7 @@ A reusable authentication UI component package powered by Next.js, TailwindCSS, 
 - [Database Setup](#database-setup)
 - [Using Components](#using-components)
 - [Authentication Service](#authentication-service)
+- [Proxy/Middleware Authentication](#proxymiddleware-authentication)
 - [Profile Picture Menu Widget](#profile-picture-menu-widget)
 - [User Profile Service](#user-profile-service)
 - [Local Development](#local-development)
@@ -107,6 +112,8 @@ import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
 ---
 
 ## Required Dependencies
+
+**Note:** The `jose` package is now included as a dependency for Edge-compatible JWT operations. This is automatically installed when you run `npm install hazo_auth`.
 
 hazo_auth uses shadcn/ui components. Install the required dependencies in your project:
 
@@ -252,7 +259,10 @@ cp node_modules/hazo_auth/hazo_notify_config.example.ini ./hazo_notify_config.in
 
 - Create a `.env.local` file in your project root
 - Add `ZEPTOMAIL_API_KEY=your_api_key_here` (if using Zeptomail)
+- Add `JWT_SECRET=your_secure_random_string_at_least_32_characters` (required for JWT session tokens)
 - Add other sensitive configuration values as needed
+
+**Note:** `JWT_SECRET` is required for JWT session token functionality (used for Edge-compatible proxy/middleware authentication). Generate a secure random string at least 32 characters long.
 
 **Important:** The configuration files must be located in your project root directory (where `process.cwd()` points to), not inside `node_modules`. The package reads configuration from `process.cwd()` at runtime, so storing them elsewhere (including `node_modules/hazo_auth`) will break runtime access.
 
@@ -611,6 +621,9 @@ import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
 
 // Server utilities
 import { ... } from "hazo_auth/server";
+
+// Edge-compatible proxy/middleware authentication (v1.6.6+)
+import { validate_session_cookie } from "hazo_auth/server/middleware";
 ```
 
 **Note:** The package uses relative imports internally. Consumers should only import from the exposed entry points listed above. Do not import from internal paths like `hazo_auth/components/ui/*` - these are internal modules.
@@ -794,6 +807,93 @@ if (data.authenticated) {
 - ✅ **Single source of truth** - Prevents downstream variations
 
 **Note:** The `use_auth_status` hook automatically uses this endpoint and includes permissions in its return value.
+
+### Proxy/Middleware Authentication
+
+hazo_auth provides Edge-compatible authentication for Next.js proxy/middleware files. **Note:** Next.js is migrating from `middleware.ts` to `proxy.ts` (see [Next.js documentation](https://nextjs.org/docs/messages/middleware-to-proxy)), but the functionality remains the same.
+
+#### Edge Runtime Limitations
+
+Next.js proxy/middleware runs in Edge Runtime, which cannot use Node.js APIs (like SQLite). Therefore, `hazo_get_auth` cannot be used directly in proxy/middleware because it requires database access.
+
+#### JWT Session Tokens
+
+**New in v1.6.6+:** hazo_auth now issues JWT session tokens on login that can be validated in Edge Runtime:
+
+- **Cookie Name:** `hazo_auth_session`
+- **Token Type:** JWT (signed with `JWT_SECRET`)
+- **Expiry:** 30 days (configurable)
+- **Validation:** Signature and expiry checked without database access
+- **Backward Compatible:** Existing `hazo_auth_user_id` and `hazo_auth_user_email` cookies still work
+
+**Requirements:**
+- `JWT_SECRET` environment variable must be set (see [Configuration Setup](#configuration-setup))
+- The `jose` package is included as a dependency (Edge-compatible JWT library)
+
+#### Using in Proxy/Middleware
+
+**Recommended: Use JWT validation (Edge-compatible)**
+
+```typescript
+// proxy.ts (or middleware.ts - both work)
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { validate_session_cookie } from "hazo_auth/server/middleware";
+
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  // Protect routes
+  if (pathname.startsWith("/members")) {
+    const { valid } = await validate_session_cookie(request);
+    
+    if (!valid) {
+      const login_url = new URL("/hazo_auth/login", request.url);
+      login_url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(login_url);
+    }
+  }
+  
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};
+```
+
+**Fallback: Simple cookie check (less secure, but works)**
+
+If JWT validation fails or you need a simpler check:
+
+```typescript
+// proxy.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  if (pathname.startsWith("/members")) {
+    const user_id = request.cookies.get("hazo_auth_user_id")?.value;
+    const user_email = request.cookies.get("hazo_auth_user_email")?.value;
+    
+    if (!user_id || !user_email) {
+      const login_url = new URL("/hazo_auth/login", request.url);
+      login_url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(login_url);
+    }
+  }
+  
+  return NextResponse.next();
+}
+```
+
+**Important Notes:**
+- JWT validation provides better security (signature validation, tamper detection)
+- Simple cookie check is faster but doesn't validate token integrity
+- Full user status checks (e.g., deactivated accounts) happen in API routes/layouts
+- Both approaches work - JWT is recommended for production
 
 ### Server-Side Functions
 

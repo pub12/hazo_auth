@@ -7,6 +7,7 @@ import { authenticate_user } from "../../../../lib/services/login_service";
 import { createCrudService } from "hazo_connect/server";
 import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
 import { get_login_config } from "../../../../lib/login_config.server";
+import { create_session_token } from "../../../../lib/services/session_token_service";
 
 // section: api_handler
 export async function POST(request: NextRequest) {
@@ -159,6 +160,30 @@ export async function POST(request: NextRequest) {
       path: "/",
       maxAge: 60 * 60 * 24 * 30, // 30 days
     });
+
+    // Create and set JWT session token (for Edge-compatible proxy/middleware)
+    try {
+      const session_token = await create_session_token(user_id, email);
+      response.cookies.set("hazo_auth_session", session_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+      });
+    } catch (token_error) {
+      // Log error but don't fail login if token creation fails
+      // Backward compatibility: existing cookies still work
+      const token_error_message = token_error instanceof Error ? token_error.message : "Unknown error";
+      logger.warn("login_session_token_creation_failed", {
+        filename: get_filename(),
+        line_number: get_line_number(),
+        user_id,
+        email,
+        error: token_error_message,
+        note: "Login succeeded but session token creation failed - using legacy cookies",
+      });
+    }
 
     return response;
   } catch (error) {
