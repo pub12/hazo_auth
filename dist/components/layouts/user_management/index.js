@@ -133,7 +133,7 @@ export function UserManagementLayout({ className }) {
             return;
         setUsersActionLoading(true);
         try {
-            const response = await fetch("/api/user_management/users", {
+            const response = await fetch("/api/hazo_auth/user_management/users", {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -149,7 +149,7 @@ export function UserManagementLayout({ className }) {
                 setDeactivateDialogOpen(false);
                 setSelectedUser(null);
                 // Reload users
-                const reload_response = await fetch("/api/user_management/users");
+                const reload_response = await fetch("/api/hazo_auth/user_management/users");
                 const reload_data = await reload_response.json();
                 if (reload_data.success) {
                     setUsers(reload_data.users);
@@ -172,7 +172,7 @@ export function UserManagementLayout({ className }) {
             return;
         setUsersActionLoading(true);
         try {
-            const response = await fetch("/api/user_management/users", {
+            const response = await fetch("/api/hazo_auth/user_management/users", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -224,7 +224,7 @@ export function UserManagementLayout({ className }) {
                     toast.info(`Skipped: ${data.skipped.join(", ")}`);
                 }
                 // Reload permissions
-                const reload_response = await fetch("/api/user_management/permissions");
+                const reload_response = await fetch("/api/hazo_auth/user_management/permissions");
                 const reload_data = await reload_response.json();
                 if (reload_data.success) {
                     const db_perms = reload_data.db_permissions.map((p) => ({
@@ -259,7 +259,7 @@ export function UserManagementLayout({ className }) {
             return;
         setPermissionsActionLoading(true);
         try {
-            const response = await fetch("/api/user_management/permissions", {
+            const response = await fetch("/api/hazo_auth/user_management/permissions", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -276,7 +276,7 @@ export function UserManagementLayout({ className }) {
                 setEditingPermission(null);
                 setEditDescription("");
                 // Reload permissions
-                const reload_response = await fetch("/api/user_management/permissions");
+                const reload_response = await fetch("/api/hazo_auth/user_management/permissions");
                 const reload_data = await reload_response.json();
                 if (reload_data.success) {
                     const db_perms = reload_data.db_permissions.map((p) => ({
@@ -313,7 +313,7 @@ export function UserManagementLayout({ className }) {
         }
         setPermissionsActionLoading(true);
         try {
-            const response = await fetch("/api/user_management/permissions", {
+            const response = await fetch("/api/hazo_auth/user_management/permissions", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -330,7 +330,7 @@ export function UserManagementLayout({ className }) {
                 setNewPermissionName("");
                 setNewPermissionDescription("");
                 // Reload permissions
-                const reload_response = await fetch("/api/user_management/permissions");
+                const reload_response = await fetch("/api/hazo_auth/user_management/permissions");
                 const reload_data = await reload_response.json();
                 if (reload_data.success) {
                     const db_perms = reload_data.db_permissions.map((p) => ({
@@ -372,7 +372,7 @@ export function UserManagementLayout({ className }) {
             if (data.success) {
                 toast.success("Permission deleted successfully");
                 // Reload permissions
-                const reload_response = await fetch("/api/user_management/permissions");
+                const reload_response = await fetch("/api/hazo_auth/user_management/permissions");
                 const reload_data = await reload_response.json();
                 if (reload_data.success) {
                     const db_perms = reload_data.db_permissions.map((p) => ({
