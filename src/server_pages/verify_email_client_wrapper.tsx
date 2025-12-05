@@ -10,8 +10,10 @@ import type { LayoutDataClient } from "../components/layouts/shared/data/layout_
 import type { EmailVerificationConfig } from "../lib/email_verification_config.server";
 
 // section: types
-export type VerifyEmailClientWrapperProps = EmailVerificationConfig & {
-  image_src: string;
+import type { StaticImageData } from "next/image";
+
+export type VerifyEmailClientWrapperProps = Omit<EmailVerificationConfig, 'imageSrc' | 'imageAlt' | 'imageBackgroundColor'> & {
+  image_src: string | StaticImageData;
   image_alt: string;
   image_background_color: string;
   redirect_delay: number;

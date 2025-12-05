@@ -5,6 +5,8 @@ import { get_already_logged_in_config } from "./already_logged_in_config.server"
 import loginDefaultImage from "../assets/images/login_default.jpg";
 
 // section: types
+import type { StaticImageData } from "next/image";
+
 export type LoginConfig = {
   redirectRoute?: string;
   successMessage: string;
@@ -17,9 +19,9 @@ export type LoginConfig = {
   forgotPasswordLabel: string;
   createAccountPath: string;
   createAccountLabel: string;
-  imageSrc?: string;
-  imageAlt?: string;
-  imageBackgroundColor?: string;
+  imageSrc: string | StaticImageData;
+  imageAlt: string;
+  imageBackgroundColor: string;
 };
 
 // section: helpers

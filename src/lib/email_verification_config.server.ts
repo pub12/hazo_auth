@@ -5,15 +5,17 @@ import { get_config_value } from "./config/config_loader.server";
 import verifyEmailDefaultImage from "../assets/images/verify_email_default.jpg";
 
 // section: types
+import type { StaticImageData } from "next/image";
+
 export type EmailVerificationConfig = {
   alreadyLoggedInMessage: string;
   showLogoutButton: boolean;
   showReturnHomeButton: boolean;
   returnHomeButtonLabel: string;
   returnHomePath: string;
-  imageSrc?: string;
-  imageAlt?: string;
-  imageBackgroundColor?: string;
+  imageSrc: string | StaticImageData;
+  imageAlt: string;
+  imageBackgroundColor: string;
 };
 
 // section: helpers

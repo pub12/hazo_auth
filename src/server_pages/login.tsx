@@ -3,18 +3,18 @@
 // section: imports
 import { get_login_config } from "../lib/login_config.server";
 import { LoginClientWrapper } from "./login_client_wrapper";
-import { DEFAULT_UI_SHELL } from "../lib/config/default_config";
+import type { StaticImageData } from "next/image";
 
 export type LoginPageProps = {
   /**
    * Optional image source for the visual panel
-   * Defaults from hazo_auth_config.ini or DEFAULT_UI_SHELL.image_src
+   * Defaults from hazo_auth_config.ini or package default image
    */
-  image_src?: string;
+  image_src?: string | StaticImageData;
 
   /**
    * Optional image alt text
-   * Defaults to "Login illustration"
+   * Defaults to "Secure login illustration"
    */
   image_alt?: string;
 

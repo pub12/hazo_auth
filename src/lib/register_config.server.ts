@@ -7,6 +7,8 @@ import { get_user_fields_config } from "./user_fields_config.server";
 import registerDefaultImage from "../assets/images/register_default.jpg";
 
 // section: types
+import type { StaticImageData } from "next/image";
+
 export type RegisterConfig = {
   showNameField: boolean;
   passwordRequirements: {
@@ -23,9 +25,9 @@ export type RegisterConfig = {
   returnHomePath: string;
   signInPath: string;
   signInLabel: string;
-  imageSrc?: string;
-  imageAlt?: string;
-  imageBackgroundColor?: string;
+  imageSrc: string | StaticImageData;
+  imageAlt: string;
+  imageBackgroundColor: string;
 };
 
 // section: helpers

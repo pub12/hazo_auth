@@ -1,9 +1,13 @@
+import type { StaticImageData } from "next/image";
 export type EmailVerificationConfig = {
     alreadyLoggedInMessage: string;
     showLogoutButton: boolean;
     showReturnHomeButton: boolean;
     returnHomeButtonLabel: string;
     returnHomePath: string;
+    imageSrc: string | StaticImageData;
+    imageAlt: string;
+    imageBackgroundColor: string;
 };
 /**
  * Reads email verification layout configuration from hazo_auth_config.ini file

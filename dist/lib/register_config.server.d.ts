@@ -1,3 +1,4 @@
+import type { StaticImageData } from "next/image";
 export type RegisterConfig = {
     showNameField: boolean;
     passwordRequirements: {
@@ -14,9 +15,9 @@ export type RegisterConfig = {
     returnHomePath: string;
     signInPath: string;
     signInLabel: string;
-    imageSrc?: string;
-    imageAlt?: string;
-    imageBackgroundColor?: string;
+    imageSrc: string | StaticImageData;
+    imageAlt: string;
+    imageBackgroundColor: string;
 };
 /**
  * Reads register layout configuration from hazo_auth_config.ini file

@@ -28,6 +28,8 @@
     "src/cli/**/*",
     "src/page_components/**/*",
     "src/server_pages/**/*",
+    "src/types/**/*",
+    "src/assets/**/*",
     "src/index.ts",
     "src/client.ts"
   ],

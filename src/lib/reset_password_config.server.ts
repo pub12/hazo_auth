@@ -6,6 +6,8 @@ import { get_password_requirements_config } from "./password_requirements_config
 import resetPasswordDefaultImage from "../assets/images/reset_password_default.jpg";
 
 // section: types
+import type { StaticImageData } from "next/image";
+
 export type ResetPasswordConfig = {
   errorMessage: string;
   successMessage: string;
@@ -23,9 +25,9 @@ export type ResetPasswordConfig = {
     require_number: boolean;
     require_special: boolean;
   };
-  imageSrc?: string;
-  imageAlt?: string;
-  imageBackgroundColor?: string;
+  imageSrc: string | StaticImageData;
+  imageAlt: string;
+  imageBackgroundColor: string;
 };
 
 // section: helpers

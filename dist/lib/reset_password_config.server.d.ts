@@ -1,3 +1,4 @@
+import type { StaticImageData } from "next/image";
 export type ResetPasswordConfig = {
     errorMessage: string;
     successMessage: string;
@@ -15,6 +16,9 @@ export type ResetPasswordConfig = {
         require_number: boolean;
         require_special: boolean;
     };
+    imageSrc: string | StaticImageData;
+    imageAlt: string;
+    imageBackgroundColor: string;
 };
 /**
  * Reads reset password layout configuration from hazo_auth_config.ini file

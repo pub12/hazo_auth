@@ -3,17 +3,18 @@
 // section: imports
 import { get_register_config } from "../lib/register_config.server";
 import { RegisterClientWrapper } from "./register_client_wrapper";
+import type { StaticImageData } from "next/image";
 
 export type RegisterPageProps = {
   /**
    * Optional image source for the visual panel
-   * Defaults from hazo_auth_config.ini or "/globe.svg"
+   * Defaults from hazo_auth_config.ini or package default image
    */
-  image_src?: string;
+  image_src?: string | StaticImageData;
 
   /**
    * Optional image alt text
-   * Defaults from hazo_auth_config.ini or "Registration illustration"
+   * Defaults from hazo_auth_config.ini or "Modern building representing user registration"
    */
   image_alt?: string;
 

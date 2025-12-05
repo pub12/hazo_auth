@@ -11,8 +11,10 @@ import type { LayoutDataClient } from "../components/layouts/shared/data/layout_
 import type { LoginConfig } from "../lib/login_config.server";
 
 // section: types
-export type LoginClientWrapperProps = LoginConfig & {
-  image_src: string;
+import type { StaticImageData } from "next/image";
+
+export type LoginClientWrapperProps = Omit<LoginConfig, 'imageSrc' | 'imageAlt' | 'imageBackgroundColor'> & {
+  image_src: string | StaticImageData;
   image_alt: string;
   image_background_color: string;
 };

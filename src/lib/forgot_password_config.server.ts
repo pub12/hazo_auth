@@ -5,15 +5,17 @@ import { get_config_value } from "./config/config_loader.server";
 import forgotPasswordDefaultImage from "../assets/images/forgot_password_default.jpg";
 
 // section: types
+import type { StaticImageData } from "next/image";
+
 export type ForgotPasswordConfig = {
   alreadyLoggedInMessage: string;
   showLogoutButton: boolean;
   showReturnHomeButton: boolean;
   returnHomeButtonLabel: string;
   returnHomePath: string;
-  imageSrc?: string;
-  imageAlt?: string;
-  imageBackgroundColor?: string;
+  imageSrc: string | StaticImageData;
+  imageAlt: string;
+  imageBackgroundColor: string;
 };
 
 // section: helpers

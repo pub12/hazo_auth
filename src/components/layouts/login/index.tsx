@@ -4,6 +4,7 @@
 
 // section: imports
 import Link from "next/link";
+import type { StaticImageData } from "next/image";
 import { Input } from "../../ui/input";
 import { PasswordField } from "../shared/components/password_field";
 import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
@@ -31,7 +32,7 @@ import { type LayoutDataClient } from "../shared/data/layout_data_client";
 
 // section: types
 export type LoginLayoutProps<TClient = unknown> = {
-  image_src: string;
+  image_src: string | StaticImageData;
   image_alt: string;
   image_background_color?: string;
   field_overrides?: LayoutFieldMapOverrides;

@@ -3,6 +3,7 @@
 import { get_config_value } from "./config/config_loader.server";
 import { get_already_logged_in_config } from "./already_logged_in_config.server";
 import { get_password_requirements_config } from "./password_requirements_config.server";
+import resetPasswordDefaultImage from "../assets/images/reset_password_default.jpg";
 // section: helpers
 /**
  * Reads reset password layout configuration from hazo_auth_config.ini file
@@ -23,6 +24,12 @@ export function get_reset_password_config() {
     const forgotPasswordPath = get_config_value(section, "forgot_password_path", "/hazo_auth/forgot_password");
     // Get shared password requirements
     const passwordRequirements = get_password_requirements_config();
+    // Read image configuration
+    // If not set in config, falls back to default image from assets
+    const imageSrc = get_config_value(section, "image_src", "" // Empty string means not set in config
+    ) || resetPasswordDefaultImage;
+    const imageAlt = get_config_value(section, "image_alt", "Reset password illustration");
+    const imageBackgroundColor = get_config_value(section, "image_background_color", "#f1f5f9");
     return {
         errorMessage,
         successMessage,
@@ -34,5 +41,8 @@ export function get_reset_password_config() {
         returnHomeButtonLabel: alreadyLoggedInConfig.returnHomeButtonLabel,
         returnHomePath: alreadyLoggedInConfig.returnHomePath,
         passwordRequirements,
+        imageSrc,
+        imageAlt,
+        imageBackgroundColor,
     };
 }

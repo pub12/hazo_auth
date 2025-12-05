@@ -1,9 +1,13 @@
+import type { StaticImageData } from "next/image";
 export type ForgotPasswordConfig = {
     alreadyLoggedInMessage: string;
     showLogoutButton: boolean;
     showReturnHomeButton: boolean;
     returnHomeButtonLabel: string;
     returnHomePath: string;
+    imageSrc: string | StaticImageData;
+    imageAlt: string;
+    imageBackgroundColor: string;
 };
 /**
  * Reads forgot password layout configuration from hazo_auth_config.ini file

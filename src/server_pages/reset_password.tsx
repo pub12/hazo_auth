@@ -3,14 +3,14 @@
 // section: imports
 import { get_reset_password_config } from "../lib/reset_password_config.server";
 import { ResetPasswordClientWrapper } from "./reset_password_client_wrapper";
-import { DEFAULT_UI_SHELL } from "../lib/config/default_config";
+import type { StaticImageData } from "next/image";
 
 export type ResetPasswordPageProps = {
   /**
    * Optional image source for the visual panel
-   * Defaults from hazo_auth_config.ini or DEFAULT_UI_SHELL.image_src
+   * Defaults from hazo_auth_config.ini or package default image
    */
-  image_src?: string;
+  image_src?: string | StaticImageData;
 
   /**
    * Optional image alt text

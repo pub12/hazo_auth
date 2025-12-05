@@ -1,3 +1,4 @@
+import type { StaticImageData } from "next/image";
 export type LoginConfig = {
     redirectRoute?: string;
     successMessage: string;
@@ -10,6 +11,9 @@ export type LoginConfig = {
     forgotPasswordLabel: string;
     createAccountPath: string;
     createAccountLabel: string;
+    imageSrc: string | StaticImageData;
+    imageAlt: string;
+    imageBackgroundColor: string;
 };
 /**
  * Reads login layout configuration from hazo_auth_config.ini file

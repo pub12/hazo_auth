@@ -306,8 +306,14 @@ sqlite3 data/hazo_auth.sqlite ".tables"
 
 Run this SQL script in your PostgreSQL database:
 
+**Important:** Run the entire script in order. The enum type must be created before the table that uses it.
+
 ```sql
--- Create enum type
+-- Ensure we're in the public schema (or your target schema)
+SET search_path TO public;
+
+-- Create enum type (drop first if it exists to avoid conflicts)
+DROP TYPE IF EXISTS hazo_enum_profile_source_enum CASCADE;
 CREATE TYPE hazo_enum_profile_source_enum AS ENUM ('gravatar', 'custom', 'predefined');
 
 -- Create users table
@@ -385,6 +391,64 @@ CREATE INDEX idx_hazo_user_roles_role_id ON hazo_user_roles(role_id);
 ```sql
 SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'hazo_%';
 -- Expected: 6 tables listed
+```
+
+**Grant access to admin user:**
+
+After creating the tables, grant appropriate permissions to your admin database user. Replace `your_admin_user` with your actual PostgreSQL username:
+
+```sql
+-- Grant usage on schema (usually 'public')
+GRANT USAGE ON SCHEMA public TO your_admin_user;
+
+-- Grant all privileges on all hazo_* tables
+GRANT ALL PRIVILEGES ON TABLE hazo_users TO your_admin_user;
+GRANT ALL PRIVILEGES ON TABLE hazo_refresh_tokens TO your_admin_user;
+GRANT ALL PRIVILEGES ON TABLE hazo_permissions TO your_admin_user;
+GRANT ALL PRIVILEGES ON TABLE hazo_roles TO your_admin_user;
+GRANT ALL PRIVILEGES ON TABLE hazo_role_permissions TO your_admin_user;
+GRANT ALL PRIVILEGES ON TABLE hazo_user_roles TO your_admin_user;
+
+-- Grant usage on the enum type
+GRANT USAGE ON TYPE hazo_enum_profile_source_enum TO your_admin_user;
+
+-- Grant privileges on sequences (if using SERIAL instead of UUID, though not needed for UUID)
+-- GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO your_admin_user;
+
+-- Optional: Grant privileges on future tables (if you plan to add more hazo_* tables)
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO your_admin_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON SEQUENCES TO your_admin_user;
+```
+
+**For PostgREST/API access (if using PostgREST):**
+
+If you're using PostgREST, you'll typically use an `anon` role for unauthenticated access and an `authenticated` role for authenticated users. Grant appropriate permissions:
+
+```sql
+-- Create roles if they don't exist
+-- CREATE ROLE anon;
+-- CREATE ROLE authenticated;
+
+-- Grant usage on schema
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+
+-- Grant select on tables for anon (public read access)
+GRANT SELECT ON TABLE hazo_users TO anon;
+GRANT SELECT ON TABLE hazo_permissions TO anon;
+GRANT SELECT ON TABLE hazo_roles TO anon;
+GRANT SELECT ON TABLE hazo_role_permissions TO anon;
+GRANT SELECT ON TABLE hazo_user_roles TO anon;
+
+-- Grant full access to authenticated users (adjust based on your RLS policies)
+GRANT ALL PRIVILEGES ON TABLE hazo_users TO authenticated;
+GRANT ALL PRIVILEGES ON TABLE hazo_refresh_tokens TO authenticated;
+GRANT ALL PRIVILEGES ON TABLE hazo_permissions TO authenticated;
+GRANT ALL PRIVILEGES ON TABLE hazo_roles TO authenticated;
+GRANT ALL PRIVILEGES ON TABLE hazo_role_permissions TO authenticated;
+GRANT ALL PRIVILEGES ON TABLE hazo_user_roles TO authenticated;
+
+-- Grant usage on enum type
+GRANT USAGE ON TYPE hazo_enum_profile_source_enum TO anon, authenticated;
 ```
 
 **Checklist:**

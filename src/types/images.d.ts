@@ -1,20 +1,30 @@
+// file_description: Type declarations for image imports
 declare module "*.jpg" {
-  const content: import("next/image").StaticImageData;
-  export default content;
+  import { StaticImageData } from "next/image";
+  const value: StaticImageData;
+  export default value;
 }
 
 declare module "*.jpeg" {
-  const content: import("next/image").StaticImageData;
-  export default content;
+  import { StaticImageData } from "next/image";
+  const value: StaticImageData;
+  export default value;
 }
 
 declare module "*.png" {
-  const content: import("next/image").StaticImageData;
-  export default content;
+  import { StaticImageData } from "next/image";
+  const value: StaticImageData;
+  export default value;
+}
+
+declare module "*.webp" {
+  import { StaticImageData } from "next/image";
+  const value: StaticImageData;
+  export default value;
 }
 
 declare module "*.svg" {
-  const content: import("next/image").StaticImageData;
-  export default content;
+  import { StaticImageData } from "next/image";
+  const value: StaticImageData;
+  export default value;
 }
-

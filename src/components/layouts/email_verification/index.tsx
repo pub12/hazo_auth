@@ -5,6 +5,7 @@
 // section: imports
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
+import type { StaticImageData } from "next/image";
 import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
 import { FormHeader } from "../shared/components/form_header";
 import { FormActionButtons } from "../shared/components/form_action_buttons";
@@ -35,7 +36,7 @@ import Link from "next/link";
 
 // section: types
 export type EmailVerificationLayoutProps<TClient = unknown> = {
-  image_src: string;
+  image_src: string | StaticImageData;
   image_alt: string;
   image_background_color?: string;
   field_overrides?: LayoutFieldMapOverrides;

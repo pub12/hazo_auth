@@ -10,8 +10,10 @@ import type { LayoutDataClient } from "../components/layouts/shared/data/layout_
 import type { ForgotPasswordConfig } from "../lib/forgot_password_config.server";
 
 // section: types
-export type ForgotPasswordClientWrapperProps = ForgotPasswordConfig & {
-  image_src: string;
+import type { StaticImageData } from "next/image";
+
+export type ForgotPasswordClientWrapperProps = Omit<ForgotPasswordConfig, 'imageSrc' | 'imageAlt' | 'imageBackgroundColor'> & {
+  image_src: string | StaticImageData;
   image_alt: string;
   image_background_color: string;
   sign_in_path: string;

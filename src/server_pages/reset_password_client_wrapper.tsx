@@ -10,8 +10,10 @@ import type { LayoutDataClient } from "../components/layouts/shared/data/layout_
 import type { ResetPasswordConfig } from "../lib/reset_password_config.server";
 
 // section: types
-export type ResetPasswordClientWrapperProps = ResetPasswordConfig & {
-  image_src: string;
+import type { StaticImageData } from "next/image";
+
+export type ResetPasswordClientWrapperProps = Omit<ResetPasswordConfig, 'imageSrc' | 'imageAlt' | 'imageBackgroundColor'> & {
+  image_src: string | StaticImageData;
   image_alt: string;
   image_background_color: string;
 };
