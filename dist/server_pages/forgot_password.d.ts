@@ -50,4 +50,5 @@ export type ForgotPasswordPageProps = {
  * @returns Server-rendered forgot password page
  */
 export default function ForgotPasswordPage({ image_src, image_alt, image_background_color, sign_in_path, sign_in_label, }?: ForgotPasswordPageProps): import("react/jsx-runtime").JSX.Element;
+export { ForgotPasswordPage };
 //# sourceMappingURL=forgot_password.d.ts.map

@@ -38,3 +38,5 @@ export default function ResetPasswordPage({ image_src, image_alt, image_backgrou
     // Pass serializable config to client wrapper
     return (_jsx(ResetPasswordClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, passwordRequirements: config.passwordRequirements, errorMessage: config.errorMessage, successMessage: config.successMessage, loginPath: config.loginPath, forgotPasswordPath: config.forgotPasswordPath, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath }));
 }
+// Named export for direct imports
+export { ResetPasswordPage };

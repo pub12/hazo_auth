@@ -83,3 +83,6 @@ export default function RegisterPage({
     />
   );
 }
+
+// Named export for direct imports
+export { RegisterPage };

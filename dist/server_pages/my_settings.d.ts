@@ -50,4 +50,5 @@ export type MySettingsPageProps = {
  * @returns Server-rendered my settings component
  */
 export default function MySettingsPage({ className, }?: MySettingsPageProps): import("react/jsx-runtime").JSX.Element;
+export { MySettingsPage };
 //# sourceMappingURL=my_settings.d.ts.map

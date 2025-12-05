@@ -38,3 +38,5 @@ export default function ForgotPasswordPage({ image_src, image_alt, image_backgro
     // Pass serializable config to client wrapper
     return (_jsx(ForgotPasswordClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, sign_in_path: sign_in_path, sign_in_label: sign_in_label, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath }));
 }
+// Named export for direct imports
+export { ForgotPasswordPage };

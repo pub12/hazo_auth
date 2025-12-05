@@ -40,4 +40,5 @@ export type LoginPageProps = {
  * @returns Server-rendered login page
  */
 export default function LoginPage({ image_src, image_alt, image_background_color, }?: LoginPageProps): import("react/jsx-runtime").JSX.Element;
+export { LoginPage };
 //# sourceMappingURL=login.d.ts.map

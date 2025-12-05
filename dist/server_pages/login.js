@@ -37,3 +37,5 @@ export default function LoginPage({ image_src, image_alt, image_background_color
     // Pass serializable config to client wrapper
     return (_jsx(LoginClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, redirectRoute: config.redirectRoute, successMessage: config.successMessage, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath, forgotPasswordPath: config.forgotPasswordPath, forgotPasswordLabel: config.forgotPasswordLabel, createAccountPath: config.createAccountPath, createAccountLabel: config.createAccountLabel }));
 }
+// Named export for direct imports
+export { LoginPage };

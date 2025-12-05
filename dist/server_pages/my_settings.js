@@ -55,3 +55,5 @@ export default function MySettingsPage({ className, } = {}) {
     // Render layout with all server-initialized configuration
     return (_jsx(MySettingsLayout, { className: className, password_requirements: config.passwordRequirements, profilePicture: config.profilePicture, userFields: config.userFields, unauthorizedMessage: config.unauthorizedMessage, loginButtonLabel: config.loginButtonLabel, loginPath: config.loginPath, heading: config.heading, subHeading: config.subHeading, profilePhotoLabel: config.profilePhotoLabel, profilePhotoRecommendation: config.profilePhotoRecommendation, uploadPhotoButtonLabel: config.uploadPhotoButtonLabel, removePhotoButtonLabel: config.removePhotoButtonLabel, profileInformationLabel: config.profileInformationLabel, passwordLabel: config.passwordLabel, currentPasswordLabel: config.currentPasswordLabel, newPasswordLabel: config.newPasswordLabel, confirmPasswordLabel: config.confirmPasswordLabel, messages: config.messages, uiSizes: config.uiSizes, fileTypes: config.fileTypes }));
 }
+// Named export for direct imports
+export { MySettingsPage };

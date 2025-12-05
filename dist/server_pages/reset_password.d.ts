@@ -41,4 +41,5 @@ export type ResetPasswordPageProps = {
  * @returns Server-rendered reset password page
  */
 export default function ResetPasswordPage({ image_src, image_alt, image_background_color, }?: ResetPasswordPageProps): import("react/jsx-runtime").JSX.Element;
+export { ResetPasswordPage };
 //# sourceMappingURL=reset_password.d.ts.map

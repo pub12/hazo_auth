@@ -42,4 +42,5 @@ export type RegisterPageProps = {
  * @returns Server-rendered register page
  */
 export default function RegisterPage({ image_src, image_alt, image_background_color, }?: RegisterPageProps): import("react/jsx-runtime").JSX.Element;
+export { RegisterPage };
 //# sourceMappingURL=register.d.ts.map

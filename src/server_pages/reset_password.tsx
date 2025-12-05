@@ -82,3 +82,6 @@ export default function ResetPasswordPage({
     />
   );
 }
+
+// Named export for direct imports
+export { ResetPasswordPage };

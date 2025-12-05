@@ -38,3 +38,5 @@ export default function VerifyEmailPage({ image_src, image_alt, image_background
     // Pass serializable config to client wrapper
     return (_jsx(VerifyEmailClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, redirect_delay: redirect_delay, login_path: login_path, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath }));
 }
+// Named export for direct imports
+export { VerifyEmailPage };

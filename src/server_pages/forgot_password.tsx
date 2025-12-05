@@ -93,3 +93,6 @@ export default function ForgotPasswordPage({
     />
   );
 }
+
+// Named export for direct imports
+export { ForgotPasswordPage };

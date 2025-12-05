@@ -50,4 +50,5 @@ export type VerifyEmailPageProps = {
  * @returns Server-rendered email verification page
  */
 export default function VerifyEmailPage({ image_src, image_alt, image_background_color, redirect_delay, login_path, }?: VerifyEmailPageProps): import("react/jsx-runtime").JSX.Element;
+export { VerifyEmailPage };
 //# sourceMappingURL=verify_email.d.ts.map

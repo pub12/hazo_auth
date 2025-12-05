@@ -5,7 +5,6 @@ export { FormFieldWrapper } from "./components/form_field_wrapper";
 export { FormHeader } from "./components/form_header";
 export { LogoutButton } from "./components/logout_button";
 export { PasswordField } from "./components/password_field";
-export { ProfilePicMenuWrapper } from "./components/profile_pic_menu_wrapper";
 export { ProfilePicMenu } from "./components/profile_pic_menu";
 export { StandaloneLayoutWrapper } from "./components/standalone_layout_wrapper";
 export { TwoColumnAuthLayout } from "./components/two_column_auth_layout";

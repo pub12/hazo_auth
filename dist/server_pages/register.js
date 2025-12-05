@@ -39,3 +39,5 @@ export default function RegisterPage({ image_src, image_alt, image_background_co
     // Pass serializable config to client wrapper
     return (_jsx(RegisterClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, showNameField: config.showNameField, passwordRequirements: config.passwordRequirements, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath, signInPath: config.signInPath, signInLabel: config.signInLabel }));
 }
+// Named export for direct imports
+export { RegisterPage };

@@ -93,3 +93,6 @@ export default function VerifyEmailPage({
     />
   );
 }
+
+// Named export for direct imports
+export { VerifyEmailPage };

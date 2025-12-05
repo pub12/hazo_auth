@@ -8,7 +8,7 @@ export { FormFieldWrapper } from "./components/form_field_wrapper";
 export { FormHeader } from "./components/form_header";
 export { LogoutButton } from "./components/logout_button";
 export { PasswordField } from "./components/password_field";
-export { ProfilePicMenuWrapper } from "./components/profile_pic_menu_wrapper";
+// ProfilePicMenuWrapper - NOT exported (server component - imports .server files)
 export { ProfilePicMenu } from "./components/profile_pic_menu";
 // SidebarLayoutWrapper - NOT exported (test workspace component only)
 export { StandaloneLayoutWrapper } from "./components/standalone_layout_wrapper";

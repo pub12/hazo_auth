@@ -90,3 +90,6 @@ export default function MySettingsPage({
     />
   );
 }
+
+// Named export for direct imports
+export { MySettingsPage };

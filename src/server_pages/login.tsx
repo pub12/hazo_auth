@@ -82,3 +82,6 @@ export default function LoginPage({
     />
   );
 }
+
+// Named export for direct imports
+export { LoginPage };
