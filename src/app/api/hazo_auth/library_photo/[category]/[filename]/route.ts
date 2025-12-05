@@ -27,10 +27,10 @@ const CACHE_MAX_AGE = 3600; // 1 hour in seconds
 // section: api_handler
 export async function GET(
   request: NextRequest,
-  { params }: { params: { category: string; filename: string } }
+  { params }: { params: Promise<{ category: string; filename: string }> }
 ) {
   const logger = create_app_logger();
-  const { category, filename } = params;
+  const { category, filename } = await params;
 
   try {
     // Validate inputs to prevent path traversal

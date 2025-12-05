@@ -8,7 +8,7 @@ import path from "path";
 // section: api_handler
 export async function GET(
   request: NextRequest,
-  { params }: { params: { filename: string } }
+  { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
     const config = get_profile_picture_config();
@@ -20,7 +20,7 @@ export async function GET(
       );
     }
 
-    const filename = params.filename;
+    const { filename } = await params;
 
     // Validate filename (prevent path traversal)
     if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {

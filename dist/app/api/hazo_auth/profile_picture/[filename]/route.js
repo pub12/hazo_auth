@@ -11,7 +11,7 @@ export async function GET(request, { params }) {
         if (!config.allow_photo_upload || !config.upload_photo_path) {
             return NextResponse.json({ error: "Profile picture upload is not enabled" }, { status: 404 });
         }
-        const filename = params.filename;
+        const { filename } = await params;
         // Validate filename (prevent path traversal)
         if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
             return NextResponse.json({ error: "Invalid filename" }, { status: 400 });

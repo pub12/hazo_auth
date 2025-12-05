@@ -13,6 +13,11 @@ const next_config = {
   // Note: hazo_connect configuration is now read from hazo_auth_config.ini using hazo_config
   // Environment variables are only used as fallback if hazo_auth_config.ini is not found
   // See hazo_auth_config.ini for hazo_connect configuration parameters
+
+  // section: turbopack_configuration
+  // Empty turbopack config to silence Next.js 16 warning about webpack config
+  turbopack: {},
+
   env: {
     // Environment variables can be set here as fallback, but hazo_auth_config.ini is preferred
     // HAZO_CONNECT_ENABLE_ADMIN_UI: "true",
