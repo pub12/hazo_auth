@@ -129,7 +129,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:pkg": "tsc -p tsconfig.build.json",
+    "build:pkg": "tsc -p tsconfig.build.json && tsx scripts/copy_assets.ts",
     "prepublishOnly": "npm run build:pkg",
     "validate": "tsx scripts/validate_setup.ts",
     "generate-routes": "tsx scripts/generate_routes.ts",
