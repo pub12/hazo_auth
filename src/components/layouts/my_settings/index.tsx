@@ -14,7 +14,7 @@ import {
   resolveMySettingsButtonPalette,
   type MySettingsLabelOverrides,
 } from "./config/my_settings_field_config";
-import type { 
+import type {
   PasswordRequirementOptions,
   ButtonPaletteOverrides,
 } from "../shared/config/layout_customization";
@@ -22,9 +22,11 @@ import { formatDistanceToNow } from "date-fns";
 import { PasswordField } from "../shared/components/password_field";
 import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
 import { Pencil, Trash2 } from "lucide-react";
+import { cn } from "../../../lib/utils";
 
 // section: types
 export type MySettingsLayoutProps = {
+  className?: string;
   labels?: MySettingsLabelOverrides;
   button_colors?: ButtonPaletteOverrides;
   password_requirements: PasswordRequirementOptions;
@@ -87,6 +89,7 @@ export type MySettingsLayoutProps = {
  * @returns My settings layout component
  */
 export default function my_settings_layout({
+  className,
   labels,
   button_colors,
   password_requirements,
@@ -123,7 +126,7 @@ export default function my_settings_layout({
       loginButtonLabel={loginButtonLabel}
       loginPath={loginPath}
     >
-      <div className="cls_my_settings_layout flex flex-col gap-6 p-6 max-w-4xl mx-auto min-h-screen bg-[var(--hazo-bg-subtle)]">
+      <div className={cn("cls_my_settings_layout flex flex-col gap-6 p-6 w-full", className)}>
         {/* Header Section */}
         <div className="cls_my_settings_layout_header flex flex-col gap-2">
           <h1 className="cls_my_settings_layout_heading text-3xl font-bold text-[var(--hazo-text-primary)]">

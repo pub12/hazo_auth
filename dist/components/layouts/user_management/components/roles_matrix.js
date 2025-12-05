@@ -13,6 +13,7 @@ import { Label } from "../../../ui/label";
 import { Plus, Loader2, CircleCheck, CircleX } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 // section: component
 /**
  * Roles matrix component - reusable internal component for roles-permissions matrix
@@ -23,6 +24,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
  * @returns Roles matrix component
  */
 export function RolesMatrix({ add_button_enabled = true, role_name_selection_enabled = true, permissions_read_only = false, show_save_cancel = true, user_id, onSave, onCancel, onRoleSelection, className, }) {
+    const { apiBasePath } = useHazoAuthConfig();
     const [roles, setRoles] = useState([]);
     const [originalRoles, setOriginalRoles] = useState([]);
     const [permissions, setPermissions] = useState([]);
@@ -38,7 +40,7 @@ export function RolesMatrix({ add_button_enabled = true, role_name_selection_ena
             setLoading(true);
             try {
                 // Load roles and permissions
-                const roles_response = await fetch("/api/hazo_auth/user_management/roles");
+                const roles_response = await fetch(`${apiBasePath}/user_management/roles`);
                 const roles_data = await roles_response.json();
                 if (!roles_data.success) {
                     toast.error("Failed to load roles and permissions");
@@ -63,7 +65,7 @@ export function RolesMatrix({ add_button_enabled = true, role_name_selection_ena
                 // If user_id is provided, load user info and user roles
                 if (user_id) {
                     // Load user info
-                    const user_response = await fetch(`/api/hazo_auth/user_management/users?id=${user_id}`);
+                    const user_response = await fetch(`${apiBasePath}/user_management/users?id=${user_id}`);
                     const user_data = await user_response.json();
                     if (user_data.success && Array.isArray(user_data.users) && user_data.users.length > 0) {
                         const user = user_data.users[0];
@@ -74,7 +76,7 @@ export function RolesMatrix({ add_button_enabled = true, role_name_selection_ena
                         });
                     }
                     // Load user roles
-                    const user_roles_response = await fetch(`/api/hazo_auth/user_management/users/roles?user_id=${user_id}`);
+                    const user_roles_response = await fetch(`${apiBasePath}/user_management/users/roles?user_id=${user_id}`);
                     const user_roles_data = await user_roles_response.json();
                     if (user_roles_data.success && Array.isArray(user_roles_data.role_ids)) {
                         setUserRoleIds(user_roles_data.role_ids);
@@ -191,7 +193,7 @@ export function RolesMatrix({ add_button_enabled = true, role_name_selection_ena
                     .filter((role) => role.selected && role.role_id !== undefined)
                     .map((role) => role.role_id);
                 // Update user roles via API
-                const response = await fetch("/api/hazo_auth/user_management/users/roles", {
+                const response = await fetch(`${apiBasePath}/user_management/users/roles`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -220,7 +222,7 @@ export function RolesMatrix({ add_button_enabled = true, role_name_selection_ena
                     onSave(roles_data);
                 }
                 // Save to API
-                const response = await fetch("/api/hazo_auth/user_management/roles", {
+                const response = await fetch(`${apiBasePath}/user_management/roles`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -231,7 +233,7 @@ export function RolesMatrix({ add_button_enabled = true, role_name_selection_ena
                 if (data.success) {
                     toast.success("Roles and permissions saved successfully");
                     // Reload data to get updated role IDs
-                    const reload_response = await fetch("/api/hazo_auth/user_management/roles");
+                    const reload_response = await fetch(`${apiBasePath}/user_management/roles`);
                     const reload_data = await reload_response.json();
                     if (reload_data.success) {
                         const updated_roles = reload_data.roles.map((role) => ({

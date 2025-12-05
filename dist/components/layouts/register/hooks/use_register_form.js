@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { REGISTER_FIELD_IDS } from "../config/register_field_config";
 import { validateEmail, validatePassword } from "../../shared/utils/validation";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 // section: constants
 const PASSWORD_FIELDS = [
     REGISTER_FIELD_IDS.PASSWORD,
@@ -18,7 +19,9 @@ const buildInitialValues = () => ({
 });
 // section: hook
 export const use_register_form = ({ showNameField, passwordRequirements, dataClient, urlOnLogon, }) => {
-    const [values, setValues] = useState(buildInitialValues);
+    const { apiBasePath } = useHazoAuthConfig();
+    const initialValues = useMemo(() => buildInitialValues(), []);
+    const [values, setValues] = useState(initialValues);
     const [errors, setErrors] = useState({});
     const [passwordVisibility, setPasswordVisibility] = useState({
         password: false,
@@ -26,19 +29,44 @@ export const use_register_form = ({ showNameField, passwordRequirements, dataCli
     });
     const [emailTouched, setEmailTouched] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // Check if form has been edited (changed from initial state)
+    const isFormEdited = useMemo(() => {
+        return Object.entries(values).some(([fieldId, fieldValue]) => {
+            if (fieldId === REGISTER_FIELD_IDS.NAME && !showNameField) {
+                return false;
+            }
+            return fieldValue.trim() !== initialValues[fieldId].trim();
+        });
+    }, [values, initialValues, showNameField]);
     const isSubmitDisabled = useMemo(() => {
+        // Disable if submitting
         if (isSubmitting) {
             return true;
         }
+        // Disable if form hasn't been edited
+        if (!isFormEdited) {
+            return true;
+        }
+        // Disable if there are validation errors (excluding submit errors)
+        const validationErrors = Object.assign({}, errors);
+        delete validationErrors.submit;
+        const hasErrors = Object.keys(validationErrors).length > 0;
+        if (hasErrors) {
+            return true;
+        }
+        // Disable if required fields are empty
         const hasEmptyField = Object.entries(values).some(([fieldId, fieldValue]) => {
             if (fieldId === REGISTER_FIELD_IDS.NAME && !showNameField) {
                 return false;
             }
             return fieldValue.trim() === "";
         });
-        const hasErrors = Object.keys(errors).length > 0;
-        return hasEmptyField || hasErrors;
-    }, [errors, showNameField, values, isSubmitting]);
+        if (hasEmptyField) {
+            return true;
+        }
+        // Enable if form is edited, has no errors, and all required fields are filled
+        return false;
+    }, [errors, showNameField, values, isSubmitting, isFormEdited]);
     const togglePasswordVisibility = useCallback((fieldId) => {
         setPasswordVisibility((previous) => (Object.assign(Object.assign({}, previous), { [fieldId]: !previous[fieldId] })));
     }, []);
@@ -115,7 +143,7 @@ export const use_register_form = ({ showNameField, passwordRequirements, dataCli
         setIsSubmitting(true);
         setErrors({});
         try {
-            const response = await fetch("/api/hazo_auth/register", {
+            const response = await fetch(`${apiBasePath}/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -136,7 +164,8 @@ export const use_register_form = ({ showNameField, passwordRequirements, dataCli
                 description: "Your account has been created successfully.",
             });
             // Reset form on success
-            setValues(buildInitialValues());
+            const resetValues = buildInitialValues();
+            setValues(resetValues);
             setErrors({});
             setPasswordVisibility({
                 password: false,
@@ -160,7 +189,8 @@ export const use_register_form = ({ showNameField, passwordRequirements, dataCli
         }
     }, [values, passwordRequirements, dataClient, urlOnLogon]);
     const handleCancel = useCallback(() => {
-        setValues(buildInitialValues());
+        const resetValues = buildInitialValues();
+        setValues(resetValues);
         setErrors({});
         setPasswordVisibility({
             password: false,

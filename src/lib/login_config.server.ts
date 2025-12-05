@@ -2,6 +2,7 @@
 // section: imports
 import { get_config_value } from "./config/config_loader.server";
 import { get_already_logged_in_config } from "./already_logged_in_config.server";
+import loginDefaultImage from "../assets/images/login_default.jpg";
 
 // section: types
 export type LoginConfig = {
@@ -16,6 +17,9 @@ export type LoginConfig = {
   forgotPasswordLabel: string;
   createAccountPath: string;
   createAccountLabel: string;
+  imageSrc?: string;
+  imageAlt?: string;
+  imageBackgroundColor?: string;
 };
 
 // section: helpers
@@ -54,6 +58,25 @@ export function get_login_config(): LoginConfig {
   // Get shared already logged in config
   const alreadyLoggedInConfig = get_already_logged_in_config();
 
+  // Read image configuration
+  // If not set in config, falls back to default image from assets
+  const imageSrc = get_config_value(
+    section,
+    "image_src",
+    "" // Empty string means not set in config
+  ) || loginDefaultImage;
+
+  const imageAlt = get_config_value(
+    section,
+    "image_alt",
+    "Secure login illustration"
+  );
+  const imageBackgroundColor = get_config_value(
+    section,
+    "image_background_color",
+    "#f1f5f9"
+  );
+
   return {
     redirectRoute,
     successMessage,
@@ -66,6 +89,9 @@ export function get_login_config(): LoginConfig {
     forgotPasswordLabel,
     createAccountPath,
     createAccountLabel,
+    imageSrc,
+    imageAlt,
+    imageBackgroundColor,
   };
 }
 

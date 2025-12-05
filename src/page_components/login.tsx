@@ -1,5 +1,19 @@
 // file_description: zero-config login page component for hazo_auth
 // Consumers can use this directly without needing to configure props
+//
+// ⚠️ DEPRECATED: This client component is deprecated in hazo_auth v2.0+
+// Please use the new server component version instead:
+//
+// import { LoginPage } from "hazo_auth/pages/login";
+//
+// The new version:
+// - Initializes on the server (no loading state)
+// - Works with your app's hazo_connect instance
+// - True zero-config "drop in and use"
+// - Better performance (smaller bundle)
+//
+// This file will be removed in v3.0
+//
 "use client";
 
 // section: imports
@@ -16,6 +30,10 @@ const DEFAULT_IMAGE_ALT = "Illustration of a globe representing secure authentic
 const DEFAULT_IMAGE_BG = "#e2e8f0";
 
 // section: types
+/**
+ * @deprecated This client component is deprecated in hazo_auth v2.0+
+ * Use the new server component version instead: `import { LoginPage } from "hazo_auth/pages/login"`
+ */
 export type LoginPageProps = {
   redirectRoute?: string;
   successMessage?: string;

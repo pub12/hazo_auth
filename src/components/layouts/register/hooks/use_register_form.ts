@@ -6,6 +6,7 @@ import type { LayoutDataClient } from "../../shared/data/layout_data_client";
 import type { PasswordRequirementOptions, PasswordRequirementOverrides } from "../../shared/config/layout_customization";
 import { REGISTER_FIELD_IDS, type RegisterFieldId } from "../config/register_field_config";
 import { validateEmail, validatePassword } from "../../shared/utils/validation";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 
 // section: constants
 const PASSWORD_FIELDS: Array<RegisterFieldId> = [
@@ -61,6 +62,7 @@ export const use_register_form = <TClient,>({
   dataClient,
   urlOnLogon,
 }: UseRegisterFormParams<TClient>): UseRegisterFormResult => {
+  const { apiBasePath } = useHazoAuthConfig();
   const initialValues = useMemo(() => buildInitialValues(), []);
   const [values, setValues] = useState<RegisterFormValues>(initialValues);
   const [errors, setErrors] = useState<RegisterFormErrors>({});
@@ -225,7 +227,7 @@ export const use_register_form = <TClient,>({
       setErrors({});
 
       try {
-        const response = await fetch("/api/hazo_auth/register", {
+        const response = await fetch(`${apiBasePath}/register`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

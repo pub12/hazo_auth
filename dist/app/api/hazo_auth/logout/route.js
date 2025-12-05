@@ -27,6 +27,11 @@ export async function POST(request) {
             expires: new Date(0),
             path: "/",
         });
+        // Clear JWT session token cookie
+        response.cookies.set("hazo_auth_session", "", {
+            expires: new Date(0),
+            path: "/",
+        });
         // Invalidate user cache
         if (user_id) {
             try {

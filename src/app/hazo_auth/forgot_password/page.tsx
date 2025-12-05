@@ -1,24 +1,17 @@
-// file_description: render the forgot password page shell and mount the forgot password layout component within sidebar
+// file_description: test app forgot password page - uses new zero-config ForgotPasswordPage server component
 // section: imports
 import { AuthPageShell } from "../../../components/layouts/shared/components/auth_page_shell";
-import { ForgotPasswordPageClient } from "./forgot_password_page_client";
-import { get_forgot_password_config } from "../../../lib/forgot_password_config.server";
+import ForgotPasswordPage from "../../../server_pages/forgot_password";
 
 // section: component
+/**
+ * Test app forgot password page
+ * Wraps the new zero-config ForgotPasswordPage server component in AuthPageShell for test workspace UI
+ */
 export default function forgot_password_page() {
-  // Read forgot password configuration from hazo_auth_config.ini (server-side)
-  const forgotPasswordConfig = get_forgot_password_config();
-
   return (
     <AuthPageShell>
-      <ForgotPasswordPageClient
-        alreadyLoggedInMessage={forgotPasswordConfig.alreadyLoggedInMessage}
-        showLogoutButton={forgotPasswordConfig.showLogoutButton}
-        showReturnHomeButton={forgotPasswordConfig.showReturnHomeButton}
-        returnHomeButtonLabel={forgotPasswordConfig.returnHomeButtonLabel}
-        returnHomePath={forgotPasswordConfig.returnHomePath}
-      />
+      <ForgotPasswordPage />
     </AuthPageShell>
   );
 }
-

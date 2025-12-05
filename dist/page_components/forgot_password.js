@@ -1,5 +1,19 @@
 // file_description: zero-config forgot password page component for hazo_auth
 // Consumers can use this directly without needing to configure props
+//
+// ⚠️ DEPRECATED: This client component is deprecated in hazo_auth v2.0+
+// Please use the new server component version instead:
+//
+// import { ForgotPasswordPage } from "hazo_auth/pages/forgot_password";
+//
+// The new version:
+// - Initializes on the server (no loading state)
+// - Works with your app's hazo_connect instance
+// - True zero-config "drop in and use"
+// - Better performance (smaller bundle)
+//
+// This file will be removed in v3.0
+//
 "use client";
 import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports

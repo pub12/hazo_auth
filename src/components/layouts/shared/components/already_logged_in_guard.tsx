@@ -9,10 +9,11 @@ import { Button } from "../../../ui/button";
 import { TwoColumnAuthLayout } from "./two_column_auth_layout";
 import { useRouter } from "next/navigation";
 import { Home } from "lucide-react";
+import type { StaticImageData } from "next/image";
 
 // section: types
 export type AlreadyLoggedInGuardProps = {
-  image_src: string;
+  image_src: string | StaticImageData;
   image_alt: string;
   image_background_color?: string;
   message?: string;

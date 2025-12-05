@@ -3,11 +3,11 @@
 "use client";
 
 // section: imports
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
 
 // section: types
 type VisualPanelProps = {
-  imageSrc: string;
+  imageSrc: string | StaticImageData;
   imageAlt: string;
   backgroundColor?: string;
   className?: string;
@@ -20,6 +20,8 @@ export function VisualPanel({
   backgroundColor = "#f1f5f9",
   className,
 }: VisualPanelProps) {
+  const isJpgString = typeof imageSrc === 'string' && (imageSrc.toLowerCase().endsWith('.jpg') || imageSrc.toLowerCase().endsWith('.jpeg'));
+
   return (
     <div
       className={`cls_visual_panel relative hidden h-full w-full items-center justify-center md:flex ${className ?? ""}`}
@@ -33,6 +35,7 @@ export function VisualPanel({
           sizes="(min-width: 768px) 50vw, 100vw"
           className="cls_visual_panel_image object-cover"
           priority
+          unoptimized={isJpgString}
         />
       </div>
     </div>

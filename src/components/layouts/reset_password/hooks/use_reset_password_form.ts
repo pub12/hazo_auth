@@ -7,6 +7,7 @@ import type { LayoutDataClient } from "../../shared/data/layout_data_client";
 import type { PasswordRequirementOptions } from "../../shared/config/layout_customization";
 import { RESET_PASSWORD_FIELD_IDS, type ResetPasswordFieldId } from "../config/reset_password_field_config";
 import { validatePassword } from "../../shared/utils/validation";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 
 // section: constants
 const PASSWORD_FIELDS: Array<ResetPasswordFieldId> = [
@@ -56,6 +57,7 @@ export const use_reset_password_form = <TClient,>({
   dataClient,
   loginPath = "/hazo_auth/login",
 }: UseResetPasswordFormParams<TClient>): UseResetPasswordFormResult => {
+  const { apiBasePath } = useHazoAuthConfig();
   const router = useRouter();
   const searchParams = useSearchParams();
   const tokenParam = searchParams.get("token");
@@ -85,7 +87,7 @@ export const use_reset_password_form = <TClient,>({
       setTokenError(null);
 
       try {
-        const response = await fetch(`/api/hazo_auth/validate_reset_token?token=${encodeURIComponent(tokenParam)}`, {
+        const response = await fetch(`${apiBasePath}/validate_reset_token?token=${encodeURIComponent(tokenParam)}`, {
           method: "GET",
         });
 
@@ -217,7 +219,7 @@ export const use_reset_password_form = <TClient,>({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/hazo_auth/reset_password", {
+      const response = await fetch(`${apiBasePath}/reset_password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -27,6 +27,7 @@ import { Label } from "../../../ui/label";
 import { Plus, Save, Loader2, CircleCheck, CircleX } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 
 // section: types
 export type RolesMatrixData = {
@@ -70,6 +71,8 @@ export function RolesMatrix({
   onRoleSelection,
   className,
 }: RolesMatrixProps) {
+  const { apiBasePath } = useHazoAuthConfig();
+
   const [roles, setRoles] = useState<Array<{
     role_id?: number;
     role_name: string;
@@ -100,7 +103,7 @@ export function RolesMatrix({
       setLoading(true);
       try {
         // Load roles and permissions
-        const roles_response = await fetch("/api/hazo_auth/user_management/roles");
+        const roles_response = await fetch(`${apiBasePath}/user_management/roles`);
         const roles_data = await roles_response.json();
 
         if (!roles_data.success) {
@@ -138,7 +141,7 @@ export function RolesMatrix({
         // If user_id is provided, load user info and user roles
         if (user_id) {
           // Load user info
-          const user_response = await fetch(`/api/hazo_auth/user_management/users?id=${user_id}`);
+          const user_response = await fetch(`${apiBasePath}/user_management/users?id=${user_id}`);
           const user_data = await user_response.json();
 
           if (user_data.success && Array.isArray(user_data.users) && user_data.users.length > 0) {
@@ -151,7 +154,7 @@ export function RolesMatrix({
           }
 
           // Load user roles
-          const user_roles_response = await fetch(`/api/hazo_auth/user_management/users/roles?user_id=${user_id}`);
+          const user_roles_response = await fetch(`${apiBasePath}/user_management/users/roles?user_id=${user_id}`);
           const user_roles_data = await user_roles_response.json();
 
           if (user_roles_data.success && Array.isArray(user_roles_data.role_ids)) {
@@ -293,7 +296,7 @@ export function RolesMatrix({
           .map((role) => role.role_id as number);
 
         // Update user roles via API
-        const response = await fetch("/api/hazo_auth/user_management/users/roles", {
+        const response = await fetch(`${apiBasePath}/user_management/users/roles`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -327,7 +330,7 @@ export function RolesMatrix({
         }
 
         // Save to API
-        const response = await fetch("/api/hazo_auth/user_management/roles", {
+        const response = await fetch(`${apiBasePath}/user_management/roles`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -341,7 +344,7 @@ export function RolesMatrix({
           toast.success("Roles and permissions saved successfully");
           
           // Reload data to get updated role IDs
-          const reload_response = await fetch("/api/hazo_auth/user_management/roles");
+          const reload_response = await fetch(`${apiBasePath}/user_management/roles`);
           const reload_data = await reload_response.json();
 
           if (reload_data.success) {

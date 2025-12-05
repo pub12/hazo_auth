@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import { use_auth_status, trigger_auth_status_refresh } from "../../shared/hooks/use_auth_status";
 import { toast } from "sonner";
 import type { PasswordRequirementOptions } from "../../shared/config/layout_customization";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 
 // section: types
 export type PasswordFields = {
@@ -93,6 +94,7 @@ const validateName = (name: string): string | null => {
 export function use_my_settings({
   passwordRequirements,
 }: UseMySettingsParams): UseMySettingsResult {
+  const { apiBasePath } = useHazoAuthConfig();
   const authStatus = use_auth_status();
   
   // Password fields state
@@ -134,7 +136,7 @@ export function use_my_settings({
     }
 
     try {
-      const response = await fetch("/api/hazo_auth/update_user", {
+      const response = await fetch(`${apiBasePath}/update_user`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -171,7 +173,7 @@ export function use_my_settings({
     }
 
     try {
-      const response = await fetch("/api/hazo_auth/update_user", {
+      const response = await fetch(`${apiBasePath}/update_user`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -304,7 +306,7 @@ export function use_my_settings({
     }
 
     try {
-      const response = await fetch("/api/hazo_auth/change_password", {
+      const response = await fetch(`${apiBasePath}/change_password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -371,7 +373,7 @@ export function use_my_settings({
    */
   const handleProfilePictureSave = useCallback(async (profilePictureUrl: string, profileSource: "upload" | "library" | "gravatar") => {
     try {
-      const response = await fetch("/api/hazo_auth/update_user", {
+      const response = await fetch(`${apiBasePath}/update_user`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -408,7 +410,7 @@ export function use_my_settings({
    */
   const handleProfilePictureRemove = useCallback(async () => {
     try {
-      const response = await fetch("/api/hazo_auth/remove_profile_picture", {
+      const response = await fetch(`${apiBasePath}/remove_profile_picture`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

@@ -1,5 +1,6 @@
+import type { StaticImageData } from "next/image";
 export type AlreadyLoggedInGuardProps = {
-    image_src: string;
+    image_src: string | StaticImageData;
     image_alt: string;
     image_background_color?: string;
     message?: string;

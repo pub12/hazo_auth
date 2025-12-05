@@ -6,6 +6,7 @@ import { LOGIN_FIELD_IDS } from "../config/login_field_config";
 import { validateEmail } from "../../shared/utils/validation";
 import { get_client_ip } from "../../shared/utils/ip_address";
 import { trigger_auth_status_refresh } from "../../shared/hooks/use_auth_status";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 // section: helpers
 const buildInitialValues = () => ({
     [LOGIN_FIELD_IDS.EMAIL]: "",
@@ -21,6 +22,7 @@ const get_line_number = () => {
 // section: hook
 export const use_login_form = ({ dataClient, logger, redirectRoute, successMessage = "Successfully logged in", urlOnLogon, }) => {
     const router = useRouter();
+    const { apiBasePath } = useHazoAuthConfig();
     const [values, setValues] = useState(buildInitialValues);
     const [errors, setErrors] = useState({});
     const [passwordVisibility, setPasswordVisibility] = useState({
@@ -110,7 +112,7 @@ export const use_login_form = ({ dataClient, logger, redirectRoute, successMessa
             const currentIp = clientIp === "unknown" ? await get_client_ip() : clientIp;
             setClientIp(currentIp);
             // Attempt login via API route
-            const response = await fetch("/api/hazo_auth/login", {
+            const response = await fetch(`${apiBasePath}/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

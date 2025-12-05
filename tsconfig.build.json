@@ -21,16 +21,20 @@
   },
   "include": [
     "src/components/**/*",
+    "src/contexts/**/*",
     "src/lib/**/*",
     "src/hooks/**/*",
     "src/server/**/*",
     "src/cli/**/*",
     "src/page_components/**/*",
+    "src/server_pages/**/*",
     "src/index.ts",
     "src/client.ts"
   ],
   "exclude": [
     "node_modules",
+    "src/app/**/*",
+    "src/stories/**/*",
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.stories.tsx"

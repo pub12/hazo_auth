@@ -1,6 +1,7 @@
 import { type MySettingsLabelOverrides } from "./config/my_settings_field_config";
 import type { PasswordRequirementOptions, ButtonPaletteOverrides } from "../shared/config/layout_customization";
 export type MySettingsLayoutProps = {
+    className?: string;
     labels?: MySettingsLabelOverrides;
     button_colors?: ButtonPaletteOverrides;
     password_requirements: PasswordRequirementOptions;
@@ -60,5 +61,5 @@ export type MySettingsLayoutProps = {
  * @param props - Component props including labels, button colors, password requirements, etc.
  * @returns My settings layout component
  */
-export default function my_settings_layout({ labels, button_colors, password_requirements, profilePicture, userFields, unauthorizedMessage, loginButtonLabel, loginPath, heading, subHeading, profilePhotoLabel, profilePhotoRecommendation, uploadPhotoButtonLabel, removePhotoButtonLabel, profileInformationLabel, passwordLabel, currentPasswordLabel, newPasswordLabel, confirmPasswordLabel, messages, uiSizes, fileTypes, }: MySettingsLayoutProps): import("react/jsx-runtime").JSX.Element;
+export default function my_settings_layout({ className, labels, button_colors, password_requirements, profilePicture, userFields, unauthorizedMessage, loginButtonLabel, loginPath, heading, subHeading, profilePhotoLabel, profilePhotoRecommendation, uploadPhotoButtonLabel, removePhotoButtonLabel, profileInformationLabel, passwordLabel, currentPasswordLabel, newPasswordLabel, confirmPasswordLabel, messages, uiSizes, fileTypes, }: MySettingsLayoutProps): import("react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=index.d.ts.map

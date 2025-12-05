@@ -1,3 +1,7 @@
+/**
+ * @deprecated This client component is deprecated in hazo_auth v2.0+
+ * Use the new server component version instead: `import { LoginPage } from "hazo_auth/pages/login"`
+ */
 export type LoginPageProps = {
     redirectRoute?: string;
     successMessage?: string;

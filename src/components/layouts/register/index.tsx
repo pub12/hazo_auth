@@ -29,10 +29,11 @@ import {
   type UseRegisterFormResult,
 } from "./hooks/use_register_form";
 import { type LayoutDataClient } from "../shared/data/layout_data_client";
+import type { StaticImageData } from "next/image";
 
 // section: types
 export type RegisterLayoutProps<TClient = unknown> = {
-  image_src: string;
+  image_src: string | StaticImageData;
   image_alt: string;
   image_background_color?: string;
   field_overrides?: LayoutFieldMapOverrides;

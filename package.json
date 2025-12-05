@@ -1,6 +1,6 @@
 {
   "name": "hazo_auth",
-  "version": "1.6.7",
+  "version": "2.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -65,32 +65,56 @@
       "import": "./dist/server/middleware.js"
     },
     "./pages": {
+      "types": "./dist/server_pages/index.d.ts",
+      "import": "./dist/server_pages/index.js"
+    },
+    "./pages/login": {
+      "types": "./dist/server_pages/login.d.ts",
+      "import": "./dist/server_pages/login.js"
+    },
+    "./pages/register": {
+      "types": "./dist/server_pages/register.d.ts",
+      "import": "./dist/server_pages/register.js"
+    },
+    "./pages/forgot_password": {
+      "types": "./dist/server_pages/forgot_password.d.ts",
+      "import": "./dist/server_pages/forgot_password.js"
+    },
+    "./pages/reset_password": {
+      "types": "./dist/server_pages/reset_password.d.ts",
+      "import": "./dist/server_pages/reset_password.js"
+    },
+    "./pages/verify_email": {
+      "types": "./dist/server_pages/verify_email.d.ts",
+      "import": "./dist/server_pages/verify_email.js"
+    },
+    "./pages/my_settings": {
+      "types": "./dist/server_pages/my_settings.d.ts",
+      "import": "./dist/server_pages/my_settings.js"
+    },
+    "./page_components": {
       "types": "./dist/page_components/index.d.ts",
       "import": "./dist/page_components/index.js"
     },
-    "./pages/login": {
+    "./page_components/login": {
       "types": "./dist/page_components/login.d.ts",
       "import": "./dist/page_components/login.js"
     },
-    "./pages/register": {
+    "./page_components/register": {
       "types": "./dist/page_components/register.d.ts",
       "import": "./dist/page_components/register.js"
     },
-    "./pages/forgot_password": {
+    "./page_components/forgot_password": {
       "types": "./dist/page_components/forgot_password.d.ts",
       "import": "./dist/page_components/forgot_password.js"
     },
-    "./pages/reset_password": {
+    "./page_components/reset_password": {
       "types": "./dist/page_components/reset_password.d.ts",
       "import": "./dist/page_components/reset_password.js"
     },
-    "./pages/verify_email": {
+    "./page_components/verify_email": {
       "types": "./dist/page_components/verify_email.d.ts",
       "import": "./dist/page_components/verify_email.js"
-    },
-    "./pages/my_settings": {
-      "types": "./dist/page_components/my_settings.d.ts",
-      "import": "./dist/page_components/my_settings.js"
     }
   },
   "files": [

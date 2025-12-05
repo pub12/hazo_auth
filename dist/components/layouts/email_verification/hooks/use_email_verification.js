@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { EMAIL_VERIFICATION_FIELD_IDS } from "../config/email_verification_field_config";
 import { validateEmail } from "../../shared/utils/validation";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 // section: helpers
 const buildInitialValues = (initialEmail) => ({
     [EMAIL_VERIFICATION_FIELD_IDS.EMAIL]: initialEmail || "",
 });
 // section: hook
 export const use_email_verification = ({ dataClient, redirectDelay = 5, loginPath = "/hazo_auth/login", }) => {
+    const { apiBasePath } = useHazoAuthConfig();
     const router = useRouter();
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
@@ -48,7 +50,7 @@ export const use_email_verification = ({ dataClient, redirectDelay = 5, loginPat
             setIsError(false);
             setErrorMessage(undefined);
             try {
-                const response = await fetch(`/api/hazo_auth/verify_email?token=${encodeURIComponent(token)}`, {
+                const response = await fetch(`${apiBasePath}/verify_email?token=${encodeURIComponent(token)}`, {
                     method: "GET",
                 });
                 const data = await response.json();
@@ -79,7 +81,7 @@ export const use_email_verification = ({ dataClient, redirectDelay = 5, loginPat
                 setErrorMessage(errorMessage);
                 // Try to extract email from error response if available
                 try {
-                    const response = await fetch(`/api/hazo_auth/verify_email?token=${encodeURIComponent(token)}`, {
+                    const response = await fetch(`${apiBasePath}/verify_email?token=${encodeURIComponent(token)}`, {
                         method: "GET",
                     });
                     const data = await response.json();
@@ -155,7 +157,7 @@ export const use_email_verification = ({ dataClient, redirectDelay = 5, loginPat
         setIsSubmitting(true);
         setErrors({});
         try {
-            const response = await fetch("/api/hazo_auth/resend_verification", {
+            const response = await fetch(`${apiBasePath}/resend_verification`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

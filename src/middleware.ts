@@ -88,9 +88,10 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public (public files)
+     * - auth_images (public images)
      * - api/auth/me (public endpoint)
      */
-    "/((?!_next/static|_next/image|favicon.ico|public).*)",
+    "/((?!_next/static|_next/image|favicon.ico|public|auth_images).*)",
   ],
 };
 

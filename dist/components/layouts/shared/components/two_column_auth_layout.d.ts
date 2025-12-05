@@ -1,5 +1,6 @@
+import type { StaticImageData } from "next/image";
 type TwoColumnAuthLayoutProps = {
-    imageSrc: string;
+    imageSrc: string | StaticImageData;
     imageAlt: string;
     imageBackgroundColor?: string;
     formContent: React.ReactNode;

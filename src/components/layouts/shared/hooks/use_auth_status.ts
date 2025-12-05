@@ -4,6 +4,7 @@
 
 // section: imports
 import { useState, useEffect, useCallback } from "react";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 
 // section: types
 export type AuthStatusData = {
@@ -40,6 +41,7 @@ export function trigger_auth_status_refresh(): void {
 
 // section: hook
 export function use_auth_status(): AuthStatus {
+  const { apiBasePath } = useHazoAuthConfig();
   const [authStatus, setAuthStatus] = useState<AuthStatusData>({
     authenticated: false,
     loading: true,
@@ -49,7 +51,7 @@ export function use_auth_status(): AuthStatus {
     setAuthStatus((prev) => ({ ...prev, loading: true }));
 
     try {
-      const response = await fetch("/api/hazo_auth/me", {
+      const response = await fetch(`${apiBasePath}/me`, {
         method: "GET",
         credentials: "include",
       });
@@ -83,7 +85,7 @@ export function use_auth_status(): AuthStatus {
         loading: false,
       });
     }
-  }, []);
+  }, [apiBasePath]);
 
   useEffect(() => {
     // Check auth status on mount

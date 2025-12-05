@@ -1,10 +1,11 @@
 // file_description: reusable two-column authentication layout shell that combines visual panel and form content
 // section: imports
 import { VisualPanel } from "./visual_panel";
+import type { StaticImageData } from "next/image";
 
 // section: types
 type TwoColumnAuthLayoutProps = {
-  imageSrc: string;
+  imageSrc: string | StaticImageData;
   imageAlt: string;
   imageBackgroundColor?: string;
   formContent: React.ReactNode;

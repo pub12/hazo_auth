@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from "../../../ui/avatar";
 import { VerticalTabs, VerticalTabsList, VerticalTabsTrigger, VerticalTabsContent } from "../../../ui/vertical-tabs";
 import { Loader2 } from "lucide-react";
 import { HazoUITooltip } from "../../../ui/hazo_ui_tooltip";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 
 // section: types
 export type ProfilePictureLibraryTabProps = {
@@ -45,6 +46,7 @@ export function ProfilePictureLibraryTab({
   libraryPhotoGridColumns,
   libraryPhotoPreviewSize,
 }: ProfilePictureLibraryTabProps) {
+  const { apiBasePath } = useHazoAuthConfig();
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -57,7 +59,7 @@ export function ProfilePictureLibraryTab({
     const loadCategories = async () => {
       setLoadingCategories(true);
       try {
-        const response = await fetch("/api/hazo_auth/library_photos");
+        const response = await fetch(`${apiBasePath}/library_photos`);
         const data = await response.json();
         if (data.success && data.categories) {
           setCategories(data.categories);
@@ -99,7 +101,7 @@ export function ProfilePictureLibraryTab({
     const loadPhotos = async () => {
       setLoadingPhotos(true);
       try {
-        const response = await fetch(`/api/hazo_auth/library_photos?category=${encodeURIComponent(selectedCategory)}`);
+        const response = await fetch(`${apiBasePath}/library_photos?category=${encodeURIComponent(selectedCategory)}`);
         const data = await response.json();
         if (data.success && data.photos) {
           setPhotos(data.photos);

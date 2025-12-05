@@ -8,6 +8,8 @@ import register_layout from "../../../components/layouts/register";
 import { createLayoutDataClient } from "../../../components/layouts/shared/data/layout_data_client";
 import { create_sqlite_hazo_connect } from "../../../lib/hazo_connect_setup";
 import type { LayoutDataClient } from "../../../components/layouts/shared/data/layout_data_client";
+import type { StaticImageData } from "next/image";
+import defaultRegisterImage from "../../../assets/images/register_default.jpg";
 
 // section: types
 type RegisterPageClientProps = {
@@ -27,6 +29,9 @@ type RegisterPageClientProps = {
   signInPath?: string;
   signInLabel?: string;
   urlOnLogon?: string;
+  imageSrc?: string | StaticImageData;
+  imageAlt?: string;
+  imageBackgroundColor?: string;
 };
 
 // section: component
@@ -41,6 +46,9 @@ export function RegisterPageClient({
   signInPath,
   signInLabel,
   urlOnLogon,
+  imageSrc = defaultRegisterImage,
+  imageAlt = "Illustration of a globe representing secure authentication workflows",
+  imageBackgroundColor = "#e2e8f0",
 }: RegisterPageClientProps) {
   const [dataClient, setDataClient] = useState<LayoutDataClient<unknown> | null>(null);
 
@@ -61,9 +69,9 @@ export function RegisterPageClient({
 
   return (
     <RegisterLayout
-      image_src="/globe.svg"
-      image_alt="Illustration of a globe representing secure authentication workflows"
-      image_background_color="#e2e8f0"
+      image_src={imageSrc}
+      image_alt={imageAlt}
+      image_background_color={imageBackgroundColor}
       password_requirements={passwordRequirements}
       show_name_field={showNameField}
       data_client={dataClient}

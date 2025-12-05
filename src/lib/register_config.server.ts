@@ -4,6 +4,7 @@ import { get_config_boolean, get_config_value, read_config_section } from "./con
 import { get_password_requirements_config } from "./password_requirements_config.server";
 import { get_already_logged_in_config } from "./already_logged_in_config.server";
 import { get_user_fields_config } from "./user_fields_config.server";
+import registerDefaultImage from "../assets/images/register_default.jpg";
 
 // section: types
 export type RegisterConfig = {
@@ -22,6 +23,9 @@ export type RegisterConfig = {
   returnHomePath: string;
   signInPath: string;
   signInLabel: string;
+  imageSrc?: string;
+  imageAlt?: string;
+  imageBackgroundColor?: string;
 };
 
 // section: helpers
@@ -58,6 +62,25 @@ export function get_register_config(): RegisterConfig {
     "Sign in"
   );
 
+  // Read image configuration
+  // If not set in config, falls back to default image from assets
+  const imageSrc = get_config_value(
+    "hazo_auth__register_layout",
+    "image_src",
+    "" // Empty string means not set in config
+  ) || registerDefaultImage;
+
+  const imageAlt = get_config_value(
+    "hazo_auth__register_layout",
+    "image_alt",
+    "Modern building representing user registration"
+  );
+  const imageBackgroundColor = get_config_value(
+    "hazo_auth__register_layout",
+    "image_background_color",
+    "#e2e8f0"
+  );
+
   return {
     showNameField,
     passwordRequirements,
@@ -68,6 +91,9 @@ export function get_register_config(): RegisterConfig {
     returnHomePath: alreadyLoggedInConfig.returnHomePath,
     signInPath,
     signInLabel,
+    imageSrc,
+    imageAlt,
+    imageBackgroundColor,
   };
 }
 

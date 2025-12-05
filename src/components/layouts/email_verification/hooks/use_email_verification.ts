@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import type { LayoutDataClient } from "../../shared/data/layout_data_client";
 import { EMAIL_VERIFICATION_FIELD_IDS, type EmailVerificationFieldId } from "../config/email_verification_field_config";
 import { validateEmail } from "../../shared/utils/validation";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 
 // section: types
 export type EmailVerificationFormValues = Record<EmailVerificationFieldId, string>;
@@ -49,6 +50,7 @@ export const use_email_verification = <TClient,>({
   redirectDelay = 5,
   loginPath = "/hazo_auth/login",
 }: UseEmailVerificationParams<TClient>): UseEmailVerificationResult => {
+  const { apiBasePath } = useHazoAuthConfig();
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -91,7 +93,7 @@ export const use_email_verification = <TClient,>({
       setErrorMessage(undefined);
 
       try {
-        const response = await fetch(`/api/hazo_auth/verify_email?token=${encodeURIComponent(token)}`, {
+        const response = await fetch(`${apiBasePath}/verify_email?token=${encodeURIComponent(token)}`, {
           method: "GET",
         });
 
@@ -131,7 +133,7 @@ export const use_email_verification = <TClient,>({
 
         // Try to extract email from error response if available
         try {
-          const response = await fetch(`/api/hazo_auth/verify_email?token=${encodeURIComponent(token)}`, {
+          const response = await fetch(`${apiBasePath}/verify_email?token=${encodeURIComponent(token)}`, {
             method: "GET",
           });
           const data = await response.json();
@@ -221,7 +223,7 @@ export const use_email_verification = <TClient,>({
       setErrors({});
 
       try {
-        const response = await fetch("/api/hazo_auth/resend_verification", {
+        const response = await fetch(`${apiBasePath}/resend_verification`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

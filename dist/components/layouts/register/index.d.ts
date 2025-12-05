@@ -1,7 +1,8 @@
 import { type ButtonPaletteOverrides, type LayoutFieldMapOverrides, type LayoutLabelOverrides, type PasswordRequirementOverrides } from "../shared/config/layout_customization";
 import { type LayoutDataClient } from "../shared/data/layout_data_client";
+import type { StaticImageData } from "next/image";
 export type RegisterLayoutProps<TClient = unknown> = {
-    image_src: string;
+    image_src: string | StaticImageData;
     image_alt: string;
     image_background_color?: string;
     field_overrides?: LayoutFieldMapOverrides;

@@ -3,6 +3,7 @@
 import { get_config_value } from "./config/config_loader.server";
 import { get_already_logged_in_config } from "./already_logged_in_config.server";
 import { get_password_requirements_config } from "./password_requirements_config.server";
+import resetPasswordDefaultImage from "../assets/images/reset_password_default.jpg";
 
 // section: types
 export type ResetPasswordConfig = {
@@ -22,6 +23,9 @@ export type ResetPasswordConfig = {
     require_number: boolean;
     require_special: boolean;
   };
+  imageSrc?: string;
+  imageAlt?: string;
+  imageBackgroundColor?: string;
 };
 
 // section: helpers
@@ -59,6 +63,25 @@ export function get_reset_password_config(): ResetPasswordConfig {
   // Get shared password requirements
   const passwordRequirements = get_password_requirements_config();
 
+  // Read image configuration
+  // If not set in config, falls back to default image from assets
+  const imageSrc = get_config_value(
+    section,
+    "image_src",
+    "" // Empty string means not set in config
+  ) || resetPasswordDefaultImage;
+
+  const imageAlt = get_config_value(
+    section,
+    "image_alt",
+    "Reset password illustration"
+  );
+  const imageBackgroundColor = get_config_value(
+    section,
+    "image_background_color",
+    "#f1f5f9"
+  );
+
   return {
     errorMessage,
     successMessage,
@@ -70,6 +93,9 @@ export function get_reset_password_config(): ResetPasswordConfig {
     returnHomeButtonLabel: alreadyLoggedInConfig.returnHomeButtonLabel,
     returnHomePath: alreadyLoggedInConfig.returnHomePath,
     passwordRequirements,
+    imageSrc,
+    imageAlt,
+    imageBackgroundColor,
   };
 }
 

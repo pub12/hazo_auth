@@ -12,6 +12,7 @@ import { ProfilePictureLibraryTab } from "./profile_picture_library_tab";
 import { ProfilePictureGravatarTab } from "./profile_picture_gravatar_tab";
 import { toast } from "sonner";
 import { cn } from "../../../../lib/utils";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 // section: component
 /**
  * Profile picture dialog component with tabs for Upload, Library, and Gravatar
@@ -20,6 +21,7 @@ import { cn } from "../../../../lib/utils";
  * @returns Profile picture dialog component
  */
 export function ProfilePictureDialog({ open, onOpenChange, onSave, email, allowPhotoUpload, maxPhotoSize, libraryPhotoPath, currentProfilePictureUrl, currentProfileSource, saveButtonLabel = "Save", cancelButtonLabel = "Cancel", disabled = false, messages, uiSizes, fileTypes, }) {
+    const { apiBasePath } = useHazoAuthConfig();
     const [useUpload, setUseUpload] = useState(false);
     const [useLibrary, setUseLibrary] = useState(false);
     const [useGravatar, setUseGravatar] = useState(false);
@@ -126,7 +128,7 @@ export function ProfilePictureDialog({ open, onOpenChange, onSave, email, allowP
         try {
             const formData = new FormData();
             formData.append("file", file);
-            const response = await fetch("/api/hazo_auth/upload_profile_picture", {
+            const response = await fetch(`${apiBasePath}/upload_profile_picture`, {
                 method: "POST",
                 credentials: "include",
                 body: formData,

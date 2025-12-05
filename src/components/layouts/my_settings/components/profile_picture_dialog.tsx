@@ -18,6 +18,7 @@ import { ProfilePictureLibraryTab } from "./profile_picture_library_tab";
 import { ProfilePictureGravatarTab } from "./profile_picture_gravatar_tab";
 import { toast } from "sonner";
 import { cn } from "../../../../lib/utils";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 
 // section: types
 export type ProfilePictureDialogProps = {
@@ -79,6 +80,7 @@ export function ProfilePictureDialog({
   uiSizes,
   fileTypes,
 }: ProfilePictureDialogProps) {
+  const { apiBasePath } = useHazoAuthConfig();
   const [useUpload, setUseUpload] = useState(false);
   const [useLibrary, setUseLibrary] = useState(false);
   const [useGravatar, setUseGravatar] = useState(false);
@@ -188,7 +190,7 @@ export function ProfilePictureDialog({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/hazo_auth/upload_profile_picture", {
+      const response = await fetch(`${apiBasePath}/upload_profile_picture`, {
         method: "POST",
         credentials: "include",
         body: formData,

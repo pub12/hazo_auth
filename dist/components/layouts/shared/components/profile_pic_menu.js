@@ -14,6 +14,7 @@ import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarM
 import { Settings, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { use_auth_status, trigger_auth_status_refresh } from "../hooks/use_auth_status";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 // section: component
 /**
  * Profile picture menu component
@@ -24,10 +25,13 @@ import { use_auth_status, trigger_auth_status_refresh } from "../hooks/use_auth_
  * @param props - Component props including configuration options
  * @returns Profile picture menu component
  */
-export function ProfilePicMenu({ show_single_button = false, sign_up_label = "Sign Up", sign_in_label = "Sign In", register_path = "/hazo_auth/register", login_path = "/hazo_auth/login", settings_path = "/hazo_auth/my_settings", logout_path = "/api/hazo_auth/logout", custom_menu_items = [], className, avatar_size = "default", variant = "dropdown", sidebar_group_label = "Account", }) {
+export function ProfilePicMenu({ show_single_button = false, sign_up_label = "Sign Up", sign_in_label = "Sign In", register_path = "/hazo_auth/register", login_path = "/hazo_auth/login", settings_path = "/hazo_auth/my_settings", logout_path, custom_menu_items = [], className, avatar_size = "default", variant = "dropdown", sidebar_group_label = "Account", }) {
+    const { apiBasePath } = useHazoAuthConfig();
     const router = useRouter();
     const authStatus = use_auth_status();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    // Use provided logout_path or default to context-based path
+    const effectiveLogoutPath = logout_path || `${apiBasePath}/logout`;
     // Get initials from name or email
     const getInitials = () => {
         var _a, _b;
@@ -47,7 +51,7 @@ export function ProfilePicMenu({ show_single_button = false, sign_up_label = "Si
     const handleLogout = async () => {
         setIsLoggingOut(true);
         try {
-            const response = await fetch(logout_path, {
+            const response = await fetch(effectiveLogoutPath, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -112,7 +116,7 @@ export function ProfilePicMenu({ show_single_button = false, sign_up_label = "Si
             items.push({
                 type: "link",
                 label: "Logout",
-                href: logout_path,
+                href: effectiveLogoutPath,
                 order: 2,
                 id: "default_logout",
             });
@@ -133,7 +137,7 @@ export function ProfilePicMenu({ show_single_button = false, sign_up_label = "Si
             return a.order - b.order;
         });
         return items;
-    }, [authStatus.authenticated, authStatus.name, authStatus.email, settings_path, logout_path, custom_menu_items]);
+    }, [authStatus.authenticated, authStatus.name, authStatus.email, settings_path, effectiveLogoutPath, custom_menu_items]);
     // Avatar size classes
     const avatarSizeClasses = {
         sm: "h-8 w-8",

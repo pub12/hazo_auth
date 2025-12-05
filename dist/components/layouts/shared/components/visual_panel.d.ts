@@ -1,5 +1,6 @@
+import { type StaticImageData } from "next/image";
 type VisualPanelProps = {
-    imageSrc: string;
+    imageSrc: string | StaticImageData;
     imageAlt: string;
     backgroundColor?: string;
     className?: string;

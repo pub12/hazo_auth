@@ -4,12 +4,14 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { FORGOT_PASSWORD_FIELD_IDS } from "../config/forgot_password_field_config";
 import { validateEmail } from "../../shared/utils/validation";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 // section: helpers
 const buildInitialValues = () => ({
     [FORGOT_PASSWORD_FIELD_IDS.EMAIL]: "",
 });
 // section: hook
 export const use_forgot_password_form = ({ dataClient, }) => {
+    const { apiBasePath } = useHazoAuthConfig();
     const [values, setValues] = useState(buildInitialValues);
     const [errors, setErrors] = useState({});
     const [emailTouched, setEmailTouched] = useState(false);
@@ -71,7 +73,7 @@ export const use_forgot_password_form = ({ dataClient, }) => {
         setIsSubmitting(true);
         setErrors({});
         try {
-            const response = await fetch("/api/hazo_auth/forgot_password", {
+            const response = await fetch(`${apiBasePath}/forgot_password`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

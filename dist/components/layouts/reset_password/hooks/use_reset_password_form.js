@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { RESET_PASSWORD_FIELD_IDS } from "../config/reset_password_field_config";
 import { validatePassword } from "../../shared/utils/validation";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 // section: constants
 const PASSWORD_FIELDS = [
     RESET_PASSWORD_FIELD_IDS.PASSWORD,
@@ -17,6 +18,7 @@ const buildInitialValues = () => ({
 });
 // section: hook
 export const use_reset_password_form = ({ passwordRequirements, dataClient, loginPath = "/hazo_auth/login", }) => {
+    const { apiBasePath } = useHazoAuthConfig();
     const router = useRouter();
     const searchParams = useSearchParams();
     const tokenParam = searchParams.get("token");
@@ -42,7 +44,7 @@ export const use_reset_password_form = ({ passwordRequirements, dataClient, logi
             setIsValidatingToken(true);
             setTokenError(null);
             try {
-                const response = await fetch(`/api/hazo_auth/validate_reset_token?token=${encodeURIComponent(tokenParam)}`, {
+                const response = await fetch(`${apiBasePath}/validate_reset_token?token=${encodeURIComponent(tokenParam)}`, {
                     method: "GET",
                 });
                 const data = await response.json();
@@ -148,7 +150,7 @@ export const use_reset_password_form = ({ passwordRequirements, dataClient, logi
         }
         setIsSubmitting(true);
         try {
-            const response = await fetch("/api/hazo_auth/reset_password", {
+            const response = await fetch(`${apiBasePath}/reset_password`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -1,7 +1,7 @@
 // file_description: barrel export for shared layout components, hooks, and utilities
 // section: component_exports
 export { AlreadyLoggedInGuard } from "./components/already_logged_in_guard";
-export { AuthPageShell } from "./components/auth_page_shell";
+// AuthPageShell - NOT exported (test workspace component only)
 export { FieldErrorMessage } from "./components/field_error_message";
 export { FormActionButtons } from "./components/form_action_buttons";
 export { FormFieldWrapper } from "./components/form_field_wrapper";
@@ -10,7 +10,7 @@ export { LogoutButton } from "./components/logout_button";
 export { PasswordField } from "./components/password_field";
 export { ProfilePicMenuWrapper } from "./components/profile_pic_menu_wrapper";
 export { ProfilePicMenu } from "./components/profile_pic_menu";
-export { SidebarLayoutWrapper } from "./components/sidebar_layout_wrapper";
+// SidebarLayoutWrapper - NOT exported (test workspace component only)
 export { StandaloneLayoutWrapper } from "./components/standalone_layout_wrapper";
 export { TwoColumnAuthLayout } from "./components/two_column_auth_layout";
 export { UnauthorizedGuard } from "./components/unauthorized_guard";

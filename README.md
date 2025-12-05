@@ -2,9 +2,21 @@
 
 A reusable authentication UI component package powered by Next.js, TailwindCSS, and shadcn. It integrates `hazo_config` for configuration management and `hazo_connect` for data access, enabling future components to stay aligned with platform conventions.
 
-### What's New (v1.6.6+)
+### What's New in v2.0 🚀
 
-- **JWT Session Tokens for Edge-Compatible Authentication**: hazo_auth now issues JWT session tokens on login, enabling secure Edge Runtime authentication in Next.js proxy/middleware files. This provides better security than simple cookie checks while maintaining high performance. See [Proxy/Middleware Authentication](#proxymiddleware-authentication) for details.
+**Zero-Config Server Components** - Authentication pages now work out-of-the-box with ZERO configuration required!
+
+- ✅ **True "Drop In and Use"** - Pages initialize everything server-side, no loading state
+- ✅ **Better Performance** - Smaller JS bundles, faster page loads, immediate rendering
+- ✅ **Flexible API Paths** - Customize endpoints globally via `HazoAuthProvider` context
+- ✅ **Embeddable Components** - MySettings and UserManagement adapt to any layout
+- ✅ **Sensible Defaults** - INI files are now optional, defaults built-in
+
+**Migrating from v1.x?** See [MIGRATION.md](./MIGRATION.md) for a complete upgrade guide.
+
+### Also Includes (v1.6.6+)
+
+- **JWT Session Tokens for Edge-Compatible Authentication**: Secure Edge Runtime authentication in Next.js proxy/middleware files. See [Proxy/Middleware Authentication](#proxymiddleware-authentication) for details.
 
 ## Table of Contents
 
@@ -63,25 +75,113 @@ npx hazo_auth validate              # Check your setup and configuration
 npx hazo_auth --help                # Show all commands
 ```
 
-### Using Zero-Config Page Components
+### Using Zero-Config Page Components (v2.0+)
 
-The generated pages import from `hazo_auth/pages/*` which provides zero-config components:
+**NEW in v2.0:** All pages are now React Server Components that initialize everything on the server. No configuration, no loading state, no hassle!
 
 ```typescript
-// Generated app/hazo_auth/login/page.tsx
+// app/login/page.tsx - That's literally it!
 import { LoginPage } from "hazo_auth/pages/login";
-export default LoginPage;
+
+export default function Page() {
+  return <LoginPage />;
+}
 ```
 
-Available zero-config pages:
-- `LoginPage` - Login form with sensible defaults
-- `RegisterPage` - Registration with password requirements
-- `ForgotPasswordPage` - Password reset request
-- `ResetPasswordPage` - Set new password
-- `VerifyEmailPage` - Email verification
-- `MySettingsPage` - User profile and settings
+**What happens behind the scenes:**
+- ✅ Database connection initialized server-side via hazo_connect singleton
+- ✅ Configuration loaded from hazo_auth_config.ini (or uses sensible defaults)
+- ✅ All props automatically configured
+- ✅ Page renders immediately - NO loading state!
 
-All pages work out-of-the-box with no props required!
+**Available zero-config pages:**
+
+| Page | Import | Description |
+|------|--------|-------------|
+| **LoginPage** | `hazo_auth/pages/login` | Login form with forgot password link |
+| **RegisterPage** | `hazo_auth/pages/register` | Registration with password validation |
+| **ForgotPasswordPage** | `hazo_auth/pages/forgot_password` | Request password reset email |
+| **ResetPasswordPage** | `hazo_auth/pages/reset_password` | Set new password with token |
+| **VerifyEmailPage** | `hazo_auth/pages/verify_email` | Email verification handler |
+| **MySettingsPage** | `hazo_auth/pages/my_settings` | User profile and password change |
+
+**Example - Complete Auth Flow:**
+
+```typescript
+// app/login/page.tsx
+import { LoginPage } from "hazo_auth/pages/login";
+export default function Page() {
+  return <LoginPage />;
+}
+
+// app/register/page.tsx
+import { RegisterPage } from "hazo_auth/pages/register";
+export default function Page() {
+  return <RegisterPage />;
+}
+
+// app/settings/page.tsx
+import { MySettingsPage } from "hazo_auth/pages/my_settings";
+export default function Page() {
+  return <MySettingsPage />;
+}
+```
+
+**Customizing Visual Appearance (Optional):**
+
+```typescript
+// All pages accept optional visual props
+import { LoginPage } from "hazo_auth/pages/login";
+
+export default function Page() {
+  return (
+    <LoginPage
+      image_src="/custom-login-image.jpg"
+      image_alt="My company logo"
+      image_background_color="#f0f0f0"
+    />
+  );
+}
+```
+
+**Embedding MySettings in Your Dashboard:**
+
+```typescript
+// MySettings is now container-agnostic!
+import { MySettingsPage } from "hazo_auth/pages/my_settings";
+
+export default function DashboardPage() {
+  return (
+    <DashboardLayout>
+      <Sidebar />
+      <main className="p-6">
+        <MySettingsPage className="max-w-4xl mx-auto" />
+      </main>
+    </DashboardLayout>
+  );
+}
+```
+
+**Custom API Paths:**
+
+If you use custom API endpoints (not `/api/hazo_auth/`), wrap your app with `HazoAuthProvider`:
+
+```typescript
+// app/layout.tsx
+import { HazoAuthProvider } from "hazo_auth";
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <HazoAuthProvider apiBasePath="/api/v1/auth">
+          {children}
+        </HazoAuthProvider>
+      </body>
+    </html>
+  );
+}
+```
 
 ### Manual Setup (Advanced)
 

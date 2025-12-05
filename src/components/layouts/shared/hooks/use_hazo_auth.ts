@@ -5,6 +5,7 @@
 // section: imports
 import { useState, useEffect, useCallback } from "react";
 import type { HazoAuthResult } from "../../../../lib/auth/auth_types";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 
 // section: types
 
@@ -72,6 +73,7 @@ export function trigger_hazo_auth_refresh(): void {
 export function use_hazo_auth(
   options?: UseHazoAuthOptions,
 ): UseHazoAuthResult {
+  const { apiBasePath } = useHazoAuthConfig();
   const [authResult, setAuthResult] = useState<HazoAuthResult>({
     authenticated: false,
     user: null,
@@ -91,7 +93,7 @@ export function use_hazo_auth(
     setError(null);
 
     try {
-      const response = await fetch("/api/hazo_auth/get_auth", {
+      const response = await fetch(`${apiBasePath}/get_auth`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -127,7 +129,7 @@ export function use_hazo_auth(
     } finally {
       setLoading(false);
     }
-  }, [options?.required_permissions, options?.strict, options?.skip]);
+  }, [apiBasePath, options?.required_permissions, options?.strict, options?.skip]);
 
   useEffect(() => {
     // Fetch auth status on mount

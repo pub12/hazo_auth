@@ -7,7 +7,7 @@ export type PasswordRequirementsConfig = {
 };
 /**
  * Reads shared password requirements configuration from hazo_auth_config.ini file
- * Falls back to defaults if hazo_auth_config.ini is not found or section is missing
+ * Falls back to centralized defaults if hazo_auth_config.ini is not found or section is missing
  * This configuration is used by both register and reset password layouts
  * @returns Password requirements configuration options
  */

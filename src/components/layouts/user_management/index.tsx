@@ -40,6 +40,7 @@ import { RolesMatrix } from "./components/roles_matrix";
 import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
+import { useHazoAuthConfig } from "../../../contexts/hazo_auth_provider";
 
 // section: types
 export type UserManagementLayoutProps = {
@@ -75,6 +76,8 @@ type Permission = {
  * @returns User Management layout component
  */
 export function UserManagementLayout({ className }: UserManagementLayoutProps) {
+  const { apiBasePath } = useHazoAuthConfig();
+
   // Permission checks
   const authResult = use_hazo_auth();
   const hasUserManagementPermission = authResult.authenticated && 
@@ -116,7 +119,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
   const loadUsers = useCallback(async () => {
     setUsersLoading(true);
     try {
-      const response = await fetch("/api/hazo_auth/user_management/users");
+      const response = await fetch(`${apiBasePath}/user_management/users`);
       const data = await response.json();
 
       if (data.success) {
@@ -151,7 +154,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
     const loadPermissions = async () => {
       setPermissionsLoading(true);
       try {
-        const response = await fetch("/api/hazo_auth/user_management/permissions");
+        const response = await fetch(`${apiBasePath}/user_management/permissions`);
         const data = await response.json();
 
         if (data.success) {
@@ -193,7 +196,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
 
     setUsersActionLoading(true);
     try {
-      const response = await fetch("/api/hazo_auth/user_management/users", {
+      const response = await fetch(`${apiBasePath}/user_management/users`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -212,7 +215,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
         setSelectedUser(null);
 
         // Reload users
-        const reload_response = await fetch("/api/hazo_auth/user_management/users");
+        const reload_response = await fetch(`${apiBasePath}/user_management/users`);
         const reload_data = await reload_response.json();
         if (reload_data.success) {
           setUsers(reload_data.users);
@@ -233,7 +236,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
 
     setUsersActionLoading(true);
     try {
-      const response = await fetch("/api/hazo_auth/user_management/users", {
+      const response = await fetch(`${apiBasePath}/user_management/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -264,7 +267,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
   const handleMigratePermissions = async () => {
     setMigrateLoading(true);
     try {
-      const response = await fetch("/api/hazo_auth/user_management/permissions?action=migrate", {
+      const response = await fetch(`${apiBasePath}/user_management/permissions?action=migrate`, {
         method: "POST",
       });
 
@@ -291,7 +294,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
         }
 
         // Reload permissions
-        const reload_response = await fetch("/api/hazo_auth/user_management/permissions");
+        const reload_response = await fetch(`${apiBasePath}/user_management/permissions`);
         const reload_data = await reload_response.json();
         if (reload_data.success) {
           const db_perms: Permission[] = reload_data.db_permissions.map((p: {
@@ -330,7 +333,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
 
     setPermissionsActionLoading(true);
     try {
-      const response = await fetch("/api/hazo_auth/user_management/permissions", {
+      const response = await fetch(`${apiBasePath}/user_management/permissions`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -350,7 +353,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
         setEditDescription("");
 
         // Reload permissions
-        const reload_response = await fetch("/api/hazo_auth/user_management/permissions");
+        const reload_response = await fetch(`${apiBasePath}/user_management/permissions`);
         const reload_data = await reload_response.json();
         if (reload_data.success) {
           const db_perms: Permission[] = reload_data.db_permissions.map((p: {
@@ -392,7 +395,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
 
     setPermissionsActionLoading(true);
     try {
-      const response = await fetch("/api/hazo_auth/user_management/permissions", {
+      const response = await fetch(`${apiBasePath}/user_management/permissions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -412,7 +415,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
         setNewPermissionDescription("");
 
         // Reload permissions
-        const reload_response = await fetch("/api/hazo_auth/user_management/permissions");
+        const reload_response = await fetch(`${apiBasePath}/user_management/permissions`);
         const reload_data = await reload_response.json();
         if (reload_data.success) {
           const db_perms: Permission[] = reload_data.db_permissions.map((p: {
@@ -452,7 +455,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
     setPermissionsActionLoading(true);
     try {
       const response = await fetch(
-        `/api/hazo_auth/user_management/permissions?permission_id=${permission.id}`,
+        `${apiBasePath}/user_management/permissions?permission_id=${permission.id}`,
         {
           method: "DELETE",
         }
@@ -464,7 +467,7 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
         toast.success("Permission deleted successfully");
 
         // Reload permissions
-        const reload_response = await fetch("/api/hazo_auth/user_management/permissions");
+        const reload_response = await fetch(`${apiBasePath}/user_management/permissions`);
         const reload_data = await reload_response.json();
         if (reload_data.success) {
           const db_perms: Permission[] = reload_data.db_permissions.map((p: {

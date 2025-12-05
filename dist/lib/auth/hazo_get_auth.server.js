@@ -6,6 +6,7 @@ import { PermissionError } from "./auth_types";
 import { get_auth_cache } from "./auth_cache";
 import { get_rate_limiter } from "./auth_rate_limiter";
 import { get_auth_utility_config } from "../auth_utility_config.server";
+import { validate_session_token } from "../services/session_token_service";
 // section: helpers
 /**
  * Gets client IP address from request
@@ -146,14 +147,41 @@ function get_friendly_error_message(missing_permissions, config) {
  * @throws PermissionError if strict mode and permissions are missing
  */
 export async function hazo_get_auth(request, options) {
-    var _a, _b;
+    var _a, _b, _c;
     const logger = create_app_logger();
     const config = get_auth_utility_config();
     const cache = get_auth_cache(config.cache_max_users, config.cache_ttl_minutes, config.cache_max_age_minutes);
     const rate_limiter = get_rate_limiter();
     // Fast path: Check for authentication cookies
-    const user_id = (_a = request.cookies.get("hazo_auth_user_id")) === null || _a === void 0 ? void 0 : _a.value;
-    const user_email = (_b = request.cookies.get("hazo_auth_user_email")) === null || _b === void 0 ? void 0 : _b.value;
+    // Priority: 1. JWT session token (new), 2. Simple cookies (backward compatibility)
+    let user_id;
+    let user_email;
+    // Check for JWT session token first
+    const session_token = (_a = request.cookies.get("hazo_auth_session")) === null || _a === void 0 ? void 0 : _a.value;
+    if (session_token) {
+        try {
+            const token_result = await validate_session_token(session_token);
+            if (token_result.valid && token_result.user_id && token_result.email) {
+                user_id = token_result.user_id;
+                user_email = token_result.email;
+            }
+        }
+        catch (token_error) {
+            // If token validation fails, fall back to simple cookies
+            const token_error_message = token_error instanceof Error ? token_error.message : "Unknown error";
+            logger.debug("auth_utility_jwt_validation_failed", {
+                filename: get_filename(),
+                line_number: get_line_number(),
+                error: token_error_message,
+                note: "Falling back to simple cookie check",
+            });
+        }
+    }
+    // Fall back to simple cookies if JWT not present or invalid (backward compatibility)
+    if (!user_id || !user_email) {
+        user_id = (_b = request.cookies.get("hazo_auth_user_id")) === null || _b === void 0 ? void 0 : _b.value;
+        user_email = (_c = request.cookies.get("hazo_auth_user_email")) === null || _c === void 0 ? void 0 : _c.value;
+    }
     if (!user_id || !user_email) {
         // Unauthenticated - check rate limit by IP
         const client_ip = get_client_ip(request);

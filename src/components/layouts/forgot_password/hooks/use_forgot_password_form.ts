@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { LayoutDataClient } from "../../shared/data/layout_data_client";
 import { FORGOT_PASSWORD_FIELD_IDS, type ForgotPasswordFieldId } from "../config/forgot_password_field_config";
 import { validateEmail } from "../../shared/utils/validation";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 
 // section: types
 export type ForgotPasswordFormValues = Record<ForgotPasswordFieldId, string>;
@@ -37,6 +38,7 @@ const buildInitialValues = (): ForgotPasswordFormValues => ({
 export const use_forgot_password_form = <TClient,>({
   dataClient,
 }: UseForgotPasswordFormParams<TClient>): UseForgotPasswordFormResult => {
+  const { apiBasePath } = useHazoAuthConfig();
   const [values, setValues] = useState<ForgotPasswordFormValues>(buildInitialValues);
   const [errors, setErrors] = useState<ForgotPasswordFormErrors>({});
   const [emailTouched, setEmailTouched] = useState<boolean>(false);
@@ -113,7 +115,7 @@ export const use_forgot_password_form = <TClient,>({
       setErrors({});
 
       try {
-        const response = await fetch("/api/hazo_auth/forgot_password", {
+        const response = await fetch(`${apiBasePath}/forgot_password`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -9,14 +9,16 @@ import { Button } from "../../../ui/button";
 import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { trigger_auth_status_refresh } from "../hooks/use_auth_status";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 // section: component
 export function LogoutButton({ className, variant = "outline", size = "default", }) {
+    const { apiBasePath } = useHazoAuthConfig();
     const router = useRouter();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const handleLogout = async () => {
         setIsLoggingOut(true);
         try {
-            const response = await fetch("/api/hazo_auth/logout", {
+            const response = await fetch(`${apiBasePath}/logout`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

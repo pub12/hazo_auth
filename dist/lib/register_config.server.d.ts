@@ -14,6 +14,9 @@ export type RegisterConfig = {
     returnHomePath: string;
     signInPath: string;
     signInLabel: string;
+    imageSrc?: string;
+    imageAlt?: string;
+    imageBackgroundColor?: string;
 };
 /**
  * Reads register layout configuration from hazo_auth_config.ini file

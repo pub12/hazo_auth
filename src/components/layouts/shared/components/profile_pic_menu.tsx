@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { use_auth_status, trigger_auth_status_refresh } from "../hooks/use_auth_status";
 // Type-only import from server file is safe (types are erased at runtime)
 import type { ProfilePicMenuMenuItem } from "../../../../lib/profile_pic_menu_config.server";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 
 // section: types
 export type ProfilePicMenuProps = {
@@ -62,16 +63,20 @@ export function ProfilePicMenu({
   register_path = "/hazo_auth/register",
   login_path = "/hazo_auth/login",
   settings_path = "/hazo_auth/my_settings",
-  logout_path = "/api/hazo_auth/logout",
+  logout_path,
   custom_menu_items = [],
   className,
   avatar_size = "default",
   variant = "dropdown",
   sidebar_group_label = "Account",
 }: ProfilePicMenuProps) {
+  const { apiBasePath } = useHazoAuthConfig();
   const router = useRouter();
   const authStatus = use_auth_status();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Use provided logout_path or default to context-based path
+  const effectiveLogoutPath = logout_path || `${apiBasePath}/logout`;
 
   // Get initials from name or email
   const getInitials = (): string => {
@@ -93,7 +98,7 @@ export function ProfilePicMenu({
     setIsLoggingOut(true);
 
     try {
-      const response = await fetch(logout_path, {
+      const response = await fetch(effectiveLogoutPath, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -168,7 +173,7 @@ export function ProfilePicMenu({
       items.push({
         type: "link",
         label: "Logout",
-        href: logout_path,
+        href: effectiveLogoutPath,
         order: 2,
         id: "default_logout",
       });
@@ -194,7 +199,7 @@ export function ProfilePicMenu({
     });
 
     return items;
-  }, [authStatus.authenticated, authStatus.name, authStatus.email, settings_path, logout_path, custom_menu_items]);
+  }, [authStatus.authenticated, authStatus.name, authStatus.email, settings_path, effectiveLogoutPath, custom_menu_items]);
 
   // Avatar size classes
   const avatarSizeClasses = {

@@ -3,6 +3,7 @@
 "use client";
 // section: imports
 import { useState, useEffect, useCallback } from "react";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 // section: constants
 const AUTH_STATUS_CHANGE_EVENT = "hazo_auth_status_change";
 // section: helpers
@@ -23,6 +24,7 @@ export function trigger_hazo_auth_refresh() {
  * @returns UseHazoAuthResult with auth data, loading state, and refetch function
  */
 export function use_hazo_auth(options) {
+    const { apiBasePath } = useHazoAuthConfig();
     const [authResult, setAuthResult] = useState({
         authenticated: false,
         user: null,
@@ -39,7 +41,7 @@ export function use_hazo_auth(options) {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch("/api/hazo_auth/get_auth", {
+            const response = await fetch(`${apiBasePath}/get_auth`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -72,7 +74,7 @@ export function use_hazo_auth(options) {
         finally {
             setLoading(false);
         }
-    }, [options === null || options === void 0 ? void 0 : options.required_permissions, options === null || options === void 0 ? void 0 : options.strict, options === null || options === void 0 ? void 0 : options.skip]);
+    }, [apiBasePath, options === null || options === void 0 ? void 0 : options.required_permissions, options === null || options === void 0 ? void 0 : options.strict, options === null || options === void 0 ? void 0 : options.skip]);
     useEffect(() => {
         // Fetch auth status on mount
         void fetchAuth();

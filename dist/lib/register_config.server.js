@@ -25,6 +25,10 @@ export function get_register_config() {
     // Read sign in link configuration
     const signInPath = get_config_value("hazo_auth__register_layout", "sign_in_path", "/hazo_auth/login");
     const signInLabel = get_config_value("hazo_auth__register_layout", "sign_in_label", "Sign in");
+    // Read image configuration
+    const imageSrc = get_config_value("hazo_auth__register_layout", "image_src", "/globe.svg");
+    const imageAlt = get_config_value("hazo_auth__register_layout", "image_alt", "Illustration of a globe representing secure authentication workflows");
+    const imageBackgroundColor = get_config_value("hazo_auth__register_layout", "image_background_color", "#e2e8f0");
     return {
         showNameField,
         passwordRequirements,
@@ -35,5 +39,8 @@ export function get_register_config() {
         returnHomePath: alreadyLoggedInConfig.returnHomePath,
         signInPath,
         signInLabel,
+        imageSrc,
+        imageAlt,
+        imageBackgroundColor,
     };
 }

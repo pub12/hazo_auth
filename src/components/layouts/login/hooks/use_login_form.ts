@@ -7,6 +7,7 @@ import { LOGIN_FIELD_IDS, type LoginFieldId } from "../config/login_field_config
 import { validateEmail } from "../../shared/utils/validation";
 import { get_client_ip } from "../../shared/utils/ip_address";
 import { trigger_auth_status_refresh } from "../../shared/hooks/use_auth_status";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 
 // section: types
 export type LoginFormValues = Record<LoginFieldId, string>;
@@ -66,6 +67,7 @@ export const use_login_form = <TClient,>({
   urlOnLogon,
 }: UseLoginFormParams<TClient>): UseLoginFormResult => {
   const router = useRouter();
+  const { apiBasePath } = useHazoAuthConfig();
   const [values, setValues] = useState<LoginFormValues>(buildInitialValues);
   const [errors, setErrors] = useState<LoginFormErrors>({});
   const [passwordVisibility, setPasswordVisibility] = useState<PasswordVisibilityState>({
@@ -182,7 +184,7 @@ export const use_login_form = <TClient,>({
         setClientIp(currentIp);
 
         // Attempt login via API route
-        const response = await fetch("/api/hazo_auth/login", {
+        const response = await fetch(`${apiBasePath}/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
