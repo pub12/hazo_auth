@@ -17,7 +17,7 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "../../../ui/sidebar";
-import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, User } from "lucide-react";
+import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, User, ShieldCheck } from "lucide-react";
 import { use_auth_status } from "../hooks/use_auth_status";
 import { ProfilePicMenu } from "./profile_pic_menu";
 
@@ -128,6 +128,18 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                     >
                       <User className="h-4 w-4" aria-hidden="true" />
                       <span>User Management</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem className="cls_sidebar_layout_rbac_test_item">
+                  <SidebarMenuButton asChild>
+                    <Link
+                      href="/hazo_auth/rbac_test"
+                      className="cls_sidebar_layout_rbac_test_link flex items-center gap-2"
+                      aria-label="Test RBAC and HRBAC access control"
+                    >
+                      <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                      <span>RBAC/HRBAC Test</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

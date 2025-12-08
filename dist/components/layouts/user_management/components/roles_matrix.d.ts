@@ -18,9 +18,8 @@ export type RolesMatrixProps = {
     className?: string;
 };
 /**
- * Roles matrix component - reusable internal component for roles-permissions matrix
- * Shows data table with permissions as columns and roles as rows
- * Checkboxes in cells indicate role-permission mappings
+ * Roles matrix component - reusable internal component for roles-permissions management
+ * Shows roles with permission tags and an edit button to modify permissions via dialog
  * Changes are stored locally and only saved when Save button is pressed
  * @param props - Component props including button enable flags and save callback
  * @returns Roles matrix component

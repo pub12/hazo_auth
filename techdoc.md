@@ -332,6 +332,105 @@ CREATE TABLE hazo_user_roles (
 );
 ```
 
+### HRBAC Tables (Hierarchical Role-Based Access Control)
+
+**Optional feature** - enables 7-level scope hierarchy for organizational access control.
+
+**hazo_scopes_l1 through hazo_scopes_l7:**
+```sql
+-- Level 1 (root level - no parent)
+CREATE TABLE hazo_scopes_l1 (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    seq TEXT NOT NULL,                       -- Auto-generated friendly ID (e.g., L1_001)
+    org TEXT NOT NULL,                       -- Organization identifier
+    name TEXT NOT NULL,                      -- Scope name (e.g., "Acme Corp")
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_hazo_scopes_l1_org ON hazo_scopes_l1(org);
+CREATE INDEX idx_hazo_scopes_l1_seq ON hazo_scopes_l1(seq);
+
+-- Level 2 (parent: L1)
+CREATE TABLE hazo_scopes_l2 (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    seq TEXT NOT NULL,
+    org TEXT NOT NULL,
+    name TEXT NOT NULL,
+    parent_scope_id UUID REFERENCES hazo_scopes_l1(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_hazo_scopes_l2_org ON hazo_scopes_l2(org);
+CREATE INDEX idx_hazo_scopes_l2_seq ON hazo_scopes_l2(seq);
+CREATE INDEX idx_hazo_scopes_l2_parent ON hazo_scopes_l2(parent_scope_id);
+
+-- Levels 3-7 follow the same pattern, each referencing the previous level
+```
+
+**Field Notes:**
+- `id` - UUID primary key (TEXT in SQLite)
+- `seq` - Auto-generated human-readable ID (e.g., L2_015) via database function
+- `org` - Organization identifier (allows multi-tenancy)
+- `name` - Display name for the scope
+- `parent_scope_id` - References parent level (NULL for L1, required for L2-L7)
+- Foreign key with CASCADE DELETE ensures referential integrity
+
+**hazo_user_scopes:**
+```sql
+CREATE TABLE hazo_user_scopes (
+    user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
+    scope_id UUID NOT NULL,                  -- References scope in one of the scope tables
+    scope_seq TEXT NOT NULL,                 -- Denormalized seq for quick lookup
+    scope_type hazo_enum_scope_types NOT NULL, -- Which level (hazo_scopes_l1..l7)
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, scope_type, scope_id)
+);
+CREATE INDEX idx_hazo_user_scopes_user_id ON hazo_user_scopes(user_id);
+CREATE INDEX idx_hazo_user_scopes_scope_id ON hazo_user_scopes(scope_id);
+CREATE INDEX idx_hazo_user_scopes_scope_type ON hazo_user_scopes(scope_type);
+```
+
+**Field Notes:**
+- Composite primary key: `(user_id, scope_type, scope_id)`
+- `scope_type` - Enum indicating which level (hazo_scopes_l1 through hazo_scopes_l7)
+- `scope_seq` - Denormalized for display purposes (avoids joins)
+- Users can be assigned to multiple scopes at different levels
+
+**hazo_scope_labels:**
+```sql
+CREATE TABLE hazo_scope_labels (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org TEXT NOT NULL,
+    scope_type hazo_enum_scope_types NOT NULL,
+    label TEXT NOT NULL,                     -- Custom label (e.g., "Division" instead of "Level 2")
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    UNIQUE(org, scope_type)
+);
+CREATE INDEX idx_hazo_scope_labels_org ON hazo_scope_labels(org);
+```
+
+**Field Notes:**
+- Allows organizations to customize labels for each scope level
+- Example: "Company" (L1), "Division" (L2), "Department" (L3)
+- UNIQUE constraint ensures one label per organization per level
+
+**hazo_enum_scope_types (PostgreSQL only):**
+```sql
+CREATE TYPE hazo_enum_scope_types AS ENUM (
+    'hazo_scopes_l1',
+    'hazo_scopes_l2',
+    'hazo_scopes_l3',
+    'hazo_scopes_l4',
+    'hazo_scopes_l5',
+    'hazo_scopes_l6',
+    'hazo_scopes_l7'
+);
+```
+
+**SQLite Note:** SQLite uses TEXT with CHECK constraint for scope type validation.
+
 ### Database Migrations
 
 Migration files are located in `migrations/`:
@@ -341,6 +440,7 @@ Migration files are located in `migrations/`:
 | `001_create_tables.sql` | Initial schema creation |
 | `002_add_name_to_hazo_users.sql` | Add name field to users |
 | `003_add_url_on_logon_to_hazo_users.sql` | Add url_on_logon field for custom redirects |
+| `004_add_parent_scope_to_scope_tables.sql` | Add parent_scope_id to L2-L7 scope tables (HRBAC) |
 
 **Apply migrations:**
 ```bash
@@ -420,6 +520,19 @@ All layout components follow a similar pattern:
 | `MySettingsLayout` | `hazo_auth__my_settings_layout` | Multiple | Multiple |
 | `UserManagementLayout` | N/A | Multiple | Multiple |
 
+**UserManagementLayout Tabs:**
+- **Users Tab**: List users, deactivate users, send password reset emails
+- **Roles Tab**: Manage roles and their permission assignments using tag-based UI
+  - **Roles Matrix**: Displays roles with their permissions as inline tags/chips
+  - Shows up to 4 permission tags, with "+N more" button to expand/collapse remaining permissions
+  - Edit Permissions dialog with Select All/Unselect All functionality
+  - Scrollable permission list with checkboxes and descriptions
+  - **Design Rationale**: Tag-based UI replaced horizontal data table for better visual hierarchy and efficient use of space when many permissions exist
+- **Permissions Tab**: Create, edit, and delete permissions
+- **Scope Hierarchy Tab** (HRBAC): Manage scope structure (requires `admin_scope_hierarchy_management`)
+- **Scope Labels Tab** (HRBAC): Customize scope level labels (requires `admin_scope_hierarchy_management`)
+- **User Scopes Tab** (HRBAC): Assign scopes to users (requires `admin_user_scope_assignment`)
+
 ### Shared Components
 
 Located in `src/components/layouts/shared/components/`:
@@ -443,6 +556,10 @@ Located in `src/components/ui/`, these are shadcn-based components:
 - `Avatar`, `Badge`, `Card`, `Separator`
 - `Form`, `Tabs`, `Table`
 - `Sidebar`, `SidebarGroup`, `SidebarMenu`, `SidebarMenuItem` (for sidebar variant)
+- `TreeView` - Hierarchical data display with accordion-style expand/collapse
+  - Uses `<div role="button">` for triggers instead of `<button>` to support nested interactive elements
+  - Keyboard accessible (Tab navigation, Enter/Space to toggle)
+  - Prevents hydration errors when action buttons are placed inside tree items
 - And more...
 
 ---
@@ -628,6 +745,81 @@ function UserProfile() {
 - `forgot_password` - Password reset template
 - `password_changed` - Password changed notification
 
+### HRBAC Services (Hierarchical Role-Based Access Control)
+
+**Optional services** - only used when HRBAC is enabled via configuration.
+
+| Service | Location | Functions |
+|---------|----------|-----------|
+| `scope_service.ts` | `src/lib/services/` | Scope CRUD operations and hierarchy navigation |
+| `scope_labels_service.ts` | `src/lib/services/` | Custom scope labels per organization |
+| `user_scope_service.ts` | `src/lib/services/` | User scope assignments and access checking |
+
+**scope_service.ts Functions:**
+- `get_scopes_by_level(adapter, level, org?)` - Get all scopes for a level
+- `get_scope_by_id(adapter, level, scope_id)` - Get single scope by UUID
+- `get_scope_by_seq(adapter, level, seq)` - Get single scope by friendly ID
+- `create_scope(adapter, level, data)` - Create new scope with parent validation
+- `update_scope(adapter, level, scope_id, data)` - Update scope name or parent
+- `delete_scope(adapter, level, scope_id)` - Delete scope (cascades to children)
+- `get_scope_children(adapter, level, scope_id)` - Get immediate children
+- `get_scope_ancestors(adapter, level, scope_id)` - Get all ancestors up to L1
+- `get_scope_descendants(adapter, level, scope_id)` - Get all descendants down to L7
+- `get_scope_tree(adapter, org)` - Build nested tree structure for an organization
+- `get_all_scope_trees(adapter)` - Build trees for all organizations
+- `is_valid_scope_level(level)` - Validate scope level string
+- `get_parent_level(level)` - Get parent level for a scope level
+- `get_child_level(level)` - Get child level for a scope level
+
+**scope_labels_service.ts Functions:**
+- `get_scope_labels(adapter, org)` - Get all labels for an organization
+- `get_scope_labels_with_defaults(adapter, org, custom_defaults?)` - Labels with fallback
+- `get_label_for_level(adapter, org, scope_type, custom_default?)` - Single label lookup
+- `upsert_scope_label(adapter, org, scope_type, label)` - Create or update label
+- `batch_upsert_scope_labels(adapter, org, labels[])` - Bulk save labels from UI
+- `delete_scope_label(adapter, org, scope_type)` - Revert to default label
+
+**user_scope_service.ts Functions:**
+- `get_user_scopes(adapter, user_id)` - Get all scope assignments for a user
+- `get_users_by_scope(adapter, scope_type, scope_id)` - Get users assigned to a scope
+- `assign_user_scope(adapter, user_id, scope_type, scope_id, scope_seq)` - Assign scope to user
+- `remove_user_scope(adapter, user_id, scope_type, scope_id)` - Remove scope assignment
+- `update_user_scopes(adapter, user_id, new_scopes[])` - Bulk replace assignments
+- `check_user_scope_access(adapter, user_id, target_scope_type, target_scope_id?, target_scope_seq?)` - **Core access checking with inheritance**
+  - Checks direct assignment OR ancestor-based access
+  - Returns `{ has_access, access_via?, user_scopes? }`
+  - Used by `hazo_get_auth()` for scope-based authorization
+- `get_user_effective_scopes(adapter, user_id)` - Calculate all accessible scopes (direct + inherited)
+
+**HRBAC Architecture Details:**
+
+1. **Scope Hierarchy:**
+   - 7 levels: L1 (root) → L2 → L3 → L4 → L5 → L6 → L7 (leaf)
+   - Each level (except L1) has `parent_scope_id` referencing parent level
+   - Foreign key CASCADE DELETE ensures referential integrity
+
+2. **Access Inheritance Algorithm:**
+   - User assigned to L2 automatically has access to all L3, L4, L5, L6, L7 under that L2
+   - Access checking: First check direct assignment, then traverse ancestors
+   - Time complexity: O(log n) for hierarchical lookup with indexed parent_scope_id
+
+3. **Caching Strategy:**
+   - `scope_cache.ts` - LRU cache with TTL (configurable: default 5000 entries, 15min TTL)
+   - Smart invalidation using cache versions per scope
+   - Methods: `get()`, `set()`, `invalidate_user()`, `invalidate_by_scope()`, `invalidate_all()`
+   - Cache key: user_id → scopes[]
+   - Invalidation: When scope assignment changes, only affected users invalidated
+
+4. **Database Performance:**
+   - Indexes on `parent_scope_id` for efficient ancestor/descendant queries
+   - Indexes on `org`, `seq` for quick lookups
+   - Composite primary key on `hazo_user_scopes(user_id, scope_type, scope_id)`
+
+5. **Type Safety:**
+   - TypeScript enums for `ScopeLevel` type
+   - Type guards (`is_valid_scope_level()`) prevent invalid usage
+   - Compile-time and runtime validation
+
 ---
 
 ## API Routes
@@ -740,6 +932,78 @@ The `/api/hazo_auth/me` endpoint is the **standardized endpoint** that ensures c
 | `/api/auth/upload_profile_picture` | POST | Upload profile picture |
 | `/api/auth/remove_profile_picture` | DELETE | Remove profile picture |
 | `/api/auth/library_photos` | GET | Get library photos |
+
+### HRBAC Routes (Scope Management)
+
+**Optional routes** - only used when HRBAC is enabled.
+
+| Route | Method | Description | Required Permission |
+|-------|--------|-------------|---------------------|
+| `/api/hazo_auth/scope_management/scopes` | GET | Get scopes for a level and org | `admin_scope_hierarchy_management` |
+| `/api/hazo_auth/scope_management/scopes` | POST | Create new scope | `admin_scope_hierarchy_management` |
+| `/api/hazo_auth/scope_management/scopes/:id` | PUT | Update scope | `admin_scope_hierarchy_management` |
+| `/api/hazo_auth/scope_management/scopes/:id` | DELETE | Delete scope (cascades) | `admin_scope_hierarchy_management` |
+| `/api/hazo_auth/scope_management/tree` | GET | Get scope tree for org | `admin_scope_hierarchy_management` |
+| `/api/hazo_auth/scope_management/labels` | GET | Get scope labels for org | `admin_scope_hierarchy_management` |
+| `/api/hazo_auth/scope_management/labels` | POST | Upsert scope label | `admin_scope_hierarchy_management` |
+| `/api/hazo_auth/scope_management/labels/batch` | POST | Batch upsert labels | `admin_scope_hierarchy_management` |
+| `/api/hazo_auth/user_management/users/scopes` | GET | Get user's scope assignments | `admin_user_scope_assignment` |
+| `/api/hazo_auth/user_management/users/scopes` | POST | Assign scope to user | `admin_user_scope_assignment` |
+| `/api/hazo_auth/user_management/users/scopes` | PUT | Bulk update user scopes | `admin_user_scope_assignment` |
+| `/api/hazo_auth/user_management/users/scopes/:id` | DELETE | Remove scope assignment | `admin_user_scope_assignment` |
+| `/api/hazo_auth/rbac_test` | POST | Test permissions and scope access | `admin_test_access` |
+
+**Example Request (Create Scope):**
+```typescript
+POST /api/hazo_auth/scope_management/scopes
+{
+  "level": "hazo_scopes_l2",
+  "org": "acme_corp",
+  "name": "Engineering Division",
+  "parent_scope_id": "uuid-of-l1-scope"
+}
+```
+
+**Example Request (Assign Scope):**
+```typescript
+POST /api/hazo_auth/user_management/users/scopes
+{
+  "user_id": "uuid-of-user",
+  "scope_type": "hazo_scopes_l2",
+  "scope_id": "uuid-of-scope",
+  "scope_seq": "L2_005"
+}
+```
+
+**Example Request (Test Scope Access):**
+```typescript
+POST /api/hazo_auth/rbac_test
+{
+  "test_user_id": "uuid-of-user-to-test",
+  "required_permissions": ["view_reports"],
+  "scope_type": "hazo_scopes_l3",
+  "scope_id": "uuid-of-scope"
+}
+
+Response:
+{
+  "authenticated": true,
+  "permission_ok": true,
+  "scope_ok": true,
+  "scope_access_via": {
+    "scope_type": "hazo_scopes_l2",
+    "scope_id": "parent-scope-uuid",
+    "scope_seq": "L2_005"
+  },
+  "user_scopes": [...]
+}
+```
+
+**Implementation Notes:**
+- The route correctly uses `users_service.findBy()` (hazo_connect API) instead of `users_service.read()`
+- Scope access checking calls `check_user_scope_access()` with individual parameters, not an object
+- Client component fetches user's role IDs first, then retrieves all roles with permissions and filters to user's roles
+- Client component includes `&include_effective=true` in scope fetch URL to retrieve `direct_scopes` field
 
 ---
 

@@ -6,7 +6,12 @@ import { create_app_logger } from "../app_logger";
 import { read_config_section } from "../config/config_loader.server";
 // section: constants
 const DEFAULT_EMAIL_FROM = "noreply@hazo_auth.local";
-const DEFAULT_EMAIL_TEMPLATE_DIR = path.resolve(process.cwd(), "email_templates");
+/**
+ * Gets the default email template directory (lazy-evaluated to avoid Edge Runtime issues)
+ */
+function get_default_email_template_dir() {
+    return path.resolve(process.cwd(), "email_templates");
+}
 // section: singleton
 /**
  * Singleton instance for hazo_notify emailer configuration
@@ -66,7 +71,7 @@ function get_email_template_directory() {
             ? template_dir
             : path.resolve(process.cwd(), template_dir);
     }
-    return DEFAULT_EMAIL_TEMPLATE_DIR;
+    return get_default_email_template_dir();
 }
 /**
  * Gets email from address from config

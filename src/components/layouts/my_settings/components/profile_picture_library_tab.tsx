@@ -238,9 +238,10 @@ export function ProfilePictureLibraryTab({
                   onClick={() => handlePhotoClick(photoUrl)}
                   className={`
                     cls_profile_picture_library_tab_photo_thumbnail
-                    aspect-square rounded-lg overflow-hidden border-2 transition-colors cursor-pointer
+                    w-full aspect-square rounded-lg overflow-hidden border-2 transition-colors cursor-pointer
                     ${selectedPhoto === photoUrl ? "border-blue-500 ring-2 ring-blue-200" : "border-[var(--hazo-border)] hover:border-[var(--hazo-border-emphasis)]"}
                   `}
+                  style={{ minHeight: '80px', minWidth: '80px' }}
                   aria-label={`Select photo ${photoUrl.split('/').pop()}`}
                 >
                   <img

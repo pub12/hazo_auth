@@ -14,3 +14,16 @@ export class PermissionError extends Error {
         this.name = "PermissionError";
     }
 }
+/**
+ * Custom error class for scope access denials in HRBAC
+ * Thrown when strict mode is enabled and user lacks access to required scope
+ */
+export class ScopeAccessError extends Error {
+    constructor(scope_type, scope_identifier, user_scopes) {
+        super(`Access denied to scope: ${scope_type} / ${scope_identifier}`);
+        this.scope_type = scope_type;
+        this.scope_identifier = scope_identifier;
+        this.user_scopes = user_scopes;
+        this.name = "ScopeAccessError";
+    }
+}

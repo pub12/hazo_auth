@@ -14,8 +14,15 @@ const next_config = {
   // Environment variables are only used as fallback if hazo_auth_config.ini is not found
   // See hazo_auth_config.ini for hazo_connect configuration parameters
 
+  // section: server_external_packages
+  // Mark hazo_notify as external to prevent bundling for Edge Runtime
+  // hazo_notify uses Node.js APIs and should not be analyzed for Edge compatibility
+  serverExternalPackages: ["hazo_notify"],
+
   // section: turbopack_configuration
-  // Empty turbopack config to silence Next.js 16 warning about webpack config
+  // Empty turbopack config - Edge Runtime warnings are expected for instrumentation
+  // The warnings are for static analysis only; the code correctly detects Edge Runtime
+  // at runtime and does not execute Node.js-specific code in Edge context
   turbopack: {},
 
   env: {

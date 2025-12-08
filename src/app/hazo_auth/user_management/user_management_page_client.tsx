@@ -5,12 +5,19 @@
 // section: imports
 import { UserManagementLayout } from "../../../components/layouts/user_management";
 
+// section: types
+type UserManagementPageClientProps = {
+  hrbacEnabled?: boolean;
+  defaultOrg?: string;
+};
+
 // section: component
 /**
  * Client component for user management page
+ * @param props - Component props
  * @returns User Management layout component
  */
-export function UserManagementPageClient() {
-  return <UserManagementLayout className="w-full" />;
+export function UserManagementPageClient({ hrbacEnabled = false, defaultOrg = "" }: UserManagementPageClientProps) {
+  return <UserManagementLayout className="w-full" hrbacEnabled={hrbacEnabled} defaultOrg={defaultOrg} />;
 }
 

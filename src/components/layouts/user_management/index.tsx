@@ -1,4 +1,4 @@
-// file_description: User Management layout component with three tabs for managing users, roles, and permissions
+// file_description: User Management layout component with tabs for managing users, roles, permissions, and HRBAC scopes
 // section: client_directive
 "use client";
 
@@ -37,6 +37,9 @@ import {
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
 import { RolesMatrix } from "./components/roles_matrix";
+import { ScopeHierarchyTab } from "./components/scope_hierarchy_tab";
+import { ScopeLabelsTab } from "./components/scope_labels_tab";
+import { UserScopesTab } from "./components/user_scopes_tab";
 import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
@@ -45,6 +48,10 @@ import { useHazoAuthConfig } from "../../../contexts/hazo_auth_provider";
 // section: types
 export type UserManagementLayoutProps = {
   className?: string;
+  /** Whether HRBAC is enabled (passed from server) */
+  hrbacEnabled?: boolean;
+  /** Default organization for HRBAC scopes */
+  defaultOrg?: string;
 };
 
 type User = {
@@ -68,30 +75,40 @@ type Permission = {
 
 // section: component
 /**
- * User Management layout component with three tabs
+ * User Management layout component with tabs for managing users, roles, permissions, and HRBAC scopes
  * Tab 1: Manage Users - data table with user details and actions
  * Tab 2: Roles - roles-permissions matrix
  * Tab 3: Permissions - manage permissions from DB and config
+ * Tab 4: Scope Labels - customize scope level labels (if HRBAC enabled)
+ * Tab 5: Scope Hierarchy - manage HRBAC scopes (if HRBAC enabled)
+ * Tab 6: User Scopes - assign scopes to users (if HRBAC enabled)
  * @param props - Component props
  * @returns User Management layout component
  */
-export function UserManagementLayout({ className }: UserManagementLayoutProps) {
+export function UserManagementLayout({ className, hrbacEnabled = false, defaultOrg = "" }: UserManagementLayoutProps) {
   const { apiBasePath } = useHazoAuthConfig();
 
   // Permission checks
   const authResult = use_hazo_auth();
-  const hasUserManagementPermission = authResult.authenticated && 
+  const hasUserManagementPermission = authResult.authenticated &&
     authResult.permissions.includes("admin_user_management");
-  const hasRoleManagementPermission = authResult.authenticated && 
+  const hasRoleManagementPermission = authResult.authenticated &&
     authResult.permissions.includes("admin_role_management");
-  const hasPermissionManagementPermission = authResult.authenticated && 
+  const hasPermissionManagementPermission = authResult.authenticated &&
     authResult.permissions.includes("admin_permission_management");
+  const hasScopeHierarchyPermission = authResult.authenticated &&
+    authResult.permissions.includes("admin_scope_hierarchy_management");
+  const hasUserScopeAssignmentPermission = authResult.authenticated &&
+    authResult.permissions.includes("admin_user_scope_assignment");
 
   // Determine which tabs to show
   const showUsersTab = hasUserManagementPermission;
   const showRolesTab = hasRoleManagementPermission;
   const showPermissionsTab = hasPermissionManagementPermission;
-  const hasAnyPermission = showUsersTab || showRolesTab || showPermissionsTab;
+  const showScopeHierarchyTab = hrbacEnabled && hasScopeHierarchyPermission;
+  const showScopeLabelsTab = hrbacEnabled && hasScopeHierarchyPermission;
+  const showUserScopesTab = hrbacEnabled && hasUserScopeAssignmentPermission;
+  const hasAnyPermission = showUsersTab || showRolesTab || showPermissionsTab || showScopeHierarchyTab || showScopeLabelsTab || showUserScopesTab;
 
   // Tab 1: Users state
   const [users, setUsers] = useState<User[]>([]);
@@ -532,15 +549,18 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
           </p>
         </div>
       ) : (
-        <Tabs 
+        <Tabs
           defaultValue={
-            showUsersTab ? "users" : 
-            showRolesTab ? "roles" : 
-            showPermissionsTab ? "permissions" : "users"
-          } 
+            showUsersTab ? "users" :
+            showRolesTab ? "roles" :
+            showPermissionsTab ? "permissions" :
+            showScopeLabelsTab ? "scope_labels" :
+            showScopeHierarchyTab ? "scope_hierarchy" :
+            showUserScopesTab ? "user_scopes" : "users"
+          }
           className="cls_user_management_tabs w-full"
         >
-          <TabsList className="cls_user_management_tabs_list flex w-full">
+          <TabsList className="cls_user_management_tabs_list flex w-full flex-wrap">
             {showUsersTab && (
               <TabsTrigger value="users" className="cls_user_management_tabs_trigger flex-1">
                 Manage Users
@@ -554,6 +574,21 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
             {showPermissionsTab && (
               <TabsTrigger value="permissions" className="cls_user_management_tabs_trigger flex-1">
                 Permissions
+              </TabsTrigger>
+            )}
+            {showScopeLabelsTab && (
+              <TabsTrigger value="scope_labels" className="cls_user_management_tabs_trigger flex-1">
+                Scope Labels
+              </TabsTrigger>
+            )}
+            {showScopeHierarchyTab && (
+              <TabsTrigger value="scope_hierarchy" className="cls_user_management_tabs_trigger flex-1">
+                Scope Hierarchy
+              </TabsTrigger>
+            )}
+            {showUserScopesTab && (
+              <TabsTrigger value="user_scopes" className="cls_user_management_tabs_trigger flex-1">
+                User Scopes
               </TabsTrigger>
             )}
           </TabsList>
@@ -882,6 +917,27 @@ export function UserManagementLayout({ className }: UserManagementLayoutProps) {
               </div>
             )}
           </div>
+            </TabsContent>
+          )}
+
+          {/* Tab 4: Scope Labels (HRBAC) */}
+          {showScopeLabelsTab && (
+            <TabsContent value="scope_labels" className="cls_user_management_tab_scope_labels w-full">
+              <ScopeLabelsTab defaultOrg={defaultOrg} />
+            </TabsContent>
+          )}
+
+          {/* Tab 5: Scope Hierarchy (HRBAC) */}
+          {showScopeHierarchyTab && (
+            <TabsContent value="scope_hierarchy" className="cls_user_management_tab_scope_hierarchy w-full">
+              <ScopeHierarchyTab defaultOrg={defaultOrg} />
+            </TabsContent>
+          )}
+
+          {/* Tab 6: User Scopes (HRBAC) */}
+          {showUserScopesTab && (
+            <TabsContent value="user_scopes" className="cls_user_management_tab_user_scopes w-full">
+              <UserScopesTab />
             </TabsContent>
           )}
         </Tabs>

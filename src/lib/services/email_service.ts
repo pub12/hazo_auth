@@ -28,7 +28,13 @@ export type EmailTemplateData = {
 
 // section: constants
 const DEFAULT_EMAIL_FROM = "noreply@hazo_auth.local";
-const DEFAULT_EMAIL_TEMPLATE_DIR = path.resolve(process.cwd(), "email_templates");
+
+/**
+ * Gets the default email template directory (lazy-evaluated to avoid Edge Runtime issues)
+ */
+function get_default_email_template_dir(): string {
+  return path.resolve(process.cwd(), "email_templates");
+}
 
 // section: singleton
 /**
@@ -93,7 +99,7 @@ function get_email_template_directory(): string {
       : path.resolve(process.cwd(), template_dir);
   }
   
-  return DEFAULT_EMAIL_TEMPLATE_DIR;
+  return get_default_email_template_dir();
 }
 
 /**

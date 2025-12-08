@@ -26,7 +26,7 @@ export function TwoColumnAuthLayout({
 }: TwoColumnAuthLayoutProps) {
   return (
     <div
-      className={`cls_two_column_auth_layout mx-auto grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:grid-cols-2 md:min-h-[520px] ${className ?? ""}`}
+      className={`cls_two_column_auth_layout mx-4 my-8 grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:mx-auto md:my-12 md:grid-cols-2 md:min-h-[520px] ${className ?? ""}`}
     >
       <VisualPanel
         imageSrc={imageSrc}

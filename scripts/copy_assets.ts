@@ -31,3 +31,6 @@ if (fs.existsSync(assetsDir)) {
     console.log('No assets directory found to copy.');
 }
 
+
+
+

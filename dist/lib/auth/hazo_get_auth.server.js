@@ -2,11 +2,15 @@ import { get_hazo_connect_instance } from "../hazo_connect_instance.server";
 import { createCrudService } from "hazo_connect/server";
 import { create_app_logger } from "../app_logger";
 import { get_filename, get_line_number } from "../utils/api_route_helpers";
-import { PermissionError } from "./auth_types";
+import { PermissionError, ScopeAccessError } from "./auth_types";
 import { get_auth_cache } from "./auth_cache";
+import { get_scope_cache } from "./scope_cache";
 import { get_rate_limiter } from "./auth_rate_limiter";
 import { get_auth_utility_config } from "../auth_utility_config.server";
 import { validate_session_token } from "../services/session_token_service";
+import { is_hrbac_enabled, get_scope_hierarchy_config } from "../scope_hierarchy_config.server";
+import { check_user_scope_access, get_user_scopes } from "../services/user_scope_service";
+import { is_valid_scope_level } from "../services/scope_service";
 // section: helpers
 /**
  * Gets client IP address from request
@@ -137,14 +141,84 @@ function get_friendly_error_message(missing_permissions, config) {
     // Default message if no specific mapping
     return "You don't have the required permissions to perform this action. Please contact your administrator.";
 }
+/**
+ * Gets user scopes with caching
+ * @param user_id - User ID
+ * @returns Array of user scope entries
+ */
+async function get_user_scopes_cached(user_id) {
+    const scope_config = get_scope_hierarchy_config();
+    const scope_cache = get_scope_cache(scope_config.scope_cache_max_entries, scope_config.scope_cache_ttl_minutes);
+    // Check cache
+    const cached = scope_cache.get(user_id);
+    if (cached) {
+        return cached.scopes;
+    }
+    // Fetch from database
+    const hazoConnect = get_hazo_connect_instance();
+    const result = await get_user_scopes(hazoConnect, user_id);
+    if (!result.success || !result.scopes) {
+        return [];
+    }
+    // Convert to cache entry format and cache
+    const scopes = result.scopes.map((s) => ({
+        scope_type: s.scope_type,
+        scope_id: s.scope_id,
+        scope_seq: s.scope_seq,
+    }));
+    scope_cache.set(user_id, scopes);
+    return scopes;
+}
+/**
+ * Checks if user has access to a specific scope
+ * @param user_id - User ID
+ * @param scope_type - Scope level
+ * @param scope_id - Scope ID (optional)
+ * @param scope_seq - Scope seq (optional)
+ * @returns Object with scope_ok and access_via info
+ */
+async function check_scope_access(user_id, scope_type, scope_id, scope_seq) {
+    const logger = create_app_logger();
+    // Validate scope_type
+    if (!is_valid_scope_level(scope_type)) {
+        logger.warn("auth_utility_invalid_scope_type", {
+            filename: get_filename(),
+            line_number: get_line_number(),
+            scope_type,
+            user_id,
+        });
+        return { scope_ok: false, user_scopes: [] };
+    }
+    const hazoConnect = get_hazo_connect_instance();
+    const result = await check_user_scope_access(hazoConnect, user_id, scope_type, scope_id, scope_seq);
+    const user_scopes = (result.user_scopes || []).map((s) => ({
+        scope_type: s.scope_type,
+        scope_id: s.scope_id,
+        scope_seq: s.scope_seq,
+    }));
+    if (result.has_access && result.access_via) {
+        return {
+            scope_ok: true,
+            scope_access_via: {
+                scope_type: result.access_via.scope_type,
+                scope_id: result.access_via.scope_id,
+                scope_seq: result.access_via.scope_seq,
+            },
+            user_scopes,
+        };
+    }
+    return { scope_ok: false, user_scopes };
+}
 // section: main_function
 /**
  * Main hazo_get_auth function for server-side use in API routes
  * Returns user details, permissions, and checks required permissions
+ * Optionally checks HRBAC scope access when scope options are provided
  * @param request - NextRequest object
- * @param options - Optional parameters for permission checking
- * @returns HazoAuthResult with user data and permissions
+ * @param options - Optional parameters for permission checking and HRBAC scope checking
+ * @returns HazoAuthResult with user data, permissions, and optional scope access info
  * @throws PermissionError if strict mode and permissions are missing
+ * @throws ScopeAccessError if strict mode and scope access is denied
  */
 export async function hazo_get_auth(request, options) {
     var _a, _b, _c;
@@ -274,11 +348,41 @@ export async function hazo_get_auth(request, options) {
             throw new PermissionError(missing_permissions, permissions, options.required_permissions, friendly_message);
         }
     }
+    // Check HRBAC scope access if enabled and scope options provided
+    let scope_ok;
+    let scope_access_via;
+    const hrbac_enabled = is_hrbac_enabled();
+    const has_scope_options = (options === null || options === void 0 ? void 0 : options.scope_type) && ((options === null || options === void 0 ? void 0 : options.scope_id) || (options === null || options === void 0 ? void 0 : options.scope_seq));
+    if (hrbac_enabled && has_scope_options) {
+        const scope_result = await check_scope_access(user.id, options.scope_type, options === null || options === void 0 ? void 0 : options.scope_id, options === null || options === void 0 ? void 0 : options.scope_seq);
+        scope_ok = scope_result.scope_ok;
+        scope_access_via = scope_result.scope_access_via;
+        // Log scope denial if permission logging is enabled
+        if (!scope_ok && config.log_permission_denials) {
+            const client_ip = get_client_ip(request);
+            logger.warn("auth_utility_scope_access_denied", {
+                filename: get_filename(),
+                line_number: get_line_number(),
+                user_id: user.id,
+                scope_type: options.scope_type,
+                scope_id: options === null || options === void 0 ? void 0 : options.scope_id,
+                scope_seq: options === null || options === void 0 ? void 0 : options.scope_seq,
+                user_scopes: scope_result.user_scopes,
+                ip: client_ip,
+            });
+        }
+        // Throw error if strict mode and scope access denied
+        if (!scope_ok && (options === null || options === void 0 ? void 0 : options.strict)) {
+            throw new ScopeAccessError(options.scope_type, (options === null || options === void 0 ? void 0 : options.scope_id) || (options === null || options === void 0 ? void 0 : options.scope_seq) || "unknown", scope_result.user_scopes);
+        }
+    }
     return {
         authenticated: true,
         user,
         permissions,
         permission_ok,
         missing_permissions,
+        scope_ok,
+        scope_access_via,
     };
 }

@@ -706,6 +706,7 @@ import { ResetPasswordLayout } from "hazo_auth/components/layouts/reset_password
 import { EmailVerificationLayout } from "hazo_auth/components/layouts/email_verification";
 import { MySettingsLayout } from "hazo_auth/components/layouts/my_settings";
 import { UserManagementLayout } from "hazo_auth/components/layouts/user_management";
+import { RbacTestLayout } from "hazo_auth/components/layouts/rbac_test";
 
 // Shared layout components and hooks (barrel import - recommended)
 import { 
@@ -762,6 +763,7 @@ export default async function LoginPage() {
 - `EmailVerificationLayout` - Verify email address
 - `MySettingsLayout` - User profile and settings
 - `UserManagementLayout` - Admin user/role management (requires user_management API routes)
+- `RbacTestLayout` - RBAC/HRBAC permission and scope testing tool (requires admin_test_access permission)
 
 ### User Management Component
 
@@ -793,6 +795,7 @@ export { GET, POST, PUT } from "hazo_auth/server/routes";
 - **Users:** List users, deactivate users, send password reset emails
 - **Permissions:** List permissions (from DB and config), migrate config permissions to DB, create/update/delete permissions
 - **Roles:** List roles with permissions, create roles, update role-permission assignments
+  - **UI Enhancement**: The Roles tab uses a tag-based UI for better readability. Each role displays permissions as inline tags/chips (showing up to 4, with "+N more" to expand). Edit permissions via an interactive dialog with Select All/Unselect All buttons.
 - **User Roles:** Get user roles, assign roles to users, bulk update user role assignments
 
 **Example Usage:**
@@ -1226,6 +1229,149 @@ rate_limit_per_ip = 200
 log_permission_denials = true
 enable_friendly_error_messages = true
 ```
+
+---
+
+## Hierarchical Role-Based Access Control (HRBAC)
+
+hazo_auth supports optional Hierarchical Role-Based Access Control (HRBAC) with 7 scope levels (L1-L7). HRBAC extends standard RBAC by allowing users to be assigned to scopes in a hierarchy, with automatic inheritance of access to child scopes.
+
+### Enabling HRBAC
+
+Add the following to your `hazo_auth_config.ini`:
+
+```ini
+[hazo_auth__scope_hierarchy]
+enable_hrbac = true
+default_org = my_organization  # Optional: default organization for single-tenant apps
+scope_cache_ttl_minutes = 15
+scope_cache_max_entries = 5000
+
+# Optional: customize default labels for each scope level
+default_label_l1 = Company
+default_label_l2 = Division
+default_label_l3 = Department
+default_label_l4 = Team
+default_label_l5 = Project
+default_label_l6 = Sub-project
+default_label_l7 = Task
+```
+
+### Database Setup
+
+HRBAC requires additional database tables. See `SETUP_CHECKLIST.md` for full PostgreSQL and SQLite scripts, including:
+- `hazo_scopes_l1` through `hazo_scopes_l7` - Scope tables with parent_scope_id references
+- `hazo_user_scopes` - User-scope assignments
+- `hazo_scope_labels` - Custom labels per organization
+- `hazo_enum_scope_types` - Enum type for scope validation
+
+### Using hazo_get_auth with Scope Options
+
+When HRBAC is enabled, you can check scope access alongside permissions:
+
+```typescript
+import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
+import { ScopeAccessError } from "hazo_auth/lib/auth/auth_types";
+
+export async function GET(request: NextRequest) {
+  try {
+    const authResult = await hazo_get_auth(request, {
+      required_permissions: ["view_reports"],
+      scope_type: "hazo_scopes_l3",  // Check access to Level 3 scope
+      scope_seq: "L3_001",           // Scope identifier (or use scope_id for UUID)
+      strict: true,                   // Throws ScopeAccessError if denied
+    });
+
+    if (!authResult.authenticated) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    // Both permission_ok and scope_ok must be true for full access
+    if (authResult.scope_ok) {
+      // Access granted - scope_access_via shows how access was granted
+      console.log("Access via:", authResult.scope_access_via);
+    }
+
+    return NextResponse.json({ message: "Access granted" });
+  } catch (error) {
+    if (error instanceof ScopeAccessError) {
+      return NextResponse.json(
+        { error: "Scope access denied", scope: error.scope_identifier },
+        { status: 403 }
+      );
+    }
+    throw error;
+  }
+}
+```
+
+### Scope Access Inheritance
+
+Users assigned to a higher-level scope automatically have access to all descendant scopes:
+- User with L2 scope access can access all L3, L4, L5, L6, L7 scopes under that L2 scope
+- Direct assignments take precedence over inherited access
+- The `scope_access_via` field in the result shows which scope granted access
+
+### Required Permissions for Management
+
+- `admin_scope_hierarchy_management` - Manage scopes and scope labels
+- `admin_user_scope_assignment` - Assign scopes to users
+- `admin_test_access` - Access the RBAC/HRBAC test tool
+
+Add these to your `application_permission_list_defaults` in `hazo_auth_config.ini`:
+
+```ini
+[hazo_auth__user_management]
+application_permission_list_defaults = admin_user_management,admin_role_management,admin_permission_management,admin_scope_hierarchy_management,admin_user_scope_assignment,admin_test_access
+```
+
+### User Management UI
+
+When HRBAC is enabled and the user has appropriate permissions, three new tabs appear in the User Management layout:
+- **Scope Hierarchy** - Create, edit, and delete scopes at each level
+- **Scope Labels** - Customize labels for scope levels per organization
+- **User Scopes** - Assign and remove scope assignments for users
+
+### RBAC/HRBAC Test Tool
+
+The `RbacTestLayout` component provides a comprehensive testing interface for administrators to test RBAC permissions and HRBAC scope access for any user in the system.
+
+**Features:**
+- **User Selection**: Dropdown to select any user in the system
+- **User Info Display**: Shows selected user's current permissions and assigned scopes
+- **RBAC Test Tab**: Select permissions to test if the user has them
+- **HRBAC Test Tab**: Select a scope from a tree view and test if the user has access
+- **Results Display**: Clear pass/fail indicators with missing permissions and scope access details
+
+**Required Permission:** `admin_test_access`
+
+**Usage in Your App:**
+
+```typescript
+// app/admin/rbac-test/page.tsx
+import { RbacTestLayout } from "hazo_auth/components/layouts/rbac_test";
+import { is_hrbac_enabled, get_default_org } from "hazo_auth/lib/scope_hierarchy_config.server";
+
+export default function RbacTestPage() {
+  const hrbacEnabled = is_hrbac_enabled();
+  const defaultOrg = get_default_org();
+
+  return (
+    <RbacTestLayout
+      hrbacEnabled={hrbacEnabled}
+      defaultOrg={defaultOrg}
+    />
+  );
+}
+```
+
+**API Route Required:**
+The test tool uses the `/api/hazo_auth/rbac_test` endpoint which is included in the package. This route:
+- Accepts `test_user_id` parameter to test any user
+- Checks permissions and scope access for the specified user
+- Requires `admin_test_access` permission to call
+
+**Demo Page:** A test page is available at `/hazo_auth/rbac_test` in the demo app.
 
 ---
 

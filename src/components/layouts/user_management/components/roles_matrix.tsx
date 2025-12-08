@@ -1,9 +1,9 @@
-// file_description: internal reusable component for roles-permissions matrix with data table
+// file_description: internal reusable component for roles-permissions management with tag-based UI
 // section: client_directive
 "use client";
 
 // section: imports
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../../../ui/button";
 import { Checkbox } from "../../../ui/checkbox";
 import {
@@ -24,7 +24,7 @@ import {
 } from "../../../ui/dialog";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
-import { Plus, Save, Loader2, CircleCheck, CircleX } from "lucide-react";
+import { Plus, Loader2, CircleCheck, CircleX, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
 import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
@@ -51,11 +51,15 @@ export type RolesMatrixProps = {
   className?: string;
 };
 
+type PermissionWithDescription = {
+  permission_name: string;
+  description: string;
+};
+
 // section: component
 /**
- * Roles matrix component - reusable internal component for roles-permissions matrix
- * Shows data table with permissions as columns and roles as rows
- * Checkboxes in cells indicate role-permission mappings
+ * Roles matrix component - reusable internal component for roles-permissions management
+ * Shows roles with permission tags and an edit button to modify permissions via dialog
  * Changes are stored locally and only saved when Save button is pressed
  * @param props - Component props including button enable flags and save callback
  * @returns Roles matrix component
@@ -86,6 +90,7 @@ export function RolesMatrix({
     permissions: Set<string>;
   }>>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
+  const [permissionsWithDescriptions, setPermissionsWithDescriptions] = useState<PermissionWithDescription[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -96,6 +101,13 @@ export function RolesMatrix({
     profile_picture_url: string | null;
   } | null>(null);
   const [userRoleIds, setUserRoleIds] = useState<number[]>([]);
+
+  // Edit permissions dialog state
+  const [editPermissionsDialogOpen, setEditPermissionsDialogOpen] = useState(false);
+  const [editingRoleIndex, setEditingRoleIndex] = useState<number | null>(null);
+
+  // Track which roles have expanded permission tags (for read-only mode)
+  const [expandedRoles, setExpandedRoles] = useState<Set<number>>(new Set());
 
   // Load roles and permissions on mount
   useEffect(() => {
@@ -113,7 +125,51 @@ export function RolesMatrix({
         }
 
         setPermissions(roles_data.permissions.map((p: { permission_name: string }) => p.permission_name));
-        
+
+        // Also fetch permission descriptions from the permissions endpoint
+        try {
+          const perms_response = await fetch(`${apiBasePath}/user_management/permissions`);
+          const perms_data = await perms_response.json();
+
+          if (perms_data.success) {
+            // Combine DB permissions and config permissions with descriptions
+            const all_perms_with_desc: PermissionWithDescription[] = [];
+
+            // DB permissions have descriptions
+            if (Array.isArray(perms_data.db_permissions)) {
+              perms_data.db_permissions.forEach((p: { permission_name: string; description: string }) => {
+                all_perms_with_desc.push({
+                  permission_name: p.permission_name,
+                  description: p.description || "",
+                });
+              });
+            }
+
+            // Config permissions don't have descriptions in the API
+            if (Array.isArray(perms_data.config_permissions)) {
+              perms_data.config_permissions.forEach((name: string) => {
+                // Only add if not already in db_permissions
+                if (!all_perms_with_desc.some(p => p.permission_name === name)) {
+                  all_perms_with_desc.push({
+                    permission_name: name,
+                    description: "",
+                  });
+                }
+              });
+            }
+
+            setPermissionsWithDescriptions(all_perms_with_desc);
+          }
+        } catch {
+          // If we can't get descriptions, use permissions without descriptions
+          setPermissionsWithDescriptions(
+            roles_data.permissions.map((p: { permission_name: string }) => ({
+              permission_name: p.permission_name,
+              description: "",
+            }))
+          );
+        }
+
         // Initialize roles with permissions as Sets
         const roles_with_permissions = roles_data.roles.map((role: {
           role_id: number;
@@ -159,7 +215,7 @@ export function RolesMatrix({
 
           if (user_roles_data.success && Array.isArray(user_roles_data.role_ids)) {
             setUserRoleIds(user_roles_data.role_ids);
-            
+
             // Pre-check roles that are assigned to the user
             roles_with_permissions.forEach((role: {
               role_id?: number;
@@ -171,7 +227,7 @@ export function RolesMatrix({
                 role.selected = true;
               }
             });
-            
+
             // Also update original roles
             original_roles.forEach((role: {
               role_id?: number;
@@ -196,7 +252,7 @@ export function RolesMatrix({
     };
 
     void loadData();
-  }, [user_id]);
+  }, [user_id, apiBasePath]);
 
   // Handle checkbox change for role-permission mapping
   const handlePermissionToggle = (role_index: number, permission_name: string) => {
@@ -267,7 +323,7 @@ export function RolesMatrix({
     }));
     setRoles(reset_roles);
     toast.info("Changes cancelled. State reset to database values.");
-    
+
     // Call onCancel callback if provided (e.g., to close dialog)
     if (onCancel) {
       onCancel();
@@ -311,7 +367,7 @@ export function RolesMatrix({
 
         if (data.success) {
           toast.success("User roles updated successfully");
-          
+
           // Update original state to reflect saved changes
           const updated_original_roles = originalRoles.map((role) => ({
             ...role,
@@ -342,7 +398,7 @@ export function RolesMatrix({
 
         if (data.success) {
           toast.success("Roles and permissions saved successfully");
-          
+
           // Reload data to get updated role IDs
           const reload_response = await fetch(`${apiBasePath}/user_management/roles`);
           const reload_data = await reload_response.json();
@@ -384,6 +440,57 @@ export function RolesMatrix({
     }
   };
 
+  // Handle opening the edit permissions dialog
+  const handleOpenEditPermissions = (role_index: number) => {
+    setEditingRoleIndex(role_index);
+    setEditPermissionsDialogOpen(true);
+  };
+
+  // Handle toggling expanded state for a role's permission tags
+  const handleToggleExpandedPermissions = (role_index: number) => {
+    setExpandedRoles((prev) => {
+      const updated = new Set(prev);
+      if (updated.has(role_index)) {
+        updated.delete(role_index);
+      } else {
+        updated.add(role_index);
+      }
+      return updated;
+    });
+  };
+
+  // Handle select all permissions for the editing role
+  const handleSelectAllPermissions = () => {
+    if (editingRoleIndex === null) return;
+
+    setRoles((prev) => {
+      const updated = [...prev];
+      const role = { ...updated[editingRoleIndex] };
+      role.permissions = new Set(permissions);
+      updated[editingRoleIndex] = role;
+      return updated;
+    });
+  };
+
+  // Handle unselect all permissions for the editing role
+  const handleUnselectAllPermissions = () => {
+    if (editingRoleIndex === null) return;
+
+    setRoles((prev) => {
+      const updated = [...prev];
+      const role = { ...updated[editingRoleIndex] };
+      role.permissions = new Set<string>();
+      updated[editingRoleIndex] = role;
+      return updated;
+    });
+  };
+
+  // Get description for a permission
+  const getPermissionDescription = (permission_name: string): string => {
+    const perm = permissionsWithDescriptions.find(p => p.permission_name === permission_name);
+    return perm?.description || "";
+  };
+
   if (loading) {
     return (
       <div className={`cls_roles_matrix flex items-center justify-center p-8 ${className || ""}`}>
@@ -403,6 +510,9 @@ export function RolesMatrix({
     }
     return email.substring(0, 2).toUpperCase();
   };
+
+  // Number of permission tags to show before truncating
+  const MAX_VISIBLE_TAGS = 4;
 
   return (
     <div className={`cls_roles_matrix flex flex-col gap-4 w-full ${className || ""}`}>
@@ -449,7 +559,7 @@ export function RolesMatrix({
         </div>
       </div>
 
-      {/* Data table */}
+      {/* Roles table with tag-based permissions */}
       <div className="cls_roles_matrix_table_container border rounded-lg overflow-auto w-full">
         <Table className="cls_roles_matrix_table w-full">
           <TableHeader className="cls_roles_matrix_table_header">
@@ -459,63 +569,115 @@ export function RolesMatrix({
                   {/* Empty header for role checkbox column */}
                 </TableHead>
               )}
-              <TableHead className="cls_roles_matrix_table_header_role_name">
+              <TableHead className="cls_roles_matrix_table_header_role_name w-48">
                 Role Name
               </TableHead>
-              {permissions.map((permission_name) => (
-                <TableHead
-                  key={permission_name}
-                  className="cls_roles_matrix_table_header_permission text-center"
-                >
-                  {permission_name}
+              <TableHead className="cls_roles_matrix_table_header_permissions">
+                Permissions
+              </TableHead>
+              {!permissions_read_only && (
+                <TableHead className="cls_roles_matrix_table_header_actions w-24 text-center">
+                  Actions
                 </TableHead>
-              ))}
+              )}
             </TableRow>
           </TableHeader>
           <TableBody className="cls_roles_matrix_table_body">
             {roles.length === 0 ? (
               <TableRow className="cls_roles_matrix_table_row_empty">
                 <TableCell
-                  colSpan={permissions.length + (role_name_selection_enabled ? 2 : 1)}
+                  colSpan={role_name_selection_enabled ? 4 : 3}
                   className="text-center text-muted-foreground py-8"
                 >
                   No roles found. Add a role to get started.
                 </TableCell>
               </TableRow>
             ) : (
-              roles.map((role, role_index) => (
-                <TableRow key={role_index} className="cls_roles_matrix_table_row">
-                  {role_name_selection_enabled && (
-                    <TableCell className="cls_roles_matrix_table_cell_role_checkbox text-center">
-                      <div className="cls_roles_matrix_role_checkbox_wrapper flex items-center justify-center">
-                        <Checkbox
-                          checked={role.selected}
-                          onCheckedChange={() => handleRoleSelectionToggle(role_index)}
-                          className="cls_roles_matrix_role_checkbox"
-                        />
+              roles.map((role, role_index) => {
+                const permission_array = Array.from(role.permissions);
+                const is_expanded = expandedRoles.has(role_index);
+                const visible_permissions = is_expanded
+                  ? permission_array
+                  : permission_array.slice(0, MAX_VISIBLE_TAGS);
+                const remaining_count = permission_array.length - MAX_VISIBLE_TAGS;
+
+                return (
+                  <TableRow key={role_index} className="cls_roles_matrix_table_row">
+                    {role_name_selection_enabled && (
+                      <TableCell className="cls_roles_matrix_table_cell_role_checkbox text-center">
+                        <div className="cls_roles_matrix_role_checkbox_wrapper flex items-center justify-center">
+                          <Checkbox
+                            checked={role.selected}
+                            onCheckedChange={() => handleRoleSelectionToggle(role_index)}
+                            className="cls_roles_matrix_role_checkbox"
+                          />
+                        </div>
+                      </TableCell>
+                    )}
+                    <TableCell className="cls_roles_matrix_table_cell_role_name font-medium">
+                      {role.role_name}
+                    </TableCell>
+                    <TableCell className="cls_roles_matrix_table_cell_permissions">
+                      <div className="cls_roles_matrix_permission_tags flex flex-wrap items-center gap-1.5">
+                        {permission_array.length === 0 ? (
+                          <span className="text-muted-foreground text-sm italic">
+                            No permissions assigned
+                          </span>
+                        ) : (
+                          <>
+                            {visible_permissions.map((perm_name) => (
+                              <span
+                                key={perm_name}
+                                className="cls_roles_matrix_permission_tag bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-medium"
+                                title={getPermissionDescription(perm_name) || perm_name}
+                              >
+                                {perm_name}
+                              </span>
+                            ))}
+                            {remaining_count > 0 && !is_expanded && (
+                              <span
+                                className="cls_roles_matrix_permission_tag_more bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-medium cursor-pointer hover:bg-slate-200"
+                                onClick={() => {
+                                  if (permissions_read_only) {
+                                    handleToggleExpandedPermissions(role_index);
+                                  } else {
+                                    handleOpenEditPermissions(role_index);
+                                  }
+                                }}
+                                title={permissions_read_only ? `Click to expand all ${permission_array.length} permissions` : `Click to edit all ${permission_array.length} permissions`}
+                              >
+                                +{remaining_count} more
+                              </span>
+                            )}
+                            {is_expanded && remaining_count > 0 && (
+                              <span
+                                className="cls_roles_matrix_permission_tag_collapse bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-medium cursor-pointer hover:bg-slate-200"
+                                onClick={() => handleToggleExpandedPermissions(role_index)}
+                                title="Click to collapse"
+                              >
+                                Show less
+                              </span>
+                            )}
+                          </>
+                        )}
                       </div>
                     </TableCell>
-                  )}
-                  <TableCell className="cls_roles_matrix_table_cell_role_name font-medium">
-                    {role.role_name}
-                  </TableCell>
-                  {permissions.map((permission_name) => (
-                    <TableCell
-                      key={permission_name}
-                      className="cls_roles_matrix_table_cell_permission text-center"
-                    >
-                      <div className="cls_roles_matrix_permission_checkbox_wrapper flex items-center justify-center">
-                        <Checkbox
-                          checked={role.permissions.has(permission_name)}
-                          onCheckedChange={() => handlePermissionToggle(role_index, permission_name)}
-                          disabled={permissions_read_only}
-                          className="cls_roles_matrix_permission_checkbox"
-                        />
-                      </div>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+                    {!permissions_read_only && (
+                      <TableCell className="cls_roles_matrix_table_cell_actions text-center">
+                        <Button
+                          onClick={() => handleOpenEditPermissions(role_index)}
+                          variant="ghost"
+                          size="sm"
+                          className="cls_roles_matrix_edit_button h-8 w-8 p-0"
+                          title="Edit permissions"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -604,7 +766,108 @@ export function RolesMatrix({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Permissions Dialog */}
+      <Dialog open={editPermissionsDialogOpen} onOpenChange={setEditPermissionsDialogOpen}>
+        <DialogContent className="cls_roles_matrix_edit_permissions_dialog max-w-lg max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              Edit Permissions for: {editingRoleIndex !== null ? roles[editingRoleIndex]?.role_name : ""}
+            </DialogTitle>
+            <DialogDescription>
+              Select which permissions to assign to this role.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Select All / Unselect All buttons */}
+          <div className="cls_roles_matrix_edit_permissions_actions flex items-center gap-2 py-2 border-b">
+            <Button
+              onClick={handleSelectAllPermissions}
+              variant="outline"
+              size="sm"
+              className="cls_roles_matrix_select_all_button"
+            >
+              Select All
+            </Button>
+            <Button
+              onClick={handleUnselectAllPermissions}
+              variant="outline"
+              size="sm"
+              className="cls_roles_matrix_unselect_all_button"
+            >
+              Unselect All
+            </Button>
+          </div>
+
+          {/* Scrollable permissions list */}
+          <div className="cls_roles_matrix_edit_permissions_list flex-1 overflow-y-auto py-2 min-h-0">
+            <div className="flex flex-col gap-3">
+              {permissionsWithDescriptions.map((perm) => {
+                const is_checked = editingRoleIndex !== null && roles[editingRoleIndex]?.permissions.has(perm.permission_name);
+
+                return (
+                  <div
+                    key={perm.permission_name}
+                    className="cls_roles_matrix_permission_item flex items-start gap-3 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                    onClick={() => editingRoleIndex !== null && handlePermissionToggle(editingRoleIndex, perm.permission_name)}
+                  >
+                    <Checkbox
+                      checked={is_checked}
+                      onCheckedChange={() => editingRoleIndex !== null && handlePermissionToggle(editingRoleIndex, perm.permission_name)}
+                      className="cls_roles_matrix_permission_checkbox mt-0.5"
+                    />
+                    <div className="cls_roles_matrix_permission_info flex flex-col gap-0.5">
+                      <span className="cls_roles_matrix_permission_name font-medium text-sm">
+                        {perm.permission_name}
+                      </span>
+                      {perm.description && (
+                        <span className="cls_roles_matrix_permission_description text-xs text-muted-foreground italic">
+                          {perm.description}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <DialogFooter className="cls_roles_matrix_edit_permissions_footer border-t pt-4">
+            <Button
+              onClick={() => setEditPermissionsDialogOpen(false)}
+              variant="default"
+              className="cls_roles_matrix_edit_permissions_done"
+            >
+              <CircleCheck className="h-4 w-4 mr-2" />
+              Done
+            </Button>
+            <Button
+              onClick={() => {
+                // Reset this role's permissions to original state
+                if (editingRoleIndex !== null) {
+                  const original_role = originalRoles.find(r => r.role_name === roles[editingRoleIndex].role_name);
+                  if (original_role) {
+                    setRoles((prev) => {
+                      const updated = [...prev];
+                      updated[editingRoleIndex] = {
+                        ...updated[editingRoleIndex],
+                        permissions: new Set(original_role.permissions),
+                      };
+                      return updated;
+                    });
+                  }
+                }
+                setEditPermissionsDialogOpen(false);
+              }}
+              variant="outline"
+              className="cls_roles_matrix_edit_permissions_cancel"
+            >
+              <CircleX className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-

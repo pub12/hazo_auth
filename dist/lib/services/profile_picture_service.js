@@ -238,7 +238,50 @@ export function clear_library_cache() {
  * @param user_name - User's name (optional)
  * @returns Default profile picture URL and source, or null if no default available
  */
-export function get_default_profile_picture(user_email, user_name) {
+/**
+ * Checks if a Gravatar exists for the given email by making a HEAD request
+ * @param email - User email address
+ * @returns Promise<boolean> - true if Gravatar exists (status 200), false otherwise (404 or error)
+ */
+async function check_gravatar_exists(email) {
+    try {
+        const uiSizes = get_ui_sizes_config();
+        const gravatar_url = get_gravatar_url(email, uiSizes.gravatar_size);
+        // Make HEAD request to check if image exists without downloading it
+        const response = await fetch(gravatar_url, {
+            method: 'HEAD',
+            // Add timeout to prevent hanging
+            signal: AbortSignal.timeout(5000) // 5 second timeout
+        });
+        // Gravatar returns 200 if user has an image, 404 if using default/mystery-person
+        return response.ok;
+    }
+    catch (error) {
+        // If fetch fails (network error, timeout, etc.), assume no Gravatar
+        return false;
+    }
+}
+/**
+ * Gets a random image from a random category in the library
+ * @returns string | null - Random library photo URL or null if no photos available
+ */
+function get_random_library_photo() {
+    const categories = get_library_categories();
+    if (categories.length === 0) {
+        return null;
+    }
+    // Pick a random category
+    const random_category = categories[Math.floor(Math.random() * categories.length)];
+    // Get photos from that category
+    const photos = get_library_photos(random_category);
+    if (photos.length === 0) {
+        return null;
+    }
+    // Pick a random photo from that category
+    const random_photo = photos[Math.floor(Math.random() * photos.length)];
+    return random_photo;
+}
+export async function get_default_profile_picture(user_email, user_name) {
     const config = get_profile_picture_config();
     if (!config.user_photo_default) {
         return null;
@@ -246,25 +289,25 @@ export function get_default_profile_picture(user_email, user_name) {
     const uiSizes = get_ui_sizes_config();
     // Try priority 1
     if (config.user_photo_default_priority1 === "gravatar") {
-        const gravatar_url = get_gravatar_url(user_email, uiSizes.gravatar_size);
-        // Note: We can't check if Gravatar actually exists without making a request
-        // For now, we'll always return Gravatar URL and let the browser handle 404
-        return {
-            profile_picture_url: gravatar_url,
-            profile_source: "gravatar",
-        };
+        // Check if Gravatar actually exists for this email
+        const gravatar_exists = await check_gravatar_exists(user_email);
+        if (gravatar_exists) {
+            const gravatar_url = get_gravatar_url(user_email, uiSizes.gravatar_size);
+            return {
+                profile_picture_url: gravatar_url,
+                profile_source: "gravatar",
+            };
+        }
+        // If Gravatar doesn't exist, fall through to priority 2
     }
     else if (config.user_photo_default_priority1 === "library") {
-        const categories = get_library_categories();
-        if (categories.length > 0) {
-            // Use first category, first photo as default
-            const photos = get_library_photos(categories[0]);
-            if (photos.length > 0) {
-                return {
-                    profile_picture_url: photos[0],
-                    profile_source: "library",
-                };
-            }
+        // Use random library photo instead of first photo
+        const random_photo = get_random_library_photo();
+        if (random_photo) {
+            return {
+                profile_picture_url: random_photo,
+                profile_source: "library",
+            };
         }
     }
     // Try priority 2 if priority 1 didn't work (only if priority2 is different from priority1)
@@ -272,22 +315,24 @@ export function get_default_profile_picture(user_email, user_name) {
     const priority2 = config.user_photo_default_priority2;
     if (priority2 && priority2 !== priority1) {
         if (priority2 === "gravatar") {
-            const gravatar_url = get_gravatar_url(user_email, uiSizes.gravatar_size);
-            return {
-                profile_picture_url: gravatar_url,
-                profile_source: "gravatar",
-            };
+            // Check if Gravatar actually exists for this email
+            const gravatar_exists = await check_gravatar_exists(user_email);
+            if (gravatar_exists) {
+                const gravatar_url = get_gravatar_url(user_email, uiSizes.gravatar_size);
+                return {
+                    profile_picture_url: gravatar_url,
+                    profile_source: "gravatar",
+                };
+            }
         }
         else if (priority2 === "library") {
-            const categories = get_library_categories();
-            if (categories.length > 0) {
-                const photos = get_library_photos(categories[0]);
-                if (photos.length > 0) {
-                    return {
-                        profile_picture_url: photos[0],
-                        profile_source: "library",
-                    };
-                }
+            // Use random library photo instead of first photo
+            const random_photo = get_random_library_photo();
+            if (random_photo) {
+                return {
+                    profile_picture_url: random_photo,
+                    profile_source: "library",
+                };
             }
         }
     }

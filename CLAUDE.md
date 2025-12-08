@@ -107,6 +107,12 @@ Core tables:
 - `hazo_user_roles` - User-role junction table
 - `hazo_role_permissions` - Role-permission junction table
 
+HRBAC tables (optional, for Hierarchical Role-Based Access Control):
+- `hazo_scopes_l1` through `hazo_scopes_l7` - Hierarchical scope levels
+- `hazo_user_scopes` - User-scope assignments
+- `hazo_scope_labels` - Custom labels for scope levels per organization
+- `hazo_enum_scope_types` - Enum for scope type validation
+
 **Migration Pattern:**
 ```bash
 npm run migrate migrations/003_add_url_on_logon_to_hazo_users.sql
@@ -114,12 +120,61 @@ npm run migrate migrations/003_add_url_on_logon_to_hazo_users.sql
 
 Migrations are executed via `scripts/apply_migration.ts` which supports both SQLite and PostgREST.
 
+### Hierarchical Role-Based Access Control (HRBAC)
+
+HRBAC extends the standard RBAC model with 7 hierarchical scope levels (L1-L7). Users assigned to a higher-level scope automatically inherit access to all descendant scopes.
+
+**Architecture:**
+- Scope tables use `parent_scope_id` to establish hierarchy (L2 references L1, L3 references L2, etc.)
+- User scope assignments in `hazo_user_scopes` table
+- Access checking uses ancestor traversal for inherited access
+- LRU cache for scope lookups (configurable TTL and size)
+
+**Configuration:**
+```ini
+[hazo_auth__scope_hierarchy]
+enable_hrbac = true
+default_org = my_org
+scope_cache_ttl_minutes = 15
+scope_cache_max_entries = 5000
+default_label_l1 = Company
+default_label_l2 = Division
+default_label_l3 = Department
+# ... through l7
+```
+
+**Using hazo_get_auth with scope options:**
+```typescript
+const result = await hazo_get_auth(request, {
+  required_permissions: ['view_reports'],
+  scope_type: 'hazo_scopes_l3',
+  scope_id: 'uuid-of-scope',  // or use scope_seq
+  scope_seq: 'L3_001',
+  strict: true,  // throws ScopeAccessError if denied
+});
+
+if (result.scope_ok) {
+  // Access granted via: result.scope_access_via
+}
+```
+
+**Permissions:**
+- `admin_scope_hierarchy_management` - Manage scopes and labels
+- `admin_user_scope_assignment` - Assign scopes to users
+- `admin_test_access` - Access the RBAC/HRBAC test tool
+
+**Services:**
+- `src/lib/services/scope_service.ts` - CRUD operations for scopes
+- `src/lib/services/scope_labels_service.ts` - Custom labels per organization
+- `src/lib/services/user_scope_service.ts` - User scope assignments and access checking
+- `src/lib/auth/scope_cache.ts` - LRU cache for scope lookups
+
 ### Component Architecture
 
 Components follow a layered structure:
 
 1. **Layouts** (`src/components/layouts/*`) - Full-featured page layouts with business logic
-   - Example: `LoginLayout`, `RegisterLayout`, `MySettingsLayout`
+   - Example: `LoginLayout`, `RegisterLayout`, `MySettingsLayout`, `RbacTestLayout`
    - Accept configuration props for customization
    - Use hooks for form state and API communication
 
@@ -236,6 +291,7 @@ src/
 │   │   ├── register/
 │   │   ├── my_settings/
 │   │   ├── user_management/
+│   │   ├── rbac_test/        # RBAC/HRBAC test tool
 │   │   └── shared/           # Shared components & hooks
 │   └── ui/                   # shadcn/ui primitives
 ├── lib/

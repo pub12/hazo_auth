@@ -91,7 +91,7 @@ export async function register_user(
     // Set default profile picture if enabled
     const profile_picture_config = get_profile_picture_config();
     if (profile_picture_config.user_photo_default) {
-      const default_photo = get_default_profile_picture(email, name);
+      const default_photo = await get_default_profile_picture(email, name);
       if (default_photo) {
         insert_data.profile_picture_url = default_photo.profile_picture_url;
         // Map UI source value to database enum value

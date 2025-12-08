@@ -55,13 +55,7 @@ export declare function get_library_source(): "project" | "node_modules" | null;
  * Clears the library path cache (useful for testing or after copying files)
  */
 export declare function clear_library_cache(): void;
-/**
- * Gets default profile picture based on configuration priority
- * @param user_email - User's email address
- * @param user_name - User's name (optional)
- * @returns Default profile picture URL and source, or null if no default available
- */
-export declare function get_default_profile_picture(user_email: string, user_name?: string): DefaultProfilePictureResult | null;
+export declare function get_default_profile_picture(user_email: string, user_name?: string): Promise<DefaultProfilePictureResult | null>;
 /**
  * Updates user profile picture in database
  * @param adapter - The hazo_connect adapter instance

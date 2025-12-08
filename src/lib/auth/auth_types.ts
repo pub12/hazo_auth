@@ -13,8 +13,18 @@ export type HazoAuthUser = {
 };
 
 /**
+ * Scope access information returned when HRBAC scope checking is used
+ */
+export type ScopeAccessInfo = {
+  scope_type: string;
+  scope_id: string;
+  scope_seq: string;
+};
+
+/**
  * Result type for hazo_get_auth function
  * Returns authenticated state with user data and permissions, or unauthenticated state
+ * Optionally includes scope access information when HRBAC is used
  */
 export type HazoAuthResult =
   | {
@@ -23,12 +33,16 @@ export type HazoAuthResult =
       permissions: string[];
       permission_ok: boolean;
       missing_permissions?: string[];
+      // HRBAC scope access fields (only present when scope options are provided)
+      scope_ok?: boolean;
+      scope_access_via?: ScopeAccessInfo;
     }
   | {
       authenticated: false;
       user: null;
       permissions: [];
       permission_ok: false;
+      scope_ok?: false;
     };
 
 /**
@@ -45,6 +59,22 @@ export type HazoAuthOptions = {
    * If false (default), returns permission_ok: false without throwing
    */
   strict?: boolean;
+  // HRBAC (Hierarchical Role-Based Access Control) options
+  /**
+   * The scope level to check access for (e.g., "hazo_scopes_l3")
+   * If provided along with scope_id or scope_seq, enables HRBAC checking
+   */
+  scope_type?: string;
+  /**
+   * The scope ID (UUID) to check access for
+   * Takes precedence over scope_seq if both provided
+   */
+  scope_id?: string;
+  /**
+   * The scope seq (friendly ID like "L3_001") to check access for
+   * Used if scope_id is not provided
+   */
+  scope_seq?: string;
 };
 
 /**
@@ -60,6 +90,21 @@ export class PermissionError extends Error {
   ) {
     super(`Missing permissions: ${missing_permissions.join(", ")}`);
     this.name = "PermissionError";
+  }
+}
+
+/**
+ * Custom error class for scope access denials in HRBAC
+ * Thrown when strict mode is enabled and user lacks access to required scope
+ */
+export class ScopeAccessError extends Error {
+  constructor(
+    public scope_type: string,
+    public scope_identifier: string,
+    public user_scopes: Array<{ scope_type: string; scope_id: string; scope_seq: string }>,
+  ) {
+    super(`Access denied to scope: ${scope_type} / ${scope_identifier}`);
+    this.name = "ScopeAccessError";
   }
 }
 

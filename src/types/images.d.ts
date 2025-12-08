@@ -28,3 +28,6 @@ declare module "*.svg" {
   const value: StaticImageData;
   export default value;
 }
+
+
+
