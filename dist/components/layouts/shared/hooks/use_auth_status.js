@@ -40,6 +40,10 @@ export function use_auth_status() {
                     email_verified: data.email_verified,
                     last_logon: data.last_logon,
                     profile_picture_url: data.profile_picture_url,
+                    // Populate aliases for profile_picture_url
+                    profile_image: data.profile_image,
+                    avatar_url: data.avatar_url,
+                    image: data.image,
                     profile_source: data.profile_source,
                     permissions: data.permissions || [],
                     permission_ok: (_a = data.permission_ok) !== null && _a !== void 0 ? _a : true,

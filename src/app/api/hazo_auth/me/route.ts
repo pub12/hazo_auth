@@ -25,6 +25,9 @@ import { get_filename, get_line_number } from "../../../../lib/utils/api_route_h
  *   email_verified: boolean,
  *   last_logon: string | undefined,
  *   profile_picture_url: string | null,
+ *   profile_image: string | null,      // alias for profile_picture_url
+ *   avatar_url: string | null,         // alias for profile_picture_url
+ *   image: string | null,              // alias for profile_picture_url
  *   profile_source: "upload" | "library" | "gravatar" | "custom" | undefined,
  *   user: { id, email_address, name, is_active, profile_picture_url },
  *   permissions: string[],
@@ -77,6 +80,7 @@ export async function GET(request: NextRequest) {
     const profile_source_ui = profile_source_db ? map_db_source_to_ui(profile_source_db) : undefined;
 
     // Return unified format with all fields
+    const profile_pic = auth_result.user.profile_picture_url;
     return NextResponse.json(
       {
         authenticated: true,
@@ -86,7 +90,11 @@ export async function GET(request: NextRequest) {
         name: auth_result.user.name,
         email_verified: user_db.email_verified === true,
         last_logon: (user_db.last_logon as string | null | undefined) || undefined,
-        profile_picture_url: auth_result.user.profile_picture_url,
+        profile_picture_url: profile_pic,
+        // Aliases for profile_picture_url (for consuming app compatibility)
+        profile_image: profile_pic,
+        avatar_url: profile_pic,
+        image: profile_pic,
         profile_source: profile_source_ui,
         // Permissions and user object (always included)
         user: auth_result.user,

@@ -15,6 +15,10 @@ export type AuthStatusData = {
   email_verified?: boolean;
   last_logon?: string;
   profile_picture_url?: string;
+  // Aliases for profile_picture_url (for consuming app compatibility)
+  profile_image?: string;
+  avatar_url?: string;
+  image?: string;
   profile_source?: "upload" | "library" | "gravatar" | "custom";
   permissions?: string[];
   permission_ok?: boolean;
@@ -67,6 +71,10 @@ export function use_auth_status(): AuthStatus {
           email_verified: data.email_verified,
           last_logon: data.last_logon,
           profile_picture_url: data.profile_picture_url,
+          // Populate aliases for profile_picture_url
+          profile_image: data.profile_image,
+          avatar_url: data.avatar_url,
+          image: data.image,
           profile_source: data.profile_source,
           permissions: data.permissions || [],
           permission_ok: data.permission_ok ?? true,

@@ -14,6 +14,9 @@ import { NextRequest, NextResponse } from "next/server";
  *   email_verified: boolean,
  *   last_logon: string | undefined,
  *   profile_picture_url: string | null,
+ *   profile_image: string | null,      // alias for profile_picture_url
+ *   avatar_url: string | null,         // alias for profile_picture_url
+ *   image: string | null,              // alias for profile_picture_url
  *   profile_source: "upload" | "library" | "gravatar" | "custom" | undefined,
  *   user: { id, email_address, name, is_active, profile_picture_url },
  *   permissions: string[],

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **ProfileStamp Component**: New drop-in component for user attribution in notes, comments, and activity feeds
+  - Displays circular profile picture with hover card showing user details
+  - Three size variants: sm (24px), default (32px), lg (40px)
+  - Customizable hover card with name, email, and custom fields
+  - Loading state and unauthenticated fallback handling
+  - Keyboard accessible with focus ring
+  - Exported from `hazo_auth/client` for client component use
+  - Test page at `/hazo_auth/profile_stamp_test` with interactive examples
+  - **Why this addition**: Many applications need user attribution UI for comments, notes, activity feeds, and team member displays. ProfileStamp provides a ready-to-use component that integrates with hazo_auth's authentication system.
+
+- **Profile Picture Aliases in /api/hazo_auth/me**: Enhanced API response for consuming app compatibility
+  - Added `profile_image`, `avatar_url`, and `image` as aliases for `profile_picture_url`
+  - Allows consuming applications to use their preferred field name
+  - All aliases point to the same URL value
+  - **Why this change**: Different applications use different naming conventions for profile pictures. Providing aliases improves interoperability without requiring consumers to modify their existing code.
+
+- **HoverCard UI Component**: Added shadcn/ui hover card component using @radix-ui/react-hover-card
+  - Provides accessible hover card UI primitive
+  - Used by ProfileStamp component
+
 ### Changed
 - **Roles Matrix UI Redesign**: Replaced horizontal data table matrix with tag-based UI for improved UX
   - Each role now displays permissions as inline tags/chips (max 4 visible, "+N more" for rest)

@@ -17,7 +17,7 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "../../../ui/sidebar";
-import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, User, ShieldCheck } from "lucide-react";
+import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, User, ShieldCheck, CircleUserRound } from "lucide-react";
 import { use_auth_status } from "../hooks/use_auth_status";
 import { ProfilePicMenu } from "./profile_pic_menu";
 
@@ -140,6 +140,18 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                     >
                       <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                       <span>RBAC/HRBAC Test</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem className="cls_sidebar_layout_profile_stamp_test_item">
+                  <SidebarMenuButton asChild>
+                    <Link
+                      href="/hazo_auth/profile_stamp_test"
+                      className="cls_sidebar_layout_profile_stamp_test_link flex items-center gap-2"
+                      aria-label="Test ProfileStamp component"
+                    >
+                      <CircleUserRound className="h-4 w-4" aria-hidden="true" />
+                      <span>ProfileStamp Test</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

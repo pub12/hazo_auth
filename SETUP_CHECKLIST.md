@@ -954,6 +954,7 @@ Visit each page and verify it loads:
 - [ ] `http://localhost:3000/hazo_auth/register` - Registration form displays
 - [ ] `http://localhost:3000/hazo_auth/forgot_password` - Forgot password form displays
 - [ ] `http://localhost:3000/hazo_auth/my_settings` - Settings page displays (after login)
+- [ ] `http://localhost:3000/hazo_auth/profile_stamp_test` - ProfileStamp component examples display
 
 ---
 

@@ -49,7 +49,7 @@ import { hazo_get_auth } from "hazo_auth";
 import { LoginLayout } from "hazo_auth/components/layouts/login";
 
 // Client-side (Client Components)
-import { ProfilePicMenu, use_auth_status } from "hazo_auth/client";
+import { ProfilePicMenu, ProfileStamp, use_auth_status } from "hazo_auth/client";
 
 // Page components (zero-config)
 import { LoginPage } from "hazo_auth/pages/login";
@@ -79,6 +79,7 @@ export { POST } from "hazo_auth/server/routes";
    - Component uses `use_hazo_auth()` hook
    - Hook fetches from `/api/hazo_auth/me` (standardized endpoint)
    - Returns authentication status and permissions
+   - Response includes profile picture aliases: `profile_image`, `avatar_url`, `image` (for consuming app compatibility)
 
 4. **Edge Runtime (Middleware/Proxy):**
    - Use `validate_session_cookie(request)` - validates JWT without database
@@ -184,7 +185,7 @@ Components follow a layered structure:
    - Wrap layouts with sensible defaults
 
 3. **Shared Components** (`src/components/layouts/shared/*`) - Reusable UI elements
-   - Example: `ProfilePicMenu`, `FormActionButtons`, `PasswordField`
+   - Example: `ProfilePicMenu`, `ProfileStamp`, `FormActionButtons`, `PasswordField`
    - Exported via barrel file for clean imports
 
 4. **UI Primitives** (`src/components/ui/*`) - shadcn/ui components
@@ -219,8 +220,9 @@ Components follow a layered structure:
 1. Start dev server: `npm run dev`
 2. Visit demo pages at `/hazo_auth/login`, `/hazo_auth/register`, etc.
 3. Use SQLite admin UI (if enabled): `/hazo_connect/sqlite_admin`
-4. Test with Storybook: `npm run storybook`
-5. Run unit tests: `npm test`
+4. Test ProfileStamp component: `/hazo_auth/profile_stamp_test`
+5. Test with Storybook: `npm run storybook`
+6. Run unit tests: `npm test`
 
 ### Working with hazo_connect
 
@@ -322,11 +324,59 @@ Optional:
 - `POSTGREST_API_KEY` - PostgREST API key
 - `APP_DOMAIN_NAME` - Base URL for email links (fallback to NEXT_PUBLIC_APP_URL)
 
+## Client-Safe Components
+
+The following components are exported from `hazo_auth/client` for use in client components:
+
+- `ProfilePicMenu` - Profile picture menu with dropdown or sidebar variants
+- `ProfileStamp` - Circular profile picture with hover card showing user details
+- `use_auth_status` - Hook for basic authentication status
+- `use_hazo_auth` - Hook for authentication with permissions
+- `cn` - Class name utility function
+
+### ProfileStamp Component
+
+A drop-in component that displays a circular profile picture with a hover card showing user details. Perfect for adding profile attribution to notes, comments, or any user-generated content.
+
+**Props:**
+```typescript
+type ProfileStampProps = {
+  size?: "sm" | "default" | "lg";  // Avatar sizes: sm (24px), default (32px), lg (40px)
+  custom_fields?: ProfileStampCustomField[];  // Custom fields to show in hover card
+  className?: string;  // Additional CSS classes
+  show_name?: boolean;  // Show user name in hover card (default: true)
+  show_email?: boolean;  // Show email in hover card (default: true)
+};
+```
+
+**Usage Example:**
+```typescript
+import { ProfileStamp } from "hazo_auth/client";
+
+// Basic usage
+<ProfileStamp />
+
+// With custom fields for notes
+<ProfileStamp
+  size="lg"
+  custom_fields={[
+    { label: "Role", value: "Admin" },
+    { label: "Department", value: "Engineering" }
+  ]}
+/>
+
+// No hover card (show_name and show_email both false, no custom fields)
+<ProfileStamp show_name={false} show_email={false} />
+```
+
+**Test Page:** Visit `/hazo_auth/profile_stamp_test` to see examples of ProfileStamp with various configurations.
+
 ## Common Issues
 
 ### "Module not found: Can't resolve 'fs'"
 - Client component importing from `hazo_auth` instead of `hazo_auth/client`
 - Use `hazo_auth/client` for all client components
+- ProfileStamp is exported from `hazo_auth/client`
 
 ### "Cannot read config file"
 - Config files must be in project root (where `process.cwd()` points)

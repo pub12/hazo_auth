@@ -10,6 +10,8 @@ export { LogoutButton } from "./components/logout_button";
 export { PasswordField } from "./components/password_field";
 // ProfilePicMenuWrapper - NOT exported (server component - imports .server files)
 export { ProfilePicMenu } from "./components/profile_pic_menu";
+export { ProfileStamp } from "./components/profile_stamp";
+export type { ProfileStampProps, ProfileStampCustomField } from "./components/profile_stamp";
 // SidebarLayoutWrapper - NOT exported (test workspace component only)
 export { StandaloneLayoutWrapper } from "./components/standalone_layout_wrapper";
 export { TwoColumnAuthLayout } from "./components/two_column_auth_layout";

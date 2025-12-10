@@ -6,6 +6,9 @@ export type AuthStatusData = {
     email_verified?: boolean;
     last_logon?: string;
     profile_picture_url?: string;
+    profile_image?: string;
+    avatar_url?: string;
+    image?: string;
     profile_source?: "upload" | "library" | "gravatar" | "custom";
     permissions?: string[];
     permission_ok?: boolean;

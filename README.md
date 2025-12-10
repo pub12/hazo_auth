@@ -198,11 +198,12 @@ import { MySettingsLayout } from "hazo_auth/components/layouts/my_settings";
 import { UserManagementLayout } from "hazo_auth/components/layouts/user_management";
 
 // Import shared components and hooks from barrel export
-import { 
-  ProfilePicMenu, 
+import {
+  ProfilePicMenu,
   ProfilePicMenuWrapper,
-  use_hazo_auth, 
-  use_auth_status 
+  ProfileStamp,
+  use_hazo_auth,
+  use_auth_status
 } from "hazo_auth/components/layouts/shared";
 
 // Import server-side utilities
@@ -258,11 +259,12 @@ For client components (browser-safe, no Node.js dependencies):
 
 ```typescript
 // Use hazo_auth/client for client components
-import { 
-  ProfilePicMenu, 
-  use_auth_status, 
+import {
+  ProfilePicMenu,
+  ProfileStamp,
+  use_auth_status,
   use_hazo_auth,
-  cn 
+  cn
 } from "hazo_auth/client";
 ```
 
@@ -863,6 +865,10 @@ This is the **standardized endpoint** that ensures consistent response format ac
   last_logon: string | undefined,
   profile_picture_url: string | null,
   profile_source: "upload" | "library" | "gravatar" | "custom" | undefined,
+  // Profile picture aliases (for consuming app compatibility)
+  profile_image?: string,  // Alias for profile_picture_url
+  avatar_url?: string,     // Alias for profile_picture_url
+  image?: string,          // Alias for profile_picture_url
   // Permissions (always included)
   user: {
     id: string,
@@ -1372,6 +1378,74 @@ The test tool uses the `/api/hazo_auth/rbac_test` endpoint which is included in 
 - Requires `admin_test_access` permission to call
 
 **Demo Page:** A test page is available at `/hazo_auth/rbac_test` in the demo app.
+
+---
+
+## ProfileStamp Component
+
+The `ProfileStamp` component is a drop-in widget that displays a circular profile picture with a hover card showing user details. Perfect for adding profile attribution to notes, comments, or any user-generated content.
+
+### Features
+
+- Displays user's profile picture or initials
+- Hover card with user name, email, and custom fields
+- Three sizes: sm (24px), default (32px), lg (40px)
+- Automatic loading state and unauthenticated fallback
+- Fully accessible with keyboard navigation
+
+### Usage
+
+```typescript
+import { ProfileStamp } from "hazo_auth/client";
+
+// Basic usage
+<ProfileStamp />
+
+// With custom size and fields
+<ProfileStamp
+  size="lg"
+  custom_fields={[
+    { label: "Role", value: "Admin" },
+    { label: "Department", value: "Engineering" }
+  ]}
+/>
+
+// Hide default fields, only show custom fields
+<ProfileStamp
+  show_name={false}
+  show_email={false}
+  custom_fields={[
+    { label: "Posted", value: "2 hours ago" }
+  ]}
+/>
+```
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `size` | `"sm" \| "default" \| "lg"` | `"default"` | Avatar size (sm: 24px, default: 32px, lg: 40px) |
+| `custom_fields` | `ProfileStampCustomField[]` | `[]` | Custom fields to display in hover card |
+| `className` | `string` | `undefined` | Additional CSS classes |
+| `show_name` | `boolean` | `true` | Show user name in hover card |
+| `show_email` | `boolean` | `true` | Show email in hover card |
+
+### ProfileStampCustomField Type
+
+```typescript
+type ProfileStampCustomField = {
+  label: string;  // Field label (e.g., "Role", "Department")
+  value: string;  // Field value (e.g., "Admin", "Engineering")
+};
+```
+
+### Test Page
+
+Visit `/hazo_auth/profile_stamp_test` in your dev environment to see examples of ProfileStamp with various configurations:
+- Size variants
+- Custom fields
+- Display options (showing/hiding name and email)
+- Usage scenarios (notes, comments, activity feeds)
 
 ---
 

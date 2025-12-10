@@ -544,6 +544,12 @@ Located in `src/components/layouts/shared/components/`:
   - `variant="dropdown"` (default): Renders as clickable avatar with dropdown menu (for navbar/header)
   - `variant="sidebar"`: Shows profile picture and name in sidebar, clicking opens dropdown menu (for sidebar navigation)
 - `ProfilePicMenuWrapper` - Server wrapper with config loading (supports both variants)
+- `ProfileStamp` - Circular profile picture with hover card showing user details
+  - Sizes: sm (24px), default (32px), lg (40px)
+  - Displays user name, email, and optional custom fields in hover card
+  - Perfect for user attribution in notes, comments, activity feeds
+  - Accessible with keyboard navigation
+  - Exported from `hazo_auth/client` for client component use
 - `AlreadyLoggedInGuard` - Guard for logged-in users
 - `UnauthorizedGuard` - Guard for unauthorized users
 
@@ -657,6 +663,100 @@ import { ProfilePicMenuWrapper } from "hazo_auth/components/layouts/shared";
   avatar_size="sm"
 />
 ```
+
+---
+
+## ProfileStamp Component
+
+The `ProfileStamp` component displays a circular profile picture with a hover card showing user details. It's a drop-in widget perfect for user attribution in notes, comments, activity feeds, or any user-generated content.
+
+### Features
+
+- Displays user's profile picture or initials
+- Hover card with name, email, and custom fields
+- Three sizes: sm (24px), default (32px), lg (40px)
+- Loading state with animated skeleton
+- Unauthenticated fallback display
+- Keyboard accessible (focus ring on trigger)
+- Exported from `hazo_auth/client` for client component use
+
+### Props
+
+```typescript
+type ProfileStampProps = {
+  size?: "sm" | "default" | "lg";              // Avatar size variant
+  custom_fields?: ProfileStampCustomField[];   // Custom fields to display
+  className?: string;                           // Additional CSS classes
+  show_name?: boolean;                          // Show name in hover card (default: true)
+  show_email?: boolean;                         // Show email in hover card (default: true)
+};
+
+type ProfileStampCustomField = {
+  label: string;  // Field label (e.g., "Role", "Posted")
+  value: string;  // Field value (e.g., "Admin", "2 hours ago")
+};
+```
+
+### Usage Examples
+
+**Basic usage:**
+```typescript
+import { ProfileStamp } from "hazo_auth/client";
+
+// Minimal - shows avatar with name and email in hover card
+<ProfileStamp />
+```
+
+**With custom fields:**
+```typescript
+// For notes or comments
+<ProfileStamp
+  size="sm"
+  custom_fields={[
+    { label: "Role", value: "Admin" },
+    { label: "Posted", value: "2 hours ago" }
+  ]}
+/>
+```
+
+**Custom display options:**
+```typescript
+// Hide name/email, only show custom fields
+<ProfileStamp
+  show_name={false}
+  show_email={false}
+  custom_fields={[
+    { label: "Department", value: "Engineering" }
+  ]}
+/>
+```
+
+### Component Behavior
+
+1. **Loading State**: Shows animated skeleton when auth status is loading
+2. **Unauthenticated**: Shows "?" avatar without hover card
+3. **No Hover Content**: If `show_name` and `show_email` are both false and no custom fields, displays avatar without hover card
+4. **Authenticated with Content**: Shows avatar with hover card containing:
+   - User name (if `show_name` is true)
+   - User email (if `show_email` is true)
+   - Custom fields (if provided)
+
+### Test Page
+
+Visit `/hazo_auth/profile_stamp_test` to see interactive examples:
+- Size variants (sm, default, lg)
+- Custom fields with various use cases
+- Display options (showing/hiding name and email)
+- Usage scenarios (notes, comments, activity feeds, team members)
+
+### Implementation Details
+
+- Uses `use_auth_status()` hook to fetch user data
+- Built with shadcn/ui `Avatar` and `HoverCard` components
+- Hover card uses @radix-ui/react-hover-card for accessibility
+- Initials generation: Takes first letter of first and last name, or first letter of email
+- CSS classes prefixed with `cls_profile_stamp_*` for styling customization
+- Focus ring on hover trigger for keyboard accessibility
 
 ---
 
@@ -894,6 +994,10 @@ The `/api/hazo_auth/me` endpoint is the **standardized endpoint** that ensures c
   last_logon: string | undefined,
   profile_picture_url: string | null,
   profile_source: "upload" | "library" | "gravatar" | "custom" | undefined,
+  // Profile picture aliases (for consuming app compatibility)
+  profile_image?: string,  // Alias for profile_picture_url
+  avatar_url?: string,     // Alias for profile_picture_url
+  image?: string,          // Alias for profile_picture_url
   // Permissions (always included)
   user: {
     id: string,
