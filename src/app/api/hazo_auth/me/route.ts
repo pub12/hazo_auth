@@ -79,6 +79,14 @@ export async function GET(request: NextRequest) {
     const profile_source_db = user_db.profile_source as string | null | undefined;
     const profile_source_ui = profile_source_db ? map_db_source_to_ui(profile_source_db) : undefined;
 
+    // Parse auth_providers (comma-separated string to array)
+    const auth_providers_str = (user_db.auth_providers as string) || "email";
+    const auth_providers = auth_providers_str.split(",").map((p: string) => p.trim());
+
+    // Check if user has a password set
+    const password_hash = user_db.password_hash as string;
+    const has_password = password_hash !== null && password_hash !== undefined && password_hash !== "";
+
     // Return unified format with all fields
     const profile_pic = auth_result.user.profile_picture_url;
     return NextResponse.json(
@@ -96,6 +104,10 @@ export async function GET(request: NextRequest) {
         avatar_url: profile_pic,
         image: profile_pic,
         profile_source: profile_source_ui,
+        // OAuth-related fields
+        auth_providers,
+        has_password,
+        google_connected: auth_providers.includes("google"),
         // Permissions and user object (always included)
         user: auth_result.user,
         permissions: auth_result.permissions,

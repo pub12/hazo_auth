@@ -79,6 +79,12 @@ export default function LoginPage({
       forgotPasswordLabel={config.forgotPasswordLabel}
       createAccountPath={config.createAccountPath}
       createAccountLabel={config.createAccountLabel}
+      oauth={{
+        enable_google: config.oauth.enable_google,
+        enable_email_password: config.oauth.enable_email_password,
+        google_button_text: config.oauth.google_button_text,
+        oauth_divider_text: config.oauth.oauth_divider_text,
+      }}
     />
   );
 }

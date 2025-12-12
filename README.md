@@ -24,6 +24,7 @@ A reusable authentication UI component package powered by Next.js, TailwindCSS, 
 - [Quick Start](#quick-start)
 - [Configuration Setup](#configuration-setup)
 - [Database Setup](#database-setup)
+- [Google OAuth Setup](#google-oauth-setup)
 - [Using Components](#using-components)
 - [Authentication Service](#authentication-service)
 - [Proxy/Middleware Authentication](#proxymiddleware-authentication)
@@ -366,6 +367,19 @@ cp node_modules/hazo_auth/hazo_notify_config.example.ini ./hazo_notify_config.in
 
 **Note:** `JWT_SECRET` is required for JWT session token functionality (used for Edge-compatible proxy/middleware authentication). Generate a secure random string at least 32 characters long.
 
+**For Google OAuth (optional):**
+```env
+# NextAuth.js configuration (required for OAuth)
+NEXTAUTH_SECRET=your_secure_random_string_at_least_32_characters
+NEXTAUTH_URL=http://localhost:3000  # Change to production URL in production
+
+# Google OAuth credentials (from Google Cloud Console)
+HAZO_AUTH_GOOGLE_CLIENT_ID=your_google_client_id
+HAZO_AUTH_GOOGLE_CLIENT_SECRET=your_google_client_secret
+```
+
+See [Google OAuth Setup](#google-oauth-setup) for detailed instructions.
+
 **Important:** The configuration files must be located in your project root directory (where `process.cwd()` points to), not inside `node_modules`. The package reads configuration from `process.cwd()` at runtime, so storing them elsewhere (including `node_modules/hazo_auth`) will break runtime access.
 
 ---
@@ -669,6 +683,222 @@ npx tsx scripts/apply_migration.ts migrations/003_add_url_on_logon_to_hazo_users
 # Or apply all pending migrations
 npx tsx scripts/apply_migration.ts
 ```
+
+---
+
+## Google OAuth Setup
+
+hazo_auth supports Google Sign-In via NextAuth.js v4, allowing users to authenticate with their Google accounts.
+
+### Features
+
+- **Dual authentication**: Users can have BOTH Google OAuth and email/password login
+- **Auto-linking**: Automatically links Google login to existing unverified email/password accounts
+- **Graceful degradation**: Login page adapts based on enabled authentication methods
+- **Set password feature**: Google-only users can add a password later via My Settings
+- **Profile data**: Full name and profile picture automatically populated from Google
+
+### Step 1: Get Google OAuth Credentials
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a project or select an existing project
+3. Enable Google+ API (or Google Identity Services)
+4. Navigate to **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
+5. Configure OAuth consent screen if prompted
+6. Set **Application type** to "Web application"
+7. Add **Authorized JavaScript origins**:
+   - Development: `http://localhost:3000`
+   - Production: `https://yourdomain.com`
+8. Add **Authorized redirect URIs**:
+   - Development: `http://localhost:3000/api/auth/callback/google`
+   - Production: `https://yourdomain.com/api/auth/callback/google`
+9. Copy the **Client ID** and **Client Secret**
+
+### Step 2: Add Environment Variables
+
+Add to your `.env.local`:
+
+```env
+# NextAuth.js configuration (REQUIRED for OAuth)
+NEXTAUTH_SECRET=your_secure_random_string_at_least_32_characters
+NEXTAUTH_URL=http://localhost:3000  # Change to production URL in production
+
+# Google OAuth credentials (from Google Cloud Console)
+HAZO_AUTH_GOOGLE_CLIENT_ID=your_google_client_id_from_step_1
+HAZO_AUTH_GOOGLE_CLIENT_SECRET=your_google_client_secret_from_step_1
+```
+
+**Generate NEXTAUTH_SECRET:**
+```bash
+openssl rand -base64 32
+```
+
+### Step 3: Run Database Migration
+
+Add OAuth fields to the `hazo_users` table:
+
+```bash
+npm run migrate migrations/005_add_oauth_fields_to_hazo_users.sql
+```
+
+This migration adds:
+- `google_id` - Google's unique user ID (TEXT, UNIQUE)
+- `auth_providers` - Tracks authentication methods: 'email', 'google', or 'email,google'
+- Index on `google_id` for fast OAuth lookups
+
+**Manual migration (if needed):**
+
+**PostgreSQL:**
+```sql
+ALTER TABLE hazo_users
+ADD COLUMN google_id TEXT UNIQUE;
+
+ALTER TABLE hazo_users
+ADD COLUMN auth_providers TEXT DEFAULT 'email';
+
+CREATE INDEX IF NOT EXISTS idx_hazo_users_google_id ON hazo_users(google_id);
+```
+
+**SQLite:**
+```sql
+ALTER TABLE hazo_users
+ADD COLUMN google_id TEXT;
+
+ALTER TABLE hazo_users
+ADD COLUMN auth_providers TEXT DEFAULT 'email';
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_hazo_users_google_id_unique ON hazo_users(google_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_users_google_id ON hazo_users(google_id);
+```
+
+### Step 4: Configure OAuth in hazo_auth_config.ini
+
+```ini
+[hazo_auth__oauth]
+# Enable Google OAuth login (default: true)
+enable_google = true
+
+# Enable traditional email/password login (default: true)
+enable_email_password = true
+
+# Auto-link Google login to existing unverified email/password accounts (default: true)
+auto_link_unverified_accounts = true
+
+# Customize button text (optional)
+google_button_text = Continue with Google
+oauth_divider_text = or
+```
+
+### Step 5: Create NextAuth API Routes
+
+Create `app/api/auth/[...nextauth]/route.ts`:
+
+```typescript
+export { GET, POST } from "hazo_auth/server/routes/nextauth";
+```
+
+Create `app/api/hazo_auth/oauth/google/callback/route.ts`:
+
+```typescript
+export { GET } from "hazo_auth/server/routes/oauth_google_callback";
+```
+
+Create `app/api/hazo_auth/set_password/route.ts`:
+
+```typescript
+export { POST } from "hazo_auth/server/routes/set_password";
+```
+
+**Or use the CLI generator:**
+```bash
+npx hazo_auth generate-routes --oauth
+```
+
+### Step 6: Test Google OAuth
+
+1. Start your dev server: `npm run dev`
+2. Visit `http://localhost:3000/hazo_auth/login`
+3. You should see the "Sign in with Google" button
+4. Click it and authenticate with your Google account
+5. You'll be redirected back and logged in
+
+### User Flows
+
+**New User - Google Sign-In:**
+- User clicks "Sign in with Google"
+- Authenticates with Google
+- Account created with Google profile data (email, name, profile picture)
+- Email is automatically verified
+- User can log in with Google anytime
+
+**Existing Unverified User - Google Sign-In:**
+- User has email/password account but hasn't verified email
+- Clicks "Sign in with Google" with same email
+- System auto-links Google account (if `auto_link_unverified_accounts = true`)
+- Email becomes verified
+- User can now log in with EITHER Google OR email/password
+
+**Google-Only User Adds Password:**
+- Google-only user visits My Settings
+- "Set Password" section appears
+- User sets a password
+- User can now log in with EITHER method
+
+**Google-Only User Tries Forgot Password:**
+- User registered with Google tries "Forgot Password"
+- System shows: "You registered with Google. Please sign in with Google instead."
+
+### Configuration Options
+
+**Disable email/password login (Google-only):**
+```ini
+[hazo_auth__oauth]
+enable_google = true
+enable_email_password = false
+```
+
+**Disable Google OAuth (email/password only):**
+```ini
+[hazo_auth__oauth]
+enable_google = false
+enable_email_password = true
+```
+
+### API Response Changes
+
+The `/api/hazo_auth/me` endpoint now includes OAuth status:
+
+```typescript
+{
+  authenticated: true,
+  // ... existing fields
+  auth_providers: "email,google",  // NEW: Tracks authentication methods
+  has_password: true,              // NEW: Whether user has password set
+  google_connected: true,          // NEW: Whether Google account is linked
+}
+```
+
+### Dependencies
+
+Google OAuth adds one new dependency:
+- `next-auth@^4.24.11` - NextAuth.js for OAuth handling (automatically installed with hazo_auth)
+
+### Troubleshooting
+
+**"Sign in with Google" button not showing:**
+- Verify `enable_google = true` in `[hazo_auth__oauth]` section
+- Check `HAZO_AUTH_GOOGLE_CLIENT_ID` and `HAZO_AUTH_GOOGLE_CLIENT_SECRET` are set
+- Check `NEXTAUTH_URL` matches your current URL
+
+**OAuth callback error:**
+- Verify redirect URI in Google Cloud Console matches exactly: `http://localhost:3000/api/auth/callback/google`
+- Check `NEXTAUTH_SECRET` is set and at least 32 characters
+- Verify API routes are created: `/api/auth/[...nextauth]/route.ts` and `/api/hazo_auth/oauth/google/callback/route.ts`
+
+**User created but not logged in:**
+- Check browser console for errors
+- Verify `/api/hazo_auth/oauth/google/callback` route exists
+- Check server logs for errors during session creation
 
 ---
 

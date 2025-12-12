@@ -16,6 +16,12 @@ export type ForgotPasswordLayoutProps<TClient = unknown> = {
     showReturnHomeButton?: boolean;
     returnHomeButtonLabel?: string;
     returnHomePath?: string;
+    /** Message shown when user's account is Google-only (no password set) */
+    googleOnlyAccountHeading?: string;
+    googleOnlyAccountMessage?: string;
+    googleOnlyAccountHelpText?: string;
+    mySettingsPath?: string;
+    mySettingsLabel?: string;
 };
-export default function forgot_password_layout<TClient>({ image_src, image_alt, image_background_color, field_overrides, labels, button_colors, data_client, sign_in_path, sign_in_label, alreadyLoggedInMessage, showLogoutButton, showReturnHomeButton, returnHomeButtonLabel, returnHomePath, }: ForgotPasswordLayoutProps<TClient>): import("react/jsx-runtime").JSX.Element;
+export default function forgot_password_layout<TClient>({ image_src, image_alt, image_background_color, field_overrides, labels, button_colors, data_client, sign_in_path, sign_in_label, alreadyLoggedInMessage, showLogoutButton, showReturnHomeButton, returnHomeButtonLabel, returnHomePath, googleOnlyAccountHeading, googleOnlyAccountMessage, googleOnlyAccountHelpText, mySettingsPath, mySettingsLabel, }: ForgotPasswordLayoutProps<TClient>): import("react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=index.d.ts.map

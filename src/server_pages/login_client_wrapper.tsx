@@ -9,14 +9,17 @@ import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup";
 import { create_app_logger } from "../lib/app_logger";
 import type { LayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
 import type { LoginConfig } from "../lib/login_config.server";
+import type { OAuthLayoutConfig } from "../components/layouts/login";
 
 // section: types
 import type { StaticImageData } from "next/image";
 
-export type LoginClientWrapperProps = Omit<LoginConfig, 'imageSrc' | 'imageAlt' | 'imageBackgroundColor'> & {
+export type LoginClientWrapperProps = Omit<LoginConfig, 'imageSrc' | 'imageAlt' | 'imageBackgroundColor' | 'oauth'> & {
   image_src: string | StaticImageData;
   image_alt: string;
   image_background_color: string;
+  /** OAuth configuration */
+  oauth?: OAuthLayoutConfig;
 };
 
 // section: component
@@ -39,6 +42,7 @@ export function LoginClientWrapper({
   forgotPasswordLabel,
   createAccountPath,
   createAccountLabel,
+  oauth,
 }: LoginClientWrapperProps) {
   const [dataClient, setDataClient] = useState<LayoutDataClient<unknown> | null>(null);
 
@@ -79,6 +83,7 @@ export function LoginClientWrapper({
       forgot_password_label={forgotPasswordLabel}
       create_account_path={createAccountPath}
       create_account_label={createAccountLabel}
+      oauth={oauth}
     />
   );
 }

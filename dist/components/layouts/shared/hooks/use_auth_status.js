@@ -48,6 +48,10 @@ export function use_auth_status() {
                     permissions: data.permissions || [],
                     permission_ok: (_a = data.permission_ok) !== null && _a !== void 0 ? _a : true,
                     missing_permissions: data.missing_permissions,
+                    // OAuth-related fields
+                    auth_providers: data.auth_providers,
+                    has_password: data.has_password,
+                    google_connected: data.google_connected,
                     loading: false,
                 });
             }

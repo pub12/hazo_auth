@@ -23,6 +23,10 @@ export type AuthStatusData = {
   permissions?: string[];
   permission_ok?: boolean;
   missing_permissions?: string[];
+  // OAuth-related fields
+  auth_providers?: string;
+  has_password?: boolean;
+  google_connected?: boolean;
   loading: boolean;
 };
 
@@ -79,6 +83,10 @@ export function use_auth_status(): AuthStatus {
           permissions: data.permissions || [],
           permission_ok: data.permission_ok ?? true,
           missing_permissions: data.missing_permissions,
+          // OAuth-related fields
+          auth_providers: data.auth_providers,
+          has_password: data.has_password,
+          google_connected: data.google_connected,
           loading: false,
         });
       } else {

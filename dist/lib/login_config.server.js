@@ -2,6 +2,7 @@
 // section: imports
 import { get_config_value } from "./config/config_loader.server";
 import { get_already_logged_in_config } from "./already_logged_in_config.server";
+import { get_oauth_config } from "./oauth_config.server";
 import loginDefaultImage from "../assets/images/login_default.jpg";
 // section: helpers
 /**
@@ -28,6 +29,8 @@ export function get_login_config() {
     ) || loginDefaultImage;
     const imageAlt = get_config_value(section, "image_alt", "Secure login illustration");
     const imageBackgroundColor = get_config_value(section, "image_background_color", "#f1f5f9");
+    // Get OAuth configuration
+    const oauth = get_oauth_config();
     return {
         redirectRoute,
         successMessage,
@@ -43,5 +46,6 @@ export function get_login_config() {
         imageSrc,
         imageAlt,
         imageBackgroundColor,
+        oauth,
     };
 }

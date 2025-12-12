@@ -7,6 +7,127 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Google OAuth Sign-In
+
+**Major Feature**: Complete Google OAuth authentication integration via NextAuth.js v4.
+
+**Why this addition**: Many users prefer signing in with their existing Google accounts rather than creating new passwords. OAuth provides better security (no password to remember/leak) and faster onboarding. The implementation supports flexible authentication strategies - users can have Google-only, password-only, or both authentication methods.
+
+**Core Features**:
+- **Google Sign-In Button**: One-click authentication with Google accounts
+- **Dual Authentication**: Users can link BOTH Google and email/password to the same account
+- **Auto-Linking**: Automatically links Google login to existing unverified email/password accounts (configurable)
+- **Profile Data Import**: Full name and profile picture automatically populated from Google profile
+- **Email Verification**: Emails are auto-verified when signing in with Google
+- **Set Password Feature**: Google-only users can add a password later via My Settings
+- **Graceful Degradation**: Login page adapts based on enabled authentication methods (Google-only, email-only, or both)
+
+**New Configuration** (`hazo_auth_config.ini`):
+```ini
+[hazo_auth__oauth]
+enable_google = true                      # Enable Google OAuth (default: true)
+enable_email_password = true              # Enable email/password login (default: true)
+auto_link_unverified_accounts = true      # Auto-link to unverified accounts (default: true)
+google_button_text = Continue with Google # Customize button text
+oauth_divider_text = or                   # Divider text between OAuth and email/password
+```
+
+**New Environment Variables**:
+- `NEXTAUTH_SECRET` - NextAuth.js session encryption key (required for OAuth)
+- `NEXTAUTH_URL` - Base URL for OAuth callbacks
+- `HAZO_AUTH_GOOGLE_CLIENT_ID` - Google OAuth client ID
+- `HAZO_AUTH_GOOGLE_CLIENT_SECRET` - Google OAuth client secret
+
+**Database Changes** (Migration `005_add_oauth_fields_to_hazo_users.sql`):
+- Added `google_id` column - Google's unique user ID (TEXT, UNIQUE, indexed)
+- Added `auth_providers` column - Tracks authentication methods: 'email', 'google', or 'email,google'
+- Default value 'email' for existing users
+
+**New Components**:
+- `GoogleIcon` - Google logo SVG component
+- `GoogleSignInButton` - Styled "Sign in with Google" button
+- `OAuthDivider` - Divider with "or" text between OAuth and email/password sections
+- `ConnectedAccountsSection` (My Settings) - Shows linked OAuth providers (Google, future providers)
+- `SetPasswordSection` (My Settings) - Allows Google-only users to set a password
+
+**Modified Components**:
+- `LoginLayout` - Added Google Sign-In button and OAuth divider (conditionally rendered)
+- `MySettingsLayout` - Added "Connected Accounts" and "Set Password" sections
+- `ForgotPasswordLayout` - Special handling for Google-only users (shows "sign in with Google" message)
+
+**New Services** (`src/lib/services/oauth_service.ts`):
+- `handle_google_oauth_login(adapter, google_user, auto_link)` - Process Google OAuth login
+  - Creates new user with Google profile data
+  - Links to existing unverified email/password account (if enabled)
+  - Returns user object with authentication info
+- `link_google_account(adapter, user_id, google_id, google_profile)` - Link Google to existing account
+- `set_user_password(adapter, user_id, password)` - Set password for Google-only users
+- `get_user_oauth_status(adapter, user_id)` - Get user's OAuth connection status
+
+**Modified Services**:
+- `login_service.ts` - Handle login for users without passwords (Google-only users)
+  - Check `password_hash IS NULL OR password_hash = ''` for Google-only accounts
+  - Return appropriate error message
+- `registration_service.ts` - Set `auth_providers='email'` for email/password registrations
+- `password_reset_service.ts` - Check if user has password before allowing reset
+  - Return `no_password_set: true` for Google-only users
+
+**New Configuration Helpers** (`src/lib/oauth_config.server.ts`):
+- `get_oauth_config()` - Read OAuth configuration from INI file
+- `is_google_oauth_enabled()` - Quick check if Google OAuth is enabled
+- `is_email_password_enabled()` - Quick check if email/password login is enabled
+
+**NextAuth.js Integration** (`src/lib/auth/nextauth_config.ts`):
+- Complete NextAuth.js v4 configuration with Google provider
+- Custom callbacks for sign-in validation and session management
+- Integration with hazo_auth's existing session system
+
+**New API Routes**:
+- `/api/auth/[...nextauth]` - NextAuth.js catch-all route (handles OAuth flows)
+- `/api/hazo_auth/oauth/google/callback` - Custom callback to create hazo_auth session after OAuth
+- `/api/hazo_auth/set_password` - API endpoint for Google-only users to set password
+
+**API Response Changes**:
+- `/api/hazo_auth/me` - Added OAuth status fields:
+  - `auth_providers: string` - Tracks authentication methods ('email', 'google', or 'email,google')
+  - `has_password: boolean` - Whether user has a password set
+  - `google_connected: boolean` - Whether Google account is linked
+
+**Password Validation Utility** (`src/lib/utils/password_validator.ts`):
+- Validates password strength based on configuration requirements
+- Returns detailed error messages for password validation failures
+- Used by set password feature
+
+**User Flows**:
+
+1. **New User - Google Sign-In:**
+   - Click "Sign in with Google" → Authenticate with Google → Account created with profile data → Auto-verified email
+
+2. **Existing Unverified User - Auto-Link:**
+   - User has email/password (unverified) → Sign in with Google (same email) → Accounts linked → Email verified → Can use either method
+
+3. **Google-Only User Adds Password:**
+   - Google-only user → My Settings → "Set Password" section → Set password → Can now use both methods
+
+4. **Google-Only User Forgot Password:**
+   - Try "Forgot Password" → System detects no password → Shows "Sign in with Google instead" message
+
+**Dependencies**:
+- Added `next-auth@^4.24.11` - NextAuth.js for OAuth handling
+
+**Migration Path**:
+1. Run migration: `npm run migrate migrations/005_add_oauth_fields_to_hazo_users.sql`
+2. Add environment variables: `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `HAZO_AUTH_GOOGLE_CLIENT_ID`, `HAZO_AUTH_GOOGLE_CLIENT_SECRET`
+3. Configure OAuth in `hazo_auth_config.ini`: Add `[hazo_auth__oauth]` section
+4. Create OAuth API routes (or use `npx hazo_auth generate-routes --oauth`)
+5. Test: Visit login page and see Google Sign-In button
+
+**Backward Compatibility**:
+- OAuth is opt-in via configuration - existing apps work unchanged
+- Existing users continue using email/password login
+- No breaking changes to existing authentication flows
+- Migration adds columns with default values (safe for existing data)
+
 ### Added
 - **ProfileStamp Component**: New drop-in component for user attribution in notes, comments, and activity feeds
   - Displays circular profile picture with hover card showing user details

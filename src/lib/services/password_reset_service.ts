@@ -15,6 +15,8 @@ export type PasswordResetRequestData = {
 export type PasswordResetRequestResult = {
   success: boolean;
   error?: string;
+  /** True if the user doesn't have a password set (Google-only user) */
+  no_password_set?: boolean;
 };
 
 export type PasswordResetData = {
@@ -72,6 +74,17 @@ export async function request_password_reset(
 
     const user = users[0];
     const user_id = user.id as string;
+
+    // Check if user has a password set (Google-only users don't have a password)
+    const password_hash = user.password_hash as string;
+    if (!password_hash || password_hash === "") {
+      // User doesn't have a password - they need to set one via My Settings after logging in with Google
+      // Return success to prevent email enumeration, but include flag for UI handling
+      return {
+        success: true,
+        no_password_set: true,
+      };
+    }
 
     // Create password reset token using shared token service
     const token_result = await create_token({

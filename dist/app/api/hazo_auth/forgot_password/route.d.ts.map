@@ -1,1 +1,1 @@
-{"version":3,"file":"route.d.ts","sourceRoot":"","sources":["../../../../../src/app/api/hazo_auth/forgot_password/route.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,WAAW,EAAE,YAAY,EAAE,MAAM,aAAa,CAAC;AAOxD,wBAAsB,IAAI,CAAC,OAAO,EAAE,WAAW;;;;;IAgG9C"}
+{"version":3,"file":"route.d.ts","sourceRoot":"","sources":["../../../../../src/app/api/hazo_auth/forgot_password/route.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,WAAW,EAAE,YAAY,EAAE,MAAM,aAAa,CAAC;AAOxD,wBAAsB,IAAI,CAAC,OAAO,EAAE,WAAW;;;;;IAoH9C"}

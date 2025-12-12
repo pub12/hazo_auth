@@ -61,8 +61,24 @@ export async function authenticate_user(
       };
     }
 
-    // Verify password using argon2
+    // Check if user has a password set (Google-only users have empty password_hash)
     const password_hash = user.password_hash as string;
+    if (!password_hash || password_hash === "") {
+      // Check if user has Google linked
+      const auth_providers = (user.auth_providers as string) || "";
+      if (auth_providers.includes("google")) {
+        return {
+          success: false,
+          error: "This account uses Google Sign-In. Please log in with Google instead.",
+        };
+      }
+      return {
+        success: false,
+        error: "Invalid email or password",
+      };
+    }
+
+    // Verify password using argon2
     const is_password_valid = await argon2.verify(password_hash, password);
 
     if (!is_password_valid) {

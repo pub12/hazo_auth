@@ -69,6 +69,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if this is a Google-only user (no password set)
+    if (result.no_password_set) {
+      logger.info("password_reset_no_password_set", {
+        filename: get_filename(),
+        line_number: get_line_number(),
+        email,
+        note: "User does not have a password set (OAuth-only account)",
+      });
+
+      // Return success to prevent email enumeration, but include flag for UI handling
+      return NextResponse.json(
+        {
+          success: true,
+          no_password_set: true,
+          message: "If an account with that email exists, a password reset link has been sent.",
+        },
+        { status: 200 }
+      );
+    }
+
     logger.info("password_reset_requested", {
       filename: get_filename(),
       line_number: get_line_number(),

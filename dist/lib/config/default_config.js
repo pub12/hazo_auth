@@ -132,6 +132,19 @@ export const DEFAULT_PROFILE_PIC_MENU = {
 export const DEFAULT_API_PATHS = {
     apiBasePath: "/api/hazo_auth",
 };
+// section: oauth
+export const DEFAULT_OAUTH = {
+    /** Enable Google OAuth login (requires HAZO_AUTH_GOOGLE_CLIENT_ID and HAZO_AUTH_GOOGLE_CLIENT_SECRET env vars) */
+    enable_google: true,
+    /** Enable traditional email/password login */
+    enable_email_password: true,
+    /** Auto-link Google login to existing unverified email/password accounts and mark as verified */
+    auto_link_unverified_accounts: true,
+    /** Text displayed on the Google sign-in button */
+    google_button_text: "Continue with Google",
+    /** Text displayed on the divider between OAuth and email/password form */
+    oauth_divider_text: "or continue with email",
+};
 // section: combined_defaults
 /**
  * All default configuration values combined in one object
@@ -156,4 +169,5 @@ export const HAZO_AUTH_DEFAULTS = {
     uiShell: DEFAULT_UI_SHELL,
     profilePicMenu: DEFAULT_PROFILE_PIC_MENU,
     apiPaths: DEFAULT_API_PATHS,
+    oauth: DEFAULT_OAUTH,
 };

@@ -13,6 +13,8 @@ export type UseForgotPasswordFormResult = {
     isSubmitDisabled: boolean;
     isSubmitting: boolean;
     emailTouched: boolean;
+    /** True if the submitted email is for a Google-only account (no password set) */
+    isGoogleOnlyAccount: boolean;
     handleFieldChange: (fieldId: ForgotPasswordFieldId, value: string) => void;
     handleEmailBlur: () => void;
     handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;

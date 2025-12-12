@@ -63,25 +63,35 @@ export { POST } from "hazo_auth/server/routes";
 
 ### Authentication Flow Architecture
 
-1. **Login Flow:**
+1. **Login Flow (Email/Password):**
    - Client submits credentials → `/api/hazo_auth/login` (POST)
    - Server validates via Argon2, creates JWT session token
    - Sets cookies: `hazo_auth_user_id`, `hazo_auth_user_email`, `hazo_auth_session` (JWT)
    - Returns user data or redirects
 
-2. **Authorization Check (Server-side):**
+2. **Login Flow (Google OAuth):**
+   - Client clicks "Sign in with Google" button
+   - NextAuth.js handles OAuth flow → `/api/auth/signin/google`
+   - Google authentication → callback to `/api/auth/callback/google`
+   - Custom callback handler (`/api/hazo_auth/oauth/google/callback`) creates hazo_auth session
+   - Auto-links to existing unverified email/password accounts (configurable)
+   - Sets same cookies as email/password login for unified session management
+   - Full name populated from Google profile
+
+3. **Authorization Check (Server-side):**
    - API route calls `hazo_get_auth(request, { required_permissions: ['admin'] })`
    - Function validates JWT session token OR queries database for user + permissions
    - Returns `HazoAuthResult` with user, permissions, and `permission_ok` flag
    - Uses LRU cache (15min TTL) to reduce database load
 
-3. **Authorization Check (Client-side):**
+4. **Authorization Check (Client-side):**
    - Component uses `use_hazo_auth()` hook
    - Hook fetches from `/api/hazo_auth/me` (standardized endpoint)
    - Returns authentication status and permissions
    - Response includes profile picture aliases: `profile_image`, `avatar_url`, `image` (for consuming app compatibility)
+   - Response includes OAuth status: `auth_providers`, `has_password`, `google_connected`
 
-4. **Edge Runtime (Middleware/Proxy):**
+5. **Edge Runtime (Middleware/Proxy):**
    - Use `validate_session_cookie(request)` - validates JWT without database
    - Fast signature verification for route protection
    - Falls back to simple cookie check if JWT unavailable
@@ -92,6 +102,7 @@ All configuration comes from `hazo_auth_config.ini` in the project root (where `
 
 - **UI Customization:** `[hazo_auth__login_layout]`, `[hazo_auth__register_layout]`, etc.
 - **Auth Behavior:** `[hazo_auth__tokens]`, `[hazo_auth__password_requirements]`
+- **OAuth Settings:** `[hazo_auth__oauth]` (enable_google, enable_email_password, auto_link_unverified_accounts, button text)
 - **RBAC Setup:** `[hazo_auth__user_management]`, `[hazo_auth__initial_setup]`
 - **Email Settings:** `[hazo_auth__email]` (templates, from_email, base_url)
 - **Profile Pictures:** `[hazo_auth__profile_picture]` (upload path, priorities)
@@ -101,12 +112,16 @@ Configuration is loaded via `hazo_config` package and cached at runtime.
 ### Database Schema
 
 Core tables:
-- `hazo_users` - User accounts (id, email_address, password_hash, profile fields)
+- `hazo_users` - User accounts (id, email_address, password_hash, profile fields, **google_id**, **auth_providers**)
 - `hazo_refresh_tokens` - Token storage (password reset, email verification)
 - `hazo_roles` - Role definitions
 - `hazo_permissions` - Permission definitions
 - `hazo_user_roles` - User-role junction table
 - `hazo_role_permissions` - Role-permission junction table
+
+**New OAuth fields in hazo_users (v4.2.0):**
+- `google_id` - Google's unique user ID (sub claim from JWT) for OAuth lookups
+- `auth_providers` - Tracks authentication methods: 'email', 'google', or 'email,google'
 
 HRBAC tables (optional, for Hierarchical Role-Based Access Control):
 - `hazo_scopes_l1` through `hazo_scopes_l7` - Hierarchical scope levels
@@ -318,6 +333,12 @@ src/
 Required:
 - `JWT_SECRET` - JWT signing key (min 32 chars) - **CRITICAL for JWT session tokens**
 - `ZEPTOMAIL_API_KEY` - Email service API key (for password reset, verification emails)
+- `NEXTAUTH_SECRET` - NextAuth.js secret for session encryption (min 32 chars) - **Required for OAuth**
+- `NEXTAUTH_URL` - Base URL for OAuth callbacks (e.g., `http://localhost:3000` for dev, `https://yourdomain.com` for production)
+
+OAuth Providers (optional, enable in config):
+- `HAZO_AUTH_GOOGLE_CLIENT_ID` - Google OAuth client ID (from Google Cloud Console)
+- `HAZO_AUTH_GOOGLE_CLIENT_SECRET` - Google OAuth client secret
 
 Optional:
 - `POSTGREST_URL` - PostgREST API URL (if using PostgreSQL)
@@ -370,6 +391,202 @@ import { ProfileStamp } from "hazo_auth/client";
 ```
 
 **Test Page:** Visit `/hazo_auth/profile_stamp_test` to see examples of ProfileStamp with various configurations.
+
+## Google OAuth Integration
+
+### Overview
+
+hazo_auth supports Google Sign-In via NextAuth.js v4, allowing users to authenticate with their Google accounts. The implementation supports:
+- **Dual authentication methods**: Users can have BOTH Google OAuth and email/password login
+- **Auto-linking**: Automatically links Google login to existing unverified email/password accounts (configurable)
+- **Graceful degradation**: Login page adapts based on enabled authentication methods
+- **Set password feature**: Google-only users can add a password later via My Settings
+
+### Configuration
+
+Enable Google OAuth in `hazo_auth_config.ini`:
+
+```ini
+[hazo_auth__oauth]
+# Enable Google OAuth login (requires Google Cloud credentials)
+enable_google = true
+
+# Enable traditional email/password login
+enable_email_password = true
+
+# Auto-link Google login to existing unverified email/password accounts
+auto_link_unverified_accounts = true
+
+# Customize button text
+google_button_text = Continue with Google
+oauth_divider_text = or
+```
+
+### Environment Variables
+
+Add to `.env.local`:
+
+```env
+# NextAuth.js configuration (REQUIRED for OAuth)
+NEXTAUTH_SECRET=your_secure_random_string_at_least_32_characters
+NEXTAUTH_URL=http://localhost:3000  # Change to production URL in production
+
+# Google OAuth credentials (from Google Cloud Console)
+HAZO_AUTH_GOOGLE_CLIENT_ID=your_google_client_id
+HAZO_AUTH_GOOGLE_CLIENT_SECRET=your_google_client_secret
+```
+
+**Get Google OAuth credentials:**
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a project or select existing project
+3. Enable Google+ API
+4. Go to Credentials → Create Credentials → OAuth 2.0 Client ID
+5. Set Authorized JavaScript origins: `http://localhost:3000` (dev), `https://yourdomain.com` (prod)
+6. Set Authorized redirect URIs: `http://localhost:3000/api/auth/callback/google`
+7. Copy Client ID and Client Secret
+
+### Database Migration
+
+Run migration to add OAuth fields:
+
+```bash
+npm run migrate migrations/005_add_oauth_fields_to_hazo_users.sql
+```
+
+This adds:
+- `google_id` - Google's unique user ID (TEXT, UNIQUE, indexed)
+- `auth_providers` - Tracks authentication methods: 'email', 'google', or 'email,google'
+
+### User Flows
+
+**New User - Google Sign-In:**
+1. Click "Sign in with Google" button
+2. Authenticate with Google
+3. Account created with Google profile data (email, name, profile picture)
+4. `auth_providers` set to 'google'
+5. `password_hash` is NULL
+6. Email is auto-verified (email_verified = true)
+
+**Existing User with Unverified Email/Password:**
+1. User has email/password account but hasn't verified email
+2. Click "Sign in with Google" with same email address
+3. System auto-links Google account (if `auto_link_unverified_accounts = true`)
+4. Email becomes verified
+5. `auth_providers` updated to 'email,google'
+6. User can now log in with EITHER method
+
+**Google-Only User Adds Password:**
+1. Google-only user visits My Settings
+2. "Set Password" section appears (only for Google-only users)
+3. User sets password
+4. `auth_providers` updated to 'email,google'
+5. User can now log in with EITHER method
+
+**User with Password Tries Forgot Password (Google-Only):**
+1. User who registered with Google tries "Forgot Password"
+2. System detects `has_password = false`
+3. Shows message: "You registered with Google. Please sign in with Google instead."
+
+### API Endpoints
+
+**OAuth Routes (created by NextAuth.js):**
+- `GET /api/auth/signin/google` - Initiates Google OAuth flow
+- `GET /api/auth/callback/google` - Google OAuth callback handler
+
+**Custom OAuth Routes:**
+- `GET /api/hazo_auth/oauth/google/callback` - Creates hazo_auth session after NextAuth callback
+- `POST /api/hazo_auth/set_password` - Allows Google-only users to set a password
+
+### Components
+
+**New OAuth Components:**
+- `GoogleIcon` - Google logo SVG
+- `GoogleSignInButton` - "Sign in with Google" button
+- `OAuthDivider` - Divider with "or" text between OAuth and email/password
+- `ConnectedAccountsSection` (My Settings) - Shows linked OAuth providers
+- `SetPasswordSection` (My Settings) - For Google-only users to add password
+
+**Modified Components:**
+- `LoginLayout` - Added OAuth button section (conditionally rendered)
+- `MySettingsLayout` - Added Connected Accounts and Set Password sections
+- `ForgotPasswordLayout` - Special handling for Google-only users
+
+### Service Functions
+
+**OAuth Service (`src/lib/services/oauth_service.ts`):**
+- `handle_google_oauth_login()` - Process Google OAuth login, create/link account
+- `link_google_account()` - Link Google OAuth to existing email/password account
+- `set_user_password()` - Set password for Google-only users
+- `get_user_oauth_status()` - Get user's OAuth connection status
+
+**Modified Services:**
+- `login_service.ts` - Handle login for users without passwords (Google-only)
+- `registration_service.ts` - Set `auth_providers='email'` for new email registrations
+- `password_reset_service.ts` - Check if user has password before allowing reset
+
+### Configuration Helpers
+
+**OAuth Config (`src/lib/oauth_config.server.ts`):**
+- `get_oauth_config()` - Read OAuth configuration from INI file
+- `is_google_oauth_enabled()` - Quick check if Google OAuth is enabled
+- `is_email_password_enabled()` - Quick check if email/password login is enabled
+
+### NextAuth.js Configuration
+
+NextAuth.js config is in `src/lib/auth/nextauth_config.ts`:
+
+```typescript
+import GoogleProvider from "next-auth/providers/google";
+
+export const authOptions: NextAuthOptions = {
+  providers: [
+    GoogleProvider({
+      clientId: process.env.HAZO_AUTH_GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.HAZO_AUTH_GOOGLE_CLIENT_SECRET!,
+    }),
+  ],
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      // Custom sign-in logic
+    },
+  },
+  // ... other NextAuth options
+};
+```
+
+### API Response Changes
+
+**`/api/hazo_auth/me` Response (Enhanced):**
+```typescript
+{
+  authenticated: true,
+  // ... existing fields
+  auth_providers: "email,google",  // NEW: Tracks authentication methods
+  has_password: true,              // NEW: Whether user has password set
+  google_connected: true,          // NEW: Whether Google account is linked
+}
+```
+
+### Dependencies
+
+New dependency added to `package.json`:
+- `next-auth@^4.24.11` - NextAuth.js for OAuth handling
+
+### Files Added
+
+1. `migrations/005_add_oauth_fields_to_hazo_users.sql` - Database migration
+2. `src/lib/oauth_config.server.ts` - OAuth configuration loader
+3. `src/lib/services/oauth_service.ts` - OAuth business logic
+4. `src/lib/auth/nextauth_config.ts` - NextAuth.js configuration
+5. `src/lib/utils/password_validator.ts` - Password validation utility
+6. `src/app/api/auth/[...nextauth]/route.ts` - NextAuth API route handler
+7. `src/app/api/hazo_auth/oauth/google/callback/route.ts` - Custom callback handler
+8. `src/app/api/hazo_auth/set_password/route.ts` - Set password API route
+9. `src/components/layouts/shared/components/google_icon.tsx` - Google logo
+10. `src/components/layouts/shared/components/google_sign_in_button.tsx` - Google button
+11. `src/components/layouts/shared/components/oauth_divider.tsx` - OAuth/email divider
+12. `src/components/layouts/my_settings/components/connected_accounts_section.tsx` - OAuth status
+13. `src/components/layouts/my_settings/components/set_password_section.tsx` - Set password UI
 
 ## Common Issues
 

@@ -13,6 +13,9 @@ export type AuthStatusData = {
     permissions?: string[];
     permission_ok?: boolean;
     missing_permissions?: string[];
+    auth_providers?: string;
+    has_password?: boolean;
+    google_connected?: boolean;
     loading: boolean;
 };
 export type AuthStatus = AuthStatusData & {

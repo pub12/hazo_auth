@@ -29,6 +29,16 @@ export async function request_password_reset(adapter, data) {
         }
         const user = users[0];
         const user_id = user.id;
+        // Check if user has a password set (Google-only users don't have a password)
+        const password_hash = user.password_hash;
+        if (!password_hash || password_hash === "") {
+            // User doesn't have a password - they need to set one via My Settings after logging in with Google
+            // Return success to prevent email enumeration, but include flag for UI handling
+            return {
+                success: true,
+                no_password_set: true,
+            };
+        }
         // Create password reset token using shared token service
         const token_result = await create_token({
             adapter,

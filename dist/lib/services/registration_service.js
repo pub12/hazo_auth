@@ -44,6 +44,7 @@ export async function register_user(adapter, data) {
             email_verified: false,
             is_active: true,
             login_attempts: 0,
+            auth_providers: "email", // Track that this user registered with email/password
             created_at: now,
             changed_at: now,
         };

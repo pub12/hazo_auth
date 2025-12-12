@@ -10,6 +10,7 @@ import { FormHeader } from "../shared/components/form_header";
 import { FormActionButtons } from "../shared/components/form_action_buttons";
 import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
 import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
+import { GoogleSignInButton } from "../shared/components/google_sign_in_button";
 import {
   type ButtonPaletteOverrides,
   type LayoutFieldMapOverrides,
@@ -44,6 +45,12 @@ export type ForgotPasswordLayoutProps<TClient = unknown> = {
   showReturnHomeButton?: boolean;
   returnHomeButtonLabel?: string;
   returnHomePath?: string;
+  /** Message shown when user's account is Google-only (no password set) */
+  googleOnlyAccountHeading?: string;
+  googleOnlyAccountMessage?: string;
+  googleOnlyAccountHelpText?: string;
+  mySettingsPath?: string;
+  mySettingsLabel?: string;
 };
 
 const ORDERED_FIELDS: ForgotPasswordFieldId[] = [
@@ -68,6 +75,11 @@ export default function forgot_password_layout<TClient>({
   showReturnHomeButton = false,
   returnHomeButtonLabel = "Return home",
   returnHomePath = "/",
+  googleOnlyAccountHeading = "Google Account Detected",
+  googleOnlyAccountMessage = "Your account was created using Google Sign-In and doesn't have a password set.",
+  googleOnlyAccountHelpText = "Sign in with Google, then set a password in your account settings if you'd like to use email/password login.",
+  mySettingsPath = "/hazo_auth/my_settings",
+  mySettingsLabel = "Go to Settings",
 }: ForgotPasswordLayoutProps<TClient>) {
   const fieldDefinitions = createForgotPasswordFieldDefinitions(field_overrides);
   const resolvedLabels = resolveForgotPasswordLabels(labels);
@@ -140,40 +152,73 @@ export default function forgot_password_layout<TClient>({
         imageBackgroundColor={image_background_color}
         formContent={
           <>
-            <FormHeader
-              heading={resolvedLabels.heading}
-              subHeading={resolvedLabels.subHeading}
-            />
-            <form
-              className="cls_forgot_password_layout_form_fields flex flex-col gap-5"
-              onSubmit={form.handleSubmit}
-              aria-label="Forgot password form"
-            >
-              {renderFields(form)}
-              <FormActionButtons
-                submitLabel={resolvedLabels.submitButton}
-                cancelLabel={resolvedLabels.cancelButton}
-                buttonPalette={resolvedButtonPalette}
-                isSubmitDisabled={form.isSubmitDisabled}
-                onCancel={form.handleCancel}
-                submitAriaLabel="Submit forgot password form"
-                cancelAriaLabel="Cancel forgot password form"
-              />
-              {form.isSubmitting && (
-                <div className="cls_forgot_password_submitting_indicator text-sm text-slate-600 text-center">
-                  Sending reset link...
+            {form.isGoogleOnlyAccount ? (
+              /* Google-only account message */
+              <div className="cls_forgot_password_google_only flex flex-col gap-5">
+                <FormHeader
+                  heading={googleOnlyAccountHeading}
+                  subHeading={googleOnlyAccountMessage}
+                />
+                <p className="cls_forgot_password_google_only_help text-sm text-slate-600">
+                  {googleOnlyAccountHelpText}
+                </p>
+                <div className="cls_forgot_password_google_only_actions flex flex-col gap-3">
+                  <GoogleSignInButton label="Sign in with Google" />
+                  <Link
+                    href={mySettingsPath}
+                    className="cls_forgot_password_settings_link text-center text-sm font-medium text-slate-700 hover:text-slate-900 hover:underline"
+                  >
+                    {mySettingsLabel}
+                  </Link>
                 </div>
-              )}
-            </form>
-            <div className="cls_forgot_password_sign_in_link mt-4 text-center text-sm text-slate-600">
-              Remember your password?{" "}
-              <Link
-                href={sign_in_path}
-                className="font-medium text-slate-900 hover:underline"
-              >
-                {sign_in_label}
-              </Link>
-            </div>
+                <div className="cls_forgot_password_sign_in_link mt-2 text-center text-sm text-slate-600">
+                  <Link
+                    href={sign_in_path}
+                    className="font-medium text-slate-900 hover:underline"
+                  >
+                    Back to {sign_in_label}
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              /* Normal forgot password form */
+              <>
+                <FormHeader
+                  heading={resolvedLabels.heading}
+                  subHeading={resolvedLabels.subHeading}
+                />
+                <form
+                  className="cls_forgot_password_layout_form_fields flex flex-col gap-5"
+                  onSubmit={form.handleSubmit}
+                  aria-label="Forgot password form"
+                >
+                  {renderFields(form)}
+                  <FormActionButtons
+                    submitLabel={resolvedLabels.submitButton}
+                    cancelLabel={resolvedLabels.cancelButton}
+                    buttonPalette={resolvedButtonPalette}
+                    isSubmitDisabled={form.isSubmitDisabled}
+                    onCancel={form.handleCancel}
+                    submitAriaLabel="Submit forgot password form"
+                    cancelAriaLabel="Cancel forgot password form"
+                  />
+                  {form.isSubmitting && (
+                    <div className="cls_forgot_password_submitting_indicator text-sm text-slate-600 text-center">
+                      Sending reset link...
+                    </div>
+                  )}
+                </form>
+                <div className="cls_forgot_password_sign_in_link mt-4 text-center text-sm text-slate-600">
+                  Remember your password?{" "}
+                  <Link
+                    href={sign_in_path}
+                    className="font-medium text-slate-900 hover:underline"
+                  >
+                    {sign_in_label}
+                  </Link>
+                </div>
+              </>
+            )}
           </>
         }
       />

@@ -5,6 +5,8 @@ export type PasswordResetRequestData = {
 export type PasswordResetRequestResult = {
     success: boolean;
     error?: string;
+    /** True if the user doesn't have a password set (Google-only user) */
+    no_password_set?: boolean;
 };
 export type PasswordResetData = {
     token: string;

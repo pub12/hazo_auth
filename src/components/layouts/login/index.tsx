@@ -13,6 +13,8 @@ import { FormActionButtons } from "../shared/components/form_action_buttons";
 import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
 import { CheckCircle } from "lucide-react";
 import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
+import { GoogleSignInButton } from "../shared/components/google_sign_in_button";
+import { OAuthDivider } from "../shared/components/oauth_divider";
 import {
   type ButtonPaletteOverrides,
   type LayoutFieldMapOverrides,
@@ -31,6 +33,17 @@ import {
 import { type LayoutDataClient } from "../shared/data/layout_data_client";
 
 // section: types
+export type OAuthLayoutConfig = {
+  /** Enable Google OAuth login */
+  enable_google: boolean;
+  /** Enable traditional email/password login */
+  enable_email_password: boolean;
+  /** Text displayed on the Google sign-in button */
+  google_button_text: string;
+  /** Text displayed on the divider between OAuth and email/password form */
+  oauth_divider_text: string;
+};
+
 export type LoginLayoutProps<TClient = unknown> = {
   image_src: string | StaticImageData;
   image_alt: string;
@@ -57,6 +70,8 @@ export type LoginLayoutProps<TClient = unknown> = {
   create_account_path?: string;
   create_account_label?: string;
   urlOnLogon?: string;
+  /** OAuth configuration */
+  oauth?: OAuthLayoutConfig;
 };
 
 const ORDERED_FIELDS: LoginFieldId[] = [
@@ -88,7 +103,15 @@ export default function login_layout<TClient>({
   create_account_path = "/hazo_auth/register",
   create_account_label = "Create account",
   urlOnLogon,
+  oauth,
 }: LoginLayoutProps<TClient>) {
+  // Default OAuth config: both enabled
+  const oauthConfig = oauth || {
+    enable_google: true,
+    enable_email_password: true,
+    google_button_text: "Continue with Google",
+    oauth_divider_text: "or continue with email",
+  };
   const fieldDefinitions = createLoginFieldDefinitions(field_overrides);
   const resolvedLabels = resolveLoginLabels(labels);
   const resolvedButtonPalette = resolveLoginButtonPalette(button_colors);
@@ -212,29 +235,60 @@ export default function login_layout<TClient>({
               heading={resolvedLabels.heading}
               subHeading={resolvedLabels.subHeading}
             />
-            <form
-              className="cls_login_layout_form_fields flex flex-col gap-5"
-              onSubmit={form.handleSubmit}
-              aria-label="Login form"
-            >
-              {renderFields(form)}
-              <FormActionButtons
-                submitLabel={resolvedLabels.submitButton}
-                cancelLabel={resolvedLabels.cancelButton}
-                buttonPalette={resolvedButtonPalette}
-                isSubmitDisabled={form.isSubmitDisabled}
-                onCancel={form.handleCancel}
-                submitAriaLabel="Submit login form"
-                cancelAriaLabel="Cancel login form"
-              />
-              <div className="cls_login_layout_support_links flex flex-col gap-1 text-sm text-muted-foreground">
-                <Link
-                  href={forgot_password_path}
-                  className="cls_login_layout_forgot_password_link text-primary underline-offset-4 hover:underline"
-                  aria-label="Go to forgot password page"
-                >
-                  {forgot_password_label}
-                </Link>
+
+            {/* OAuth Section - Google Sign-In Button */}
+            {oauthConfig.enable_google && (
+              <div className="cls_login_layout_oauth_section">
+                <GoogleSignInButton
+                  label={oauthConfig.google_button_text}
+                />
+              </div>
+            )}
+
+            {/* OAuth Divider - Show when both OAuth and email/password are enabled */}
+            {oauthConfig.enable_google && oauthConfig.enable_email_password && (
+              <OAuthDivider text={oauthConfig.oauth_divider_text} />
+            )}
+
+            {/* Email/Password Form - Only show if enabled */}
+            {oauthConfig.enable_email_password && (
+              <form
+                className="cls_login_layout_form_fields flex flex-col gap-5"
+                onSubmit={form.handleSubmit}
+                aria-label="Login form"
+              >
+                {renderFields(form)}
+                <FormActionButtons
+                  submitLabel={resolvedLabels.submitButton}
+                  cancelLabel={resolvedLabels.cancelButton}
+                  buttonPalette={resolvedButtonPalette}
+                  isSubmitDisabled={form.isSubmitDisabled}
+                  onCancel={form.handleCancel}
+                  submitAriaLabel="Submit login form"
+                  cancelAriaLabel="Cancel login form"
+                />
+                <div className="cls_login_layout_support_links flex flex-col gap-1 text-sm text-muted-foreground">
+                  <Link
+                    href={forgot_password_path}
+                    className="cls_login_layout_forgot_password_link text-primary underline-offset-4 hover:underline"
+                    aria-label="Go to forgot password page"
+                  >
+                    {forgot_password_label}
+                  </Link>
+                  <Link
+                    href={create_account_path}
+                    className="cls_login_layout_create_account_link text-primary underline-offset-4 hover:underline"
+                    aria-label="Go to create account page"
+                  >
+                    {create_account_label}
+                  </Link>
+                </div>
+              </form>
+            )}
+
+            {/* Create account link - Only show if email/password is disabled but OAuth is enabled */}
+            {!oauthConfig.enable_email_password && oauthConfig.enable_google && (
+              <div className="cls_login_layout_support_links mt-4 text-center text-sm text-muted-foreground">
                 <Link
                   href={create_account_path}
                   className="cls_login_layout_create_account_link text-primary underline-offset-4 hover:underline"
@@ -243,7 +297,7 @@ export default function login_layout<TClient>({
                   {create_account_label}
                 </Link>
               </div>
-            </form>
+            )}
           </>
         }
       />

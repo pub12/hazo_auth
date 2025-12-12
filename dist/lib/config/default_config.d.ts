@@ -111,6 +111,18 @@ export declare const DEFAULT_PROFILE_PIC_MENU: {
 export declare const DEFAULT_API_PATHS: {
     readonly apiBasePath: "/api/hazo_auth";
 };
+export declare const DEFAULT_OAUTH: {
+    /** Enable Google OAuth login (requires HAZO_AUTH_GOOGLE_CLIENT_ID and HAZO_AUTH_GOOGLE_CLIENT_SECRET env vars) */
+    readonly enable_google: true;
+    /** Enable traditional email/password login */
+    readonly enable_email_password: true;
+    /** Auto-link Google login to existing unverified email/password accounts and mark as verified */
+    readonly auto_link_unverified_accounts: true;
+    /** Text displayed on the Google sign-in button */
+    readonly google_button_text: "Continue with Google";
+    /** Text displayed on the divider between OAuth and email/password form */
+    readonly oauth_divider_text: "or continue with email";
+};
 /**
  * All default configuration values combined in one object
  * This makes it easy to see all defaults at a glance and export them as needed
@@ -228,6 +240,18 @@ export declare const HAZO_AUTH_DEFAULTS: {
     };
     readonly apiPaths: {
         readonly apiBasePath: "/api/hazo_auth";
+    };
+    readonly oauth: {
+        /** Enable Google OAuth login (requires HAZO_AUTH_GOOGLE_CLIENT_ID and HAZO_AUTH_GOOGLE_CLIENT_SECRET env vars) */
+        readonly enable_google: true;
+        /** Enable traditional email/password login */
+        readonly enable_email_password: true;
+        /** Auto-link Google login to existing unverified email/password accounts and mark as verified */
+        readonly auto_link_unverified_accounts: true;
+        /** Text displayed on the Google sign-in button */
+        readonly google_button_text: "Continue with Google";
+        /** Text displayed on the divider between OAuth and email/password form */
+        readonly oauth_divider_text: "or continue with email";
     };
 };
 /**

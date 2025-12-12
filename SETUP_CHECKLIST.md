@@ -492,6 +492,169 @@ This script will:
 
 ---
 
+## Phase 3.2: Google OAuth Setup (Optional)
+
+Google OAuth Sign-In allows users to authenticate with their Google accounts. This section is optional - skip if you don't need OAuth.
+
+### Step 3.2.1: Get Google OAuth Credentials
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a project or select an existing project
+3. Enable **Google+ API** (or Google Identity Services)
+4. Navigate to **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
+5. Configure OAuth consent screen if prompted
+6. Set **Application type** to "Web application"
+7. Add **Authorized JavaScript origins**:
+   - Development: `http://localhost:3000`
+   - Production: `https://yourdomain.com`
+8. Add **Authorized redirect URIs**:
+   - Development: `http://localhost:3000/api/auth/callback/google`
+   - Production: `https://yourdomain.com/api/auth/callback/google`
+9. Copy the **Client ID** and **Client Secret**
+
+### Step 3.2.2: Add OAuth Environment Variables
+
+Add to your `.env.local`:
+
+```env
+# NextAuth.js configuration (REQUIRED for OAuth)
+NEXTAUTH_SECRET=your_secure_random_string_at_least_32_characters
+NEXTAUTH_URL=http://localhost:3000  # Change to production URL in production
+
+# Google OAuth credentials (from Google Cloud Console)
+HAZO_AUTH_GOOGLE_CLIENT_ID=your_google_client_id_from_step_1
+HAZO_AUTH_GOOGLE_CLIENT_SECRET=your_google_client_secret_from_step_1
+```
+
+**Generate NEXTAUTH_SECRET:**
+```bash
+openssl rand -base64 32
+```
+
+### Step 3.2.3: Run OAuth Database Migration
+
+Add OAuth fields to the `hazo_users` table:
+
+```bash
+npm run migrate migrations/005_add_oauth_fields_to_hazo_users.sql
+```
+
+**Verify migration applied:**
+
+**PostgreSQL:**
+```sql
+SELECT column_name FROM information_schema.columns
+WHERE table_name = 'hazo_users'
+  AND column_name IN ('google_id', 'auth_providers');
+-- Expected: 2 rows returned
+```
+
+**SQLite:**
+```bash
+sqlite3 data/hazo_auth.sqlite ".schema hazo_users" | grep -E "google_id|auth_providers"
+# Expected: google_id TEXT UNIQUE, auth_providers TEXT DEFAULT 'email'
+```
+
+**Manual migration (if needed):**
+
+**PostgreSQL:**
+```sql
+ALTER TABLE hazo_users ADD COLUMN google_id TEXT UNIQUE;
+ALTER TABLE hazo_users ADD COLUMN auth_providers TEXT DEFAULT 'email';
+CREATE INDEX IF NOT EXISTS idx_hazo_users_google_id ON hazo_users(google_id);
+```
+
+**SQLite:**
+```sql
+ALTER TABLE hazo_users ADD COLUMN google_id TEXT;
+ALTER TABLE hazo_users ADD COLUMN auth_providers TEXT DEFAULT 'email';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_hazo_users_google_id_unique ON hazo_users(google_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_users_google_id ON hazo_users(google_id);
+```
+
+### Step 3.2.4: Configure OAuth in hazo_auth_config.ini
+
+Add (or modify) the OAuth section:
+
+```ini
+[hazo_auth__oauth]
+# Enable Google OAuth login (default: true)
+enable_google = true
+
+# Enable traditional email/password login (default: true)
+enable_email_password = true
+
+# Auto-link Google login to existing unverified email/password accounts (default: true)
+auto_link_unverified_accounts = true
+
+# Customize button text (optional)
+google_button_text = Continue with Google
+oauth_divider_text = or
+```
+
+**Configuration Options:**
+
+- **Google-only authentication** (no email/password):
+  ```ini
+  enable_google = true
+  enable_email_password = false
+  ```
+
+- **Email/password only** (no OAuth):
+  ```ini
+  enable_google = false
+  enable_email_password = true
+  ```
+
+- **Both methods** (recommended):
+  ```ini
+  enable_google = true
+  enable_email_password = true
+  ```
+
+### Step 3.2.5: Create OAuth API Routes
+
+**Option A: Use CLI generator (Recommended):**
+```bash
+npx hazo_auth generate-routes --oauth
+```
+
+**Option B: Create manually:**
+
+Create `app/api/auth/[...nextauth]/route.ts`:
+```typescript
+export { GET, POST } from "hazo_auth/server/routes/nextauth";
+```
+
+Create `app/api/hazo_auth/oauth/google/callback/route.ts`:
+```typescript
+export { GET } from "hazo_auth/server/routes/oauth_google_callback";
+```
+
+Create `app/api/hazo_auth/set_password/route.ts`:
+```typescript
+export { POST } from "hazo_auth/server/routes/set_password";
+```
+
+### Step 3.2.6: Verify OAuth API Routes
+
+```bash
+ls app/api/auth/\[...nextauth\]/route.ts
+ls app/api/hazo_auth/oauth/google/callback/route.ts
+ls app/api/hazo_auth/set_password/route.ts
+# All files should exist
+```
+
+**OAuth Setup Checklist:**
+- [ ] Google OAuth credentials obtained
+- [ ] `NEXTAUTH_SECRET` and `NEXTAUTH_URL` set in `.env.local`
+- [ ] `HAZO_AUTH_GOOGLE_CLIENT_ID` and `HAZO_AUTH_GOOGLE_CLIENT_SECRET` set
+- [ ] OAuth migration applied (google_id and auth_providers columns added)
+- [ ] `[hazo_auth__oauth]` section configured in `hazo_auth_config.ini`
+- [ ] OAuth API routes created (`[...nextauth]`, `oauth/google/callback`, `set_password`)
+
+---
+
 ## Phase 4: API Routes
 
 Create API route files in your project. Each file re-exports handlers from hazo_auth.
@@ -955,6 +1118,45 @@ Visit each page and verify it loads:
 - [ ] `http://localhost:3000/hazo_auth/forgot_password` - Forgot password form displays
 - [ ] `http://localhost:3000/hazo_auth/my_settings` - Settings page displays (after login)
 - [ ] `http://localhost:3000/hazo_auth/profile_stamp_test` - ProfileStamp component examples display
+
+### Test 7: Google OAuth (if configured)
+
+If you completed Phase 3.2 (Google OAuth Setup):
+
+**Check login page:**
+1. Visit `http://localhost:3000/hazo_auth/login`
+2. Verify "Sign in with Google" button appears
+3. Verify divider with "or" text (if email/password is also enabled)
+
+**Test Google sign-in:**
+1. Click "Sign in with Google" button
+2. You should be redirected to Google's login page
+3. Sign in with your Google account
+4. You should be redirected back to your app and logged in
+5. Visit `/hazo_auth/my_settings`
+6. Verify "Connected Accounts" section shows Google as connected
+
+**Test Google-only user features:**
+1. If you signed in with Google (and didn't have a password account first):
+2. Visit `/hazo_auth/my_settings`
+3. Verify "Set Password" section appears
+4. Set a password
+5. Log out and try logging in with email/password (should work)
+
+**Test forgot password with Google-only user:**
+1. Create a new user with Google OAuth only
+2. Try visiting `/hazo_auth/forgot_password`
+3. Enter the Google user's email
+4. Should show message: "You registered with Google. Please sign in with Google instead."
+
+**OAuth Test Checklist:**
+- [ ] "Sign in with Google" button appears on login page
+- [ ] OAuth divider appears (if both auth methods enabled)
+- [ ] Google OAuth flow completes successfully
+- [ ] User is logged in after OAuth callback
+- [ ] Connected Accounts section shows Google in My Settings
+- [ ] Set Password feature works for Google-only users
+- [ ] Forgot password shows appropriate message for Google-only users
 
 ---
 

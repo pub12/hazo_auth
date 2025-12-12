@@ -12,6 +12,11 @@ export { StandaloneLayoutWrapper } from "./components/standalone_layout_wrapper"
 export { TwoColumnAuthLayout } from "./components/two_column_auth_layout";
 export { UnauthorizedGuard } from "./components/unauthorized_guard";
 export { VisualPanel } from "./components/visual_panel";
+export { GoogleIcon } from "./components/google_icon";
+export { GoogleSignInButton } from "./components/google_sign_in_button";
+export type { GoogleSignInButtonProps } from "./components/google_sign_in_button";
+export { OAuthDivider } from "./components/oauth_divider";
+export type { OAuthDividerProps } from "./components/oauth_divider";
 export { use_auth_status } from "./hooks/use_auth_status";
 export { use_hazo_auth, trigger_hazo_auth_refresh } from "./hooks/use_hazo_auth";
 export type { UseHazoAuthOptions, UseHazoAuthResult } from "./hooks/use_hazo_auth";

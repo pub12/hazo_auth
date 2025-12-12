@@ -7,6 +7,8 @@ import { Button } from "../../ui/button";
 import { EditableField } from "./components/editable_field";
 import { ProfilePictureDisplay } from "./components/profile_picture_display";
 import { ProfilePictureDialog } from "./components/profile_picture_dialog";
+import { ConnectedAccountsSection } from "./components/connected_accounts_section";
+import { SetPasswordSection } from "./components/set_password_section";
 import { UnauthorizedGuard } from "../shared/components/unauthorized_guard";
 import { use_my_settings } from "./hooks/use_my_settings";
 import {
@@ -214,8 +216,8 @@ export default function my_settings_layout({
           </div>
         </div>
 
-        {/* Password Section */}
-        {userFields.show_password_field && (
+        {/* Password Section - Only show if user has a password */}
+        {userFields.show_password_field && settings.hasPassword && (
           <div className="cls_my_settings_layout_password_section bg-white rounded-lg border border-[var(--hazo-border)] p-6">
             <h2 className="cls_my_settings_layout_section_heading text-lg font-semibold text-[var(--hazo-text-primary)] mb-4">
               {passwordLabel}
@@ -299,6 +301,22 @@ export default function my_settings_layout({
             </div>
           </div>
         )}
+
+        {/* Set Password Section - Only show for Google-only users without a password */}
+        {!settings.hasPassword && settings.googleConnected && (
+          <SetPasswordSection
+            passwordRequirements={password_requirements}
+            onPasswordSet={settings.refreshUserData}
+            parentLoading={settings.loading}
+          />
+        )}
+
+        {/* Connected Accounts Section */}
+        <ConnectedAccountsSection
+          googleConnected={settings.googleConnected || false}
+          email={settings.email}
+          loading={settings.loading}
+        />
 
         {/* Profile Picture Dialog */}
         <ProfilePictureDialog

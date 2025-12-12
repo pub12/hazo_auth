@@ -23,6 +23,8 @@ export type UseForgotPasswordFormResult = {
   isSubmitDisabled: boolean;
   isSubmitting: boolean;
   emailTouched: boolean;
+  /** True if the submitted email is for a Google-only account (no password set) */
+  isGoogleOnlyAccount: boolean;
   handleFieldChange: (fieldId: ForgotPasswordFieldId, value: string) => void;
   handleEmailBlur: () => void;
   handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
@@ -43,6 +45,7 @@ export const use_forgot_password_form = <TClient,>({
   const [errors, setErrors] = useState<ForgotPasswordFormErrors>({});
   const [emailTouched, setEmailTouched] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isGoogleOnlyAccount, setIsGoogleOnlyAccount] = useState<boolean>(false);
 
   const isSubmitDisabled = useMemo(() => {
     if (isSubmitting) {
@@ -113,6 +116,7 @@ export const use_forgot_password_form = <TClient,>({
 
       setIsSubmitting(true);
       setErrors({});
+      setIsGoogleOnlyAccount(false);
 
       try {
         const response = await fetch(`${apiBasePath}/forgot_password`, {
@@ -129,6 +133,12 @@ export const use_forgot_password_form = <TClient,>({
 
         if (!response.ok) {
           throw new Error(data.error || "Password reset request failed");
+        }
+
+        // Check if user is a Google-only account (no password set)
+        if (data.no_password_set) {
+          setIsGoogleOnlyAccount(true);
+          return;
         }
 
         // Show success notification
@@ -172,6 +182,7 @@ export const use_forgot_password_form = <TClient,>({
     isSubmitDisabled,
     isSubmitting,
     emailTouched,
+    isGoogleOnlyAccount,
     handleFieldChange,
     handleEmailBlur,
     handleSubmit,

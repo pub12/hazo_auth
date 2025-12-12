@@ -56,6 +56,10 @@ export function use_my_settings({ passwordRequirements, }) {
     const profileSource = authStatus.profile_source;
     const lastLogon = authStatus.last_logon;
     const loading = authStatus.loading;
+    // OAuth-related data
+    const authProviders = authStatus.auth_providers;
+    const hasPassword = authStatus.has_password;
+    const googleConnected = authStatus.google_connected;
     /**
      * Refreshes user data by triggering auth status refresh
      */
@@ -339,6 +343,11 @@ export function use_my_settings({ passwordRequirements, }) {
         profileSource,
         lastLogon,
         loading,
+        // OAuth-related data
+        authProviders,
+        hasPassword,
+        googleConnected,
+        // Password fields
         passwordFields,
         handlePasswordFieldChange,
         togglePasswordVisibility,

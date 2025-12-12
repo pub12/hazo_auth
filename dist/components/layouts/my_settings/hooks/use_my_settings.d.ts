@@ -19,6 +19,9 @@ export type UseMySettingsResult = {
     profileSource?: "upload" | "library" | "gravatar" | "custom";
     lastLogon?: string;
     loading: boolean;
+    authProviders?: string;
+    hasPassword?: boolean;
+    googleConnected?: boolean;
     passwordFields?: PasswordFields;
     handlePasswordFieldChange: (field: "currentPassword" | "newPassword" | "confirmPassword", value: string) => void;
     togglePasswordVisibility: (field: "currentPassword" | "newPassword" | "confirmPassword") => void;

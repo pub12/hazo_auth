@@ -16,6 +16,7 @@ export const use_forgot_password_form = ({ dataClient, }) => {
     const [errors, setErrors] = useState({});
     const [emailTouched, setEmailTouched] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isGoogleOnlyAccount, setIsGoogleOnlyAccount] = useState(false);
     const isSubmitDisabled = useMemo(() => {
         if (isSubmitting) {
             return true;
@@ -72,6 +73,7 @@ export const use_forgot_password_form = ({ dataClient, }) => {
         }
         setIsSubmitting(true);
         setErrors({});
+        setIsGoogleOnlyAccount(false);
         try {
             const response = await fetch(`${apiBasePath}/forgot_password`, {
                 method: "POST",
@@ -85,6 +87,11 @@ export const use_forgot_password_form = ({ dataClient, }) => {
             const data = await response.json();
             if (!response.ok) {
                 throw new Error(data.error || "Password reset request failed");
+            }
+            // Check if user is a Google-only account (no password set)
+            if (data.no_password_set) {
+                setIsGoogleOnlyAccount(true);
+                return;
             }
             // Show success notification
             toast.success("Password reset link sent", {
@@ -121,6 +128,7 @@ export const use_forgot_password_form = ({ dataClient, }) => {
         isSubmitDisabled,
         isSubmitting,
         emailTouched,
+        isGoogleOnlyAccount,
         handleFieldChange,
         handleEmailBlur,
         handleSubmit,

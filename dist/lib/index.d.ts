@@ -22,6 +22,8 @@ export { get_password_requirements_config } from "./password_requirements_config
 export { get_messages_config } from "./messages_config.server";
 export { get_user_fields_config } from "./user_fields_config.server";
 export { get_file_types_config } from "./file_types_config.server";
+export { get_oauth_config, is_google_oauth_enabled, is_email_password_enabled } from "./oauth_config.server";
+export type { OAuthConfig } from "./oauth_config.server";
 export { sanitize_error_for_user } from "./utils/error_sanitizer";
 export type { ErrorSanitizationOptions } from "./utils/error_sanitizer";
 export * from "./utils/api_route_helpers";

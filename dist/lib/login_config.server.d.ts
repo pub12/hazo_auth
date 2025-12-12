@@ -1,3 +1,4 @@
+import { type OAuthConfig } from "./oauth_config.server";
 import type { StaticImageData } from "next/image";
 export type LoginConfig = {
     redirectRoute?: string;
@@ -14,6 +15,8 @@ export type LoginConfig = {
     imageSrc: string | StaticImageData;
     imageAlt: string;
     imageBackgroundColor: string;
+    /** OAuth configuration */
+    oauth: OAuthConfig;
 };
 /**
  * Reads login layout configuration from hazo_auth_config.ini file
