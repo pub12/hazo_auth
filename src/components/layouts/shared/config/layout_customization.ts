@@ -1,4 +1,8 @@
 // file_description: provide reusable configuration helpers for layout components
+// section: imports
+import type { PasswordRequirementOptions } from "../../../../lib/utils/password_validator";
+export type { PasswordRequirementOptions };
+
 // section: types
 export type LayoutFieldId = string;
 
@@ -31,14 +35,6 @@ export type ButtonPaletteDefaults = {
 };
 
 export type ButtonPaletteOverrides = Partial<ButtonPaletteDefaults>;
-
-export type PasswordRequirementOptions = {
-  minimum_length: number;
-  require_uppercase: boolean;
-  require_lowercase: boolean;
-  require_number: boolean;
-  require_special: boolean;
-};
 
 export type PasswordRequirementOverrides = Partial<PasswordRequirementOptions>;
 

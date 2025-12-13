@@ -1,8 +1,13 @@
 // file_description: server-side password validation utility
-// section: imports
-import type { PasswordRequirementOptions } from "../../components/layouts/shared/config/layout_customization";
-
 // section: types
+export type PasswordRequirementOptions = {
+  minimum_length: number;
+  require_uppercase: boolean;
+  require_lowercase: boolean;
+  require_number: boolean;
+  require_special: boolean;
+};
+
 export type PasswordValidationResult = {
   valid: boolean;
   errors: string[];

@@ -1,4 +1,10 @@
-import type { PasswordRequirementOptions } from "../../components/layouts/shared/config/layout_customization";
+export type PasswordRequirementOptions = {
+    minimum_length: number;
+    require_uppercase: boolean;
+    require_lowercase: boolean;
+    require_number: boolean;
+    require_special: boolean;
+};
 export type PasswordValidationResult = {
     valid: boolean;
     errors: string[];

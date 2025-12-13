@@ -1,3 +1,5 @@
+import type { PasswordRequirementOptions } from "../../../../lib/utils/password_validator";
+export type { PasswordRequirementOptions };
 export type LayoutFieldId = string;
 export type LayoutFieldDefinition = {
     id: LayoutFieldId;
@@ -23,13 +25,6 @@ export type ButtonPaletteDefaults = {
     cancelText: string;
 };
 export type ButtonPaletteOverrides = Partial<ButtonPaletteDefaults>;
-export type PasswordRequirementOptions = {
-    minimum_length: number;
-    require_uppercase: boolean;
-    require_lowercase: boolean;
-    require_number: boolean;
-    require_special: boolean;
-};
 export type PasswordRequirementOverrides = Partial<PasswordRequirementOptions>;
 export declare const resolveFieldDefinitions: (baseDefinitions: LayoutFieldMap, overrides?: LayoutFieldMapOverrides) => LayoutFieldMap;
 export declare const resolveLabels: (defaults: LayoutLabelDefaults, overrides?: LayoutLabelOverrides) => LayoutLabelDefaults;

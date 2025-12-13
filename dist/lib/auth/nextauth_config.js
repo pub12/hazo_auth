@@ -43,12 +43,22 @@ export function get_nextauth_config() {
              * We redirect to our custom callback handler to create hazo_auth session
              */
             async redirect({ url, baseUrl }) {
-                // If the url is the callback URL, let it proceed
+                // Log for debugging
+                console.log("[NextAuth redirect callback]", { url, baseUrl });
+                // Always redirect to our custom callback after sign-in to set hazo_auth cookies
+                // The callbackUrl from signIn() comes through as `url`
+                if (url.includes("/api/hazo_auth/oauth/google/callback")) {
+                    return url;
+                }
+                // If URL is relative or same origin, allow it
+                if (url.startsWith("/")) {
+                    return `${baseUrl}${url}`;
+                }
                 if (url.startsWith(baseUrl)) {
                     return url;
                 }
-                // Default to base URL
-                return baseUrl;
+                // Default: redirect to our custom OAuth callback to set cookies
+                return `${baseUrl}/api/hazo_auth/oauth/google/callback`;
             },
             /**
              * Sign-in callback - handle user creation/linking for Google OAuth

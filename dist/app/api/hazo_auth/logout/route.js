@@ -32,6 +32,37 @@ export async function POST(request) {
             expires: new Date(0),
             path: "/",
         });
+        // Clear NextAuth session cookies (for OAuth users)
+        response.cookies.set("next-auth.session-token", "", {
+            expires: new Date(0),
+            path: "/",
+        });
+        response.cookies.set("next-auth.csrf-token", "", {
+            expires: new Date(0),
+            path: "/",
+        });
+        response.cookies.set("next-auth.callback-url", "", {
+            expires: new Date(0),
+            path: "/",
+        });
+        // Also clear secure cookie variants (used in production with HTTPS)
+        response.cookies.set("__Secure-next-auth.session-token", "", {
+            expires: new Date(0),
+            path: "/",
+        });
+        response.cookies.set("__Secure-next-auth.csrf-token", "", {
+            expires: new Date(0),
+            path: "/",
+        });
+        response.cookies.set("__Secure-next-auth.callback-url", "", {
+            expires: new Date(0),
+            path: "/",
+        });
+        // Host-prefixed variants (for some NextAuth configurations)
+        response.cookies.set("__Host-next-auth.csrf-token", "", {
+            expires: new Date(0),
+            path: "/",
+        });
         // Invalidate user cache
         if (user_id) {
             try {

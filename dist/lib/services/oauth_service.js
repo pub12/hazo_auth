@@ -86,7 +86,7 @@ export async function handle_google_oauth_login(adapter, data) {
             // Update profile picture if not set and Google provides one
             if (!user.profile_picture_url && profile_picture_url) {
                 update_data.profile_picture_url = profile_picture_url;
-                update_data.profile_source = "google";
+                update_data.profile_source = "custom"; // Use 'custom' for external URLs (Google profile pics)
             }
             await users_service.updateById(user.id, update_data);
             logger.info("oauth_service_google_linked_to_existing", {
@@ -125,7 +125,7 @@ export async function handle_google_oauth_login(adapter, data) {
         }
         if (profile_picture_url) {
             insert_data.profile_picture_url = profile_picture_url;
-            insert_data.profile_source = "google";
+            insert_data.profile_source = "custom"; // Use 'custom' for external URLs (Google profile pics)
         }
         const inserted_users = await users_service.insert(insert_data);
         if (!Array.isArray(inserted_users) || inserted_users.length === 0) {

@@ -28,21 +28,15 @@ export function GoogleSignInButton({ label = "Continue with Google", onClick, di
             setIsLoading(true);
             try {
                 // Use next-auth/react signIn function for proper OAuth flow
-                // redirect: false prevents automatic redirect so we can handle errors
-                const result = await signIn("google", {
+                // redirect: true (default) lets NextAuth handle the full flow
+                // including the redirect callback which goes to our custom callback URL
+                console.log("[GoogleSignInButton] Starting Google OAuth with callbackUrl:", callbackUrl);
+                await signIn("google", {
                     callbackUrl,
-                    redirect: false,
+                    redirect: true,
                 });
-                console.log("[GoogleSignInButton] signIn result:", result);
-                if (result === null || result === void 0 ? void 0 : result.error) {
-                    console.error("[GoogleSignInButton] Sign-in error:", result.error);
-                    alert(`Google Sign-In Error: ${result.error}`);
-                    setIsLoading(false);
-                }
-                else if (result === null || result === void 0 ? void 0 : result.url) {
-                    // Redirect to the OAuth URL
-                    window.location.href = result.url;
-                }
+                // Note: redirect: true means this code won't execute after success
+                // as the browser will be redirected
             }
             catch (error) {
                 console.error("[GoogleSignInButton] Sign-in exception:", error);

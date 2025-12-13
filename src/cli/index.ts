@@ -6,6 +6,7 @@
 import { run_validation } from "./validate.js";
 import { generate_routes, type GenerateOptions } from "./generate.js";
 import { handle_init } from "./init.js";
+import { handle_init_users, show_init_users_help } from "./init_users.js";
 
 // section: constants
 const VERSION = "1.6.0";
@@ -17,6 +18,7 @@ Usage: hazo_auth <command> [options]
 
 Commands:
   init               Initialize hazo_auth in your project (creates directories, copies config)
+  init-users         Initialize permissions, roles, and super user from config
   validate           Check your hazo_auth setup and configuration
   generate-routes    Generate API route files and pages in your project
 
@@ -26,6 +28,7 @@ Options:
 
 Examples:
   npx hazo_auth init
+  npx hazo_auth init-users
   npx hazo_auth validate
   npx hazo_auth generate-routes
   npx hazo_auth generate-routes --pages
@@ -150,6 +153,22 @@ Actions:
       }
       handle_init();
       break;
+
+    case "init-users": {
+      if (help) {
+        show_init_users_help();
+        return;
+      }
+      // Parse --email option
+      let email: string | undefined;
+      for (const arg of args) {
+        if (arg.startsWith("--email=")) {
+          email = arg.replace("--email=", "");
+        }
+      }
+      await handle_init_users({ email });
+      break;
+    }
 
     case "validate":
       if (help) {
