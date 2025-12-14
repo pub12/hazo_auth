@@ -20,6 +20,64 @@ function copyDir(src: string, dest: string) {
   }
 }
 
+/**
+ * Add .js extensions to local imports in TypeScript files for Node.js ESM compatibility.
+ * This transforms imports like:
+ *   import { foo } from "./bar"
+ *   import { foo } from "../baz/qux"
+ * To:
+ *   import { foo } from "./bar.js"
+ *   import { foo } from "../baz/qux.js"
+ *
+ * Only transforms local relative imports (starting with ./ or ../)
+ * Does not transform external package imports or imports that already have extensions
+ */
+function addJsExtensionsToFile(filePath: string) {
+  const content = fs.readFileSync(filePath, 'utf-8');
+
+  // Match import statements with relative paths that don't have extensions
+  // Handles: import { x } from "./path"  and  import x from "../path"
+  // Also handles: export { x } from "./path"
+  const importRegex = /((?:import|export)\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?["'])(\.\.?\/[^"']+?)(["'])/g;
+
+  const transformed = content.replace(importRegex, (match, prefix, importPath, suffix) => {
+    // Skip if already has an extension
+    if (/\.(js|ts|tsx|json|css|scss)$/.test(importPath)) {
+      return match;
+    }
+    // Add .js extension
+    return `${prefix}${importPath}.js${suffix}`;
+  });
+
+  if (content !== transformed) {
+    fs.writeFileSync(filePath, transformed);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Recursively process all .ts files in a directory to add .js extensions to imports
+ */
+function addJsExtensionsToDir(dir: string) {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  let filesProcessed = 0;
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      filesProcessed += addJsExtensionsToDir(fullPath);
+    } else if (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) {
+      if (addJsExtensionsToFile(fullPath)) {
+        filesProcessed++;
+      }
+    }
+  }
+
+  return filesProcessed;
+}
+
 const assetsDir = path.join(process.cwd(), 'src/assets');
 const distAssetsDir = path.join(process.cwd(), 'dist/assets');
 
@@ -86,6 +144,26 @@ if (fs.existsSync(assetsSrcDir2)) {
 } else {
     console.log('No assets directory found to copy to cli-src.');
 }
+
+// Copy server/types (required by server/logging/logger_service.ts)
+const typesSrcDir = path.join(srcDir, 'server', 'types');
+const typesDestDir = path.join(cliSrcDestDir, 'server', 'types');
+
+if (fs.existsSync(typesSrcDir)) {
+    console.log(`Copying server/types files from ${typesSrcDir} to ${typesDestDir}...`);
+    copyDir(typesSrcDir, typesDestDir);
+    console.log('Server/types files copied successfully.');
+} else {
+    console.log('No server/types directory found to copy.');
+}
+
+// Post-process cli-src: Add .js extensions to local imports for Node.js ESM compatibility
+// This is required because Node.js ESM requires explicit file extensions in imports,
+// but Next.js/Turbopack (used for the demo app) does not want them in TypeScript files.
+// By adding them after copying, we maintain compatibility with both systems.
+console.log('Adding .js extensions to local imports in cli-src for Node.js ESM compatibility...');
+const filesProcessed = addJsExtensionsToDir(cliSrcDestDir);
+console.log(`Processed ${filesProcessed} files with import transformations.`);
 
 
 
