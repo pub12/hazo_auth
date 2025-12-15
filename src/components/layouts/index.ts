@@ -21,6 +21,9 @@ export type { MySettingsLayoutProps } from "./my_settings/index";
 export { UserManagementLayout } from "./user_management/index";
 export type { UserManagementLayoutProps } from "./user_management/index";
 
+export { default as DevLockLayout } from "./dev_lock/index";
+export type { DevLockLayoutProps } from "./dev_lock/index";
+
 // section: shared_exports
 export * from "./shared/index";
 

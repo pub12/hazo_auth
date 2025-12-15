@@ -588,6 +588,117 @@ New dependency added to `package.json`:
 12. `src/components/layouts/my_settings/components/connected_accounts_section.tsx` - OAuth status
 13. `src/components/layouts/my_settings/components/set_password_section.tsx` - Set password UI
 
+## Development Lock Screen
+
+### Overview
+
+The dev lock feature provides a password-protected lock screen that blocks access to the entire application during development/testing. When enabled, users must enter a password to access any page or API route.
+
+**Key Features:**
+- Blocks ALL routes (pages redirect to lock screen, APIs return 503)
+- Zero performance impact when disabled (fast env var check in middleware)
+- Persistent cookie session (configurable duration, default 7 days)
+- Customizable UI (background color, logo, text)
+- Fails fast if misconfigured (app won't start without password when enabled)
+
+### Configuration
+
+**Environment Variables (Required when enabled):**
+```bash
+# Enable the dev lock in middleware (fast-path check)
+HAZO_AUTH_DEV_LOCK_ENABLED=true
+
+# The password users must enter to unlock
+HAZO_AUTH_DEV_LOCK_PASSWORD=your_secure_password_here
+```
+
+**INI Configuration (`hazo_auth_config.ini`):**
+```ini
+[hazo_auth__dev_lock]
+# Enable in config (also requires env var)
+enable = true
+
+# Session duration in days
+session_duration_days = 7
+
+# UI Customization
+background_color = #000000
+logo_path = /logo.png
+logo_width = 120
+logo_height = 120
+application_name = My Application
+limited_access_text = Limited Access
+password_placeholder = Enter access password
+submit_button_text = Unlock
+error_message = Incorrect password
+text_color = #ffffff
+accent_color = #3b82f6
+```
+
+### How It Works
+
+1. **Startup Validation** (`instrumentation-node.ts`):
+   - If `HAZO_AUTH_DEV_LOCK_ENABLED=true` but `HAZO_AUTH_DEV_LOCK_PASSWORD` is not set, app fails to start
+   - Warns if password is less than 8 characters
+
+2. **Middleware Check** (`src/middleware.ts`):
+   - First check in middleware (before auth check)
+   - Only runs if `HAZO_AUTH_DEV_LOCK_ENABLED === "true"`
+   - Validates signed cookie using HMAC-SHA256
+   - Page routes: Redirect to `/hazo_auth/dev_lock`
+   - API routes: Return 503 with JSON error
+
+3. **Lock Screen** (`/hazo_auth/dev_lock`):
+   - Black background with logo, app name, "Limited Access" text
+   - Single password input
+   - Posts to `/api/hazo_auth/dev_lock` to validate
+
+4. **Unlock** (`/api/hazo_auth/dev_lock`):
+   - Validates password using constant-time comparison
+   - Creates signed cookie with configurable expiry
+   - Redirects to home page on success
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `src/lib/config/default_config.ts` | DEFAULT_DEV_LOCK defaults |
+| `src/lib/dev_lock_config.server.ts` | Config loader from INI file |
+| `src/lib/auth/dev_lock_validator.edge.ts` | Edge-compatible cookie validation (HMAC-SHA256) |
+| `instrumentation-node.ts` | Startup validation |
+| `src/middleware.ts` | Dev lock check (first in middleware chain) |
+| `src/components/layouts/dev_lock/index.tsx` | DevLockLayout component |
+| `src/app/api/hazo_auth/dev_lock/route.ts` | Unlock API endpoint |
+| `src/app/hazo_auth/dev_lock/page.tsx` | Demo lock screen page |
+| `src/page_components/dev_lock.tsx` | Zero-config page component |
+
+### Usage in Consuming Apps
+
+```typescript
+// Import the layout for customization
+import { DevLockLayout } from "hazo_auth/components/layouts/dev_lock";
+
+// Or use the zero-config page component
+import { DevLockPage } from "hazo_auth/page_components/dev_lock";
+
+// In your app's /dev_lock/page.tsx
+export default function LockPage() {
+  return (
+    <DevLockPage
+      application_name="My App"
+      background_color="#1a1a2e"
+    />
+  );
+}
+```
+
+### Security Notes
+
+- Password is validated using constant-time comparison (prevents timing attacks)
+- Cookie is signed with HMAC-SHA256 using the password as key
+- Cookie format: `timestamp|expiry|signature`
+- HttpOnly, Secure (in production), SameSite=Lax
+
 ## Common Issues
 
 ### "Module not found: Can't resolve 'fs'"

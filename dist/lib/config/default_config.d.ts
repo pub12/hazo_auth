@@ -123,6 +123,34 @@ export declare const DEFAULT_OAUTH: {
     /** Text displayed on the divider between OAuth and email/password form */
     readonly oauth_divider_text: "or continue with email";
 };
+export declare const DEFAULT_DEV_LOCK: {
+    /** Enable the development lock screen (also requires HAZO_AUTH_DEV_LOCK_ENABLED env var) */
+    readonly enable: false;
+    /** Session duration in days */
+    readonly session_duration_days: 7;
+    /** Background color (default: black) */
+    readonly background_color: "#000000";
+    /** Logo image path (default: /logo.png in public folder) */
+    readonly logo_path: "/logo.png";
+    /** Logo width in pixels */
+    readonly logo_width: 120;
+    /** Logo height in pixels */
+    readonly logo_height: 120;
+    /** Application name displayed below logo */
+    readonly application_name: "";
+    /** Limited access text displayed with lock icon */
+    readonly limited_access_text: "Limited Access";
+    /** Password input placeholder text */
+    readonly password_placeholder: "Enter access password";
+    /** Submit button text */
+    readonly submit_button_text: "Unlock";
+    /** Error message for incorrect password */
+    readonly error_message: "Incorrect password";
+    /** Text color for labels (default: white) */
+    readonly text_color: "#ffffff";
+    /** Accent color for button (default: blue) */
+    readonly accent_color: "#3b82f6";
+};
 /**
  * All default configuration values combined in one object
  * This makes it easy to see all defaults at a glance and export them as needed
@@ -252,6 +280,34 @@ export declare const HAZO_AUTH_DEFAULTS: {
         readonly google_button_text: "Continue with Google";
         /** Text displayed on the divider between OAuth and email/password form */
         readonly oauth_divider_text: "or continue with email";
+    };
+    readonly devLock: {
+        /** Enable the development lock screen (also requires HAZO_AUTH_DEV_LOCK_ENABLED env var) */
+        readonly enable: false;
+        /** Session duration in days */
+        readonly session_duration_days: 7;
+        /** Background color (default: black) */
+        readonly background_color: "#000000";
+        /** Logo image path (default: /logo.png in public folder) */
+        readonly logo_path: "/logo.png";
+        /** Logo width in pixels */
+        readonly logo_width: 120;
+        /** Logo height in pixels */
+        readonly logo_height: 120;
+        /** Application name displayed below logo */
+        readonly application_name: "";
+        /** Limited access text displayed with lock icon */
+        readonly limited_access_text: "Limited Access";
+        /** Password input placeholder text */
+        readonly password_placeholder: "Enter access password";
+        /** Submit button text */
+        readonly submit_button_text: "Unlock";
+        /** Error message for incorrect password */
+        readonly error_message: "Incorrect password";
+        /** Text color for labels (default: white) */
+        readonly text_color: "#ffffff";
+        /** Accent color for button (default: blue) */
+        readonly accent_color: "#3b82f6";
     };
 };
 /**

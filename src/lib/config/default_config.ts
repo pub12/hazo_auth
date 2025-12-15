@@ -165,6 +165,36 @@ export const DEFAULT_OAUTH = {
   oauth_divider_text: "or continue with email",
 } as const;
 
+// section: dev_lock
+export const DEFAULT_DEV_LOCK = {
+  /** Enable the development lock screen (also requires HAZO_AUTH_DEV_LOCK_ENABLED env var) */
+  enable: false,
+  /** Session duration in days */
+  session_duration_days: 7,
+  /** Background color (default: black) */
+  background_color: "#000000",
+  /** Logo image path (default: /logo.png in public folder) */
+  logo_path: "/logo.png",
+  /** Logo width in pixels */
+  logo_width: 120,
+  /** Logo height in pixels */
+  logo_height: 120,
+  /** Application name displayed below logo */
+  application_name: "",
+  /** Limited access text displayed with lock icon */
+  limited_access_text: "Limited Access",
+  /** Password input placeholder text */
+  password_placeholder: "Enter access password",
+  /** Submit button text */
+  submit_button_text: "Unlock",
+  /** Error message for incorrect password */
+  error_message: "Incorrect password",
+  /** Text color for labels (default: white) */
+  text_color: "#ffffff",
+  /** Accent color for button (default: blue) */
+  accent_color: "#3b82f6",
+} as const;
+
 // section: combined_defaults
 /**
  * All default configuration values combined in one object
@@ -190,6 +220,7 @@ export const HAZO_AUTH_DEFAULTS = {
   profilePicMenu: DEFAULT_PROFILE_PIC_MENU,
   apiPaths: DEFAULT_API_PATHS,
   oauth: DEFAULT_OAUTH,
+  devLock: DEFAULT_DEV_LOCK,
 } as const;
 
 // section: types

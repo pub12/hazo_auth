@@ -12,5 +12,7 @@ export { default as MySettingsLayout } from "./my_settings/index";
 export type { MySettingsLayoutProps } from "./my_settings/index";
 export { UserManagementLayout } from "./user_management/index";
 export type { UserManagementLayoutProps } from "./user_management/index";
+export { default as DevLockLayout } from "./dev_lock/index";
+export type { DevLockLayoutProps } from "./dev_lock/index";
 export * from "./shared/index";
 //# sourceMappingURL=index.d.ts.map

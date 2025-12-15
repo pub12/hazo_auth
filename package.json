@@ -44,6 +44,10 @@
       "types": "./dist/components/layouts/user_management/index.d.ts",
       "import": "./dist/components/layouts/user_management/index.js"
     },
+    "./components/layouts/dev_lock": {
+      "types": "./dist/components/layouts/dev_lock/index.d.ts",
+      "import": "./dist/components/layouts/dev_lock/index.js"
+    },
     "./components/layouts/shared": {
       "types": "./dist/components/layouts/shared/index.d.ts",
       "import": "./dist/components/layouts/shared/index.js"
@@ -115,6 +119,10 @@
     "./page_components/verify_email": {
       "types": "./dist/page_components/verify_email.d.ts",
       "import": "./dist/page_components/verify_email.js"
+    },
+    "./page_components/dev_lock": {
+      "types": "./dist/page_components/dev_lock.d.ts",
+      "import": "./dist/page_components/dev_lock.js"
     }
   },
   "files": [

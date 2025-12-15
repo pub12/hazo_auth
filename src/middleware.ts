@@ -4,6 +4,7 @@
 // section: imports
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { validate_dev_lock_cookie } from "./lib/auth/dev_lock_validator.edge";
 
 // section: helpers
 /**
@@ -23,15 +24,68 @@ function has_auth_cookies(request: NextRequest): boolean {
 /**
  * Next.js middleware function that runs on every request
  * Protects routes by checking for authentication cookies
- * 
+ *
  * Note: This middleware runs in Edge Runtime and cannot access Node.js APIs (like SQLite)
  * It only checks if cookies exist - actual database validation happens in API routes
- * 
+ *
  * Public routes (login, register, etc.) are allowed without authentication
  * Protected routes require authentication cookies and redirect to login if not present
  */
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  // ============================================================
+  // DEV LOCK CHECK (FIRST - zero overhead when disabled)
+  // ============================================================
+  // Fast-path: Check env var directly to avoid any overhead when disabled
+  if (process.env.HAZO_AUTH_DEV_LOCK_ENABLED === "true") {
+    // Allow dev lock routes through (needed to show lock screen and handle unlock)
+    if (
+      pathname === "/hazo_auth/dev_lock" ||
+      pathname === "/api/hazo_auth/dev_lock"
+    ) {
+      return NextResponse.next();
+    }
+
+    // Allow static assets (needed for lock screen to render properly)
+    if (
+      pathname.startsWith("/_next/") ||
+      pathname.startsWith("/favicon") ||
+      pathname.endsWith(".png") ||
+      pathname.endsWith(".jpg") ||
+      pathname.endsWith(".svg") ||
+      pathname.endsWith(".ico")
+    ) {
+      return NextResponse.next();
+    }
+
+    // Validate dev lock cookie
+    const dev_lock_result = await validate_dev_lock_cookie(request);
+
+    if (!dev_lock_result.valid) {
+      // Not unlocked - block access
+      if (pathname.startsWith("/api/")) {
+        // API route - return 503 Service Unavailable with JSON
+        return new NextResponse(
+          JSON.stringify({
+            error: "Service temporarily unavailable",
+            code: "DEV_LOCK_ACTIVE",
+            message: "Application is locked. Please unlock via /hazo_auth/dev_lock",
+          }),
+          {
+            status: 503,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      } else {
+        // Page route - redirect to dev lock page
+        return NextResponse.redirect(new URL("/hazo_auth/dev_lock", request.url));
+      }
+    }
+  }
+  // ============================================================
+  // END DEV LOCK CHECK
+  // ============================================================
 
   // Public routes that don't require authentication
   const public_routes = [
