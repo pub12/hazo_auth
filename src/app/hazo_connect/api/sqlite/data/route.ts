@@ -1,4 +1,3 @@
-// file_description: API route to manage SQLite table data (CRUD operations) for admin UI
 import { NextRequest, NextResponse } from "next/server"
 import {
   getSqliteAdminService,
@@ -6,7 +5,7 @@ import {
   type SqliteFilterOperator,
   type SqliteWhereFilter
 } from "hazo_connect/server"
-import { get_hazo_connect_instance } from "../../../../../lib/hazo_connect_instance.server"
+import { getHazoConnectSingleton } from "hazo_connect/nextjs/setup"
 
 export const dynamic = "force-dynamic"
 const allowedOperators: SqliteFilterOperator[] = [
@@ -21,19 +20,6 @@ const allowedOperators: SqliteFilterOperator[] = [
   "is"
 ]
 
-// Helper function to ensure admin service is initialized
-function ensureAdminServiceInitialized() {
-  // Get singleton hazo_connect instance (initializes admin service if needed)
-  get_hazo_connect_instance();
-  
-  try {
-    return getSqliteAdminService();
-  } catch (serviceError) {
-    const errorMessage = serviceError instanceof Error ? serviceError.message : "Unknown error";
-    throw new Error(`SQLite Admin Service not available: ${errorMessage}. Make sure enable_admin_ui is set to true in hazo_auth_config.ini.`);
-  }
-}
-
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
   const table = url.searchParams.get("table")
@@ -45,7 +31,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const service = ensureAdminServiceInitialized()
+    // Initialize the singleton to ensure the adapter is registered with the admin service
+    getHazoConnectSingleton()
+    const service = getSqliteAdminService()
     const options = parseRowQueryOptions(url.searchParams)
     const page = await service.getTableData(table, options)
     return NextResponse.json({ data: page.rows, total: page.total })
@@ -56,7 +44,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const service = ensureAdminServiceInitialized()
+    // Initialize the singleton to ensure the adapter is registered with the admin service
+    getHazoConnectSingleton()
+    const service = getSqliteAdminService()
     const payload = await request.json()
     const table = payload?.table
     const data = payload?.data
@@ -77,7 +67,9 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const service = ensureAdminServiceInitialized()
+    // Initialize the singleton to ensure the adapter is registered with the admin service
+    getHazoConnectSingleton()
+    const service = getSqliteAdminService()
     const payload = await request.json()
     const table = payload?.table
     const data = payload?.data
@@ -109,7 +101,9 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const service = ensureAdminServiceInitialized()
+    // Initialize the singleton to ensure the adapter is registered with the admin service
+    getHazoConnectSingleton()
+    const service = getSqliteAdminService()
     const payload = await request.json()
     const table = payload?.table
     const criteria = payload?.criteria

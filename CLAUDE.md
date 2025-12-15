@@ -106,6 +106,7 @@ All configuration comes from `hazo_auth_config.ini` in the project root (where `
 - **RBAC Setup:** `[hazo_auth__user_management]`, `[hazo_auth__initial_setup]`
 - **Email Settings:** `[hazo_auth__email]` (templates, from_email, base_url)
 - **Profile Pictures:** `[hazo_auth__profile_picture]` (upload path, priorities)
+- **Multi-Tenancy:** `[hazo_auth__multi_tenancy]` (enable, cache settings, user limits)
 
 Configuration is loaded via `hazo_config` package and cached at runtime.
 
@@ -128,6 +129,10 @@ HRBAC tables (optional, for Hierarchical Role-Based Access Control):
 - `hazo_user_scopes` - User-scope assignments
 - `hazo_scope_labels` - Custom labels for scope levels per organization
 - `hazo_enum_scope_types` - Enum for scope type validation
+
+Multi-tenancy tables (optional, for organization hierarchy):
+- `hazo_org` - Organization definitions (id, name, parent_org_id, root_org_id, user_limit, active)
+- Users reference orgs via `hazo_users.org_id` and `hazo_users.root_org_id`
 
 **Migration Pattern:**
 ```bash
@@ -185,6 +190,88 @@ if (result.scope_ok) {
 - `src/lib/services/user_scope_service.ts` - User scope assignments and access checking
 - `src/lib/auth/scope_cache.ts` - LRU cache for scope lookups
 
+### Multi-Tenancy (Organization Hierarchy)
+
+Multi-tenancy enables hierarchical organization structures for company-wide access control. Organizations can have parent-child relationships, forming a tree structure.
+
+**Architecture:**
+- Uses existing `hazo_org` table with `parent_org_id` and `root_org_id` fields
+- User limit enforcement at root organization level only
+- Soft delete pattern (sets `active = false`, never deletes)
+- LRU cache for org lookups (configurable TTL and size)
+- `hazo_get_auth` returns org info when multi-tenancy is enabled
+
+**Configuration:**
+```ini
+[hazo_auth__multi_tenancy]
+enable_multi_tenancy = true
+org_cache_ttl_minutes = 15
+org_cache_max_entries = 1000
+default_user_limit = 0
+```
+
+**Database Schema:**
+The `hazo_org` table includes:
+- `id` - UUID primary key
+- `name` - Organization name
+- `parent_org_id` - Reference to parent org (NULL for root)
+- `root_org_id` - Reference to root org for quick tree lookups
+- `user_limit` - Maximum users (0 = unlimited, enforced at root level)
+- `active` - Soft delete flag
+- `created_at`, `created_by`, `changed_at`, `changed_by` - Audit fields
+
+**Migration:**
+```bash
+npm run migrate migrations/006_multi_tenancy_org_support.sql
+```
+
+**Using hazo_get_auth with multi-tenancy:**
+When multi-tenancy is enabled, `hazo_get_auth` returns additional org fields:
+```typescript
+const result = await hazo_get_auth(request, {
+  required_permissions: ['view_data'],
+});
+
+if (result.authenticated) {
+  // User org info available:
+  result.user.org_id;           // User's direct org ID
+  result.user.org_name;         // User's direct org name
+  result.user.parent_org_id;    // Parent org ID (if any)
+  result.user.parent_org_name;  // Parent org name
+  result.user.root_org_id;      // Root org ID
+  result.user.root_org_name;    // Root org name
+}
+```
+
+**Permissions:**
+- `hazo_perm_org_management` - CRUD operations on organizations
+- `hazo_org_global_admin` - View/manage all organizations across the system
+
+**API Endpoints:**
+- `GET /api/hazo_auth/org_management/orgs` - List organizations (with `action=tree` for hierarchy)
+- `POST /api/hazo_auth/org_management/orgs` - Create organization
+- `PATCH /api/hazo_auth/org_management/orgs` - Update organization
+- `DELETE /api/hazo_auth/org_management/orgs?org_id=...` - Soft delete (deactivate)
+
+**Services:**
+- `src/lib/services/org_service.ts` - CRUD operations for organizations
+- `src/lib/auth/org_cache.ts` - LRU cache for org lookups
+- `src/lib/multi_tenancy_config.server.ts` - Configuration loader
+
+**Components:**
+- `OrgHierarchyTab` - TreeView component for org management (in user_management)
+- `OrgManagementLayout` - Standalone layout for org management
+- `OrgManagementPage` - Zero-config page component
+
+**Imports:**
+```typescript
+// Standalone layout
+import { OrgManagementLayout } from "hazo_auth/components/layouts/org_management";
+
+// Page component
+import { OrgManagementPage } from "hazo_auth/page_components/org_management";
+```
+
 ### Component Architecture
 
 Components follow a layered structure:
@@ -236,8 +323,9 @@ Components follow a layered structure:
 2. Visit demo pages at `/hazo_auth/login`, `/hazo_auth/register`, etc.
 3. Use SQLite admin UI (if enabled): `/hazo_connect/sqlite_admin`
 4. Test ProfileStamp component: `/hazo_auth/profile_stamp_test`
-5. Test with Storybook: `npm run storybook`
-6. Run unit tests: `npm test`
+5. Test organization management: `/hazo_auth/org_management`
+6. Test with Storybook: `npm run storybook`
+7. Run unit tests: `npm test`
 
 ### Working with hazo_connect
 

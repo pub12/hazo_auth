@@ -7,6 +7,12 @@ export type HazoAuthUser = {
     email_address: string;
     is_active: boolean;
     profile_picture_url: string | null;
+    org_id?: string | null;
+    org_name?: string | null;
+    parent_org_id?: string | null;
+    parent_org_name?: string | null;
+    root_org_id?: string | null;
+    root_org_name?: string | null;
 };
 /**
  * Scope access information returned when HRBAC scope checking is used

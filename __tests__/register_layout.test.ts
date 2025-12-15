@@ -1,5 +1,6 @@
 // file_description: unit tests for the register_layout component covering validation logic
 // section: imports
+import { describe, it, expect } from "@jest/globals";
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import RegisterLayout from "@/components/layouts/register";

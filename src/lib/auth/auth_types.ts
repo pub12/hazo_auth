@@ -10,6 +10,13 @@ export type HazoAuthUser = {
   email_address: string;
   is_active: boolean;
   profile_picture_url: string | null;
+  // Multi-tenancy fields (only populated when multi-tenancy is enabled)
+  org_id?: string | null;
+  org_name?: string | null;
+  parent_org_id?: string | null;
+  parent_org_name?: string | null;
+  root_org_id?: string | null;
+  root_org_name?: string | null;
 };
 
 /**

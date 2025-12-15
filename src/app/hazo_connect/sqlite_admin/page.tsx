@@ -1,38 +1,16 @@
-// file_description: SQLite admin UI page that displays the admin client component
-// Note: This page fetches data from API routes instead of directly calling admin service
-// to avoid SQLite/WASM loading issues in React Server Component context
-import { headers } from "next/headers"
-import type { TableSummary } from "hazo_connect/ui"
-import SqliteAdminClient from "./sqlite-admin-client"
+import { getSqliteAdminService } from "hazo_connect/server"
+import { getHazoConnectSingleton } from "hazo_connect/nextjs/setup"
+import { SqliteAdminClient } from "hazo_connect/ui"
 
 export const dynamic = "force-dynamic"
 
 export default async function SqliteAdminPage() {
-  // Fetch initial tables from API route to avoid SQLite/WASM in RSC context
-  // API routes run in proper Node.js context where SQLite can work
+  // Initialize the singleton to ensure the adapter is registered with the admin service
+  getHazoConnectSingleton()
+  const service = getSqliteAdminService()
+ 
   try {
-    // Get the host from request headers to construct absolute URL
-    const headersList = await headers()
-    const host = headersList.get("host") || "localhost:3000"
-    const protocol = process.env.NODE_ENV === "production" ? "https" : "http"
-    const baseUrl = `${protocol}://${host}`
-    
-    // Use Next.js internal fetch with absolute URL
-    const response = await fetch(
-      `${baseUrl}/hazo_connect/api/sqlite/tables`,
-      { 
-        cache: "no-store"
-      }
-    );
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Failed to fetch tables: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    const tables: TableSummary[] = data.data || [];
-    
+    const tables = await service.listTables()
     return <SqliteAdminClient initialTables={tables} />
   } catch (error) {
     const message =

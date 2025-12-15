@@ -15,6 +15,8 @@ import { validate_session_token } from "../services/session_token_service";
 import { is_hrbac_enabled, get_scope_hierarchy_config } from "../scope_hierarchy_config.server";
 import { check_user_scope_access, get_user_scopes, type UserScope } from "../services/user_scope_service";
 import { is_valid_scope_level, type ScopeLevel } from "../services/scope_service";
+import { is_multi_tenancy_enabled, get_multi_tenancy_config } from "../multi_tenancy_config.server";
+import { get_org_cache, type OrgCacheEntry } from "./org_cache";
 
 // section: helpers
 
@@ -70,7 +72,7 @@ async function fetch_user_data_from_db(user_id: string): Promise<{
     throw new Error("User is inactive");
   }
 
-  // Build user object
+  // Build user object with base fields
   const user: HazoAuthUser = {
     id: user_db.id as string,
     name: (user_db.name as string | null) || null,
@@ -79,6 +81,75 @@ async function fetch_user_data_from_db(user_id: string): Promise<{
     profile_picture_url:
       (user_db.profile_picture_url as string | null) || null,
   };
+
+  // Fetch org info if multi-tenancy is enabled and user has org_id
+  if (is_multi_tenancy_enabled() && user_db.org_id) {
+    const mt_config = get_multi_tenancy_config();
+    const org_cache = get_org_cache(
+      mt_config.org_cache_max_entries,
+      mt_config.org_cache_ttl_minutes,
+    );
+
+    const user_org_id = user_db.org_id as string;
+
+    // Check org cache first
+    let cached_org = org_cache.get(user_org_id);
+
+    if (!cached_org) {
+      // Fetch org info from database
+      const org_service = createCrudService(hazoConnect, "hazo_org");
+      const orgs = await org_service.findBy({ id: user_org_id });
+
+      if (Array.isArray(orgs) && orgs.length > 0) {
+        const org = orgs[0];
+        const org_entry: OrgCacheEntry = {
+          org_id: org.id as string,
+          org_name: org.name as string,
+          parent_org_id: (org.parent_org_id as string | null) || null,
+          parent_org_name: null,
+          root_org_id: (org.root_org_id as string | null) || null,
+          root_org_name: null,
+        };
+
+        // Fetch parent org name if exists
+        if (org_entry.parent_org_id) {
+          const parent_orgs = await org_service.findBy({ id: org_entry.parent_org_id });
+          if (Array.isArray(parent_orgs) && parent_orgs.length > 0) {
+            org_entry.parent_org_name = parent_orgs[0].name as string;
+          }
+        }
+
+        // Fetch root org name if exists
+        if (org_entry.root_org_id) {
+          const root_orgs = await org_service.findBy({ id: org_entry.root_org_id });
+          if (Array.isArray(root_orgs) && root_orgs.length > 0) {
+            org_entry.root_org_name = root_orgs[0].name as string;
+          }
+        } else if (user_db.root_org_id) {
+          // Fallback to user's root_org_id if org doesn't have one
+          const root_orgs = await org_service.findBy({ id: user_db.root_org_id });
+          if (Array.isArray(root_orgs) && root_orgs.length > 0) {
+            org_entry.root_org_id = root_orgs[0].id as string;
+            org_entry.root_org_name = root_orgs[0].name as string;
+          }
+        }
+
+        // Cache the org info
+        org_cache.set(user_org_id, org_entry);
+        cached_org = org_entry;
+      }
+    }
+
+    // Add org info to user object
+    if (cached_org) {
+      user.org_id = cached_org.org_id;
+      user.org_name = cached_org.org_name;
+      user.parent_org_id = cached_org.parent_org_id;
+      user.parent_org_name = cached_org.parent_org_name;
+      user.root_org_id = cached_org.root_org_id;
+      user.root_org_name = cached_org.root_org_name;
+    }
+  }
 
   // Fetch user roles
   const user_roles = await user_roles_service.findBy({ user_id });

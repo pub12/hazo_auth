@@ -40,6 +40,7 @@ import { RolesMatrix } from "./components/roles_matrix";
 import { ScopeHierarchyTab } from "./components/scope_hierarchy_tab";
 import { ScopeLabelsTab } from "./components/scope_labels_tab";
 import { UserScopesTab } from "./components/user_scopes_tab";
+import { OrgHierarchyTab } from "./components/org_hierarchy_tab";
 import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
@@ -50,6 +51,8 @@ export type UserManagementLayoutProps = {
   className?: string;
   /** Whether HRBAC is enabled (passed from server) */
   hrbacEnabled?: boolean;
+  /** Whether multi-tenancy is enabled (passed from server) */
+  multiTenancyEnabled?: boolean;
   /** Default organization for HRBAC scopes */
   defaultOrg?: string;
 };
@@ -85,7 +88,7 @@ type Permission = {
  * @param props - Component props
  * @returns User Management layout component
  */
-export function UserManagementLayout({ className, hrbacEnabled = false, defaultOrg = "" }: UserManagementLayoutProps) {
+export function UserManagementLayout({ className, hrbacEnabled = false, multiTenancyEnabled = false, defaultOrg = "" }: UserManagementLayoutProps) {
   const { apiBasePath } = useHazoAuthConfig();
 
   // Permission checks
@@ -100,6 +103,10 @@ export function UserManagementLayout({ className, hrbacEnabled = false, defaultO
     authResult.permissions.includes("admin_scope_hierarchy_management");
   const hasUserScopeAssignmentPermission = authResult.authenticated &&
     authResult.permissions.includes("admin_user_scope_assignment");
+  const hasOrgManagementPermission = authResult.authenticated &&
+    authResult.permissions.includes("hazo_perm_org_management");
+  const hasOrgGlobalAdminPermission = authResult.authenticated &&
+    authResult.permissions.includes("hazo_org_global_admin");
 
   // Determine which tabs to show
   const showUsersTab = hasUserManagementPermission;
@@ -108,7 +115,8 @@ export function UserManagementLayout({ className, hrbacEnabled = false, defaultO
   const showScopeHierarchyTab = hrbacEnabled && hasScopeHierarchyPermission;
   const showScopeLabelsTab = hrbacEnabled && hasScopeHierarchyPermission;
   const showUserScopesTab = hrbacEnabled && hasUserScopeAssignmentPermission;
-  const hasAnyPermission = showUsersTab || showRolesTab || showPermissionsTab || showScopeHierarchyTab || showScopeLabelsTab || showUserScopesTab;
+  const showOrgsTab = multiTenancyEnabled && hasOrgManagementPermission;
+  const hasAnyPermission = showUsersTab || showRolesTab || showPermissionsTab || showScopeHierarchyTab || showScopeLabelsTab || showUserScopesTab || showOrgsTab;
 
   // Tab 1: Users state
   const [users, setUsers] = useState<User[]>([]);
@@ -591,6 +599,11 @@ export function UserManagementLayout({ className, hrbacEnabled = false, defaultO
                 User Scopes
               </TabsTrigger>
             )}
+            {showOrgsTab && (
+              <TabsTrigger value="organizations" className="cls_user_management_tabs_trigger flex-1">
+                Organizations
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Tab 1: Manage Users */}
@@ -938,6 +951,13 @@ export function UserManagementLayout({ className, hrbacEnabled = false, defaultO
           {showUserScopesTab && (
             <TabsContent value="user_scopes" className="cls_user_management_tab_user_scopes w-full">
               <UserScopesTab />
+            </TabsContent>
+          )}
+
+          {/* Tab 7: Organizations (Multi-tenancy) */}
+          {showOrgsTab && (
+            <TabsContent value="organizations" className="cls_user_management_tab_organizations w-full">
+              <OrgHierarchyTab isGlobalAdmin={hasOrgGlobalAdminPermission} />
             </TabsContent>
           )}
         </Tabs>

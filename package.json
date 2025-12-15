@@ -48,6 +48,10 @@
       "types": "./dist/components/layouts/dev_lock/index.d.ts",
       "import": "./dist/components/layouts/dev_lock/index.js"
     },
+    "./components/layouts/org_management": {
+      "types": "./dist/components/layouts/org_management/index.d.ts",
+      "import": "./dist/components/layouts/org_management/index.js"
+    },
     "./components/layouts/shared": {
       "types": "./dist/components/layouts/shared/index.d.ts",
       "import": "./dist/components/layouts/shared/index.js"
@@ -123,6 +127,14 @@
     "./page_components/dev_lock": {
       "types": "./dist/page_components/dev_lock.d.ts",
       "import": "./dist/page_components/dev_lock.js"
+    },
+    "./page_components/org_management": {
+      "types": "./dist/page_components/org_management.d.ts",
+      "import": "./dist/page_components/org_management.js"
+    },
+    "./page_components/my_settings": {
+      "types": "./dist/page_components/my_settings.d.ts",
+      "import": "./dist/page_components/my_settings.js"
     }
   },
   "files": [
@@ -182,7 +194,7 @@
     "gravatar-url": "^4.0.1",
     "handlebars": "^4.7.8",
     "hazo_config": "^1.3.0",
-    "hazo_connect": "^2.0.0",
+    "hazo_connect": "^2.3.5",
     "hazo_notify": "^1.0.0",
     "helmet": "^8.1.0",
     "ini": "^6.0.0",
@@ -210,6 +222,7 @@
     "@storybook/addon-onboarding": "^10.0.6",
     "@storybook/addon-vitest": "^10.0.6",
     "@storybook/nextjs": "^10.0.6",
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
     "@types/better-sqlite3": "^7.6.13",

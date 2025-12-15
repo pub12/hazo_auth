@@ -1,5 +1,6 @@
 // file_description: unit tests for the forgot_password_layout component covering validation logic and form submission
 // section: imports
+import { describe, it, expect, jest } from "@jest/globals";
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import ForgotPasswordLayout from "@/components/layouts/forgot_password";
@@ -111,10 +112,10 @@ describe("forgot_password_layout", () => {
     // Submit form
     fireEvent.click(submit_button);
 
-    // Wait for async operations
+    // Wait for async operations - API path comes from mocked context apiBasePath
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
-        "/api/auth/forgot_password",
+        "/api/hazo_auth/forgot_password",
         expect.objectContaining({
           method: "POST",
           headers: {
