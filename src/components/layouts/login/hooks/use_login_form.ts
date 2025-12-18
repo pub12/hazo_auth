@@ -163,9 +163,9 @@ export const use_login_form = <TClient,>({
       };
 
       if (success) {
-        logger.info("login_attempt_successful", logData);
+        logger?.info("login_attempt_successful", logData);
       } else {
-        logger.error("login_attempt_failed", logData);
+        logger?.error("login_attempt_failed", logData);
       }
     },
     [logger, values, clientIp],

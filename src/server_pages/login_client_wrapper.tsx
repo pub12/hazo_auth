@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import LoginLayout from "../components/layouts/login";
 import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
 import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup";
-import { create_app_logger } from "../lib/app_logger";
 import type { LayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
 import type { LoginConfig } from "../lib/login_config.server";
 import type { OAuthLayoutConfig } from "../components/layouts/login";
@@ -63,15 +62,12 @@ export function LoginClientWrapper({
     );
   }
 
-  const logger = create_app_logger();
-
   return (
     <LoginLayout
       image_src={image_src}
       image_alt={image_alt}
       image_background_color={image_background_color}
       data_client={dataClient}
-      logger={logger}
       redirectRoute={redirectRoute}
       successMessage={successMessage}
       alreadyLoggedInMessage={alreadyLoggedInMessage}

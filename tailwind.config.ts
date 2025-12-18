@@ -1,5 +1,6 @@
 // file_description: configure tailwindcss for the hazo_auth project
 import type { Config } from "tailwindcss";
+import { tailwindSafelist, tailwindContentPath } from "hazo_logs/tailwind";
 
 // section: tailwind_configuration
 const tailwind_config: Config = {
@@ -9,6 +10,11 @@ const tailwind_config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/stories/**/*.{js,ts,jsx,tsx,mdx}",
+    "./node_modules/hazo_ui/dist/**/*.{js,jsx}",
+    tailwindContentPath,
+  ],
+  safelist: [
+    ...tailwindSafelist,
   ],
   theme: {
   	extend: {

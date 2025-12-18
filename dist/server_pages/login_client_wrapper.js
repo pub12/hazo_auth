@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import LoginLayout from "../components/layouts/login";
 import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
 import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup";
-import { create_app_logger } from "../lib/app_logger";
 // section: component
 /**
  * Client wrapper for LoginLayout
@@ -24,6 +23,5 @@ export function LoginClientWrapper({ image_src, image_alt, image_background_colo
     if (!dataClient) {
         return (_jsx("div", { className: "cls_login_page_loading flex items-center justify-center min-h-screen", children: _jsx("div", { className: "text-slate-600 animate-pulse", children: "Loading..." }) }));
     }
-    const logger = create_app_logger();
-    return (_jsx(LoginLayout, { image_src: image_src, image_alt: image_alt, image_background_color: image_background_color, data_client: dataClient, logger: logger, redirectRoute: redirectRoute, successMessage: successMessage, alreadyLoggedInMessage: alreadyLoggedInMessage, showLogoutButton: showLogoutButton, showReturnHomeButton: showReturnHomeButton, returnHomeButtonLabel: returnHomeButtonLabel, returnHomePath: returnHomePath, forgot_password_path: forgotPasswordPath, forgot_password_label: forgotPasswordLabel, create_account_path: createAccountPath, create_account_label: createAccountLabel, oauth: oauth }));
+    return (_jsx(LoginLayout, { image_src: image_src, image_alt: image_alt, image_background_color: image_background_color, data_client: dataClient, redirectRoute: redirectRoute, successMessage: successMessage, alreadyLoggedInMessage: alreadyLoggedInMessage, showLogoutButton: showLogoutButton, showReturnHomeButton: showReturnHomeButton, returnHomeButtonLabel: returnHomeButtonLabel, returnHomePath: returnHomePath, forgot_password_path: forgotPasswordPath, forgot_password_label: forgotPasswordLabel, create_account_path: createAccountPath, create_account_label: createAccountLabel, oauth: oauth }));
 }

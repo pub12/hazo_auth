@@ -97,10 +97,10 @@ export const use_login_form = ({ dataClient, logger, redirectRoute, successMessa
         const logData = Object.assign({ filename: get_filename(), line_number: get_line_number(), email: values[LOGIN_FIELD_IDS.EMAIL], ip_address: clientIp, timestamp,
             success }, (errorMessage ? { error_message: errorMessage } : {}));
         if (success) {
-            logger.info("login_attempt_successful", logData);
+            logger === null || logger === void 0 ? void 0 : logger.info("login_attempt_successful", logData);
         }
         else {
-            logger.error("login_attempt_failed", logData);
+            logger === null || logger === void 0 ? void 0 : logger.error("login_attempt_failed", logData);
         }
     }, [logger, values, clientIp]);
     const handleSubmit = useCallback(async (event) => {

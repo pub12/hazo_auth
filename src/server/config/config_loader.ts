@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import axios from "axios";
 import { HazoConfig } from "hazo_config/dist/lib";
-import { create_logger_service } from "../logging/logger_service";
+import { createLogger } from "hazo_logs";
 import type {
   app_context,
   captcha_settings,
@@ -402,7 +402,7 @@ const create_emailer_client = (
 export const load_runtime_configuration = (
   options?: configuration_options
 ): runtime_configuration => {
-  const fallback_logger = create_logger_service("hazo_auth_config");
+  const fallback_logger = createLogger("hazo_auth_config");
   const parsed_options = sanitize_configuration_options(options, fallback_logger);
   const direct_configuration = parsed_options.direct_configuration;
   const logger = direct_configuration?.logger ?? fallback_logger;

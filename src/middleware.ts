@@ -108,6 +108,8 @@ export async function middleware(request: NextRequest) {
     "/api/auth", // NextAuth.js routes (OAuth providers, callbacks, etc.)
     "/hazo_connect/api/sqlite", // SQLite Admin API routes (admin tool, should be accessible)
     "/hazo_connect/sqlite_admin", // SQLite Admin UI page
+    "/hazo_auth/logs", // Log viewer page (demo/testing)
+    "/api/hazo_auth/logs", // Log viewer API (demo/testing)
   ];
 
   // Check if route is public

@@ -21,7 +21,6 @@ import { useEffect, useState } from "react";
 import login_layout from "../components/layouts/login";
 import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
 import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup";
-import { create_app_logger } from "../lib/app_logger";
 import type { LayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
 
 // section: constants
@@ -77,20 +76,17 @@ export function LoginPage({
   imageBackgroundColor = DEFAULT_IMAGE_BG,
 }: LoginPageProps = {}) {
   const [dataClient, setDataClient] = useState<LayoutDataClient<unknown> | null>(null);
-  const [logger, setLogger] = useState<ReturnType<typeof create_app_logger> | null>(null);
 
   useEffect(() => {
-    // Initialize hazo_connect and logger on client side
+    // Initialize hazo_connect on client side
     const hazoConnect = create_sqlite_hazo_connect();
     const client = createLayoutDataClient(hazoConnect);
-    const appLogger = create_app_logger();
-    
+
     setDataClient(client);
-    setLogger(appLogger);
   }, []);
 
   // Show loading state while initializing
-  if (!dataClient || !logger) {
+  if (!dataClient) {
     return (
       <div className="cls_login_page_loading flex items-center justify-center min-h-screen">
         <div className="text-slate-600 animate-pulse">Loading...</div>
@@ -106,7 +102,6 @@ export function LoginPage({
       image_alt={imageAlt}
       image_background_color={imageBackgroundColor}
       data_client={dataClient}
-      logger={logger}
       redirectRoute={redirectRoute}
       successMessage={successMessage}
       alreadyLoggedInMessage={alreadyLoggedInMessage}

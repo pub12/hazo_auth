@@ -1,11 +1,7 @@
 import type { Request } from "express";
-export type logger_method = (message: string, data?: Record<string, unknown>) => void;
-export type logger_service = {
-    debug: logger_method;
-    info: logger_method;
-    warn: logger_method;
-    error: logger_method;
-};
+import type { Logger, LogData } from "hazo_logs";
+export type logger_method = (message: string, data?: LogData) => void;
+export type logger_service = Logger;
 export type emailer_client = {
     send_message: (payload: Record<string, unknown>) => Promise<{
         success: boolean;

@@ -1,19 +1,17 @@
 // file_description: define shared application level types for the hazo_auth server
 // section: request_context_types
 import type { Request } from "express";
+import type { Logger, LogData } from "hazo_logs";
 
 // section: logger_interface_definition
+// Re-export hazo_logs types for backward compatibility
 export type logger_method = (
   message: string,
-  data?: Record<string, unknown>
+  data?: LogData
 ) => void;
 
-export type logger_service = {
-  debug: logger_method;
-  info: logger_method;
-  warn: logger_method;
-  error: logger_method;
-};
+// Use hazo_logs Logger type as logger_service for backward compatibility
+export type logger_service = Logger;
 
 // section: configuration_types
 export type emailer_client = {

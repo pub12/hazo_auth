@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/pubuduabayasiri/LocalDocuments/02.Nextjs/99.lib/hazo_auth/logs/.a0cf1555efbad53b16234aa8e48fcd73722d0827-audit.json",
+    "files": [
+        {
+            "date": 1766041837443,
+            "name": "/Users/pubuduabayasiri/LocalDocuments/02.Nextjs/99.lib/hazo_auth/logs/hazo-2025-12-18.log",
+            "hash": "f47afe216d41f7433d0bdc4adaa4cd65d1eb86958bce0401fcfff577fcd56643"
+        }
+    ],
+    "hashType": "sha256"
+}

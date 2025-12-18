@@ -3,13 +3,12 @@ var _a;
 // section: imports
 import http from "http";
 import { create_server_app } from "./server";
-import { create_logger_service } from "./logging/logger_service";
+import { createLogger } from "hazo_logs";
 // section: constants
 const default_port = Number((_a = process.env.PORT) !== null && _a !== void 0 ? _a : 4100);
-const server_namespace = "hazo_auth_server";
 // section: bootstrap_runner
 export const start_server = async () => {
-    const logger = create_logger_service(server_namespace);
+    const logger = createLogger("hazo_auth_server");
     const app = create_server_app();
     const http_server = http.createServer(app);
     return new Promise((resolve, reject) => {
