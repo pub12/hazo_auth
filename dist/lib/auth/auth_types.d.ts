@@ -26,6 +26,7 @@ export type ScopeAccessInfo = {
  * Result type for hazo_get_auth function
  * Returns authenticated state with user data and permissions, or unauthenticated state
  * Optionally includes scope access information when HRBAC is used
+ * Optionally includes org_ok when require_org option is used
  */
 export type HazoAuthResult = {
     authenticated: true;
@@ -35,12 +36,14 @@ export type HazoAuthResult = {
     missing_permissions?: string[];
     scope_ok?: boolean;
     scope_access_via?: ScopeAccessInfo;
+    org_ok?: boolean;
 } | {
     authenticated: false;
     user: null;
     permissions: [];
     permission_ok: false;
     scope_ok?: false;
+    org_ok?: false;
 };
 /**
  * Options for hazo_get_auth function
@@ -71,6 +74,12 @@ export type HazoAuthOptions = {
      * Used if scope_id is not provided
      */
     scope_seq?: string;
+    /**
+     * If true, throws OrgRequiredError when user has no org_id assigned
+     * Only checked when multi-tenancy is enabled
+     * If false or not set (default), org_id is optional and org fields may be null
+     */
+    require_org?: boolean;
 };
 /**
  * Custom error class for permission denials
@@ -100,5 +109,13 @@ export declare class ScopeAccessError extends Error {
         scope_id: string;
         scope_seq: string;
     }>);
+}
+/**
+ * Custom error class for missing organization assignment
+ * Thrown when require_org: true is set but user has no org_id assigned
+ */
+export declare class OrgRequiredError extends Error {
+    user_id: string;
+    constructor(user_id: string);
 }
 //# sourceMappingURL=auth_types.d.ts.map

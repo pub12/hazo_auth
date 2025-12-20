@@ -6,7 +6,7 @@ import { createCrudService } from "hazo_connect/server";
 import { create_app_logger } from "../app_logger";
 import { get_filename, get_line_number } from "../utils/api_route_helpers";
 import type { HazoAuthResult, HazoAuthUser, HazoAuthOptions, ScopeAccessInfo } from "./auth_types";
-import { PermissionError, ScopeAccessError } from "./auth_types";
+import { PermissionError, ScopeAccessError, OrgRequiredError } from "./auth_types";
 import { get_auth_cache } from "./auth_cache";
 import { get_scope_cache, type UserScopeEntry } from "./scope_cache";
 import { get_rate_limiter } from "./auth_rate_limiter";
@@ -570,6 +570,29 @@ export async function hazo_get_auth(
     }
   }
 
+  // Check org requirement if specified (only when multi-tenancy is enabled)
+  let org_ok: boolean | undefined;
+
+  if (options?.require_org && is_multi_tenancy_enabled()) {
+    org_ok = !!user.org_id;
+
+    if (!org_ok) {
+      // Log org requirement failure if permission logging is enabled
+      if (config.log_permission_denials) {
+        const client_ip = get_client_ip(request);
+        logger.warn("auth_utility_org_required_missing", {
+          filename: get_filename(),
+          line_number: get_line_number(),
+          user_id: user.id,
+          ip: client_ip,
+        });
+      }
+
+      // Always throw error when org is required but missing
+      throw new OrgRequiredError(user.id);
+    }
+  }
+
   return {
     authenticated: true,
     user,
@@ -578,6 +601,7 @@ export async function hazo_get_auth(
     missing_permissions,
     scope_ok,
     scope_access_via,
+    org_ok,
   };
 }
 

@@ -552,3 +552,115 @@ describe("Org Display Formatting", () => {
     expect(displayName).toBe("Old Dept (0 users) [Inactive]");
   });
 });
+
+// Test OrgRequiredError class
+describe("OrgRequiredError", () => {
+  it("should be exported from auth_types", async () => {
+    const { OrgRequiredError } = await import("@/lib/auth/auth_types");
+    expect(OrgRequiredError).toBeDefined();
+  });
+
+  it("should create error with correct message", async () => {
+    const { OrgRequiredError } = await import("@/lib/auth/auth_types");
+
+    const error = new OrgRequiredError("user-123");
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe("OrgRequiredError");
+    expect(error.message).toBe("User user-123 is not assigned to an organization");
+    expect(error.user_id).toBe("user-123");
+  });
+
+  it("should be catchable as Error", async () => {
+    const { OrgRequiredError } = await import("@/lib/auth/auth_types");
+
+    const error = new OrgRequiredError("test-user");
+
+    expect(error instanceof Error).toBe(true);
+  });
+});
+
+// Test HazoAuthOptions require_org field
+describe("HazoAuthOptions require_org field", () => {
+  it("should accept require_org option", async () => {
+    const types = await import("@/lib/auth/auth_types");
+
+    // Verify the module loads and we can create options with require_org
+    const options: import("@/lib/auth/auth_types").HazoAuthOptions = {
+      required_permissions: ["view_data"],
+      require_org: true,
+    };
+
+    expect(options.require_org).toBe(true);
+  });
+
+  it("should allow require_org to be false", async () => {
+    const options: import("@/lib/auth/auth_types").HazoAuthOptions = {
+      required_permissions: ["view_data"],
+      require_org: false,
+    };
+
+    expect(options.require_org).toBe(false);
+  });
+
+  it("should allow require_org to be undefined", async () => {
+    const options: import("@/lib/auth/auth_types").HazoAuthOptions = {
+      required_permissions: ["view_data"],
+    };
+
+    expect(options.require_org).toBeUndefined();
+  });
+});
+
+// Test HazoAuthResult org_ok field
+describe("HazoAuthResult org_ok field", () => {
+  it("should include org_ok in authenticated result", async () => {
+    const mockResult: import("@/lib/auth/auth_types").HazoAuthResult = {
+      authenticated: true,
+      user: {
+        id: "user-123",
+        email_address: "test@example.com",
+        name: "Test User",
+        profile_picture_url: null,
+        is_active: true,
+        org_id: "org-123",
+        org_name: "Test Org",
+      },
+      permissions: ["view_data"],
+      permission_ok: true,
+      org_ok: true,
+    };
+
+    expect(mockResult.org_ok).toBe(true);
+  });
+
+  it("should include org_ok in unauthenticated result", async () => {
+    const mockResult: import("@/lib/auth/auth_types").HazoAuthResult = {
+      authenticated: false,
+      user: null,
+      permissions: [],
+      permission_ok: false,
+      org_ok: false,
+    };
+
+    expect(mockResult.org_ok).toBe(false);
+  });
+
+  it("should allow org_ok to be undefined when require_org not used", async () => {
+    const mockResult: import("@/lib/auth/auth_types").HazoAuthResult = {
+      authenticated: true,
+      user: {
+        id: "user-123",
+        email_address: "test@example.com",
+        name: "Test User",
+        profile_picture_url: null,
+        is_active: true,
+      },
+      permissions: ["view_data"],
+      permission_ok: true,
+      // org_ok not set - should be undefined
+    };
+
+    expect(mockResult.org_ok).toBeUndefined();
+  });
+});

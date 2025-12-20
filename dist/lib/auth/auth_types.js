@@ -27,3 +27,14 @@ export class ScopeAccessError extends Error {
         this.name = "ScopeAccessError";
     }
 }
+/**
+ * Custom error class for missing organization assignment
+ * Thrown when require_org: true is set but user has no org_id assigned
+ */
+export class OrgRequiredError extends Error {
+    constructor(user_id) {
+        super(`User ${user_id} is not assigned to an organization`);
+        this.user_id = user_id;
+        this.name = "OrgRequiredError";
+    }
+}

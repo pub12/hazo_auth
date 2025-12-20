@@ -243,6 +243,32 @@ if (result.authenticated) {
 }
 ```
 
+**Org Requirement Options:**
+
+By default, `org_id` is **optional** when multi-tenancy is enabled. Users without an org assignment will have null org fields. To require org assignment for specific routes, use the `require_org` option:
+
+```typescript
+// Throw OrgRequiredError if user has no org_id
+const auth = await hazo_get_auth(request, { require_org: true });
+```
+
+Consuming apps can catch this error:
+
+```typescript
+import { OrgRequiredError } from "hazo_auth";
+
+try {
+  const auth = await hazo_get_auth(request, { require_org: true });
+} catch (error) {
+  if (error instanceof OrgRequiredError) {
+    return NextResponse.json(
+      { error: "User not assigned to an organization" },
+      { status: 400 }
+    );
+  }
+}
+```
+
 **Permissions:**
 - `hazo_perm_org_management` - CRUD operations on organizations
 - `hazo_org_global_admin` - View/manage all organizations across the system
