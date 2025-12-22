@@ -86,6 +86,13 @@ type User = {
   profile_picture_url: string | null;
   profile_source: string | null;
   user_type: string | null;
+  org_id: string | null;
+  root_org_id: string | null;
+};
+
+type OrgOption = {
+  id: string;
+  name: string;
 };
 
 type Permission = {
@@ -147,6 +154,8 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [usersActionLoading, setUsersActionLoading] = useState(false);
   const [userTypeUpdateLoading, setUserTypeUpdateLoading] = useState(false);
+  const [orgUpdateLoading, setOrgUpdateLoading] = useState(false);
+  const [availableOrgs, setAvailableOrgs] = useState<OrgOption[]>([]);
 
   // Tab 3: Permissions state
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -188,6 +197,34 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
 
     void loadUsers();
   }, [showUsersTab, loadUsers]);
+
+  // Load organizations (only if multi-tenancy is enabled and user has permission)
+  useEffect(() => {
+    if (!multiTenancyEnabled || !showUsersTab) {
+      return;
+    }
+
+    const loadOrgs = async () => {
+      try {
+        const response = await fetch(`${apiBasePath}/org_management/orgs`);
+        const data = await response.json();
+
+        if (data.success && Array.isArray(data.orgs)) {
+          setAvailableOrgs(
+            data.orgs.map((org: { id: string; name: string }) => ({
+              id: org.id,
+              name: org.name,
+            }))
+          );
+        }
+      } catch (error) {
+        // Silently fail - orgs dropdown will just be empty
+        console.error("Failed to load organizations:", error);
+      }
+    };
+
+    void loadOrgs();
+  }, [multiTenancyEnabled, showUsersTab, apiBasePath]);
 
   // Load permissions (only if user has permission)
   useEffect(() => {
@@ -345,6 +382,44 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
       toast.error("Failed to update user type");
     } finally {
       setUserTypeUpdateLoading(false);
+    }
+  };
+
+  // Handle org change
+  const handleOrgChange = async (newOrgId: string) => {
+    if (!selectedUser) return;
+
+    setOrgUpdateLoading(true);
+    try {
+      const response = await fetch(`${apiBasePath}/user_management/users`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: selectedUser.id,
+          org_id: newOrgId || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Organization updated successfully");
+        // Update local state
+        setSelectedUser({
+          ...selectedUser,
+          org_id: newOrgId || null,
+        });
+        // Reload users list to get updated root_org_id from server
+        await loadUsers();
+      } else {
+        toast.error(data.error || "Failed to update organization");
+      }
+    } catch (error) {
+      toast.error("Failed to update organization");
+    } finally {
+      setOrgUpdateLoading(false);
     }
   };
 
@@ -1425,6 +1500,37 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                         </SelectContent>
                       </Select>
                       {userTypeUpdateLoading && (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Organization (if multi-tenancy enabled) */}
+                {multiTenancyEnabled && (
+                  <div className="cls_user_management_user_detail_field_org flex flex-col gap-2">
+                    <Label className="cls_user_management_user_detail_label font-semibold">
+                      Organization
+                    </Label>
+                    <div className="cls_user_management_user_detail_org_value flex items-center gap-2">
+                      <Select
+                        value={selectedUser.org_id || ""}
+                        onValueChange={(value) => handleOrgChange(value)}
+                        disabled={orgUpdateLoading}
+                      >
+                        <SelectTrigger className="w-64">
+                          <SelectValue placeholder="Select organization" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {availableOrgs.map((org) => (
+                            <SelectItem key={org.id} value={org.id}>
+                              {org.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {orgUpdateLoading && (
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                       )}
                     </div>
