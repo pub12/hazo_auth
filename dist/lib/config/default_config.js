@@ -156,6 +156,38 @@ export const DEFAULT_MULTI_TENANCY = {
     /** Default user limit per organization (0 = unlimited) */
     default_user_limit: 0,
 };
+// section: navbar
+export const DEFAULT_NAVBAR = {
+    /** Enable navbar on auth pages */
+    enable_navbar: true,
+    /** Logo image path (default: /logo.png in public folder) */
+    logo_path: "/logo.png",
+    /** Logo width in pixels */
+    logo_width: 32,
+    /** Logo height in pixels */
+    logo_height: 32,
+    /** Company/application name displayed next to logo */
+    company_name: "",
+    /** Home link path */
+    home_path: "/",
+    /** Home link label */
+    home_label: "Home",
+    /** Show home link */
+    show_home_link: true,
+    /** Navbar background color (empty = transparent/inherit) */
+    background_color: "",
+    /** Navbar text color (empty = inherit) */
+    text_color: "",
+    /** Navbar height in pixels */
+    height: 64,
+};
+// section: user_types
+export const DEFAULT_USER_TYPES = {
+    /** Enable user types feature (default: false) */
+    enable_user_types: false,
+    /** Default user type for new users (empty = no default) */
+    default_user_type: "",
+};
 // section: dev_lock
 export const DEFAULT_DEV_LOCK = {
     /** Enable the development lock screen (also requires HAZO_AUTH_DEV_LOCK_ENABLED env var) */
@@ -212,4 +244,6 @@ export const HAZO_AUTH_DEFAULTS = {
     oauth: DEFAULT_OAUTH,
     devLock: DEFAULT_DEV_LOCK,
     multiTenancy: DEFAULT_MULTI_TENANCY,
+    navbar: DEFAULT_NAVBAR,
+    userTypes: DEFAULT_USER_TYPES,
 };

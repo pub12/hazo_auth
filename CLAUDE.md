@@ -101,6 +101,8 @@ export { POST } from "hazo_auth/server/routes";
 All configuration comes from `hazo_auth_config.ini` in the project root (where `process.cwd()` points):
 
 - **UI Customization:** `[hazo_auth__login_layout]`, `[hazo_auth__register_layout]`, etc.
+- **UI Shell:** `[hazo_auth__ui_shell]` (layout_mode, vertical_center)
+- **Navbar:** `[hazo_auth__navbar]` (enable_navbar, logo, company name, home link, styling)
 - **Auth Behavior:** `[hazo_auth__tokens]`, `[hazo_auth__password_requirements]`
 - **OAuth Settings:** `[hazo_auth__oauth]` (enable_google, enable_email_password, auto_link_unverified_accounts, button text)
 - **RBAC Setup:** `[hazo_auth__user_management]`, `[hazo_auth__initial_setup]`
@@ -146,16 +148,23 @@ Migrations are executed via `scripts/apply_migration.ts` which supports both SQL
 HRBAC extends the standard RBAC model with 7 hierarchical scope levels (L1-L7). Users assigned to a higher-level scope automatically inherit access to all descendant scopes.
 
 **Architecture:**
+- Scope tables have `org_id` and `root_org_id` foreign keys referencing `hazo_org` table
 - Scope tables use `parent_scope_id` to establish hierarchy (L2 references L1, L3 references L2, etc.)
 - User scope assignments in `hazo_user_scopes` table
 - Access checking uses ancestor traversal for inherited access
 - LRU cache for scope lookups (configurable TTL and size)
 
+**Relationship with Multi-Tenancy:**
+HRBAC scopes are connected to organizations via `org_id` and `root_org_id` foreign keys:
+- Multi-tenancy must be enabled to use HRBAC
+- Each scope belongs to a specific organization
+- Non-global admins can only see/manage scopes for their own organization
+- Global admins (`hazo_org_global_admin` permission) can manage scopes for any organization
+
 **Configuration:**
 ```ini
 [hazo_auth__scope_hierarchy]
 enable_hrbac = true
-default_org = my_org
 scope_cache_ttl_minutes = 15
 scope_cache_max_entries = 5000
 default_label_l1 = Company
@@ -183,6 +192,7 @@ if (result.scope_ok) {
 - `admin_scope_hierarchy_management` - Manage scopes and labels
 - `admin_user_scope_assignment` - Assign scopes to users
 - `admin_test_access` - Access the RBAC/HRBAC test tool
+- `hazo_org_global_admin` - View/manage scopes for any organization
 
 **Services:**
 - `src/lib/services/scope_service.ts` - CRUD operations for scopes
@@ -279,6 +289,19 @@ try {
 - `PATCH /api/hazo_auth/org_management/orgs` - Update organization
 - `DELETE /api/hazo_auth/org_management/orgs?org_id=...` - Soft delete (deactivate)
 
+**Setting up the API route in consuming apps:**
+```typescript
+// app/api/hazo_auth/org_management/orgs/route.ts
+export {
+  orgManagementOrgsGET as GET,
+  orgManagementOrgsPOST as POST,
+  orgManagementOrgsPATCH as PATCH,
+  orgManagementOrgsDELETE as DELETE
+} from "hazo_auth/server/routes";
+```
+
+Or use CLI: `npx hazo_auth generate-routes`
+
 **Services:**
 - `src/lib/services/org_service.ts` - CRUD operations for organizations
 - `src/lib/auth/org_cache.ts` - LRU cache for org lookups
@@ -298,6 +321,212 @@ import { OrgManagementLayout } from "hazo_auth/components/layouts/org_management
 import { OrgManagementPage } from "hazo_auth/page_components/org_management";
 ```
 
+### User Types (Optional Feature)
+
+User types allow applications to categorize users with customizable types (e.g., "Client", "Tax Agent", "Support Staff") with visual badge indicators. This is an optional feature that's disabled by default.
+
+**Key Features:**
+- Define types in INI config (no database table management required)
+- Single type per user (mutually exclusive)
+- Visual badge with preset or custom hex colors
+- Displayed as column in User Management table
+- Editable in user detail dialog
+- Default type can be auto-assigned on registration
+- Zero impact when disabled
+- Lightweight: single nullable TEXT column
+
+**Why Use User Types:**
+User types provide simple categorization for user personas or customer types without adding complexity to the RBAC system. Unlike roles (which control permissions), types control how users are labeled and filtered. Example: A "Client" user can have an "Admin" role.
+
+**Configuration:**
+```ini
+[hazo_auth__user_types]
+# Enable user types feature (default: false)
+enable_user_types = true
+
+# Default type for new registrations (optional)
+default_user_type = standard
+
+# Define types: key:label:badge_color
+# Colors: blue, green, red, yellow, purple, gray, orange, pink, or hex (#4CAF50)
+user_type_1 = admin:Administrator:red
+user_type_2 = standard:Standard User:blue
+user_type_3 = client:Client:green
+user_type_4 = agent:Tax Agent:orange
+user_type_5 = premium:Premium User:#FFD700
+```
+
+**Configuration Format:**
+- **key**: Unique identifier stored in database (e.g., "client", "agent")
+- **label**: Display name shown in UI (e.g., "Client", "Tax Agent")
+- **badge_color**: Visual indicator - preset name (blue, green, red, yellow, purple, gray, orange, pink) or hex code (#4CAF50)
+
+**Database Migration:**
+```bash
+npm run migrate migrations/007_add_user_type_to_hazo_users.sql
+```
+
+Adds single `user_type` TEXT column to `hazo_users` table with optional index for filtering. No foreign key constraints - values validated against config at runtime.
+
+**API Changes:**
+
+1. **`/api/hazo_auth/me` Response (Enhanced):**
+```typescript
+{
+  authenticated: true,
+  // ... existing fields
+  user_type: "client",        // NEW: User's type key (or null)
+  user_type_info: {           // NEW: Type details (or null)
+    key: "client",
+    label: "Client",
+    badge_color: "green"
+  }
+}
+```
+
+2. **`/api/hazo_auth/user_management/users` GET Response:**
+```typescript
+{
+  users: [...],
+  user_types_enabled: true,   // NEW: Whether feature is enabled
+  available_user_types: [     // NEW: List of configured types
+    { key: "admin", label: "Administrator", badge_color: "red" },
+    { key: "client", label: "Client", badge_color: "green" }
+  ]
+}
+```
+
+3. **`/api/hazo_auth/user_management/users` PATCH:**
+- Accepts `user_type` field in request body
+- Validates type key against config before saving
+- Returns updated user with `user_type_info`
+
+4. **NEW `/api/hazo_auth/user_management/user_types` GET:**
+- Returns user types configuration
+- Response: `{ enabled: boolean, types: UserType[], default_type: string | null }`
+
+**Components:**
+
+**UserTypeBadge** (`src/components/ui/user-type-badge.tsx`):
+Display-only badge component for showing user types.
+
+```typescript
+import { UserTypeBadge } from "hazo_auth/components/ui/user-type-badge";
+
+// Badge variant (default)
+<UserTypeBadge
+  type="client"
+  label="Client"
+  badge_color="green"
+  variant="badge"
+/>
+
+// Text variant (no badge styling)
+<UserTypeBadge
+  type="client"
+  label="Client"
+  badge_color="green"
+  variant="text"
+/>
+```
+
+**Props:**
+- `type: string` - Type key (for ARIA label)
+- `label: string` - Display label
+- `badge_color: string` - Preset color or hex code
+- `variant?: "badge" | "text"` - Display style (default: "badge")
+- `className?: string` - Additional CSS classes
+
+**Using in UserManagementLayout:**
+```typescript
+import { UserManagementLayout } from "hazo_auth/components/layouts/user_management";
+
+<UserManagementLayout
+  userTypesEnabled={true}
+  availableUserTypes={[
+    { key: "admin", label: "Administrator", badge_color: "red" },
+    { key: "standard", label: "Standard User", badge_color: "blue" },
+  ]}
+/>
+```
+
+When `userTypesEnabled` is true, the layout automatically adds:
+- "Type" column to users table with `UserTypeBadge` display
+- User type dropdown in user detail dialog (edit mode only)
+- Type validation before saving changes
+
+**Services & Configuration:**
+
+**`user_types_config.server.ts`** (`src/lib/user_types_config.server.ts`):
+```typescript
+// Main configuration function
+export function get_user_types_config(): UserTypesConfig
+
+// Quick checks
+export function is_user_types_enabled(): boolean
+export function get_default_user_type(): string | null
+
+// Validation
+export function validate_user_type(type_key: string): boolean
+
+// Type definitions
+export type UserType = {
+  key: string;           // Unique identifier (e.g., "client")
+  label: string;         // Display name (e.g., "Client")
+  badge_color: string;   // Color preset or hex code
+};
+
+export type UserTypesConfig = {
+  enable_user_types: boolean;
+  default_user_type: string | null;
+  user_types: UserType[];
+};
+```
+
+**API Route:**
+```typescript
+// app/api/hazo_auth/user_management/user_types/route.ts
+export { GET } from "hazo_auth/server/routes/user_types";
+```
+
+**Usage Patterns:**
+
+1. **Simple categorization:**
+```ini
+[hazo_auth__user_types]
+enable_user_types = true
+default_user_type = standard
+user_type_1 = standard:Standard User:blue
+user_type_2 = premium:Premium User:yellow
+```
+
+2. **Tax accounting personas:**
+```ini
+[hazo_auth__user_types]
+enable_user_types = true
+user_type_1 = client:Client:green
+user_type_2 = tax_agent:Tax Agent:orange
+user_type_3 = bookkeeper:Bookkeeper:blue
+user_type_4 = support:Support Staff:gray
+```
+
+3. **Custom hex colors:**
+```ini
+[hazo_auth__user_types]
+enable_user_types = true
+user_type_1 = vip:VIP Client:#FFD700
+user_type_2 = standard:Standard:#4CAF50
+```
+
+**Registration Service Integration:**
+When `default_user_type` is configured, new user registrations automatically receive that type. Falls back to NULL if no default specified or feature disabled.
+
+**Design Considerations:**
+- **Config-based (not UI-managed)**: Types defined at deployment time prevents proliferation
+- **Single type per user**: Mutually exclusive categories (not tags) for clear classification
+- **Separate from RBAC**: Types are labels, roles are permissions
+- **Optional feature**: Zero impact when disabled, no breaking changes
+
 ### Component Architecture
 
 Components follow a layered structure:
@@ -313,7 +542,7 @@ Components follow a layered structure:
    - Wrap layouts with sensible defaults
 
 3. **Shared Components** (`src/components/layouts/shared/*`) - Reusable UI elements
-   - Example: `ProfilePicMenu`, `ProfileStamp`, `FormActionButtons`, `PasswordField`
+   - Example: `ProfilePicMenu`, `ProfileStamp`, `FormActionButtons`, `PasswordField`, `AuthNavbar`
    - Exported via barrel file for clean imports
 
 4. **UI Primitives** (`src/components/ui/*`) - shadcn/ui components
@@ -701,6 +930,215 @@ New dependency added to `package.json`:
 11. `src/components/layouts/shared/components/oauth_divider.tsx` - OAuth/email divider
 12. `src/components/layouts/my_settings/components/connected_accounts_section.tsx` - OAuth status
 13. `src/components/layouts/my_settings/components/set_password_section.tsx` - Set password UI
+
+## Authentication Page Navbar
+
+### Overview
+
+The navbar feature provides a configurable navigation bar that appears at the top of all authentication pages (login, register, forgot_password, reset_password, verify_email, my_settings) when using standalone layout mode. The navbar displays your company logo, name, and a home link, providing consistent branding across the authentication experience.
+
+**Key Features:**
+- Configurable logo with Next.js Image optimization
+- Company name display with link to home page
+- Optional home link with icon
+- Customizable colors and height
+- Automatically vertically centers auth content when navbar is enabled
+- Can be disabled globally or per-page
+- Automatically disabled for dev_lock pages
+
+### Configuration
+
+**INI Configuration (`hazo_auth_config.ini`):**
+```ini
+[hazo_auth__navbar]
+# Enable navbar on auth pages (default: true)
+enable_navbar = true
+
+# Logo configuration
+logo_path = /logo.png
+logo_width = 32
+logo_height = 32
+
+# Company branding
+company_name = My Company
+
+# Home link configuration
+home_path = /
+home_label = Home
+show_home_link = true
+
+# Styling (optional - leave blank to use defaults)
+background_color =
+text_color =
+height = 64
+```
+
+**UI Shell Configuration:**
+The navbar works in conjunction with the standalone layout mode. When navbar is enabled, auth content is automatically vertically centered:
+
+```ini
+[hazo_auth__ui_shell]
+layout_mode = standalone
+vertical_center = auto  # 'auto' enables vertical centering when navbar is present
+```
+
+### How It Works
+
+1. **Automatic Display**: When `layout_mode = standalone` and `enable_navbar = true`, the navbar automatically appears on all auth pages
+2. **Vertical Centering**: Auth content is vertically centered when navbar is enabled (controlled by `vertical_center` setting)
+3. **Logo Handling**: Uses Next.js Image component for optimized logo rendering
+4. **Navigation**: Company name and logo link to `home_path`, optional home link on the right side
+5. **Styling**: Supports custom background color, text color, and height via configuration
+
+### Component Structure
+
+**Files:**
+- `src/lib/navbar_config.server.ts` - Server-side config loader
+- `src/components/layouts/shared/components/auth_navbar.tsx` - Client component for navbar
+- `src/components/layouts/shared/components/standalone_layout_wrapper.tsx` - Wrapper with navbar slot
+- `src/components/layouts/shared/components/auth_page_shell.tsx` - Shell that passes navbar config
+
+**Types:**
+```typescript
+type NavbarConfig = {
+  enable_navbar: boolean;
+  logo_path: string;
+  logo_width: number;
+  logo_height: number;
+  company_name: string;
+  home_path: string;
+  home_label: string;
+  show_home_link: boolean;
+  background_color: string;
+  text_color: string;
+  height: number;
+};
+```
+
+### Usage
+
+**Zero-Config (Recommended):**
+The navbar is automatically enabled when you use zero-config page components and have `layout_mode = standalone`:
+
+```typescript
+// app/hazo_auth/login/page.tsx
+import { LoginPage } from "hazo_auth/pages/login";
+
+export default function Page() {
+  return <LoginPage />; // Navbar appears automatically if enabled in config
+}
+```
+
+**Customization via Props:**
+You can override navbar configuration via layout props:
+
+```typescript
+import { LoginLayout } from "hazo_auth/components/layouts/login";
+
+export default function Page() {
+  return (
+    <LoginLayout
+      navbar={{
+        enable_navbar: true,
+        logo_path: "/custom-logo.svg",
+        company_name: "Custom Company Name",
+        background_color: "#1a1a1a",
+        text_color: "#ffffff",
+      }}
+    />
+  );
+}
+```
+
+**Disabling Navbar for Specific Pages:**
+Use the `disableNavbar` prop on `AuthPageShell` or pass `enable_navbar: false` in navbar config:
+
+```typescript
+import { LoginLayout } from "hazo_auth/components/layouts/login";
+
+export default function Page() {
+  return (
+    <LoginLayout
+      navbar={{ enable_navbar: false }}
+    />
+  );
+}
+```
+
+### Imports
+
+```typescript
+// Import navbar component (if building custom layouts)
+import { AuthNavbar } from "hazo_auth/components/layouts/shared";
+
+// Import navbar config type
+import type { NavbarConfig } from "hazo_auth/lib/navbar_config.server";
+```
+
+### Configuration Defaults
+
+Default values from `src/lib/config/default_config.ts`:
+
+```typescript
+export const DEFAULT_NAVBAR: NavbarConfig = {
+  enable_navbar: true,
+  logo_path: "/logo.png",
+  logo_width: 32,
+  logo_height: 32,
+  company_name: "My Company",
+  home_path: "/",
+  home_label: "Home",
+  show_home_link: true,
+  background_color: "",  // Uses CSS variable --hazo-bg-subtle
+  text_color: "",        // Uses CSS variable --hazo-text-primary
+  height: 64,
+};
+```
+
+### Design Considerations
+
+- **Responsive**: Navbar adapts to mobile and desktop viewports
+- **Accessibility**: Proper ARIA labels and semantic HTML
+- **Theme Support**: Inherits dark mode via CSS variables when colors not specified
+- **Performance**: Logo uses Next.js Image for automatic optimization
+- **Consistency**: Same navbar across all auth pages for unified branding
+
+### Example Configurations
+
+**Minimal Navbar (Logo Only):**
+```ini
+[hazo_auth__navbar]
+enable_navbar = true
+logo_path = /logo.svg
+logo_width = 40
+logo_height = 40
+company_name =
+show_home_link = false
+```
+
+**Full Branding with Custom Colors:**
+```ini
+[hazo_auth__navbar]
+enable_navbar = true
+logo_path = /brand/logo.png
+logo_width = 48
+logo_height = 48
+company_name = Acme Corporation
+home_path = https://acme.com
+home_label = Back to Home
+show_home_link = true
+background_color = #1e3a8a
+text_color = #ffffff
+height = 72
+```
+
+**Disable Navbar:**
+```ini
+[hazo_auth__navbar]
+enable_navbar = false
+```
+
+---
 
 ## Development Lock Screen
 

@@ -39,11 +39,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { use_hazo_auth } from "../../shared/hooks/use_hazo_auth";
 
 // section: types
 export type ScopeHierarchyTabProps = {
   className?: string;
-  defaultOrg?: string;
 };
 
 type ScopeLevel =
@@ -58,7 +58,8 @@ type ScopeLevel =
 type ScopeRecord = {
   id: string;
   seq: string;
-  org: string;
+  org_id: string;
+  root_org_id: string;
   name: string;
   parent_scope_id?: string;
   created_at: string;
@@ -173,20 +174,29 @@ function convertToTreeData(
 /**
  * Scope Hierarchy tab component for managing HRBAC scopes
  * Displays scopes in a tree view for intuitive hierarchy configuration
+ * Non-global admins see only their org's scopes (auto-filtered by API)
+ * Global admins can view/manage any org's scopes by providing org_id
  * @param props - Component props
  * @returns Scope Hierarchy tab component
  */
 export function ScopeHierarchyTab({
   className,
-  defaultOrg = "",
 }: ScopeHierarchyTabProps) {
   const { apiBasePath } = useHazoAuthConfig();
+  const authResult = use_hazo_auth();
+
+  // Determine if user is global admin (can manage any org)
+  const isGlobalAdmin = authResult.authenticated && authResult.permissions.includes("hazo_org_global_admin");
+  // Get user's org_id (for non-global admins, this is the only org they can manage)
+  const userOrgId = authResult.user?.org_id || "";
 
   // State
   const [tree, setTree] = useState<ScopeTreeNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [org, setOrg] = useState(defaultOrg);
+  // For non-global admins, org_id is fixed to their own org
+  // For global admins, they can enter any org_id to view that org's scopes
+  const [orgId, setOrgId] = useState("");
   const [selectedItem, setSelectedItem] = useState<ExtendedTreeDataItem>();
 
   // Dialog state
@@ -202,12 +212,20 @@ export function ScopeHierarchyTab({
 
   // Form state
   const [newName, setNewName] = useState("");
-  const [newOrg, setNewOrg] = useState(defaultOrg);
   const [editName, setEditName] = useState("");
+
+  // Initialize orgId from user's org when auth loads
+  useEffect(() => {
+    if (!authResult.loading && userOrgId && !orgId) {
+      setOrgId(userOrgId);
+    }
+  }, [authResult.loading, userOrgId, orgId]);
 
   // Load tree data
   const loadTree = useCallback(async () => {
-    if (!org) {
+    // For non-global admins, API will auto-filter to their org
+    // For global admins, org_id is required to specify which org to view
+    if (isGlobalAdmin && !orgId) {
       setTree([]);
       setLoading(false);
       return;
@@ -215,7 +233,11 @@ export function ScopeHierarchyTab({
 
     setLoading(true);
     try {
-      const params = new URLSearchParams({ action: "tree", org });
+      const params = new URLSearchParams({ action: "tree" });
+      // Only pass org_id for global admins (non-global admins are auto-filtered by API)
+      if (isGlobalAdmin && orgId) {
+        params.set("org_id", orgId);
+      }
       const response = await fetch(
         `${apiBasePath}/scope_management/scopes?${params}`
       );
@@ -233,17 +255,18 @@ export function ScopeHierarchyTab({
     } finally {
       setLoading(false);
     }
-  }, [apiBasePath, org]);
+  }, [apiBasePath, orgId, isGlobalAdmin]);
 
-  // Load data when org changes
+  // Load data when orgId changes or auth finishes loading
   useEffect(() => {
-    void loadTree();
-  }, [loadTree]);
+    if (!authResult.loading) {
+      void loadTree();
+    }
+  }, [loadTree, authResult.loading]);
 
   // Handle add scope (root level)
   const handleAddRootScope = () => {
     setAddParentScope(null);
-    setNewOrg(org || defaultOrg);
     setNewName("");
     setAddDialogOpen(true);
   };
@@ -251,7 +274,6 @@ export function ScopeHierarchyTab({
   // Handle add child scope
   const handleAddChildScope = (parent: ScopeTreeNode) => {
     setAddParentScope(parent);
-    setNewOrg(parent.org);
     setNewName("");
     setAddDialogOpen(true);
   };
@@ -276,11 +298,6 @@ export function ScopeHierarchyTab({
       return;
     }
 
-    if (!newOrg.trim()) {
-      toast.error("Organization is required");
-      return;
-    }
-
     setActionLoading(true);
     try {
       const level = addParentScope
@@ -292,14 +309,24 @@ export function ScopeHierarchyTab({
         return;
       }
 
+      // Build request body - API will use user's org_id for non-global admins
+      // or the provided org_id for global admins
       const body: Record<string, string> = {
         level,
-        org: newOrg.trim(),
         name: newName.trim(),
       };
 
+      // For global admins, pass the selected org_id
+      if (isGlobalAdmin && orgId) {
+        body.org_id = orgId;
+        body.root_org_id = orgId; // Default root_org_id to same as org_id
+      }
+
       if (addParentScope) {
         body.parent_scope_id = addParentScope.id;
+        // Inherit org_id from parent scope
+        body.org_id = addParentScope.org_id;
+        body.root_org_id = addParentScope.root_org_id;
       }
 
       const response = await fetch(`${apiBasePath}/scope_management/scopes`, {
@@ -431,26 +458,28 @@ export function ScopeHierarchyTab({
       {/* Header */}
       <div className="cls_scope_hierarchy_header flex items-center justify-between gap-4 flex-wrap">
         <div className="cls_scope_hierarchy_header_left flex items-center gap-4">
-          {/* Org filter */}
-          <div className="cls_scope_hierarchy_org_filter flex items-center gap-2">
-            <Label htmlFor="scope_org" className="text-sm font-medium">
-              Organization:
-            </Label>
-            <Input
-              id="scope_org"
-              value={org}
-              onChange={(e) => setOrg(e.target.value)}
-              placeholder="Enter organization"
-              className="w-[200px]"
-            />
-          </div>
+          {/* Org filter - only shown for global admins */}
+          {isGlobalAdmin && (
+            <div className="cls_scope_hierarchy_org_filter flex items-center gap-2">
+              <Label htmlFor="scope_org_id" className="text-sm font-medium">
+                Organization ID:
+              </Label>
+              <Input
+                id="scope_org_id"
+                value={orgId}
+                onChange={(e) => setOrgId(e.target.value)}
+                placeholder="Enter org UUID"
+                className="w-[280px] font-mono text-sm"
+              />
+            </div>
+          )}
 
           {/* Refresh button */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => void loadTree()}
-            disabled={loading || !org}
+            disabled={loading || (isGlobalAdmin && !orgId)}
           >
             <RefreshCw
               className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
@@ -464,7 +493,7 @@ export function ScopeHierarchyTab({
             onClick={handleAddRootScope}
             variant="default"
             size="sm"
-            disabled={!org}
+            disabled={isGlobalAdmin && !orgId}
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Root Scope
@@ -473,22 +502,22 @@ export function ScopeHierarchyTab({
       </div>
 
       {/* Tree View */}
-      {loading ? (
+      {loading || authResult.loading ? (
         <div className="cls_scope_hierarchy_loading flex items-center justify-center p-8">
           <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
         </div>
-      ) : !org ? (
+      ) : isGlobalAdmin && !orgId ? (
         <div className="cls_scope_hierarchy_empty flex flex-col items-center justify-center p-8 border rounded-lg border-dashed">
           <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground text-center">
-            Enter an organization name to view scope hierarchy
+            Enter an organization ID to view scope hierarchy
           </p>
         </div>
       ) : tree.length === 0 ? (
         <div className="cls_scope_hierarchy_empty flex flex-col items-center justify-center p-8 border rounded-lg border-dashed">
           <FolderTree className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground text-center mb-4">
-            No scopes found for organization &quot;{org}&quot;
+            No scopes found for this organization
           </p>
           <Button onClick={handleAddRootScope} variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
@@ -526,8 +555,8 @@ export function ScopeHierarchyTab({
               {SCOPE_LEVEL_LABELS[selectedItem.scopeData.level]}
             </div>
             <div>
-              <span className="text-muted-foreground">Org:</span>{" "}
-              {selectedItem.scopeData.org}
+              <span className="text-muted-foreground">Org ID:</span>{" "}
+              <span className="font-mono text-xs">{selectedItem.scopeData.org_id}</span>
             </div>
           </div>
         </div>
@@ -558,17 +587,6 @@ export function ScopeHierarchyTab({
                 placeholder="Enter scope name"
               />
             </div>
-            {!addParentScope && (
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="new_scope_org">Organization *</Label>
-                <Input
-                  id="new_scope_org"
-                  value={newOrg}
-                  onChange={(e) => setNewOrg(e.target.value)}
-                  placeholder="Enter organization"
-                />
-              </div>
-            )}
           </div>
           <DialogFooter>
             <Button

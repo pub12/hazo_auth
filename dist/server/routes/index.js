@@ -28,3 +28,5 @@ export { GET as userManagementUsersGET, PATCH as userManagementUsersPATCH, POST 
 export { GET as userManagementPermissionsGET, POST as userManagementPermissionsPOST, PUT as userManagementPermissionsPUT, DELETE as userManagementPermissionsDELETE } from "./user_management_permissions.js";
 export { GET as userManagementRolesGET, POST as userManagementRolesPOST, PUT as userManagementRolesPUT } from "./user_management_roles.js";
 export { GET as userManagementUsersRolesGET, POST as userManagementUsersRolesPOST, PUT as userManagementUsersRolesPUT } from "./user_management_users_roles.js";
+// Organization management routes
+export { GET as orgManagementOrgsGET, POST as orgManagementOrgsPOST, PATCH as orgManagementOrgsPATCH, DELETE as orgManagementOrgsDELETE } from "./org_management_orgs.js";

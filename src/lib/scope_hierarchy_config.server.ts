@@ -13,12 +13,12 @@ import { SCOPE_LEVELS } from "./services/scope_service";
 
 /**
  * Scope hierarchy configuration options for HRBAC
+ * Note: Scopes are now connected to organizations via org_id and root_org_id
+ * foreign keys referencing the hazo_org table.
  */
 export type ScopeHierarchyConfig = {
   /** Whether HRBAC is enabled (default: false) */
   enable_hrbac: boolean;
-  /** Default organization for single-tenant apps (optional) */
-  default_org: string;
   /** Cache TTL in minutes for scope lookups (default: 15) */
   scope_cache_ttl_minutes: number;
   /** Maximum entries in scope cache (default: 5000) */
@@ -88,14 +88,12 @@ function get_default_labels(): Record<ScopeLevel, string> {
 /**
  * Reads HRBAC scope hierarchy configuration from hazo_auth_config.ini file
  * Falls back to defaults if config file is not found or section is missing
+ * Note: Scopes are now connected to organizations via org_id/root_org_id FK references
  * @returns Scope hierarchy configuration options
  */
 export function get_scope_hierarchy_config(): ScopeHierarchyConfig {
   // Core HRBAC enablement
   const enable_hrbac = get_config_boolean(SECTION_NAME, "enable_hrbac", false);
-
-  // Default organization for single-tenant apps
-  const default_org = get_config_value(SECTION_NAME, "default_org", "");
 
   // Cache settings
   const scope_cache_ttl_minutes = get_config_number(
@@ -118,7 +116,6 @@ export function get_scope_hierarchy_config(): ScopeHierarchyConfig {
 
   return {
     enable_hrbac,
-    default_org,
     scope_cache_ttl_minutes,
     scope_cache_max_entries,
     active_levels,
@@ -132,14 +129,6 @@ export function get_scope_hierarchy_config(): ScopeHierarchyConfig {
  */
 export function is_hrbac_enabled(): boolean {
   return get_config_boolean(SECTION_NAME, "enable_hrbac", false);
-}
-
-/**
- * Gets the default organization from config
- * Returns empty string if not configured (multi-tenant mode)
- */
-export function get_default_org(): string {
-  return get_config_value(SECTION_NAME, "default_org", "");
 }
 
 /**

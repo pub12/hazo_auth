@@ -50,12 +50,12 @@ export function get_child_level(level) {
 /**
  * Gets all scopes for a given level, optionally filtered by organization
  */
-export async function get_scopes_by_level(adapter, level, org) {
+export async function get_scopes_by_level(adapter, level, org_id) {
     try {
         const scope_service = createCrudService(adapter, level);
         let scopes;
-        if (org) {
-            scopes = await scope_service.findBy({ org });
+        if (org_id) {
+            scopes = await scope_service.findBy({ org_id });
         }
         else {
             scopes = await scope_service.findBy({});
@@ -82,7 +82,7 @@ export async function get_scopes_by_level(adapter, level, org) {
                 line_number: 0,
                 operation: "get_scopes_by_level",
                 level,
-                org,
+                org_id,
             },
         });
         return {
@@ -194,7 +194,8 @@ export async function create_scope(adapter, level, data) {
             }
         }
         const insert_data = {
-            org: data.org,
+            org_id: data.org_id,
+            root_org_id: data.root_org_id,
             name: data.name,
             created_at: now,
             changed_at: now,
@@ -474,10 +475,10 @@ export async function get_scope_descendants(adapter, level, scope_id) {
         };
     }
 }
-export async function get_scope_tree(adapter, org) {
+export async function get_scope_tree(adapter, org_id) {
     try {
         // Get all L1 scopes for this org
-        const l1_result = await get_scopes_by_level(adapter, "hazo_scopes_l1", org);
+        const l1_result = await get_scopes_by_level(adapter, "hazo_scopes_l1", org_id);
         if (!l1_result.success || !l1_result.scopes) {
             return l1_result;
         }
@@ -516,7 +517,7 @@ export async function get_scope_tree(adapter, org) {
                 filename: "scope_service.ts",
                 line_number: 0,
                 operation: "get_scope_tree",
-                org,
+                org_id,
             },
         });
         return {

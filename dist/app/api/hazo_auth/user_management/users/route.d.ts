@@ -8,6 +8,12 @@ export declare function GET(request: NextRequest): Promise<NextResponse<{
     error: string;
 }> | NextResponse<{
     success: boolean;
+    user_types_enabled: boolean;
+    available_user_types: {
+        key: string;
+        label: string;
+        badge_color: string;
+    }[];
     users: {
         id: unknown;
         name: {} | null;
@@ -18,6 +24,7 @@ export declare function GET(request: NextRequest): Promise<NextResponse<{
         created_at: {} | null;
         profile_picture_url: {} | null;
         profile_source: {} | null;
+        user_type: string | null;
     }[];
 }>>;
 /**

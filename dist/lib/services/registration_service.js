@@ -9,6 +9,7 @@ import { create_app_logger } from "../app_logger";
 import { send_template_email } from "./email_service";
 import { sanitize_error_for_user } from "../utils/error_sanitizer";
 import { get_line_number } from "../utils/api_route_helpers";
+import { is_user_types_enabled, get_default_user_type, } from "../user_types_config.server";
 // section: helpers
 /**
  * Registers a new user in the database using hazo_connect
@@ -67,6 +68,13 @@ export async function register_user(adapter, data) {
                 insert_data.profile_picture_url = default_photo.profile_picture_url;
                 // Map UI source value to database enum value
                 insert_data.profile_source = map_ui_source_to_db(default_photo.profile_source);
+            }
+        }
+        // Set default user type if feature is enabled and default is configured
+        if (is_user_types_enabled()) {
+            const default_type = get_default_user_type();
+            if (default_type) {
+                insert_data.user_type = default_type;
             }
         }
         const inserted_users = await users_service.insert(insert_data);

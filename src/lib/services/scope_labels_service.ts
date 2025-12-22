@@ -11,7 +11,7 @@ import { SCOPE_LEVELS } from "./scope_service";
 // section: types
 export type ScopeLabel = {
   id: string;
-  org: string;
+  org_id: string;
   scope_type: ScopeLevel;
   label: string;
   created_at: string;
@@ -43,11 +43,11 @@ export const DEFAULT_SCOPE_LABELS: Record<ScopeLevel, string> = {
  */
 export async function get_scope_labels(
   adapter: HazoConnectAdapter,
-  org: string,
+  org_id: string,
 ): Promise<ScopeLabelResult> {
   try {
     const label_service = createCrudService(adapter, "hazo_scope_labels");
-    const labels = await label_service.findBy({ org });
+    const labels = await label_service.findBy({ org_id });
 
     return {
       success: true,
@@ -63,7 +63,7 @@ export async function get_scope_labels(
         filename: "scope_labels_service.ts",
         line_number: 0,
         operation: "get_scope_labels",
-        org,
+        org_id,
       },
     });
 
@@ -79,11 +79,11 @@ export async function get_scope_labels(
  */
 export async function get_scope_labels_with_defaults(
   adapter: HazoConnectAdapter,
-  org: string,
+  org_id: string,
   custom_defaults?: Record<ScopeLevel, string>,
 ): Promise<ScopeLabelResult> {
   try {
-    const result = await get_scope_labels(adapter, org);
+    const result = await get_scope_labels(adapter, org_id);
     if (!result.success) {
       return result;
     }
@@ -107,7 +107,7 @@ export async function get_scope_labels_with_defaults(
         // Create a synthetic label entry (not persisted)
         all_labels.push({
           id: "", // Empty ID indicates this is a default, not from DB
-          org,
+          org_id,
           scope_type: level,
           label: defaults[level],
           created_at: "",
@@ -130,7 +130,7 @@ export async function get_scope_labels_with_defaults(
         filename: "scope_labels_service.ts",
         line_number: 0,
         operation: "get_scope_labels_with_defaults",
-        org,
+        org_id,
       },
     });
 
@@ -147,13 +147,13 @@ export async function get_scope_labels_with_defaults(
  */
 export async function get_label_for_level(
   adapter: HazoConnectAdapter,
-  org: string,
+  org_id: string,
   scope_type: ScopeLevel,
   custom_default?: string,
 ): Promise<string> {
   try {
     const label_service = createCrudService(adapter, "hazo_scope_labels");
-    const labels = await label_service.findBy({ org, scope_type });
+    const labels = await label_service.findBy({ org_id, scope_type });
 
     if (Array.isArray(labels) && labels.length > 0) {
       return (labels[0] as ScopeLabel).label;
@@ -172,7 +172,7 @@ export async function get_label_for_level(
  */
 export async function upsert_scope_label(
   adapter: HazoConnectAdapter,
-  org: string,
+  org_id: string,
   scope_type: ScopeLevel,
   label: string,
 ): Promise<ScopeLabelResult> {
@@ -180,8 +180,8 @@ export async function upsert_scope_label(
     const label_service = createCrudService(adapter, "hazo_scope_labels");
     const now = new Date().toISOString();
 
-    // Check if label already exists for this org + scope_type
-    const existing = await label_service.findBy({ org, scope_type });
+    // Check if label already exists for this org_id + scope_type
+    const existing = await label_service.findBy({ org_id, scope_type });
 
     if (Array.isArray(existing) && existing.length > 0) {
       // Update existing
@@ -206,7 +206,7 @@ export async function upsert_scope_label(
       // Create new
       const inserted = await label_service.insert({
         id: randomUUID(),
-        org,
+        org_id,
         scope_type,
         label,
         created_at: now,
@@ -235,7 +235,7 @@ export async function upsert_scope_label(
         filename: "scope_labels_service.ts",
         line_number: 0,
         operation: "upsert_scope_label",
-        org,
+        org_id,
         scope_type,
         label,
       },
@@ -254,14 +254,14 @@ export async function upsert_scope_label(
  */
 export async function batch_upsert_scope_labels(
   adapter: HazoConnectAdapter,
-  org: string,
+  org_id: string,
   labels: Array<{ scope_type: ScopeLevel; label: string }>,
 ): Promise<ScopeLabelResult> {
   try {
     const results: ScopeLabel[] = [];
 
     for (const { scope_type, label } of labels) {
-      const result = await upsert_scope_label(adapter, org, scope_type, label);
+      const result = await upsert_scope_label(adapter, org_id, scope_type, label);
       if (!result.success) {
         return {
           success: false,
@@ -287,7 +287,7 @@ export async function batch_upsert_scope_labels(
         filename: "scope_labels_service.ts",
         line_number: 0,
         operation: "batch_upsert_scope_labels",
-        org,
+        org_id,
       },
     });
 
@@ -303,14 +303,14 @@ export async function batch_upsert_scope_labels(
  */
 export async function delete_scope_label(
   adapter: HazoConnectAdapter,
-  org: string,
+  org_id: string,
   scope_type: ScopeLevel,
 ): Promise<ScopeLabelResult> {
   try {
     const label_service = createCrudService(adapter, "hazo_scope_labels");
 
     // Find the label
-    const existing = await label_service.findBy({ org, scope_type });
+    const existing = await label_service.findBy({ org_id, scope_type });
 
     if (!Array.isArray(existing) || existing.length === 0) {
       return {
@@ -335,7 +335,7 @@ export async function delete_scope_label(
         filename: "scope_labels_service.ts",
         line_number: 0,
         operation: "delete_scope_label",
-        org,
+        org_id,
         scope_type,
       },
     });

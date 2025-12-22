@@ -8,6 +8,7 @@ import { get_filename, get_line_number } from "../../../../../lib/utils/api_rout
 import { request_password_reset } from "../../../../../lib/services/password_reset_service";
 import { get_auth_cache } from "../../../../../lib/auth/auth_cache";
 import { get_auth_utility_config } from "../../../../../lib/auth_utility_config.server";
+import { is_user_types_enabled, get_all_user_types, get_user_types_config, } from "../../../../../lib/user_types_config.server";
 // section: route_config
 export const dynamic = 'force-dynamic';
 // section: api_handler
@@ -32,8 +33,19 @@ export async function GET(request) {
             line_number: get_line_number(),
             user_count: users.length,
         });
+        // Check if user types feature is enabled
+        const user_types_enabled = is_user_types_enabled();
+        const available_user_types = user_types_enabled
+            ? get_all_user_types().map((t) => ({
+                key: t.key,
+                label: t.label,
+                badge_color: t.badge_color,
+            }))
+            : [];
         return NextResponse.json({
             success: true,
+            user_types_enabled,
+            available_user_types,
             users: users.map((user) => ({
                 id: user.id,
                 name: user.name || null,
@@ -44,6 +56,7 @@ export async function GET(request) {
                 created_at: user.created_at || null,
                 profile_picture_url: user.profile_picture_url || null,
                 profile_source: user.profile_source || null,
+                user_type: user.user_type || null,
             })),
         }, { status: 200 });
     }
@@ -66,18 +79,43 @@ export async function PATCH(request) {
     const logger = create_app_logger();
     try {
         const body = await request.json();
-        const { user_id, is_active } = body;
-        if (!user_id || typeof is_active !== "boolean") {
-            return NextResponse.json({ error: "user_id and is_active (boolean) are required" }, { status: 400 });
+        const { user_id, is_active, user_type } = body;
+        // user_id is always required
+        if (!user_id) {
+            return NextResponse.json({ error: "user_id is required" }, { status: 400 });
+        }
+        // Build update object based on what's provided
+        const update_data = {
+            changed_at: new Date().toISOString(),
+        };
+        // Handle is_active if provided
+        if (typeof is_active === "boolean") {
+            update_data.is_active = is_active;
+        }
+        // Handle user_type if provided (only when feature is enabled)
+        if (user_type !== undefined) {
+            const config = get_user_types_config();
+            if (config.enable_user_types) {
+                // Allow null to clear the type, or validate type exists
+                if (user_type === null || user_type === "") {
+                    update_data.user_type = null;
+                }
+                else if (config.user_types.has(user_type)) {
+                    update_data.user_type = user_type;
+                }
+                else {
+                    return NextResponse.json({ error: "Invalid user type" }, { status: 400 });
+                }
+            }
+        }
+        // Ensure there's something to update besides changed_at
+        if (Object.keys(update_data).length === 1) {
+            return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
         }
         const hazoConnect = get_hazo_connect_instance();
         const users_service = createCrudService(hazoConnect, "hazo_users");
-        // Update user with changed_at timestamp
-        const now = new Date().toISOString();
-        await users_service.updateById(user_id, {
-            is_active,
-            changed_at: now,
-        });
+        // Update user
+        await users_service.updateById(user_id, update_data);
         // Invalidate user cache after deactivation
         if (is_active === false) {
             try {
@@ -100,7 +138,7 @@ export async function PATCH(request) {
             filename: get_filename(),
             line_number: get_line_number(),
             user_id,
-            is_active,
+            updated_fields: Object.keys(update_data).filter((k) => k !== "changed_at"),
         });
         return NextResponse.json({ success: true }, { status: 200 });
     }

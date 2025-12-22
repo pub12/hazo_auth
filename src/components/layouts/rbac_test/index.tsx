@@ -45,8 +45,6 @@ export type RbacTestLayoutProps = {
   className?: string;
   /** Whether HRBAC is enabled (passed from server) */
   hrbacEnabled?: boolean;
-  /** Default organization for HRBAC scopes */
-  defaultOrg?: string;
 };
 
 type ScopeLevel =
@@ -61,7 +59,8 @@ type ScopeLevel =
 type ScopeTreeNode = {
   id: string;
   seq: string;
-  org: string;
+  org_id: string;
+  root_org_id: string;
   name: string;
   parent_scope_id?: string;
   level: ScopeLevel;
@@ -167,7 +166,6 @@ function getUserInitials(user: UserRecord): string {
 export function RbacTestLayout({
   className,
   hrbacEnabled = false,
-  defaultOrg = "",
 }: RbacTestLayoutProps) {
   const { apiBasePath } = useHazoAuthConfig();
   const authResult = use_hazo_auth();
@@ -875,7 +873,7 @@ export function RbacTestLayout({
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {SCOPE_LEVEL_LABELS[selectedTreeItem.scopeData.level]} -{" "}
-                        {selectedTreeItem.scopeData.seq} ({selectedTreeItem.scopeData.org})
+                        {selectedTreeItem.scopeData.seq}
                       </p>
                     </div>
                   )}

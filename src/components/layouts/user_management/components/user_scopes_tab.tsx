@@ -82,7 +82,8 @@ type UserScope = {
 type ScopeRecord = {
   id: string;
   seq: string;
-  org: string;
+  org_id: string;
+  root_org_id: string;
   name: string;
   parent_scope_id?: string;
   created_at: string;
@@ -575,7 +576,7 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {SCOPE_LEVEL_LABELS[selectedTreeItem.scopeData.level]} -{" "}
-                  {selectedTreeItem.scopeData.seq} ({selectedTreeItem.scopeData.org})
+                  {selectedTreeItem.scopeData.seq}
                 </p>
               </div>
             )}

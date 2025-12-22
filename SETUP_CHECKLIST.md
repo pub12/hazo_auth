@@ -1171,7 +1171,7 @@ Add to your `hazo_auth_config.ini`:
 ```ini
 [hazo_auth__scope_hierarchy]
 enable_hrbac = true
-default_org = my_organization
+# Note: No default_org needed - org determined from user authentication
 scope_cache_ttl_minutes = 15
 scope_cache_max_entries = 5000
 

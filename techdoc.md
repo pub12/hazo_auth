@@ -254,9 +254,13 @@ CREATE TABLE hazo_users (
     profile_source hazo_enum_profile_source_enum,
     mfa_secret TEXT,
     url_on_logon TEXT,                                    -- Custom redirect URL after login
+    user_type TEXT,                                        -- User type categorization (optional feature)
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- Optional index for user type filtering
+CREATE INDEX IF NOT EXISTS idx_hazo_users_user_type ON hazo_users(user_type);
 ```
 
 **Field Notes:**
@@ -272,6 +276,7 @@ CREATE TABLE hazo_users (
 - `profile_source` - Source of profile picture (gravatar, custom, predefined)
 - `mfa_secret` - MFA secret for TOTP (future use)
 - `url_on_logon` - Custom URL to redirect user after successful login
+- `user_type` - User type key (optional, validated against config at runtime)
 - `created_at` - Account creation timestamp
 - `changed_at` - Last modification timestamp
 
@@ -343,25 +348,29 @@ CREATE TABLE hazo_user_roles (
 CREATE TABLE hazo_scopes_l1 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     seq TEXT NOT NULL,                       -- Auto-generated friendly ID (e.g., L1_001)
-    org TEXT NOT NULL,                       -- Organization identifier
+    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,       -- Organization FK
+    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,  -- Root org FK
     name TEXT NOT NULL,                      -- Scope name (e.g., "Acme Corp")
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scopes_l1_org ON hazo_scopes_l1(org);
+CREATE INDEX idx_hazo_scopes_l1_org_id ON hazo_scopes_l1(org_id);
+CREATE INDEX idx_hazo_scopes_l1_root_org_id ON hazo_scopes_l1(root_org_id);
 CREATE INDEX idx_hazo_scopes_l1_seq ON hazo_scopes_l1(seq);
 
 -- Level 2 (parent: L1)
 CREATE TABLE hazo_scopes_l2 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     seq TEXT NOT NULL,
-    org TEXT NOT NULL,
+    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
+    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     parent_scope_id UUID REFERENCES hazo_scopes_l1(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scopes_l2_org ON hazo_scopes_l2(org);
+CREATE INDEX idx_hazo_scopes_l2_org_id ON hazo_scopes_l2(org_id);
+CREATE INDEX idx_hazo_scopes_l2_root_org_id ON hazo_scopes_l2(root_org_id);
 CREATE INDEX idx_hazo_scopes_l2_seq ON hazo_scopes_l2(seq);
 CREATE INDEX idx_hazo_scopes_l2_parent ON hazo_scopes_l2(parent_scope_id);
 
@@ -371,10 +380,11 @@ CREATE INDEX idx_hazo_scopes_l2_parent ON hazo_scopes_l2(parent_scope_id);
 **Field Notes:**
 - `id` - UUID primary key (TEXT in SQLite)
 - `seq` - Auto-generated human-readable ID (e.g., L2_015) via database function
-- `org` - Organization identifier (allows multi-tenancy)
+- `org_id` - UUID foreign key referencing `hazo_org(id)` (replaces string `org` field)
+- `root_org_id` - UUID foreign key to root organization for quick tree lookups
 - `name` - Display name for the scope
 - `parent_scope_id` - References parent level (NULL for L1, required for L2-L7)
-- Foreign key with CASCADE DELETE ensures referential integrity
+- Foreign keys with CASCADE DELETE ensure referential integrity (deleting org removes all scopes)
 
 **hazo_user_scopes:**
 ```sql
@@ -402,14 +412,14 @@ CREATE INDEX idx_hazo_user_scopes_scope_type ON hazo_user_scopes(scope_type);
 ```sql
 CREATE TABLE hazo_scope_labels (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org TEXT NOT NULL,
+    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
     scope_type hazo_enum_scope_types NOT NULL,
     label TEXT NOT NULL,                     -- Custom label (e.g., "Division" instead of "Level 2")
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    UNIQUE(org, scope_type)
+    UNIQUE(org_id, scope_type)
 );
-CREATE INDEX idx_hazo_scope_labels_org ON hazo_scope_labels(org);
+CREATE INDEX idx_hazo_scope_labels_org_id ON hazo_scope_labels(org_id);
 ```
 
 **Field Notes:**
@@ -443,6 +453,7 @@ Migration files are located in `migrations/`:
 | `003_add_url_on_logon_to_hazo_users.sql` | Add url_on_logon field for custom redirects |
 | `004_add_parent_scope_to_scope_tables.sql` | Add parent_scope_id to L2-L7 scope tables (HRBAC) |
 | `005_add_oauth_fields_to_hazo_users.sql` | Add google_id and auth_providers fields for OAuth (v4.2.0+) |
+| `007_add_user_type_to_hazo_users.sql` | Add user_type field for optional user categorization |
 
 **Apply migrations:**
 ```bash
@@ -452,6 +463,400 @@ npx tsx scripts/apply_migration.ts migrations/003_add_url_on_logon_to_hazo_users
 # Apply all pending migrations
 npx tsx scripts/apply_migration.ts
 ```
+
+---
+
+## User Types (Optional Feature)
+
+### Overview
+
+User types provide optional user categorization with visual badge indicators. This feature allows applications to classify users by persona or customer type (e.g., "Client", "Tax Agent", "Premium User") without modifying the RBAC permission system.
+
+**Design Principles:**
+- **Config-based**: Types defined in INI file, not managed via UI
+- **Single type per user**: Mutually exclusive categories (not tags)
+- **Lightweight**: Single nullable TEXT column, no additional tables
+- **Optional**: Feature disabled by default, zero impact when not used
+- **Validation**: Type keys validated against config at runtime
+
+### Database Schema
+
+**Migration 007** adds single column to `hazo_users`:
+```sql
+ALTER TABLE hazo_users
+ADD COLUMN user_type TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_hazo_users_user_type ON hazo_users(user_type);
+```
+
+**Schema Notes:**
+- No foreign key constraints (config-based validation)
+- Nullable column (users can have no type)
+- Optional index for filtering/sorting
+- Works with both PostgreSQL and SQLite
+
+### Configuration
+
+**INI File** (`hazo_auth_config.ini`):
+```ini
+[hazo_auth__user_types]
+# Enable user types feature (default: false)
+enable_user_types = true
+
+# Default type for new registrations (optional)
+default_user_type = standard
+
+# Define types: key:label:badge_color
+# Colors: blue, green, red, yellow, purple, gray, orange, pink, or hex (#RRGGBB)
+user_type_1 = admin:Administrator:red
+user_type_2 = standard:Standard User:blue
+user_type_3 = client:Client:green
+user_type_4 = agent:Tax Agent:orange
+user_type_5 = premium:Premium User:#FFD700
+```
+
+**Configuration Format:**
+- **key**: Unique identifier stored in database (lowercase recommended)
+- **label**: Display name shown in UI
+- **badge_color**: Preset color name or hex code (with # prefix)
+
+**Defaults** (`src/lib/config/default_config.ts`):
+```typescript
+export const DEFAULT_USER_TYPES: UserTypesConfig = {
+  enable_user_types: false,  // Disabled by default
+  default_user_type: null,   // No default type
+  user_types: [],            // No types defined
+};
+```
+
+### Type Definitions
+
+**UserType** (`src/lib/user_types_config.server.ts`):
+```typescript
+export type UserType = {
+  key: string;           // Unique identifier (e.g., "client")
+  label: string;         // Display name (e.g., "Client")
+  badge_color: string;   // Preset color or hex code
+};
+
+export type UserTypesConfig = {
+  enable_user_types: boolean;
+  default_user_type: string | null;
+  user_types: UserType[];
+};
+```
+
+### Configuration Service
+
+**`user_types_config.server.ts`** (`src/lib/user_types_config.server.ts`):
+
+```typescript
+// Main configuration function
+export function get_user_types_config(): UserTypesConfig
+
+// Quick checks
+export function is_user_types_enabled(): boolean
+export function get_default_user_type(): string | null
+export function get_user_types(): UserType[]
+
+// Validation
+export function validate_user_type(type_key: string): boolean
+
+// Utility
+export function parse_user_type_entry(entry: string): UserType | null
+```
+
+**Functions:**
+- `get_user_types_config()` - Reads config from INI with defaults
+- `is_user_types_enabled()` - Returns boolean for feature status
+- `get_default_user_type()` - Returns default type key (or null)
+- `validate_user_type(key)` - Checks if type key exists in config
+- `parse_user_type_entry(entry)` - Parses "key:label:color" format
+
+**Usage:**
+```typescript
+import {
+  get_user_types_config,
+  is_user_types_enabled,
+  validate_user_type
+} from "@/lib/user_types_config.server";
+
+// Check if feature enabled
+if (is_user_types_enabled()) {
+  const config = get_user_types_config();
+  console.log(config.user_types); // Array of UserType objects
+}
+
+// Validate type before saving
+if (!validate_user_type("client")) {
+  throw new Error("Invalid user type");
+}
+```
+
+### API Changes
+
+**1. `/api/hazo_auth/me` Response (Enhanced):**
+```typescript
+{
+  authenticated: true,
+  // ... existing fields
+  user_type: "client",        // NEW: User's type key (or null)
+  user_type_info: {           // NEW: Type details (or null)
+    key: "client",
+    label: "Client",
+    badge_color: "green"
+  }
+}
+```
+
+**2. `/api/hazo_auth/user_management/users` GET:**
+```typescript
+{
+  users: [
+    {
+      id: "uuid",
+      email_address: "user@example.com",
+      user_type: "client",  // NEW: Type key
+      // ... other fields
+    }
+  ],
+  user_types_enabled: true,   // NEW: Feature status
+  available_user_types: [     // NEW: Configured types
+    { key: "admin", label: "Administrator", badge_color: "red" },
+    { key: "client", label: "Client", badge_color: "green" }
+  ]
+}
+```
+
+**3. `/api/hazo_auth/user_management/users` PATCH:**
+- Accepts `user_type` field in request body
+- Validates type key via `validate_user_type()` before saving
+- Rejects invalid keys with 400 error
+- Returns updated user with `user_type_info` object
+
+**4. NEW `/api/hazo_auth/user_management/user_types` GET:**
+```typescript
+{
+  enabled: true,
+  types: [
+    { key: "admin", label: "Administrator", badge_color: "red" },
+    { key: "client", label: "Client", badge_color: "green" }
+  ],
+  default_type: "standard"
+}
+```
+
+Route handler: `export { GET } from "hazo_auth/server/routes/user_types";`
+
+### Components
+
+**UserTypeBadge** (`src/components/ui/user-type-badge.tsx`):
+
+Display-only badge component with preset or custom colors.
+
+**Props:**
+```typescript
+type UserTypeBadgeProps = {
+  type: string;                        // Type key (for ARIA label)
+  label: string;                       // Display label
+  badge_color: string;                 // Preset or hex color
+  variant?: "badge" | "text";          // Display style (default: "badge")
+  className?: string;                  // Additional CSS classes
+};
+```
+
+**Usage:**
+```typescript
+import { UserTypeBadge } from "hazo_auth/components/ui/user-type-badge";
+
+// Badge variant (colored background)
+<UserTypeBadge
+  type="client"
+  label="Client"
+  badge_color="green"
+  variant="badge"
+/>
+
+// Text variant (plain text, no background)
+<UserTypeBadge
+  type="client"
+  label="Client"
+  badge_color="green"
+  variant="text"
+/>
+
+// Custom hex color
+<UserTypeBadge
+  type="premium"
+  label="Premium"
+  badge_color="#FFD700"
+  variant="badge"
+/>
+```
+
+**Color Handling:**
+- **Preset colors**: blue, green, red, yellow, purple, gray, orange, pink (mapped to Tailwind classes)
+- **Custom hex colors**: Any hex code (#RRGGBB) rendered with inline styles
+- **Accessibility**: Proper ARIA labels for screen readers
+
+### User Management Integration
+
+**UserManagementLayout** (`src/components/layouts/user_management/index.tsx`):
+
+**Props:**
+```typescript
+type UserManagementLayoutProps = {
+  // ... existing props
+  userTypesEnabled?: boolean;
+  availableUserTypes?: UserType[];
+};
+```
+
+**Features when enabled:**
+1. **Type Column** in users table:
+   - Displays `UserTypeBadge` with user's type
+   - Sortable column
+   - Conditionally rendered (only when `userTypesEnabled` is true)
+
+2. **Type Dropdown** in user detail dialog:
+   - Shows in edit mode only
+   - Populated with `availableUserTypes`
+   - Includes "None" option to clear type
+   - Validation on save
+
+3. **API Integration**:
+   - Fetches types from `/api/hazo_auth/user_management/user_types`
+   - Saves type changes via PATCH `/api/hazo_auth/user_management/users`
+
+**Usage:**
+```typescript
+import { UserManagementLayout } from "hazo_auth/components/layouts/user_management";
+import { get_user_types_config } from "@/lib/user_types_config.server";
+
+export default async function UserManagementPage() {
+  const config = get_user_types_config();
+
+  return (
+    <UserManagementLayout
+      userTypesEnabled={config.enable_user_types}
+      availableUserTypes={config.user_types}
+    />
+  );
+}
+```
+
+### Service Integration
+
+**Registration Service** (`src/lib/services/registration_service.ts`):
+
+When `default_user_type` is configured, new registrations automatically receive that type:
+
+```typescript
+import { get_default_user_type } from "@/lib/user_types_config.server";
+
+const default_type = get_default_user_type();
+const new_user = {
+  // ... other fields
+  user_type: default_type || null,  // Set default or null
+};
+```
+
+**User Management API** (`src/app/api/hazo_auth/user_management/users/route.ts`):
+
+**GET Handler:**
+- Calls `get_user_types_config()` to check feature status
+- Returns `user_types_enabled` and `available_user_types` in response
+- Includes user type in user objects
+
+**PATCH Handler:**
+- Accepts `user_type` in request body
+- Validates via `validate_user_type(type_key)` before saving
+- Returns 400 error for invalid type keys
+- Allows null to clear user type
+
+**Example PATCH Request:**
+```typescript
+PATCH /api/hazo_auth/user_management/users
+{
+  user_id: "uuid",
+  user_type: "client"  // Set type to "client"
+}
+
+// Or clear type
+{
+  user_id: "uuid",
+  user_type: null  // Remove type
+}
+```
+
+### Design Rationale
+
+**1. Config-based (not UI-managed):**
+- **Pro**: Simple INI configuration, no complex CRUD UI needed
+- **Pro**: Types defined at deployment time prevents proliferation
+- **Pro**: Easier to maintain consistent types across environments
+- **Con**: Requires deployment to change types (acceptable tradeoff)
+
+**2. Single type per user:**
+- **Pro**: Mutually exclusive categories provide clear classification
+- **Pro**: Simpler UI (dropdown vs multi-select)
+- **Pro**: No ambiguity about which type takes precedence
+- **Con**: Cannot assign multiple types (use RBAC roles for that)
+
+**3. Separate from RBAC:**
+- **Pro**: Clear separation of concerns (types = labels, roles = permissions)
+- **Pro**: Doesn't interfere with existing permission system
+- **Pro**: Can combine types with roles (e.g., "Client" with "Admin" role)
+- **Con**: Two systems to manage (acceptable for different purposes)
+
+**4. No foreign key constraints:**
+- **Pro**: Simple config changes without database migrations
+- **Pro**: Works with config-driven validation
+- **Pro**: Allows types to be added/removed easily
+- **Con**: No referential integrity (mitigated by runtime validation)
+
+### Performance Considerations
+
+**Indexing:**
+- Optional index on `user_type` column for filtering/sorting
+- Index created during migration (optional, can be skipped)
+- Benefits appear when filtering users by type
+
+**Query Impact:**
+- Single column read (negligible overhead)
+- No joins required for basic user queries
+- Type info lookup happens in application layer (config read)
+
+**Caching:**
+- User types config loaded once at startup
+- No database queries for type definitions
+- Type badge rendering is stateless (no lookups)
+
+### Backward Compatibility
+
+**Migration Safety:**
+- Adds nullable column (existing rows get NULL)
+- Optional index creation (can be skipped if not needed)
+- No breaking changes to existing queries
+
+**API Compatibility:**
+- New fields added to responses (non-breaking)
+- Existing clients ignore new fields
+- No changes to required request fields
+
+**Feature Toggle:**
+- Disabled by default (`enable_user_types = false`)
+- Zero impact when disabled (column exists but unused)
+- Can be enabled/disabled without migration rollback
+
+### Future Enhancements
+
+**Potential additions (not implemented):**
+- Type-based filtering in User Management table
+- Type-specific permission defaults or role assignments
+- Bulk type assignment tool
+- Type change audit logging
+- Type-based user counts/statistics
 
 ---
 

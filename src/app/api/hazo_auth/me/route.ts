@@ -8,6 +8,10 @@ import { createCrudService } from "hazo_connect/server";
 import { map_db_source_to_ui } from "../../../../lib/services/profile_picture_source_mapper";
 import { create_app_logger } from "../../../../lib/app_logger";
 import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
+import {
+  is_user_types_enabled,
+  get_user_type_by_key,
+} from "../../../../lib/user_types_config.server";
 
 // section: api_handler
 /**
@@ -87,6 +91,20 @@ export async function GET(request: NextRequest) {
     const password_hash = user_db.password_hash as string;
     const has_password = password_hash !== null && password_hash !== undefined && password_hash !== "";
 
+    // Get user type info if feature is enabled
+    const user_type = (user_db.user_type as string | null) || null;
+    let user_type_info: { key: string; label: string; badge_color: string } | null = null;
+    if (is_user_types_enabled() && user_type) {
+      const type_def = get_user_type_by_key(user_type);
+      if (type_def) {
+        user_type_info = {
+          key: type_def.key,
+          label: type_def.label,
+          badge_color: type_def.badge_color,
+        };
+      }
+    }
+
     // Return unified format with all fields
     const profile_pic = auth_result.user.profile_picture_url;
     return NextResponse.json(
@@ -108,6 +126,9 @@ export async function GET(request: NextRequest) {
         auth_providers,
         has_password,
         google_connected: auth_providers.includes("google"),
+        // User type fields (when feature is enabled)
+        user_type,
+        user_type_info,
         // Permissions and user object (always included)
         user: auth_result.user,
         permissions: auth_result.permissions,

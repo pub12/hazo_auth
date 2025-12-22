@@ -1,6 +1,7 @@
 // file_description: load ui shell layout settings from hazo_auth_config.ini
 // section: imports
 import { get_config_value } from "./config/config_loader.server";
+import { get_navbar_config, type NavbarConfig } from "./navbar_config.server";
 
 // section: types
 export type UiShellLayoutMode = "test_sidebar" | "standalone";
@@ -13,6 +14,10 @@ export type UiShellConfig = {
   standalone_content_class: string;
   standalone_show_heading: boolean;
   standalone_show_description: boolean;
+  /** Navbar configuration for standalone mode */
+  navbar: NavbarConfig;
+  /** Enable vertical centering in standalone mode */
+  vertical_center: boolean;
 };
 
 // section: helpers
@@ -58,6 +63,14 @@ export function get_ui_shell_config(): UiShellConfig {
     "true"
   ).toLowerCase() === "true";
 
+  const vertical_center = get_config_value(
+    section,
+    "vertical_center",
+    "true"
+  ).toLowerCase() === "true";
+
+  const navbar = get_navbar_config();
+
   return {
     layout_mode,
     standalone_heading,
@@ -66,6 +79,8 @@ export function get_ui_shell_config(): UiShellConfig {
     standalone_content_class,
     standalone_show_heading,
     standalone_show_description,
+    navbar,
+    vertical_center,
   };
 }
 

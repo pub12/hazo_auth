@@ -1,3 +1,4 @@
+import { type NavbarConfig } from "./navbar_config.server";
 export type UiShellLayoutMode = "test_sidebar" | "standalone";
 export type UiShellConfig = {
     layout_mode: UiShellLayoutMode;
@@ -7,6 +8,10 @@ export type UiShellConfig = {
     standalone_content_class: string;
     standalone_show_heading: boolean;
     standalone_show_description: boolean;
+    /** Navbar configuration for standalone mode */
+    navbar: NavbarConfig;
+    /** Enable vertical centering in standalone mode */
+    vertical_center: boolean;
 };
 /**
  * Reads ui shell configuration controlling whether pages use the sidebar test shell

@@ -17,10 +17,10 @@ export const DEFAULT_SCOPE_LABELS = {
 /**
  * Gets all scope labels for an organization
  */
-export async function get_scope_labels(adapter, org) {
+export async function get_scope_labels(adapter, org_id) {
     try {
         const label_service = createCrudService(adapter, "hazo_scope_labels");
-        const labels = await label_service.findBy({ org });
+        const labels = await label_service.findBy({ org_id });
         return {
             success: true,
             labels: Array.isArray(labels) ? labels : [],
@@ -36,7 +36,7 @@ export async function get_scope_labels(adapter, org) {
                 filename: "scope_labels_service.ts",
                 line_number: 0,
                 operation: "get_scope_labels",
-                org,
+                org_id,
             },
         });
         return {
@@ -48,9 +48,9 @@ export async function get_scope_labels(adapter, org) {
 /**
  * Gets all scope labels for an organization, with defaults filled in for missing levels
  */
-export async function get_scope_labels_with_defaults(adapter, org, custom_defaults) {
+export async function get_scope_labels_with_defaults(adapter, org_id, custom_defaults) {
     try {
-        const result = await get_scope_labels(adapter, org);
+        const result = await get_scope_labels(adapter, org_id);
         if (!result.success) {
             return result;
         }
@@ -71,7 +71,7 @@ export async function get_scope_labels_with_defaults(adapter, org, custom_defaul
                 // Create a synthetic label entry (not persisted)
                 all_labels.push({
                     id: "", // Empty ID indicates this is a default, not from DB
-                    org,
+                    org_id,
                     scope_type: level,
                     label: defaults[level],
                     created_at: "",
@@ -94,7 +94,7 @@ export async function get_scope_labels_with_defaults(adapter, org, custom_defaul
                 filename: "scope_labels_service.ts",
                 line_number: 0,
                 operation: "get_scope_labels_with_defaults",
-                org,
+                org_id,
             },
         });
         return {
@@ -107,10 +107,10 @@ export async function get_scope_labels_with_defaults(adapter, org, custom_defaul
  * Gets the label for a specific scope level
  * Returns the custom label if set, otherwise returns the default
  */
-export async function get_label_for_level(adapter, org, scope_type, custom_default) {
+export async function get_label_for_level(adapter, org_id, scope_type, custom_default) {
     try {
         const label_service = createCrudService(adapter, "hazo_scope_labels");
-        const labels = await label_service.findBy({ org, scope_type });
+        const labels = await label_service.findBy({ org_id, scope_type });
         if (Array.isArray(labels) && labels.length > 0) {
             return labels[0].label;
         }
@@ -125,12 +125,12 @@ export async function get_label_for_level(adapter, org, scope_type, custom_defau
  * Creates or updates a scope label for an organization
  * Uses upsert pattern - creates if not exists, updates if exists
  */
-export async function upsert_scope_label(adapter, org, scope_type, label) {
+export async function upsert_scope_label(adapter, org_id, scope_type, label) {
     try {
         const label_service = createCrudService(adapter, "hazo_scope_labels");
         const now = new Date().toISOString();
-        // Check if label already exists for this org + scope_type
-        const existing = await label_service.findBy({ org, scope_type });
+        // Check if label already exists for this org_id + scope_type
+        const existing = await label_service.findBy({ org_id, scope_type });
         if (Array.isArray(existing) && existing.length > 0) {
             // Update existing
             const existing_label = existing[0];
@@ -153,7 +153,7 @@ export async function upsert_scope_label(adapter, org, scope_type, label) {
             // Create new
             const inserted = await label_service.insert({
                 id: randomUUID(),
-                org,
+                org_id,
                 scope_type,
                 label,
                 created_at: now,
@@ -181,7 +181,7 @@ export async function upsert_scope_label(adapter, org, scope_type, label) {
                 filename: "scope_labels_service.ts",
                 line_number: 0,
                 operation: "upsert_scope_label",
-                org,
+                org_id,
                 scope_type,
                 label,
             },
@@ -196,11 +196,11 @@ export async function upsert_scope_label(adapter, org, scope_type, label) {
  * Batch upsert scope labels for an organization
  * Useful for saving all labels at once from the UI
  */
-export async function batch_upsert_scope_labels(adapter, org, labels) {
+export async function batch_upsert_scope_labels(adapter, org_id, labels) {
     try {
         const results = [];
         for (const { scope_type, label } of labels) {
-            const result = await upsert_scope_label(adapter, org, scope_type, label);
+            const result = await upsert_scope_label(adapter, org_id, scope_type, label);
             if (!result.success) {
                 return {
                     success: false,
@@ -226,7 +226,7 @@ export async function batch_upsert_scope_labels(adapter, org, labels) {
                 filename: "scope_labels_service.ts",
                 line_number: 0,
                 operation: "batch_upsert_scope_labels",
-                org,
+                org_id,
             },
         });
         return {
@@ -238,11 +238,11 @@ export async function batch_upsert_scope_labels(adapter, org, labels) {
 /**
  * Deletes a scope label, reverting to default
  */
-export async function delete_scope_label(adapter, org, scope_type) {
+export async function delete_scope_label(adapter, org_id, scope_type) {
     try {
         const label_service = createCrudService(adapter, "hazo_scope_labels");
         // Find the label
-        const existing = await label_service.findBy({ org, scope_type });
+        const existing = await label_service.findBy({ org_id, scope_type });
         if (!Array.isArray(existing) || existing.length === 0) {
             return {
                 success: true, // Already doesn't exist
@@ -265,7 +265,7 @@ export async function delete_scope_label(adapter, org, scope_type) {
                 filename: "scope_labels_service.ts",
                 line_number: 0,
                 operation: "delete_scope_label",
-                org,
+                org_id,
                 scope_type,
             },
         });

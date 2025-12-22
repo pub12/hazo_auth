@@ -49,13 +49,12 @@ function get_default_labels() {
 /**
  * Reads HRBAC scope hierarchy configuration from hazo_auth_config.ini file
  * Falls back to defaults if config file is not found or section is missing
+ * Note: Scopes are now connected to organizations via org_id/root_org_id FK references
  * @returns Scope hierarchy configuration options
  */
 export function get_scope_hierarchy_config() {
     // Core HRBAC enablement
     const enable_hrbac = get_config_boolean(SECTION_NAME, "enable_hrbac", false);
-    // Default organization for single-tenant apps
-    const default_org = get_config_value(SECTION_NAME, "default_org", "");
     // Cache settings
     const scope_cache_ttl_minutes = get_config_number(SECTION_NAME, "scope_cache_ttl_minutes", 15);
     const scope_cache_max_entries = get_config_number(SECTION_NAME, "scope_cache_max_entries", 5000);
@@ -66,7 +65,6 @@ export function get_scope_hierarchy_config() {
     const default_labels = get_default_labels();
     return {
         enable_hrbac,
-        default_org,
         scope_cache_ttl_minutes,
         scope_cache_max_entries,
         active_levels,
@@ -79,13 +77,6 @@ export function get_scope_hierarchy_config() {
  */
 export function is_hrbac_enabled() {
     return get_config_boolean(SECTION_NAME, "enable_hrbac", false);
-}
-/**
- * Gets the default organization from config
- * Returns empty string if not configured (multi-tenant mode)
- */
-export function get_default_org() {
-    return get_config_value(SECTION_NAME, "default_org", "");
 }
 /**
  * Gets the default label for a scope level

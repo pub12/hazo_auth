@@ -133,6 +133,36 @@ export declare const DEFAULT_MULTI_TENANCY: {
     /** Default user limit per organization (0 = unlimited) */
     readonly default_user_limit: 0;
 };
+export declare const DEFAULT_NAVBAR: {
+    /** Enable navbar on auth pages */
+    readonly enable_navbar: true;
+    /** Logo image path (default: /logo.png in public folder) */
+    readonly logo_path: "/logo.png";
+    /** Logo width in pixels */
+    readonly logo_width: 32;
+    /** Logo height in pixels */
+    readonly logo_height: 32;
+    /** Company/application name displayed next to logo */
+    readonly company_name: "";
+    /** Home link path */
+    readonly home_path: "/";
+    /** Home link label */
+    readonly home_label: "Home";
+    /** Show home link */
+    readonly show_home_link: true;
+    /** Navbar background color (empty = transparent/inherit) */
+    readonly background_color: "";
+    /** Navbar text color (empty = inherit) */
+    readonly text_color: "";
+    /** Navbar height in pixels */
+    readonly height: 64;
+};
+export declare const DEFAULT_USER_TYPES: {
+    /** Enable user types feature (default: false) */
+    readonly enable_user_types: false;
+    /** Default user type for new users (empty = no default) */
+    readonly default_user_type: "";
+};
 export declare const DEFAULT_DEV_LOCK: {
     /** Enable the development lock screen (also requires HAZO_AUTH_DEV_LOCK_ENABLED env var) */
     readonly enable: false;
@@ -328,6 +358,36 @@ export declare const HAZO_AUTH_DEFAULTS: {
         readonly org_cache_max_entries: 1000;
         /** Default user limit per organization (0 = unlimited) */
         readonly default_user_limit: 0;
+    };
+    readonly navbar: {
+        /** Enable navbar on auth pages */
+        readonly enable_navbar: true;
+        /** Logo image path (default: /logo.png in public folder) */
+        readonly logo_path: "/logo.png";
+        /** Logo width in pixels */
+        readonly logo_width: 32;
+        /** Logo height in pixels */
+        readonly logo_height: 32;
+        /** Company/application name displayed next to logo */
+        readonly company_name: "";
+        /** Home link path */
+        readonly home_path: "/";
+        /** Home link label */
+        readonly home_label: "Home";
+        /** Show home link */
+        readonly show_home_link: true;
+        /** Navbar background color (empty = transparent/inherit) */
+        readonly background_color: "";
+        /** Navbar text color (empty = inherit) */
+        readonly text_color: "";
+        /** Navbar height in pixels */
+        readonly height: 64;
+    };
+    readonly userTypes: {
+        /** Enable user types feature (default: false) */
+        readonly enable_user_types: false;
+        /** Default user type for new users (empty = no default) */
+        readonly default_user_type: "";
     };
 };
 /**

@@ -142,19 +142,13 @@ export function ProfilePictureLibraryTab({
     return "L";
   };
 
-  // Map column count to Tailwind grid class
-  const getGridColumnsClass = (columns: number): string => {
-    const columnMap: Record<number, string> = {
-      1: "grid-cols-1",
-      2: "grid-cols-2",
-      3: "grid-cols-3",
-      4: "grid-cols-4",
-      5: "grid-cols-5",
-      6: "grid-cols-6",
-      7: "grid-cols-7",
-      8: "grid-cols-8",
+  // Get inline style for grid columns (using inline styles instead of Tailwind classes
+  // because dynamic classes like grid-cols-4 may not be included in consuming app's CSS bundle)
+  const getGridColumnsStyle = (columns: number): React.CSSProperties => {
+    const validColumns = Math.min(Math.max(columns, 1), 8);
+    return {
+      gridTemplateColumns: `repeat(${validColumns}, minmax(0, 1fr))`,
     };
-    return columnMap[columns] || "grid-cols-4";
   };
 
   return (
@@ -230,7 +224,10 @@ export function ProfilePictureLibraryTab({
               <Loader2 className="h-6 w-6 text-[var(--hazo-text-subtle)] animate-spin" aria-hidden="true" />
             </div>
           ) : photos.length > 0 ? (
-            <div className={`cls_profile_picture_library_tab_photos_grid grid ${getGridColumnsClass(libraryPhotoGridColumns)} gap-3 overflow-y-auto p-4 border border-[var(--hazo-border)] rounded-lg bg-[var(--hazo-bg-subtle)] min-h-[400px] max-h-[400px]`}>
+            <div
+              className="cls_profile_picture_library_tab_photos_grid grid gap-3 overflow-y-auto p-4 border border-[var(--hazo-border)] rounded-lg bg-[var(--hazo-bg-subtle)] min-h-[400px] max-h-[400px]"
+              style={getGridColumnsStyle(libraryPhotoGridColumns)}
+            >
               {photos.map((photoUrl) => (
                 <button
                   key={photoUrl}
@@ -241,7 +238,7 @@ export function ProfilePictureLibraryTab({
                     w-full aspect-square rounded-lg overflow-hidden border-2 transition-colors cursor-pointer
                     ${selectedPhoto === photoUrl ? "border-blue-500 ring-2 ring-blue-200" : "border-[var(--hazo-border)] hover:border-[var(--hazo-border-emphasis)]"}
                   `}
-                  style={{ minHeight: '80px', minWidth: '80px' }}
+                  style={{ minHeight: '80px', minWidth: '80px', aspectRatio: '1/1' }}
                   aria-label={`Select photo ${photoUrl.split('/').pop()}`}
                 >
                   <img

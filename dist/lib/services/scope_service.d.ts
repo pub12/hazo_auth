@@ -3,7 +3,8 @@ export type ScopeLevel = "hazo_scopes_l1" | "hazo_scopes_l2" | "hazo_scopes_l3" 
 export type ScopeRecord = {
     id: string;
     seq: string;
-    org: string;
+    org_id: string;
+    root_org_id: string;
     name: string;
     parent_scope_id?: string | null;
     created_at: string;
@@ -16,7 +17,8 @@ export type ScopeServiceResult = {
     error?: string;
 };
 export type CreateScopeData = {
-    org: string;
+    org_id: string;
+    root_org_id: string;
     name: string;
     parent_scope_id?: string;
 };
@@ -43,7 +45,7 @@ export declare function get_child_level(level: ScopeLevel): ScopeLevel | undefin
 /**
  * Gets all scopes for a given level, optionally filtered by organization
  */
-export declare function get_scopes_by_level(adapter: HazoConnectAdapter, level: ScopeLevel, org?: string): Promise<ScopeServiceResult>;
+export declare function get_scopes_by_level(adapter: HazoConnectAdapter, level: ScopeLevel, org_id?: string): Promise<ScopeServiceResult>;
 /**
  * Gets a single scope by ID
  */
@@ -93,11 +95,12 @@ export type ScopeTreeNode = ScopeRecord & {
 export type OrgScopeTreeNode = {
     id: string;
     name: string;
-    org: string;
+    org_id: string;
+    root_org_id: string;
     isOrgNode: true;
     children: ScopeTreeNode[];
 };
-export declare function get_scope_tree(adapter: HazoConnectAdapter, org: string): Promise<{
+export declare function get_scope_tree(adapter: HazoConnectAdapter, org_id: string): Promise<{
     success: boolean;
     tree?: ScopeTreeNode[];
     error?: string;

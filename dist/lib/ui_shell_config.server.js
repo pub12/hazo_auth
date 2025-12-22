@@ -1,6 +1,7 @@
 // file_description: load ui shell layout settings from hazo_auth_config.ini
 // section: imports
 import { get_config_value } from "./config/config_loader.server";
+import { get_navbar_config } from "./navbar_config.server";
 // section: helpers
 /**
  * Reads ui shell configuration controlling whether pages use the sidebar test shell
@@ -16,6 +17,8 @@ export function get_ui_shell_config() {
     const standalone_content_class = get_config_value(section, "standalone_content_class", "cls_standalone_shell_content w-full max-w-5xl shadow-xl rounded-2xl border bg-card");
     const standalone_show_heading = get_config_value(section, "standalone_show_heading", "true").toLowerCase() === "true";
     const standalone_show_description = get_config_value(section, "standalone_show_description", "true").toLowerCase() === "true";
+    const vertical_center = get_config_value(section, "vertical_center", "true").toLowerCase() === "true";
+    const navbar = get_navbar_config();
     return {
         layout_mode,
         standalone_heading,
@@ -24,5 +27,7 @@ export function get_ui_shell_config() {
         standalone_content_class,
         standalone_show_heading,
         standalone_show_description,
+        navbar,
+        vertical_center,
     };
 }

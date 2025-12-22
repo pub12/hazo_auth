@@ -18,7 +18,8 @@ export type ScopeLevel =
 export type ScopeRecord = {
   id: string;
   seq: string;
-  org: string;
+  org_id: string;
+  root_org_id: string;
   name: string;
   parent_scope_id?: string | null;
   created_at: string;
@@ -33,7 +34,8 @@ export type ScopeServiceResult = {
 };
 
 export type CreateScopeData = {
-  org: string;
+  org_id: string;
+  root_org_id: string;
   name: string;
   parent_scope_id?: string;
 };
@@ -99,14 +101,14 @@ export function get_child_level(level: ScopeLevel): ScopeLevel | undefined {
 export async function get_scopes_by_level(
   adapter: HazoConnectAdapter,
   level: ScopeLevel,
-  org?: string,
+  org_id?: string,
 ): Promise<ScopeServiceResult> {
   try {
     const scope_service = createCrudService(adapter, level);
 
     let scopes: unknown[];
-    if (org) {
-      scopes = await scope_service.findBy({ org });
+    if (org_id) {
+      scopes = await scope_service.findBy({ org_id });
     } else {
       scopes = await scope_service.findBy({});
     }
@@ -133,7 +135,7 @@ export async function get_scopes_by_level(
         line_number: 0,
         operation: "get_scopes_by_level",
         level,
-        org,
+        org_id,
       },
     });
 
@@ -272,7 +274,8 @@ export async function create_scope(
     }
 
     const insert_data: Record<string, unknown> = {
-      org: data.org,
+      org_id: data.org_id,
+      root_org_id: data.root_org_id,
       name: data.name,
       created_at: now,
       changed_at: now,
@@ -635,18 +638,19 @@ export type ScopeTreeNode = ScopeRecord & {
 export type OrgScopeTreeNode = {
   id: string;
   name: string;
-  org: string;
+  org_id: string;
+  root_org_id: string;
   isOrgNode: true;
   children: ScopeTreeNode[];
 };
 
 export async function get_scope_tree(
   adapter: HazoConnectAdapter,
-  org: string,
+  org_id: string,
 ): Promise<{ success: boolean; tree?: ScopeTreeNode[]; error?: string }> {
   try {
     // Get all L1 scopes for this org
-    const l1_result = await get_scopes_by_level(adapter, "hazo_scopes_l1", org);
+    const l1_result = await get_scopes_by_level(adapter, "hazo_scopes_l1", org_id);
     if (!l1_result.success || !l1_result.scopes) {
       return l1_result;
     }
@@ -696,7 +700,7 @@ export async function get_scope_tree(
         filename: "scope_service.ts",
         line_number: 0,
         operation: "get_scope_tree",
-        org,
+        org_id,
       },
     });
 

@@ -1,4 +1,6 @@
 export { AlreadyLoggedInGuard } from "./components/already_logged_in_guard";
+export { AuthNavbar } from "./components/auth_navbar";
+export type { AuthNavbarProps } from "./components/auth_navbar";
 export { FieldErrorMessage } from "./components/field_error_message";
 export { FormActionButtons } from "./components/form_action_buttons";
 export { FormFieldWrapper } from "./components/form_field_wrapper";

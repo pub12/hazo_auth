@@ -23,9 +23,18 @@ export const dynamic = "force-dynamic";
 
 // section: constants
 const REQUIRED_PERMISSION = "admin_scope_hierarchy_management";
+const GLOBAL_ADMIN_PERMISSION = "hazo_org_global_admin";
+
+// section: types
+type AuthCheckResult = {
+  authorized: boolean;
+  error?: NextResponse;
+  is_global_admin?: boolean;
+  user_org_id?: string | null;
+};
 
 // section: helpers
-async function check_permission(request: NextRequest): Promise<{ authorized: boolean; error?: NextResponse }> {
+async function check_permission(request: NextRequest): Promise<AuthCheckResult> {
   const auth_result = await hazo_get_auth(request, {
     required_permissions: [REQUIRED_PERMISSION],
     strict: false,
@@ -48,15 +57,24 @@ async function check_permission(request: NextRequest): Promise<{ authorized: boo
     };
   }
 
-  return { authorized: true };
+  // Check if user is global admin
+  const is_global_admin = auth_result.permissions?.includes(GLOBAL_ADMIN_PERMISSION) || false;
+
+  return {
+    authorized: true,
+    is_global_admin,
+    user_org_id: auth_result.user?.org_id || null,
+  };
 }
 
 // section: api_handler
 /**
  * GET - Fetch scope labels for an organization
  * Query params:
- * - org: string (required)
+ * - org_id: string (optional for global admins, auto-filled for non-global admins)
  * - include_defaults: 'true' | 'false' (optional, default: 'true')
+ *
+ * Note: Non-global admins can only see labels for their own organization.
  */
 export async function GET(request: NextRequest) {
   const logger = create_app_logger();
@@ -77,12 +95,23 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const org = searchParams.get("org");
+    let org_id = searchParams.get("org_id");
     const include_defaults = searchParams.get("include_defaults") !== "false";
 
-    if (!org) {
+    // Apply org-based filtering for non-global admins
+    if (!perm_check.is_global_admin) {
+      org_id = perm_check.user_org_id || null;
+      if (!org_id) {
+        return NextResponse.json(
+          { error: "User is not assigned to an organization" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!org_id) {
       return NextResponse.json(
-        { error: "org query parameter is required" },
+        { error: "org_id query parameter is required" },
         { status: 400 }
       );
     }
@@ -92,9 +121,9 @@ export async function GET(request: NextRequest) {
 
     let result;
     if (include_defaults) {
-      result = await get_scope_labels_with_defaults(adapter, org, config.default_labels);
+      result = await get_scope_labels_with_defaults(adapter, org_id, config.default_labels);
     } else {
-      result = await get_scope_labels(adapter, org);
+      result = await get_scope_labels(adapter, org_id);
     }
 
     if (!result.success) {
@@ -104,7 +133,7 @@ export async function GET(request: NextRequest) {
     logger.info("scope_management_labels_fetched", {
       filename: get_filename(),
       line_number: get_line_number(),
-      org,
+      org_id,
       count: result.labels?.length || 0,
     });
 
@@ -127,8 +156,10 @@ export async function GET(request: NextRequest) {
 
 /**
  * PUT - Upsert scope label(s)
- * Body (single): { org: string, scope_type: ScopeLevel, label: string }
- * Body (batch): { org: string, labels: Array<{ scope_type: ScopeLevel, label: string }> }
+ * Body (single): { org_id: string, scope_type: ScopeLevel, label: string }
+ * Body (batch): { org_id: string, labels: Array<{ scope_type: ScopeLevel, label: string }> }
+ *
+ * Note: Non-global admins can only update labels for their own organization.
  */
 export async function PUT(request: NextRequest) {
   const logger = create_app_logger();
@@ -149,11 +180,22 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { org, scope_type, label, labels } = body;
+    let { org_id, scope_type, label, labels } = body;
 
-    if (!org || typeof org !== "string" || org.trim().length === 0) {
+    // For non-global admins, force org_id to their own org
+    if (!perm_check.is_global_admin) {
+      org_id = perm_check.user_org_id;
+      if (!org_id) {
+        return NextResponse.json(
+          { error: "User is not assigned to an organization" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!org_id || typeof org_id !== "string" || org_id.trim().length === 0) {
       return NextResponse.json(
-        { error: "org is required and must be a non-empty string" },
+        { error: "org_id is required and must be a non-empty string" },
         { status: 400 }
       );
     }
@@ -190,7 +232,7 @@ export async function PUT(request: NextRequest) {
         logger.info("scope_management_labels_batch_no_changes", {
           filename: get_filename(),
           line_number: get_line_number(),
-          org,
+          org_id,
         });
 
         return NextResponse.json({
@@ -202,7 +244,7 @@ export async function PUT(request: NextRequest) {
 
       const result = await batch_upsert_scope_labels(
         adapter,
-        org.trim(),
+        org_id.trim(),
         validLabels
       );
 
@@ -213,7 +255,7 @@ export async function PUT(request: NextRequest) {
       logger.info("scope_management_labels_batch_updated", {
         filename: get_filename(),
         line_number: get_line_number(),
-        org,
+        org_id,
         count: validLabels.length,
       });
 
@@ -240,7 +282,7 @@ export async function PUT(request: NextRequest) {
 
     const result = await upsert_scope_label(
       adapter,
-      org.trim(),
+      org_id.trim(),
       scope_type as ScopeLevel,
       label.trim()
     );
@@ -252,7 +294,7 @@ export async function PUT(request: NextRequest) {
     logger.info("scope_management_label_updated", {
       filename: get_filename(),
       line_number: get_line_number(),
-      org,
+      org_id,
       scope_type,
       label: label.trim(),
     });
@@ -275,7 +317,9 @@ export async function PUT(request: NextRequest) {
 
 /**
  * DELETE - Delete a scope label (revert to default)
- * Query params: org, scope_type
+ * Query params: org_id, scope_type
+ *
+ * Note: Non-global admins can only delete labels for their own organization.
  */
 export async function DELETE(request: NextRequest) {
   const logger = create_app_logger();
@@ -296,12 +340,23 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const org = searchParams.get("org");
+    let org_id = searchParams.get("org_id");
     const scope_type = searchParams.get("scope_type");
 
-    if (!org) {
+    // For non-global admins, force org_id to their own org
+    if (!perm_check.is_global_admin) {
+      org_id = perm_check.user_org_id || null;
+      if (!org_id) {
+        return NextResponse.json(
+          { error: "User is not assigned to an organization" },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!org_id) {
       return NextResponse.json(
-        { error: "org query parameter is required" },
+        { error: "org_id query parameter is required" },
         { status: 400 }
       );
     }
@@ -314,7 +369,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const adapter = get_hazo_connect_instance();
-    const result = await delete_scope_label(adapter, org, scope_type as ScopeLevel);
+    const result = await delete_scope_label(adapter, org_id, scope_type as ScopeLevel);
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -323,7 +378,7 @@ export async function DELETE(request: NextRequest) {
     logger.info("scope_management_label_deleted", {
       filename: get_filename(),
       line_number: get_line_number(),
-      org,
+      org_id,
       scope_type,
     });
 

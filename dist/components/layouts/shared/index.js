@@ -1,6 +1,7 @@
 // file_description: barrel export for shared layout components, hooks, and utilities
 // section: component_exports
 export { AlreadyLoggedInGuard } from "./components/already_logged_in_guard";
+export { AuthNavbar } from "./components/auth_navbar";
 // AuthPageShell - NOT exported (test workspace component only)
 export { FieldErrorMessage } from "./components/field_error_message";
 export { FormActionButtons } from "./components/form_action_buttons";

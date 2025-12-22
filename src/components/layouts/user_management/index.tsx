@@ -36,6 +36,14 @@ import {
 } from "../../ui/dialog";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
+import { UserTypeBadge } from "../../ui/user-type-badge";
 import { RolesMatrix } from "./components/roles_matrix";
 import { ScopeHierarchyTab } from "./components/scope_hierarchy_tab";
 import { ScopeLabelsTab } from "./components/scope_labels_tab";
@@ -47,14 +55,24 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../
 import { useHazoAuthConfig } from "../../../contexts/hazo_auth_provider";
 
 // section: types
+
+/** User type definition for the dropdown */
+export type UserTypeOption = {
+  key: string;
+  label: string;
+  badge_color: string;
+};
+
 export type UserManagementLayoutProps = {
   className?: string;
   /** Whether HRBAC is enabled (passed from server) */
   hrbacEnabled?: boolean;
   /** Whether multi-tenancy is enabled (passed from server) */
   multiTenancyEnabled?: boolean;
-  /** Default organization for HRBAC scopes */
-  defaultOrg?: string;
+  /** Whether user types feature is enabled (passed from server) */
+  userTypesEnabled?: boolean;
+  /** Available user types for dropdown (passed from server) */
+  availableUserTypes?: UserTypeOption[];
 };
 
 type User = {
@@ -67,6 +85,7 @@ type User = {
   created_at: string | null;
   profile_picture_url: string | null;
   profile_source: string | null;
+  user_type: string | null;
 };
 
 type Permission = {
@@ -88,7 +107,7 @@ type Permission = {
  * @param props - Component props
  * @returns User Management layout component
  */
-export function UserManagementLayout({ className, hrbacEnabled = false, multiTenancyEnabled = false, defaultOrg = "" }: UserManagementLayoutProps) {
+export function UserManagementLayout({ className, hrbacEnabled = false, multiTenancyEnabled = false, userTypesEnabled = false, availableUserTypes = [] }: UserManagementLayoutProps) {
   const { apiBasePath } = useHazoAuthConfig();
 
   // Permission checks
@@ -127,6 +146,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
   const [assignRolesDialogOpen, setAssignRolesDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [usersActionLoading, setUsersActionLoading] = useState(false);
+  const [userTypeUpdateLoading, setUserTypeUpdateLoading] = useState(false);
 
   // Tab 3: Permissions state
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -287,6 +307,46 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
     }
   };
 
+  // Get user type info by key
+  const getUserTypeInfo = (typeKey: string | null): UserTypeOption | null => {
+    if (!typeKey || !userTypesEnabled) return null;
+    return availableUserTypes.find((t) => t.key === typeKey) || null;
+  };
+
+  // Handle user type change
+  const handleUserTypeChange = async (newType: string) => {
+    if (!selectedUser) return;
+
+    setUserTypeUpdateLoading(true);
+    try {
+      const response = await fetch(`${apiBasePath}/user_management/users`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: selectedUser.id,
+          user_type: newType || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("User type updated successfully");
+        // Update local state
+        setSelectedUser({ ...selectedUser, user_type: newType || null });
+        // Reload users list
+        await loadUsers();
+      } else {
+        toast.error(data.error || "Failed to update user type");
+      }
+    } catch (error) {
+      toast.error("Failed to update user type");
+    } finally {
+      setUserTypeUpdateLoading(false);
+    }
+  };
 
   // Handle migrate permissions
   const handleMigratePermissions = async () => {
@@ -640,6 +700,11 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                     <TableHead className="cls_user_management_users_table_header_created_at">
                       Created At
                     </TableHead>
+                    {userTypesEnabled && (
+                      <TableHead className="cls_user_management_users_table_header_user_type">
+                        User Type
+                      </TableHead>
+                    )}
                     <TableHead className="cls_user_management_users_table_header_actions text-right">
                       Actions
                     </TableHead>
@@ -648,7 +713,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                 <TableBody className="cls_user_management_users_table_body">
                   {users.length === 0 ? (
                     <TableRow className="cls_user_management_users_table_row_empty">
-                      <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={userTypesEnabled ? 10 : 9} className="text-center text-muted-foreground py-8">
                         No users found.
                       </TableCell>
                     </TableRow>
@@ -707,6 +772,21 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                             ? new Date(user.created_at).toLocaleDateString()
                             : "-"}
                         </TableCell>
+                        {userTypesEnabled && (
+                          <TableCell className="cls_user_management_users_table_cell_user_type">
+                            {(() => {
+                              const typeInfo = getUserTypeInfo(user.user_type);
+                              return typeInfo ? (
+                                <UserTypeBadge
+                                  label={typeInfo.label}
+                                  color={typeInfo.badge_color}
+                                />
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              );
+                            })()}
+                          </TableCell>
+                        )}
                         <TableCell className="cls_user_management_users_table_cell_actions text-right">
                           <TooltipProvider>
                             <div
@@ -936,14 +1016,14 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
           {/* Tab 4: Scope Labels (HRBAC) */}
           {showScopeLabelsTab && (
             <TabsContent value="scope_labels" className="cls_user_management_tab_scope_labels w-full">
-              <ScopeLabelsTab defaultOrg={defaultOrg} />
+              <ScopeLabelsTab />
             </TabsContent>
           )}
 
           {/* Tab 5: Scope Hierarchy (HRBAC) */}
           {showScopeHierarchyTab && (
             <TabsContent value="scope_hierarchy" className="cls_user_management_tab_scope_hierarchy w-full">
-              <ScopeHierarchyTab defaultOrg={defaultOrg} />
+              <ScopeHierarchyTab />
             </TabsContent>
           )}
 
@@ -1319,6 +1399,37 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                     )}
                   </div>
                 </div>
+
+                {/* User Type (if enabled) */}
+                {userTypesEnabled && (
+                  <div className="cls_user_management_user_detail_field_user_type flex flex-col gap-2">
+                    <Label className="cls_user_management_user_detail_label font-semibold">
+                      User Type
+                    </Label>
+                    <div className="cls_user_management_user_detail_user_type_value flex items-center gap-2">
+                      <Select
+                        value={selectedUser.user_type || ""}
+                        onValueChange={(value) => handleUserTypeChange(value)}
+                        disabled={userTypeUpdateLoading}
+                      >
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="Select user type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {availableUserTypes.map((type) => (
+                            <SelectItem key={type.key} value={type.key}>
+                              {type.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {userTypeUpdateLoading && (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -22,7 +22,6 @@ import { use_hazo_auth } from "../../../components/layouts/shared/hooks/use_hazo
 // section: types
 type ScopeTestPageClientProps = {
   hrbacEnabled: boolean;
-  defaultOrg: string;
 };
 
 type ScopeLevel = "hazo_scopes_l1" | "hazo_scopes_l2" | "hazo_scopes_l3" | "hazo_scopes_l4" | "hazo_scopes_l5" | "hazo_scopes_l6" | "hazo_scopes_l7";
@@ -63,7 +62,7 @@ const SCOPE_LEVELS: { value: ScopeLevel; label: string }[] = [
  * @param props - Component props
  * @returns Scope test page component
  */
-export function ScopeTestPageClient({ hrbacEnabled, defaultOrg }: ScopeTestPageClientProps) {
+export function ScopeTestPageClient({ hrbacEnabled }: ScopeTestPageClientProps) {
   const { apiBasePath } = useHazoAuthConfig();
   const authResult = use_hazo_auth();
 
