@@ -13,6 +13,13 @@ import {
   get_all_user_types,
   get_user_types_config,
 } from "../../../../../lib/user_types_config.server";
+import { is_multi_tenancy_enabled } from "../../../../../lib/multi_tenancy_config.server";
+import {
+  get_org_by_id,
+  can_add_user_to_org,
+} from "../../../../../lib/services/org_service";
+import { get_org_cache } from "../../../../../lib/auth/org_cache";
+import { get_multi_tenancy_config } from "../../../../../lib/multi_tenancy_config.server";
 
 // section: route_config
 export const dynamic = 'force-dynamic';
@@ -58,11 +65,15 @@ export async function GET(request: NextRequest) {
         }))
       : [];
 
+    // Check if multi-tenancy is enabled
+    const multi_tenancy_enabled = is_multi_tenancy_enabled();
+
     return NextResponse.json(
       {
         success: true,
         user_types_enabled,
         available_user_types,
+        multi_tenancy_enabled,
         users: users.map((user) => ({
           id: user.id,
           name: user.name || null,
@@ -74,6 +85,9 @@ export async function GET(request: NextRequest) {
           profile_picture_url: user.profile_picture_url || null,
           profile_source: user.profile_source || null,
           user_type: (user.user_type as string | null) || null,
+          // Include org info when multi-tenancy is enabled
+          org_id: multi_tenancy_enabled ? (user.org_id as string | null) || null : undefined,
+          root_org_id: multi_tenancy_enabled ? (user.root_org_id as string | null) || null : undefined,
         })),
       },
       { status: 200 }
@@ -97,14 +111,14 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * PATCH - Update user (deactivate: set is_active to false)
+ * PATCH - Update user (deactivate: set is_active to false, assign org, etc.)
  */
 export async function PATCH(request: NextRequest) {
   const logger = create_app_logger();
 
   try {
     const body = await request.json();
-    const { user_id, is_active, user_type } = body;
+    const { user_id, is_active, user_type, org_id } = body;
 
     // user_id is always required
     if (!user_id) {
@@ -118,6 +132,8 @@ export async function PATCH(request: NextRequest) {
     const update_data: Record<string, unknown> = {
       changed_at: new Date().toISOString(),
     };
+
+    const hazoConnect = get_hazo_connect_instance();
 
     // Handle is_active if provided
     if (typeof is_active === "boolean") {
@@ -142,6 +158,54 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    // Handle org_id if provided (only when multi-tenancy is enabled)
+    if (org_id !== undefined) {
+      if (!is_multi_tenancy_enabled()) {
+        return NextResponse.json(
+          { error: "Multi-tenancy is not enabled" },
+          { status: 400 }
+        );
+      }
+
+      // Allow null to clear the org assignment
+      if (org_id === null || org_id === "") {
+        update_data.org_id = null;
+        update_data.root_org_id = null;
+      } else {
+        // Validate org exists
+        const org_result = await get_org_by_id(hazoConnect, org_id);
+        if (!org_result.success || !org_result.org) {
+          return NextResponse.json(
+            { error: "Organization not found" },
+            { status: 400 }
+          );
+        }
+
+        const org = org_result.org;
+
+        // Check if org is active
+        if (org.active === false) {
+          return NextResponse.json(
+            { error: "Cannot assign user to inactive organization" },
+            { status: 400 }
+          );
+        }
+
+        // Check user limit
+        const limit_check = await can_add_user_to_org(hazoConnect, org_id);
+        if (limit_check.success && !limit_check.can_add) {
+          return NextResponse.json(
+            { error: limit_check.reason || "Organization user limit reached" },
+            { status: 400 }
+          );
+        }
+
+        // Set org_id and calculate root_org_id
+        update_data.org_id = org_id;
+        update_data.root_org_id = org.root_org_id || org_id;
+      }
+    }
+
     // Ensure there's something to update besides changed_at
     if (Object.keys(update_data).length === 1) {
       return NextResponse.json(
@@ -150,22 +214,25 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const hazoConnect = get_hazo_connect_instance();
     const users_service = createCrudService(hazoConnect, "hazo_users");
 
     // Update user
     await users_service.updateById(user_id, update_data);
 
-    // Invalidate user cache after deactivation
-    if (is_active === false) {
+    // Invalidate caches
+    let cache_invalidated = false;
+
+    // Invalidate user auth cache if user deactivated or org changed
+    if (is_active === false || org_id !== undefined) {
       try {
-        const config = get_auth_utility_config();
-        const cache = get_auth_cache(
-          config.cache_max_users,
-          config.cache_ttl_minutes,
-          config.cache_max_age_minutes,
+        const auth_config = get_auth_utility_config();
+        const auth_cache = get_auth_cache(
+          auth_config.cache_max_users,
+          auth_config.cache_ttl_minutes,
+          auth_config.cache_max_age_minutes,
         );
-        cache.invalidate_user(user_id);
+        auth_cache.invalidate_user(user_id);
+        cache_invalidated = true;
       } catch (cache_error) {
         // Log but don't fail user update if cache invalidation fails
         const cache_error_message =
@@ -179,11 +246,38 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    // If org changed, also invalidate org cache for old and new orgs
+    if (org_id !== undefined && is_multi_tenancy_enabled()) {
+      try {
+        const mt_config = get_multi_tenancy_config();
+        const org_cache = get_org_cache(
+          mt_config.org_cache_max_entries,
+          mt_config.org_cache_ttl_minutes,
+        );
+        // Invalidate for the new org if set
+        if (org_id && typeof org_id === "string") {
+          org_cache.invalidate(org_id);
+        }
+      } catch (cache_error) {
+        // Log but don't fail user update if cache invalidation fails
+        const cache_error_message =
+          cache_error instanceof Error ? cache_error.message : "Unknown error";
+        logger.warn("user_management_org_cache_invalidation_failed", {
+          filename: get_filename(),
+          line_number: get_line_number(),
+          user_id,
+          org_id,
+          error: cache_error_message,
+        });
+      }
+    }
+
     logger.info("user_management_user_updated", {
       filename: get_filename(),
       line_number: get_line_number(),
       user_id,
       updated_fields: Object.keys(update_data).filter((k) => k !== "changed_at"),
+      cache_invalidated,
     });
 
     return NextResponse.json(
