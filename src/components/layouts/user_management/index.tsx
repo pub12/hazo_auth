@@ -49,7 +49,8 @@ import { ScopeHierarchyTab } from "./components/scope_hierarchy_tab";
 import { ScopeLabelsTab } from "./components/scope_labels_tab";
 import { UserScopesTab } from "./components/user_scopes_tab";
 import { OrgHierarchyTab } from "./components/org_hierarchy_tab";
-import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus } from "lucide-react";
+import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus, Building2 } from "lucide-react";
+import { TreeView, type TreeDataItem } from "../../ui/tree-view";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
 import { useHazoAuthConfig } from "../../../contexts/hazo_auth_provider";
@@ -93,6 +94,7 @@ type User = {
 type OrgOption = {
   id: string;
   name: string;
+  parent_org_id: string | null;
 };
 
 type Permission = {
@@ -157,6 +159,12 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
   const [orgUpdateLoading, setOrgUpdateLoading] = useState(false);
   const [availableOrgs, setAvailableOrgs] = useState<OrgOption[]>([]);
 
+  // Org assignment dialog state
+  const [orgAssignDialogOpen, setOrgAssignDialogOpen] = useState(false);
+  const [orgAssignUser, setOrgAssignUser] = useState<User | null>(null);
+  const [selectedOrgForAssign, setSelectedOrgForAssign] = useState<string | null>(null);
+  const [orgAssignLoading, setOrgAssignLoading] = useState(false);
+
   // Tab 3: Permissions state
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [permissionsLoading, setPermissionsLoading] = useState(true);
@@ -211,9 +219,10 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
 
         if (data.success && Array.isArray(data.orgs)) {
           setAvailableOrgs(
-            data.orgs.map((org: { id: string; name: string }) => ({
+            data.orgs.map((org: { id: string; name: string; parent_org_id: string | null }) => ({
               id: org.id,
               name: org.name,
+              parent_org_id: org.parent_org_id,
             }))
           );
         }
@@ -425,6 +434,92 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
     } finally {
       setOrgUpdateLoading(false);
     }
+  };
+
+  // Build org tree from flat list for TreeView component
+  const buildOrgTree = (orgs: OrgOption[]): TreeDataItem[] => {
+    // Create a map for quick lookup
+    const orgMap = new Map<string, OrgOption & { children: TreeDataItem[] }>();
+    orgs.forEach((org) => {
+      orgMap.set(org.id, { ...org, children: [] });
+    });
+
+    const rootNodes: TreeDataItem[] = [];
+
+    // Build tree structure
+    orgs.forEach((org) => {
+      const node = orgMap.get(org.id)!;
+      const treeItem: TreeDataItem = {
+        id: org.id,
+        name: org.name,
+        children: node.children.length > 0 ? node.children : undefined,
+      };
+
+      if (org.parent_org_id && orgMap.has(org.parent_org_id)) {
+        const parent = orgMap.get(org.parent_org_id)!;
+        parent.children.push(treeItem);
+      } else {
+        rootNodes.push(treeItem);
+      }
+    });
+
+    // Update children in the tree
+    const updateChildren = (nodes: TreeDataItem[]): TreeDataItem[] => {
+      return nodes.map((node) => {
+        const orgNode = orgMap.get(node.id);
+        if (orgNode && orgNode.children.length > 0) {
+          return {
+            ...node,
+            children: updateChildren(orgNode.children),
+          };
+        }
+        return node;
+      });
+    };
+
+    return updateChildren(rootNodes);
+  };
+
+  // Handle org assignment from dialog
+  const handleOrgAssignFromDialog = async () => {
+    if (!orgAssignUser) return;
+
+    setOrgAssignLoading(true);
+    try {
+      const orgIdValue = selectedOrgForAssign;
+      const response = await fetch(`${apiBasePath}/user_management/users`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: orgAssignUser.id,
+          org_id: orgIdValue,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Organization updated successfully");
+        setOrgAssignDialogOpen(false);
+        // Reload users list to get updated org info
+        await loadUsers();
+      } else {
+        toast.error(data.error || "Failed to update organization");
+      }
+    } catch (error) {
+      toast.error("Failed to update organization");
+    } finally {
+      setOrgAssignLoading(false);
+    }
+  };
+
+  // Open org assignment dialog for a user
+  const openOrgAssignDialog = (user: User) => {
+    setOrgAssignUser(user);
+    setSelectedOrgForAssign(user.org_id);
+    setOrgAssignDialogOpen(true);
   };
 
   // Handle migrate permissions
@@ -890,6 +985,23 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                                   <p>Assign Roles</p>
                                 </TooltipContent>
                               </Tooltip>
+                              {multiTenancyEnabled && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      onClick={() => openOrgAssignDialog(user)}
+                                      variant="outline"
+                                      size="sm"
+                                      className="cls_user_management_users_table_action_assign_org"
+                                    >
+                                      <Building2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Assign Organization</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
                               {user.is_active && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -1336,7 +1448,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
 
       {/* User Detail Dialog */}
       <Dialog open={userDetailDialogOpen} onOpenChange={setUserDetailDialogOpen}>
-        <DialogContent className="cls_user_management_user_detail_dialog max-w-2xl">
+        <DialogContent className="cls_user_management_user_detail_dialog max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>User Details</DialogTitle>
             <DialogDescription>
@@ -1587,6 +1699,82 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
               className="cls_user_management_assign_roles_matrix"
             />
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Org Assignment Dialog */}
+      <Dialog open={orgAssignDialogOpen} onOpenChange={setOrgAssignDialogOpen}>
+        <DialogContent className="cls_user_management_org_assign_dialog max-w-lg max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Assign Organization</DialogTitle>
+            <DialogDescription>
+              Select an organization for {orgAssignUser?.name || orgAssignUser?.email_address}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="cls_user_management_org_assign_dialog_content flex-1 overflow-y-auto py-4 min-h-0">
+            {/* None option */}
+            <div
+              className={`cls_user_management_org_assign_none p-3 mb-2 rounded-lg border cursor-pointer transition-colors ${
+                selectedOrgForAssign === null
+                  ? "border-primary bg-primary/10"
+                  : "border-border hover:bg-muted"
+              }`}
+              onClick={() => setSelectedOrgForAssign(null)}
+            >
+              <div className="flex items-center gap-2">
+                <CircleX className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">None</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Remove organization assignment
+              </p>
+            </div>
+
+            {/* Org tree */}
+            {availableOrgs.length > 0 ? (
+              <div className="cls_user_management_org_assign_tree border rounded-lg overflow-auto min-h-[200px]">
+                <TreeView
+                  data={buildOrgTree(availableOrgs)}
+                  expandAll
+                  defaultNodeIcon={Building2}
+                  defaultLeafIcon={Building2}
+                  onSelectChange={(item) => {
+                    if (item) {
+                      setSelectedOrgForAssign(item.id);
+                    }
+                  }}
+                  initialSelectedItemId={selectedOrgForAssign || undefined}
+                  className="w-full p-2"
+                />
+              </div>
+            ) : (
+              <div className="cls_user_management_org_assign_empty text-center py-8 text-muted-foreground">
+                No organizations available
+              </div>
+            )}
+          </div>
+          <DialogFooter className="cls_user_management_org_assign_dialog_footer">
+            <Button
+              variant="outline"
+              onClick={() => setOrgAssignDialogOpen(false)}
+              disabled={orgAssignLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleOrgAssignFromDialog}
+              disabled={orgAssignLoading}
+            >
+              {orgAssignLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

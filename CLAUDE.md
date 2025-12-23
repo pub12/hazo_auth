@@ -321,6 +321,27 @@ import { OrgManagementLayout } from "hazo_auth/components/layouts/org_management
 import { OrgManagementPage } from "hazo_auth/page_components/org_management";
 ```
 
+**User Management UI Features:**
+
+When multi-tenancy is enabled, the User Management layout provides several organization-related features:
+
+1. **Organization Assignment Button:**
+   - Action button in user table rows (Building2 icon)
+   - Opens dialog with TreeView showing org hierarchy
+   - "None" option to remove org assignment
+   - Visual hierarchy makes selecting user's org intuitive
+
+2. **User Details Dialog:**
+   - Scrollable content (`max-h-[80vh] overflow-y-auto`)
+   - Ensures all fields visible (including org assignment)
+   - Edit mode shows org select dropdown in dialog body
+   - Tree view button provides alternative assignment method
+
+3. **Select Component Values:**
+   - "None" options use `value="__none__"` (Radix UI requirement)
+   - Empty strings (`value=""`) not supported by Radix UI Select
+   - Consistent across org select, user type select, scope type select
+
 ### User Types (Optional Feature)
 
 User types allow applications to categorize users with customizable types (e.g., "Client", "Tax Agent", "Support Staff") with visual badge indicators. This is an optional feature that's disabled by default.
@@ -1276,3 +1297,14 @@ export default function LockPage() {
 - Run `npm run init-users` to initialize permissions and roles
 - Verify user has roles assigned in `hazo_user_roles` table
 - Check `[hazo_auth__user_management] application_permission_list_defaults`
+
+### Radix UI Select showing empty "None" option
+- Radix UI Select does not support `value=""` (empty string)
+- Use `value="__none__"` for "None" options instead
+- Affects: org select, user type select, scope type select
+- This is a known limitation of Radix UI Select component
+
+### User details dialog fields cut off
+- Dialog content now scrollable with `max-h-[80vh] overflow-y-auto`
+- Ensures all fields visible even in smaller viewports
+- Scroll to see org assignment and fields below the fold

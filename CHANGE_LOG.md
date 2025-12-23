@@ -5,7 +5,46 @@ All notable changes to the hazo_auth package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [4.5.3] - 2025-12-23
+
+### Fixed - User Management UI Improvements
+
+**Issue**: Several UX issues in the User Management layout prevented optimal workflow when multi-tenancy was enabled.
+
+**Fixes Applied:**
+
+1. **User Details Dialog Scrolling:**
+   - Added `max-h-[80vh] overflow-y-auto` to User Details `DialogContent`
+   - Users can now scroll to see all fields when dialog content is tall
+   - Critical for viewing organization assignment and other fields below the fold
+
+2. **Organization Assignment with Tree View:**
+   - Added new action button in user table rows with Building2 icon
+   - Button only appears when multi-tenancy is enabled (`multiTenancyEnabled = true`)
+   - Opens dedicated dialog with:
+     - "None" option to remove org assignment
+     - TreeView component showing hierarchical organization structure
+     - Cancel/Save buttons with loading state
+   - Updated `OrgOption` type to include `parent_org_id` for tree building
+   - Added `buildOrgTree()` helper function to convert flat org list to tree structure
+   - Provides intuitive visual hierarchy for selecting user's organization
+
+3. **Radix UI Select Fix:**
+   - Changed "None" option from `value=""` to `value="__none__"`
+   - Radix UI Select component does not support empty string values
+   - Affected components:
+     - Org select dropdown in user detail dialog
+     - User type select in user detail dialog
+     - Scope type select in RBAC test tool
+   - Ensures consistent behavior across all Select components
+
+**Files Modified:**
+- `src/components/layouts/user_management/index.tsx` - Added org assignment button, tree dialog, fixed Select values
+- `src/app/hazo_auth/scope_test/scope_test_page_client.tsx` - Fixed Select "None" value
+
+**Impact**: Improves user experience when managing user accounts with multi-tenancy enabled. Organization assignment is now more intuitive with visual hierarchy, and dialog scrolling ensures all fields are accessible.
+
+---
 
 ### Fixed - Missing Organization Management Server Route Exports
 

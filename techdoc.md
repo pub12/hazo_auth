@@ -929,6 +929,14 @@ All layout components follow a similar pattern:
 
 **UserManagementLayout Tabs:**
 - **Users Tab**: List users, deactivate users, send password reset emails
+  - **Organization Assignment** (Multi-tenancy): Action button with Building2 icon opens tree view dialog
+    - TreeView shows hierarchical organization structure
+    - "None" option to remove org assignment
+    - Visual hierarchy makes org selection intuitive
+  - **User Details Dialog**: Scrollable content with `max-h-[80vh] overflow-y-auto`
+    - Ensures all fields visible (org assignment, user type, etc.)
+    - Edit mode shows inline org/type selects
+    - Tree view button provides alternative org assignment method
 - **Roles Tab**: Manage roles and their permission assignments using tag-based UI
   - **Roles Matrix**: Displays roles with their permissions as inline tags/chips
   - Shows up to 4 permission tags, with "+N more" button to expand/collapse remaining permissions
@@ -939,6 +947,12 @@ All layout components follow a similar pattern:
 - **Scope Hierarchy Tab** (HRBAC): Manage scope structure (requires `admin_scope_hierarchy_management`)
 - **Scope Labels Tab** (HRBAC): Customize scope level labels (requires `admin_scope_hierarchy_management`)
 - **User Scopes Tab** (HRBAC): Assign scopes to users (requires `admin_user_scope_assignment`)
+
+**Radix UI Select Constraints:**
+- Radix UI Select component does not support empty string values (`value=""`)
+- "None" options must use sentinel value like `value="__none__"`
+- Affected components: org select, user type select, scope type select in user management
+- This is a known limitation of the @radix-ui/react-select library
 
 ### Shared Components
 
