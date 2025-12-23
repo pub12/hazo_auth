@@ -67,7 +67,7 @@ export function ScopeTestPageClient({ hrbacEnabled }: ScopeTestPageClientProps) 
   const authResult = use_hazo_auth();
 
   // Form state
-  const [scopeType, setScopeType] = useState<ScopeLevel | "">("");
+  const [scopeType, setScopeType] = useState<ScopeLevel | "__none__">("__none__");
   const [scopeId, setScopeId] = useState("");
   const [scopeSeq, setScopeSeq] = useState("");
   const [requiredPermissions, setRequiredPermissions] = useState("");
@@ -84,7 +84,7 @@ export function ScopeTestPageClient({ hrbacEnabled }: ScopeTestPageClientProps) 
     try {
       // Build query params
       const params = new URLSearchParams();
-      if (scopeType) params.append("scope_type", scopeType);
+      if (scopeType && scopeType !== "__none__") params.append("scope_type", scopeType);
       if (scopeId) params.append("scope_id", scopeId);
       if (scopeSeq) params.append("scope_seq", scopeSeq);
       if (requiredPermissions) {
@@ -192,12 +192,12 @@ export function ScopeTestPageClient({ hrbacEnabled }: ScopeTestPageClientProps) 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="scope_type">Scope Type</Label>
-              <Select value={scopeType} onValueChange={(v: string) => setScopeType(v as ScopeLevel | "")}>
+              <Select value={scopeType} onValueChange={(v: string) => setScopeType(v as ScopeLevel | "__none__")}>
                 <SelectTrigger id="scope_type">
                   <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="__none__">None</SelectItem>
                   {SCOPE_LEVELS.map((level) => (
                     <SelectItem key={level.value} value={level.value}>
                       {level.label}

@@ -356,6 +356,8 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
 
     setUserTypeUpdateLoading(true);
     try {
+      // Convert sentinel value "__none__" to null for API
+      const typeValue = newType === "__none__" ? null : newType;
       const response = await fetch(`${apiBasePath}/user_management/users`, {
         method: "PATCH",
         headers: {
@@ -363,7 +365,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
         },
         body: JSON.stringify({
           user_id: selectedUser.id,
-          user_type: newType || null,
+          user_type: typeValue,
         }),
       });
 
@@ -391,6 +393,8 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
 
     setOrgUpdateLoading(true);
     try {
+      // Convert sentinel value "__none__" to null for API
+      const orgIdValue = newOrgId === "__none__" ? null : newOrgId;
       const response = await fetch(`${apiBasePath}/user_management/users`, {
         method: "PATCH",
         headers: {
@@ -398,7 +402,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
         },
         body: JSON.stringify({
           user_id: selectedUser.id,
-          org_id: newOrgId || null,
+          org_id: orgIdValue,
         }),
       });
 
@@ -1483,7 +1487,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                     </Label>
                     <div className="cls_user_management_user_detail_user_type_value flex items-center gap-2">
                       <Select
-                        value={selectedUser.user_type || ""}
+                        value={selectedUser.user_type || "__none__"}
                         onValueChange={(value) => handleUserTypeChange(value)}
                         disabled={userTypeUpdateLoading}
                       >
@@ -1491,7 +1495,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                           <SelectValue placeholder="Select user type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="__none__">None</SelectItem>
                           {availableUserTypes.map((type) => (
                             <SelectItem key={type.key} value={type.key}>
                               {type.label}
@@ -1514,7 +1518,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                     </Label>
                     <div className="cls_user_management_user_detail_org_value flex items-center gap-2">
                       <Select
-                        value={selectedUser.org_id || ""}
+                        value={selectedUser.org_id || "__none__"}
                         onValueChange={(value) => handleOrgChange(value)}
                         disabled={orgUpdateLoading}
                       >
@@ -1522,7 +1526,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                           <SelectValue placeholder="Select organization" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="__none__">None</SelectItem>
                           {availableOrgs.map((org) => (
                             <SelectItem key={org.id} value={org.id}>
                               {org.name}

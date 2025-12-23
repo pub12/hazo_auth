@@ -259,6 +259,8 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
             return;
         setUserTypeUpdateLoading(true);
         try {
+            // Convert sentinel value "__none__" to null for API
+            const typeValue = newType === "__none__" ? null : newType;
             const response = await fetch(`${apiBasePath}/user_management/users`, {
                 method: "PATCH",
                 headers: {
@@ -266,7 +268,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                 },
                 body: JSON.stringify({
                     user_id: selectedUser.id,
-                    user_type: newType || null,
+                    user_type: typeValue,
                 }),
             });
             const data = await response.json();
@@ -294,6 +296,8 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
             return;
         setOrgUpdateLoading(true);
         try {
+            // Convert sentinel value "__none__" to null for API
+            const orgIdValue = newOrgId === "__none__" ? null : newOrgId;
             const response = await fetch(`${apiBasePath}/user_management/users`, {
                 method: "PATCH",
                 headers: {
@@ -301,7 +305,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                 },
                 body: JSON.stringify({
                     user_id: selectedUser.id,
-                    org_id: newOrgId || null,
+                    org_id: orgIdValue,
                 }),
             });
             const data = await response.json();
@@ -612,7 +616,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                                                         minute: "2-digit",
                                                         second: "2-digit",
                                                         timeZoneName: "short",
-                                                    }) })) : (_jsx("span", { className: "text-muted-foreground", children: "-" })) })] }), userTypesEnabled && (_jsxs("div", { className: "cls_user_management_user_detail_field_user_type flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "User Type" }), _jsxs("div", { className: "cls_user_management_user_detail_user_type_value flex items-center gap-2", children: [_jsxs(Select, { value: selectedUser.user_type || "", onValueChange: (value) => handleUserTypeChange(value), disabled: userTypeUpdateLoading, children: [_jsx(SelectTrigger, { className: "w-48", children: _jsx(SelectValue, { placeholder: "Select user type" }) }), _jsxs(SelectContent, { children: [_jsx(SelectItem, { value: "", children: "None" }), availableUserTypes.map((type) => (_jsx(SelectItem, { value: type.key, children: type.label }, type.key)))] })] }), userTypeUpdateLoading && (_jsx(Loader2, { className: "h-4 w-4 animate-spin text-muted-foreground" }))] })] })), multiTenancyEnabled && (_jsxs("div", { className: "cls_user_management_user_detail_field_org flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "Organization" }), _jsxs("div", { className: "cls_user_management_user_detail_org_value flex items-center gap-2", children: [_jsxs(Select, { value: selectedUser.org_id || "", onValueChange: (value) => handleOrgChange(value), disabled: orgUpdateLoading, children: [_jsx(SelectTrigger, { className: "w-64", children: _jsx(SelectValue, { placeholder: "Select organization" }) }), _jsxs(SelectContent, { children: [_jsx(SelectItem, { value: "", children: "None" }), availableOrgs.map((org) => (_jsx(SelectItem, { value: org.id, children: org.name }, org.id)))] })] }), orgUpdateLoading && (_jsx(Loader2, { className: "h-4 w-4 animate-spin text-muted-foreground" }))] })] }))] })) }), _jsx(DialogFooter, { className: "cls_user_management_user_detail_dialog_footer", children: _jsx(Button, { onClick: () => setUserDetailDialogOpen(false), variant: "outline", className: "cls_user_management_user_detail_dialog_close", children: "Close" }) })] }) }), _jsx(Dialog, { open: assignRolesDialogOpen, onOpenChange: setAssignRolesDialogOpen, children: _jsxs(DialogContent, { className: "cls_user_management_assign_roles_dialog max-w-4xl max-h-[80vh] overflow-y-auto", children: [_jsxs(DialogHeader, { children: [_jsx(DialogTitle, { children: "Assign Roles to User" }), _jsxs(DialogDescription, { children: ["Select roles to assign to ", (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.name) || (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address), ". Check the roles you want to assign, then click Save."] })] }), _jsx("div", { className: "cls_user_management_assign_roles_dialog_content py-4", children: _jsx(RolesMatrix, { add_button_enabled: false, role_name_selection_enabled: true, permissions_read_only: true, show_save_cancel: true, user_id: selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.id, onSave: (data) => {
+                                                    }) })) : (_jsx("span", { className: "text-muted-foreground", children: "-" })) })] }), userTypesEnabled && (_jsxs("div", { className: "cls_user_management_user_detail_field_user_type flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "User Type" }), _jsxs("div", { className: "cls_user_management_user_detail_user_type_value flex items-center gap-2", children: [_jsxs(Select, { value: selectedUser.user_type || "__none__", onValueChange: (value) => handleUserTypeChange(value), disabled: userTypeUpdateLoading, children: [_jsx(SelectTrigger, { className: "w-48", children: _jsx(SelectValue, { placeholder: "Select user type" }) }), _jsxs(SelectContent, { children: [_jsx(SelectItem, { value: "__none__", children: "None" }), availableUserTypes.map((type) => (_jsx(SelectItem, { value: type.key, children: type.label }, type.key)))] })] }), userTypeUpdateLoading && (_jsx(Loader2, { className: "h-4 w-4 animate-spin text-muted-foreground" }))] })] })), multiTenancyEnabled && (_jsxs("div", { className: "cls_user_management_user_detail_field_org flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "Organization" }), _jsxs("div", { className: "cls_user_management_user_detail_org_value flex items-center gap-2", children: [_jsxs(Select, { value: selectedUser.org_id || "__none__", onValueChange: (value) => handleOrgChange(value), disabled: orgUpdateLoading, children: [_jsx(SelectTrigger, { className: "w-64", children: _jsx(SelectValue, { placeholder: "Select organization" }) }), _jsxs(SelectContent, { children: [_jsx(SelectItem, { value: "__none__", children: "None" }), availableOrgs.map((org) => (_jsx(SelectItem, { value: org.id, children: org.name }, org.id)))] })] }), orgUpdateLoading && (_jsx(Loader2, { className: "h-4 w-4 animate-spin text-muted-foreground" }))] })] }))] })) }), _jsx(DialogFooter, { className: "cls_user_management_user_detail_dialog_footer", children: _jsx(Button, { onClick: () => setUserDetailDialogOpen(false), variant: "outline", className: "cls_user_management_user_detail_dialog_close", children: "Close" }) })] }) }), _jsx(Dialog, { open: assignRolesDialogOpen, onOpenChange: setAssignRolesDialogOpen, children: _jsxs(DialogContent, { className: "cls_user_management_assign_roles_dialog max-w-4xl max-h-[80vh] overflow-y-auto", children: [_jsxs(DialogHeader, { children: [_jsx(DialogTitle, { children: "Assign Roles to User" }), _jsxs(DialogDescription, { children: ["Select roles to assign to ", (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.name) || (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address), ". Check the roles you want to assign, then click Save."] })] }), _jsx("div", { className: "cls_user_management_assign_roles_dialog_content py-4", children: _jsx(RolesMatrix, { add_button_enabled: false, role_name_selection_enabled: true, permissions_read_only: true, show_save_cancel: true, user_id: selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.id, onSave: (data) => {
                                     // Data is already saved by RolesMatrix component
                                     console.log("User roles saved:", data);
                                     // Refresh users list to show updated roles
