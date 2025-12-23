@@ -398,16 +398,44 @@ Run the following SQL scripts in your PostgreSQL database:
 ```sql
 -- Enum type for profile picture source
 CREATE TYPE hazo_enum_profile_source_enum AS ENUM ('gravatar', 'custom', 'predefined');
+
+-- Scope types enum (for HRBAC)
+CREATE TYPE hazo_enum_scope_types AS ENUM (
+    'hazo_scopes_l1', 'hazo_scopes_l2', 'hazo_scopes_l3',
+    'hazo_scopes_l4', 'hazo_scopes_l5', 'hazo_scopes_l6', 'hazo_scopes_l7'
+);
 ```
 
-#### 2. Create the Users Table
+#### 2. Create the Organization Table (Multi-Tenancy)
+
+```sql
+-- Organization table for multi-tenancy (create before hazo_users)
+CREATE TABLE hazo_org (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    parent_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    root_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    user_limit INTEGER NOT NULL DEFAULT 0,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_by UUID,  -- Will reference hazo_users after it's created
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_by UUID
+);
+
+CREATE INDEX idx_hazo_org_parent_org_id ON hazo_org(parent_org_id);
+CREATE INDEX idx_hazo_org_root_org_id ON hazo_org(root_org_id);
+CREATE INDEX idx_hazo_org_active ON hazo_org(active);
+```
+
+#### 3. Create the Users Table
 
 ```sql
 -- Main users table
 CREATE TABLE hazo_users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email_address TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,                                   -- NULL for OAuth-only users
     name TEXT,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -417,17 +445,32 @@ CREATE TABLE hazo_users (
     profile_source hazo_enum_profile_source_enum,
     mfa_secret TEXT,
     url_on_logon TEXT,
+    user_type TEXT,                                       -- Optional user categorization
+    google_id TEXT UNIQUE,                                -- Google OAuth ID
+    auth_providers TEXT DEFAULT 'email',                  -- 'email', 'google', or 'email,google'
+    org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    root_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
--- Index for email lookups
+-- Indexes
 CREATE INDEX idx_hazo_users_email ON hazo_users(email_address);
+CREATE INDEX idx_hazo_users_user_type ON hazo_users(user_type);
+CREATE UNIQUE INDEX idx_hazo_users_google_id ON hazo_users(google_id);
+CREATE INDEX idx_hazo_users_org_id ON hazo_users(org_id);
+CREATE INDEX idx_hazo_users_root_org_id ON hazo_users(root_org_id);
+
+-- Add FK constraints to hazo_org after hazo_users exists
+ALTER TABLE hazo_org ADD CONSTRAINT fk_hazo_org_created_by
+    FOREIGN KEY (created_by) REFERENCES hazo_users(id) ON DELETE SET NULL;
+ALTER TABLE hazo_org ADD CONSTRAINT fk_hazo_org_changed_by
+    FOREIGN KEY (changed_by) REFERENCES hazo_users(id) ON DELETE SET NULL;
 ```
 
 **Note:** The `url_on_logon` field is used to store a custom redirect URL for users after successful login. This allows per-user customization of post-login navigation.
 
-#### 3. Create the Refresh Tokens Table
+#### 4. Create the Refresh Tokens Table
 
 ```sql
 -- Refresh tokens table (used for password reset, email verification, etc.)
@@ -445,7 +488,7 @@ CREATE INDEX idx_hazo_refresh_tokens_user_id ON hazo_refresh_tokens(user_id);
 CREATE INDEX idx_hazo_refresh_tokens_token_type ON hazo_refresh_tokens(token_type);
 ```
 
-#### 4. Create the Permissions Table
+#### 5. Create the Permissions Table
 
 ```sql
 -- Permissions table for RBAC
@@ -458,7 +501,7 @@ CREATE TABLE hazo_permissions (
 );
 ```
 
-#### 5. Create the Roles Table
+#### 6. Create the Roles Table
 
 ```sql
 -- Roles table for RBAC
@@ -470,7 +513,7 @@ CREATE TABLE hazo_roles (
 );
 ```
 
-#### 6. Create the Role-Permissions Junction Table
+#### 7. Create the Role-Permissions Junction Table
 
 ```sql
 -- Junction table linking roles to permissions
@@ -487,7 +530,7 @@ CREATE INDEX idx_hazo_role_permissions_role_id ON hazo_role_permissions(role_id)
 CREATE INDEX idx_hazo_role_permissions_permission_id ON hazo_role_permissions(permission_id);
 ```
 
-#### 7. Create the User-Roles Junction Table
+#### 8. Create the User-Roles Junction Table
 
 ```sql
 -- Junction table linking users to roles
@@ -513,14 +556,35 @@ For convenience, here's the complete SQL script to create all tables at once:
 -- hazo_auth Database Setup Script (PostgreSQL)
 -- ============================================
 
--- 1. Create enum type
+-- 1. Create enum types
 CREATE TYPE hazo_enum_profile_source_enum AS ENUM ('gravatar', 'custom', 'predefined');
+CREATE TYPE hazo_enum_scope_types AS ENUM (
+    'hazo_scopes_l1', 'hazo_scopes_l2', 'hazo_scopes_l3',
+    'hazo_scopes_l4', 'hazo_scopes_l5', 'hazo_scopes_l6', 'hazo_scopes_l7'
+);
 
--- 2. Create users table
+-- 2. Create organization table (multi-tenancy)
+CREATE TABLE hazo_org (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    parent_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    root_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    user_limit INTEGER NOT NULL DEFAULT 0,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_by UUID,
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_by UUID
+);
+CREATE INDEX idx_hazo_org_parent_org_id ON hazo_org(parent_org_id);
+CREATE INDEX idx_hazo_org_root_org_id ON hazo_org(root_org_id);
+CREATE INDEX idx_hazo_org_active ON hazo_org(active);
+
+-- 3. Create users table
 CREATE TABLE hazo_users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email_address TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,
     name TEXT,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -530,12 +594,27 @@ CREATE TABLE hazo_users (
     profile_source hazo_enum_profile_source_enum,
     mfa_secret TEXT,
     url_on_logon TEXT,
+    user_type TEXT,
+    google_id TEXT UNIQUE,
+    auth_providers TEXT DEFAULT 'email',
+    org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    root_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_hazo_users_email ON hazo_users(email_address);
+CREATE INDEX idx_hazo_users_user_type ON hazo_users(user_type);
+CREATE UNIQUE INDEX idx_hazo_users_google_id ON hazo_users(google_id);
+CREATE INDEX idx_hazo_users_org_id ON hazo_users(org_id);
+CREATE INDEX idx_hazo_users_root_org_id ON hazo_users(root_org_id);
 
--- 3. Create refresh tokens table
+-- Add FK constraints to hazo_org after hazo_users exists
+ALTER TABLE hazo_org ADD CONSTRAINT fk_hazo_org_created_by
+    FOREIGN KEY (created_by) REFERENCES hazo_users(id) ON DELETE SET NULL;
+ALTER TABLE hazo_org ADD CONSTRAINT fk_hazo_org_changed_by
+    FOREIGN KEY (changed_by) REFERENCES hazo_users(id) ON DELETE SET NULL;
+
+-- 4. Create refresh tokens table
 CREATE TABLE hazo_refresh_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,

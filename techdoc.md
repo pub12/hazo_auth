@@ -238,13 +238,109 @@ hazo_auth/
 
 ## Database Schema
 
+### Enum Types (PostgreSQL)
+
+PostgreSQL requires explicit enum type creation. SQLite uses TEXT with validation at application level.
+
+```sql
+-- Profile picture source enum
+CREATE TYPE hazo_enum_profile_source_enum AS ENUM (
+    'gravatar',
+    'custom',
+    'predefined'
+);
+
+-- Scope types for HRBAC
+CREATE TYPE hazo_enum_scope_types AS ENUM (
+    'hazo_scopes_l1',
+    'hazo_scopes_l2',
+    'hazo_scopes_l3',
+    'hazo_scopes_l4',
+    'hazo_scopes_l5',
+    'hazo_scopes_l6',
+    'hazo_scopes_l7'
+);
+
+-- Notification chain status (for hazo_notify integration)
+CREATE TYPE hazo_enum_notify_chain_status AS ENUM (
+    'draft',
+    'published',
+    'inactive'
+);
+
+-- Notification email type
+CREATE TYPE hazo_enum_notify_email_type AS ENUM (
+    'system',
+    'user'
+);
+
+-- Group types (for chat/collaboration features)
+CREATE TYPE hazo_enum_group_type AS ENUM (
+    'support',
+    'peer',
+    'group'
+);
+
+-- Group roles
+CREATE TYPE hazo_enum_group_role AS ENUM (
+    'client',
+    'staff',
+    'owner',
+    'admin',
+    'member'
+);
+
+-- Chat types
+CREATE TYPE hazo_enum_chat_type AS ENUM (
+    'chat',
+    'field',
+    'project',
+    'support',
+    'general'
+);
+```
+
+### hazo_org Table (Multi-Tenancy)
+
+Required when multi-tenancy is enabled. Must be created before hazo_users if using org_id foreign key.
+
+```sql
+CREATE TABLE hazo_org (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    parent_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    root_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    user_limit INTEGER NOT NULL DEFAULT 0,              -- 0 = unlimited
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_by UUID REFERENCES hazo_users(id) ON DELETE SET NULL,
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_by UUID REFERENCES hazo_users(id) ON DELETE SET NULL
+);
+
+-- Indexes for hierarchy lookups
+CREATE INDEX idx_hazo_org_parent_org_id ON hazo_org(parent_org_id);
+CREATE INDEX idx_hazo_org_root_org_id ON hazo_org(root_org_id);
+CREATE INDEX idx_hazo_org_active ON hazo_org(active);
+CREATE INDEX idx_hazo_org_name ON hazo_org(name);
+```
+
+**Field Notes:**
+- `id` - UUID primary key
+- `name` - Organization display name
+- `parent_org_id` - Reference to parent organization (NULL for root)
+- `root_org_id` - Reference to root organization for quick tree lookups
+- `user_limit` - Maximum users allowed (0 = unlimited, enforced at root level)
+- `active` - Soft delete flag (FALSE = deactivated)
+- `created_by`/`changed_by` - Audit trail references
+
 ### hazo_users Table
 
 ```sql
 CREATE TABLE hazo_users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email_address TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,                                   -- NULL for OAuth-only users
     name TEXT,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -254,19 +350,29 @@ CREATE TABLE hazo_users (
     profile_source hazo_enum_profile_source_enum,
     mfa_secret TEXT,
     url_on_logon TEXT,                                    -- Custom redirect URL after login
-    user_type TEXT,                                        -- User type categorization (optional feature)
+    user_type TEXT,                                       -- User type categorization (optional feature)
+    -- OAuth fields (v4.2.0+)
+    google_id TEXT UNIQUE,                                -- Google OAuth unique ID (sub claim)
+    auth_providers TEXT DEFAULT 'email',                  -- 'email', 'google', or 'email,google'
+    -- Multi-tenancy fields
+    org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    root_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    -- Timestamps
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
--- Optional index for user type filtering
-CREATE INDEX IF NOT EXISTS idx_hazo_users_user_type ON hazo_users(user_type);
+-- Indexes
+CREATE INDEX idx_hazo_users_user_type ON hazo_users(user_type);
+CREATE UNIQUE INDEX idx_hazo_users_google_id ON hazo_users(google_id);
+CREATE INDEX idx_hazo_users_org_id ON hazo_users(org_id);
+CREATE INDEX idx_hazo_users_root_org_id ON hazo_users(root_org_id);
 ```
 
 **Field Notes:**
 - `id` - UUID primary key (TEXT in SQLite)
 - `email_address` - Unique email for authentication
-- `password_hash` - Argon2 hashed password
+- `password_hash` - Argon2 hashed password (NULL for OAuth-only users)
 - `name` - Optional display name
 - `email_verified` - Whether email has been verified
 - `is_active` - Account active status
@@ -277,6 +383,10 @@ CREATE INDEX IF NOT EXISTS idx_hazo_users_user_type ON hazo_users(user_type);
 - `mfa_secret` - MFA secret for TOTP (future use)
 - `url_on_logon` - Custom URL to redirect user after successful login
 - `user_type` - User type key (optional, validated against config at runtime)
+- `google_id` - Google's unique user ID for OAuth login (v4.2.0+)
+- `auth_providers` - Tracks authentication methods: 'email', 'google', or 'email,google'
+- `org_id` - User's direct organization (multi-tenancy)
+- `root_org_id` - Root organization for quick tree lookups
 - `created_at` - Account creation timestamp
 - `changed_at` - Last modification timestamp
 
@@ -427,21 +537,6 @@ CREATE INDEX idx_hazo_scope_labels_org_id ON hazo_scope_labels(org_id);
 - Example: "Company" (L1), "Division" (L2), "Department" (L3)
 - UNIQUE constraint ensures one label per organization per level
 
-**hazo_enum_scope_types (PostgreSQL only):**
-```sql
-CREATE TYPE hazo_enum_scope_types AS ENUM (
-    'hazo_scopes_l1',
-    'hazo_scopes_l2',
-    'hazo_scopes_l3',
-    'hazo_scopes_l4',
-    'hazo_scopes_l5',
-    'hazo_scopes_l6',
-    'hazo_scopes_l7'
-);
-```
-
-**SQLite Note:** SQLite uses TEXT with CHECK constraint for scope type validation.
-
 ### Database Migrations
 
 Migration files are located in `migrations/`:
@@ -453,6 +548,7 @@ Migration files are located in `migrations/`:
 | `003_add_url_on_logon_to_hazo_users.sql` | Add url_on_logon field for custom redirects |
 | `004_add_parent_scope_to_scope_tables.sql` | Add parent_scope_id to L2-L7 scope tables (HRBAC) |
 | `005_add_oauth_fields_to_hazo_users.sql` | Add google_id and auth_providers fields for OAuth (v4.2.0+) |
+| `006_multi_tenancy_org_support.sql` | Add indexes for hazo_org and hazo_users org fields (multi-tenancy) |
 | `007_add_user_type_to_hazo_users.sql` | Add user_type field for optional user categorization |
 
 **Apply migrations:**
