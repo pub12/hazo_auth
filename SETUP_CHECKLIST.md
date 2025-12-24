@@ -306,52 +306,38 @@ sqlite3 data/hazo_auth.sqlite ".tables"
 
 Run this SQL script in your PostgreSQL database:
 
-**Important:** Run the entire script in order. Enum types must be created before tables that use them, and hazo_org must be created before hazo_users.
+**Important:** Run the entire script in order. The enum type must be created before the table that uses it.
 
 ```sql
 -- Ensure we're in the public schema (or your target schema)
 SET search_path TO public;
 
--- =============================================
--- Step 1: Create Enum Types
--- =============================================
-
--- Profile picture source enum
+-- Create enum types (drop first if they exist to avoid conflicts)
 DROP TYPE IF EXISTS hazo_enum_profile_source_enum CASCADE;
 CREATE TYPE hazo_enum_profile_source_enum AS ENUM ('gravatar', 'custom', 'predefined');
 
--- Scope types enum (for HRBAC)
 DROP TYPE IF EXISTS hazo_enum_scope_types CASCADE;
 CREATE TYPE hazo_enum_scope_types AS ENUM (
     'hazo_scopes_l1', 'hazo_scopes_l2', 'hazo_scopes_l3',
     'hazo_scopes_l4', 'hazo_scopes_l5', 'hazo_scopes_l6', 'hazo_scopes_l7'
 );
 
--- Notification chain status (for hazo_notify integration)
 DROP TYPE IF EXISTS hazo_enum_notify_chain_status CASCADE;
 CREATE TYPE hazo_enum_notify_chain_status AS ENUM ('draft', 'published', 'inactive');
 
--- Notification email type
 DROP TYPE IF EXISTS hazo_enum_notify_email_type CASCADE;
 CREATE TYPE hazo_enum_notify_email_type AS ENUM ('system', 'user');
 
--- Group types (for chat/collaboration features)
 DROP TYPE IF EXISTS hazo_enum_group_type CASCADE;
 CREATE TYPE hazo_enum_group_type AS ENUM ('support', 'peer', 'group');
 
--- Group roles
 DROP TYPE IF EXISTS hazo_enum_group_role CASCADE;
 CREATE TYPE hazo_enum_group_role AS ENUM ('client', 'staff', 'owner', 'admin', 'member');
 
--- Chat types
 DROP TYPE IF EXISTS hazo_enum_chat_type CASCADE;
 CREATE TYPE hazo_enum_chat_type AS ENUM ('chat', 'field', 'project', 'support', 'general');
 
--- =============================================
--- Step 2: Create Organization Table (Multi-Tenancy)
--- =============================================
-
--- NOTE: This must be created BEFORE hazo_users due to foreign key dependencies
+-- Create organization table (multi-tenancy) - MUST be created before hazo_users
 CREATE TABLE hazo_org (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
@@ -360,25 +346,20 @@ CREATE TABLE hazo_org (
     user_limit INTEGER NOT NULL DEFAULT 0,              -- 0 = unlimited
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_by UUID,  -- Will reference hazo_users after it's created
+    created_by UUID,                                    -- FK added after hazo_users exists
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    changed_by UUID   -- Will reference hazo_users after it's created
+    changed_by UUID                                     -- FK added after hazo_users exists
 );
-
--- Indexes for organization hierarchy lookups
 CREATE INDEX idx_hazo_org_parent_org_id ON hazo_org(parent_org_id);
 CREATE INDEX idx_hazo_org_root_org_id ON hazo_org(root_org_id);
 CREATE INDEX idx_hazo_org_active ON hazo_org(active);
 CREATE INDEX idx_hazo_org_name ON hazo_org(name);
 
--- =============================================
--- Step 3: Create Users Table
--- =============================================
-
+-- Create users table
 CREATE TABLE hazo_users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email_address TEXT NOT NULL UNIQUE,
-    password_hash TEXT,                                   -- NULL for OAuth-only users
+    password_hash TEXT,                                 -- NULL for OAuth-only users
     name TEXT,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -387,20 +368,15 @@ CREATE TABLE hazo_users (
     profile_picture_url TEXT,
     profile_source hazo_enum_profile_source_enum,
     mfa_secret TEXT,
-    url_on_logon TEXT,                                    -- Custom redirect URL after login
-    user_type TEXT,                                       -- User type categorization (optional feature)
-    -- OAuth fields (v4.2.0+)
-    google_id TEXT UNIQUE,                                -- Google OAuth unique ID (sub claim)
-    auth_providers TEXT DEFAULT 'email',                  -- 'email', 'google', or 'email,google'
-    -- Multi-tenancy fields
+    url_on_logon TEXT,
+    user_type TEXT,                                     -- Optional user categorization
+    google_id TEXT UNIQUE,                              -- Google OAuth ID
+    auth_providers TEXT DEFAULT 'email',                -- 'email', 'google', or 'email,google'
     org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
     root_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
-    -- Timestamps
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-
--- Indexes for users table
 CREATE INDEX idx_hazo_users_email ON hazo_users(email_address);
 CREATE INDEX idx_hazo_users_user_type ON hazo_users(user_type);
 CREATE UNIQUE INDEX idx_hazo_users_google_id ON hazo_users(google_id);
@@ -531,22 +507,22 @@ GRANT USAGE ON TYPE hazo_enum_profile_source_enum TO anon, authenticated;
 
 **Checklist:**
 - [ ] Database created (SQLite file or PostgreSQL)
-- [ ] All core tables exist:
-  - [ ] `hazo_org` (multi-tenancy)
-  - [ ] `hazo_users` (with oauth, org_id, root_org_id, user_type fields)
-  - [ ] `hazo_refresh_tokens`
-  - [ ] `hazo_permissions`
-  - [ ] `hazo_roles`
-  - [ ] `hazo_role_permissions`
-  - [ ] `hazo_user_roles`
 - [ ] All enum types created (PostgreSQL only):
   - [ ] `hazo_enum_profile_source_enum`
-  - [ ] `hazo_enum_scope_types` (for HRBAC)
+  - [ ] `hazo_enum_scope_types`
   - [ ] `hazo_enum_notify_chain_status`
   - [ ] `hazo_enum_notify_email_type`
   - [ ] `hazo_enum_group_type`
   - [ ] `hazo_enum_group_role`
   - [ ] `hazo_enum_chat_type`
+- [ ] All core tables exist:
+  - [ ] `hazo_org` (multi-tenancy - must be created before hazo_users)
+  - [ ] `hazo_users` (with google_id, auth_providers, org_id, root_org_id, user_type fields)
+  - [ ] `hazo_refresh_tokens`
+  - [ ] `hazo_permissions`
+  - [ ] `hazo_roles`
+  - [ ] `hazo_role_permissions`
+  - [ ] `hazo_user_roles`
 
 ---
 
@@ -1629,7 +1605,7 @@ sqlite3 data/hazo_auth.sqlite ".tables" | grep -E "hazo_scopes|hazo_user_scopes|
 **HRBAC Checklist:**
 - [ ] `enable_hrbac = true` in config
 - [ ] HRBAC permissions added to defaults
-- [ ] All HRBAC tables created:
+- [ ] All 9 HRBAC tables created:
   - [ ] `hazo_scopes_l1` through `hazo_scopes_l7` (with org_id, root_org_id FKs)
   - [ ] `hazo_user_scopes` (junction table)
   - [ ] `hazo_scope_labels` (custom labels per org)
