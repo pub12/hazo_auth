@@ -306,21 +306,79 @@ sqlite3 data/hazo_auth.sqlite ".tables"
 
 Run this SQL script in your PostgreSQL database:
 
-**Important:** Run the entire script in order. The enum type must be created before the table that uses it.
+**Important:** Run the entire script in order. Enum types must be created before tables that use them, and hazo_org must be created before hazo_users.
 
 ```sql
 -- Ensure we're in the public schema (or your target schema)
 SET search_path TO public;
 
--- Create enum type (drop first if it exists to avoid conflicts)
+-- =============================================
+-- Step 1: Create Enum Types
+-- =============================================
+
+-- Profile picture source enum
 DROP TYPE IF EXISTS hazo_enum_profile_source_enum CASCADE;
 CREATE TYPE hazo_enum_profile_source_enum AS ENUM ('gravatar', 'custom', 'predefined');
 
--- Create users table
+-- Scope types enum (for HRBAC)
+DROP TYPE IF EXISTS hazo_enum_scope_types CASCADE;
+CREATE TYPE hazo_enum_scope_types AS ENUM (
+    'hazo_scopes_l1', 'hazo_scopes_l2', 'hazo_scopes_l3',
+    'hazo_scopes_l4', 'hazo_scopes_l5', 'hazo_scopes_l6', 'hazo_scopes_l7'
+);
+
+-- Notification chain status (for hazo_notify integration)
+DROP TYPE IF EXISTS hazo_enum_notify_chain_status CASCADE;
+CREATE TYPE hazo_enum_notify_chain_status AS ENUM ('draft', 'published', 'inactive');
+
+-- Notification email type
+DROP TYPE IF EXISTS hazo_enum_notify_email_type CASCADE;
+CREATE TYPE hazo_enum_notify_email_type AS ENUM ('system', 'user');
+
+-- Group types (for chat/collaboration features)
+DROP TYPE IF EXISTS hazo_enum_group_type CASCADE;
+CREATE TYPE hazo_enum_group_type AS ENUM ('support', 'peer', 'group');
+
+-- Group roles
+DROP TYPE IF EXISTS hazo_enum_group_role CASCADE;
+CREATE TYPE hazo_enum_group_role AS ENUM ('client', 'staff', 'owner', 'admin', 'member');
+
+-- Chat types
+DROP TYPE IF EXISTS hazo_enum_chat_type CASCADE;
+CREATE TYPE hazo_enum_chat_type AS ENUM ('chat', 'field', 'project', 'support', 'general');
+
+-- =============================================
+-- Step 2: Create Organization Table (Multi-Tenancy)
+-- =============================================
+
+-- NOTE: This must be created BEFORE hazo_users due to foreign key dependencies
+CREATE TABLE hazo_org (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    parent_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    root_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    user_limit INTEGER NOT NULL DEFAULT 0,              -- 0 = unlimited
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_by UUID,  -- Will reference hazo_users after it's created
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_by UUID   -- Will reference hazo_users after it's created
+);
+
+-- Indexes for organization hierarchy lookups
+CREATE INDEX idx_hazo_org_parent_org_id ON hazo_org(parent_org_id);
+CREATE INDEX idx_hazo_org_root_org_id ON hazo_org(root_org_id);
+CREATE INDEX idx_hazo_org_active ON hazo_org(active);
+CREATE INDEX idx_hazo_org_name ON hazo_org(name);
+
+-- =============================================
+-- Step 3: Create Users Table
+-- =============================================
+
 CREATE TABLE hazo_users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email_address TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,                                   -- NULL for OAuth-only users
     name TEXT,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -329,11 +387,31 @@ CREATE TABLE hazo_users (
     profile_picture_url TEXT,
     profile_source hazo_enum_profile_source_enum,
     mfa_secret TEXT,
-    url_on_logon TEXT,
+    url_on_logon TEXT,                                    -- Custom redirect URL after login
+    user_type TEXT,                                       -- User type categorization (optional feature)
+    -- OAuth fields (v4.2.0+)
+    google_id TEXT UNIQUE,                                -- Google OAuth unique ID (sub claim)
+    auth_providers TEXT DEFAULT 'email',                  -- 'email', 'google', or 'email,google'
+    -- Multi-tenancy fields
+    org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    root_org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
+    -- Timestamps
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
+
+-- Indexes for users table
 CREATE INDEX idx_hazo_users_email ON hazo_users(email_address);
+CREATE INDEX idx_hazo_users_user_type ON hazo_users(user_type);
+CREATE UNIQUE INDEX idx_hazo_users_google_id ON hazo_users(google_id);
+CREATE INDEX idx_hazo_users_org_id ON hazo_users(org_id);
+CREATE INDEX idx_hazo_users_root_org_id ON hazo_users(root_org_id);
+
+-- Add FK constraints to hazo_org now that hazo_users exists
+ALTER TABLE hazo_org ADD CONSTRAINT fk_hazo_org_created_by
+    FOREIGN KEY (created_by) REFERENCES hazo_users(id) ON DELETE SET NULL;
+ALTER TABLE hazo_org ADD CONSTRAINT fk_hazo_org_changed_by
+    FOREIGN KEY (changed_by) REFERENCES hazo_users(id) ON DELETE SET NULL;
 
 -- Create refresh tokens table
 CREATE TABLE hazo_refresh_tokens (
@@ -453,7 +531,22 @@ GRANT USAGE ON TYPE hazo_enum_profile_source_enum TO anon, authenticated;
 
 **Checklist:**
 - [ ] Database created (SQLite file or PostgreSQL)
-- [ ] All 6 tables exist: `hazo_users`, `hazo_refresh_tokens`, `hazo_permissions`, `hazo_roles`, `hazo_role_permissions`, `hazo_user_roles`
+- [ ] All core tables exist:
+  - [ ] `hazo_org` (multi-tenancy)
+  - [ ] `hazo_users` (with oauth, org_id, root_org_id, user_type fields)
+  - [ ] `hazo_refresh_tokens`
+  - [ ] `hazo_permissions`
+  - [ ] `hazo_roles`
+  - [ ] `hazo_role_permissions`
+  - [ ] `hazo_user_roles`
+- [ ] All enum types created (PostgreSQL only):
+  - [ ] `hazo_enum_profile_source_enum`
+  - [ ] `hazo_enum_scope_types` (for HRBAC)
+  - [ ] `hazo_enum_notify_chain_status`
+  - [ ] `hazo_enum_notify_email_type`
+  - [ ] `hazo_enum_group_type`
+  - [ ] `hazo_enum_group_role`
+  - [ ] `hazo_enum_chat_type`
 
 ---
 
@@ -1244,25 +1337,29 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE hazo_scopes_l1 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l1'),
-    org TEXT NOT NULL,
+    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
+    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scopes_l1_org ON hazo_scopes_l1(org);
+CREATE INDEX idx_hazo_scopes_l1_org_id ON hazo_scopes_l1(org_id);
+CREATE INDEX idx_hazo_scopes_l1_root_org_id ON hazo_scopes_l1(root_org_id);
 CREATE INDEX idx_hazo_scopes_l1_seq ON hazo_scopes_l1(seq);
 
 -- Level 2 (parent: L1)
 CREATE TABLE hazo_scopes_l2 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l2'),
-    org TEXT NOT NULL,
+    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
+    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     parent_scope_id UUID REFERENCES hazo_scopes_l1(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scopes_l2_org ON hazo_scopes_l2(org);
+CREATE INDEX idx_hazo_scopes_l2_org_id ON hazo_scopes_l2(org_id);
+CREATE INDEX idx_hazo_scopes_l2_root_org_id ON hazo_scopes_l2(root_org_id);
 CREATE INDEX idx_hazo_scopes_l2_seq ON hazo_scopes_l2(seq);
 CREATE INDEX idx_hazo_scopes_l2_parent ON hazo_scopes_l2(parent_scope_id);
 
@@ -1270,13 +1367,15 @@ CREATE INDEX idx_hazo_scopes_l2_parent ON hazo_scopes_l2(parent_scope_id);
 CREATE TABLE hazo_scopes_l3 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l3'),
-    org TEXT NOT NULL,
+    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
+    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     parent_scope_id UUID REFERENCES hazo_scopes_l2(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scopes_l3_org ON hazo_scopes_l3(org);
+CREATE INDEX idx_hazo_scopes_l3_org_id ON hazo_scopes_l3(org_id);
+CREATE INDEX idx_hazo_scopes_l3_root_org_id ON hazo_scopes_l3(root_org_id);
 CREATE INDEX idx_hazo_scopes_l3_seq ON hazo_scopes_l3(seq);
 CREATE INDEX idx_hazo_scopes_l3_parent ON hazo_scopes_l3(parent_scope_id);
 
@@ -1284,13 +1383,15 @@ CREATE INDEX idx_hazo_scopes_l3_parent ON hazo_scopes_l3(parent_scope_id);
 CREATE TABLE hazo_scopes_l4 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l4'),
-    org TEXT NOT NULL,
+    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
+    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     parent_scope_id UUID REFERENCES hazo_scopes_l3(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scopes_l4_org ON hazo_scopes_l4(org);
+CREATE INDEX idx_hazo_scopes_l4_org_id ON hazo_scopes_l4(org_id);
+CREATE INDEX idx_hazo_scopes_l4_root_org_id ON hazo_scopes_l4(root_org_id);
 CREATE INDEX idx_hazo_scopes_l4_seq ON hazo_scopes_l4(seq);
 CREATE INDEX idx_hazo_scopes_l4_parent ON hazo_scopes_l4(parent_scope_id);
 
@@ -1298,13 +1399,15 @@ CREATE INDEX idx_hazo_scopes_l4_parent ON hazo_scopes_l4(parent_scope_id);
 CREATE TABLE hazo_scopes_l5 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l5'),
-    org TEXT NOT NULL,
+    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
+    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     parent_scope_id UUID REFERENCES hazo_scopes_l4(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scopes_l5_org ON hazo_scopes_l5(org);
+CREATE INDEX idx_hazo_scopes_l5_org_id ON hazo_scopes_l5(org_id);
+CREATE INDEX idx_hazo_scopes_l5_root_org_id ON hazo_scopes_l5(root_org_id);
 CREATE INDEX idx_hazo_scopes_l5_seq ON hazo_scopes_l5(seq);
 CREATE INDEX idx_hazo_scopes_l5_parent ON hazo_scopes_l5(parent_scope_id);
 
@@ -1312,13 +1415,15 @@ CREATE INDEX idx_hazo_scopes_l5_parent ON hazo_scopes_l5(parent_scope_id);
 CREATE TABLE hazo_scopes_l6 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l6'),
-    org TEXT NOT NULL,
+    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
+    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     parent_scope_id UUID REFERENCES hazo_scopes_l5(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scopes_l6_org ON hazo_scopes_l6(org);
+CREATE INDEX idx_hazo_scopes_l6_org_id ON hazo_scopes_l6(org_id);
+CREATE INDEX idx_hazo_scopes_l6_root_org_id ON hazo_scopes_l6(root_org_id);
 CREATE INDEX idx_hazo_scopes_l6_seq ON hazo_scopes_l6(seq);
 CREATE INDEX idx_hazo_scopes_l6_parent ON hazo_scopes_l6(parent_scope_id);
 
@@ -1326,13 +1431,15 @@ CREATE INDEX idx_hazo_scopes_l6_parent ON hazo_scopes_l6(parent_scope_id);
 CREATE TABLE hazo_scopes_l7 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l7'),
-    org TEXT NOT NULL,
+    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
+    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     parent_scope_id UUID REFERENCES hazo_scopes_l6(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scopes_l7_org ON hazo_scopes_l7(org);
+CREATE INDEX idx_hazo_scopes_l7_org_id ON hazo_scopes_l7(org_id);
+CREATE INDEX idx_hazo_scopes_l7_root_org_id ON hazo_scopes_l7(root_org_id);
 CREATE INDEX idx_hazo_scopes_l7_seq ON hazo_scopes_l7(seq);
 CREATE INDEX idx_hazo_scopes_l7_parent ON hazo_scopes_l7(parent_scope_id);
 
@@ -1353,14 +1460,14 @@ CREATE INDEX idx_hazo_user_scopes_scope_type ON hazo_user_scopes(scope_type);
 -- 5. Create scope labels table
 CREATE TABLE hazo_scope_labels (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org TEXT NOT NULL,
+    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
     scope_type hazo_enum_scope_types NOT NULL,
     label TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    UNIQUE(org, scope_type)
+    UNIQUE(org_id, scope_type)
 );
-CREATE INDEX idx_hazo_scope_labels_org ON hazo_scope_labels(org);
+CREATE INDEX idx_hazo_scope_labels_org_id ON hazo_scope_labels(org_id);
 ```
 
 #### PostgreSQL Grant Scripts
@@ -1522,7 +1629,11 @@ sqlite3 data/hazo_auth.sqlite ".tables" | grep -E "hazo_scopes|hazo_user_scopes|
 **HRBAC Checklist:**
 - [ ] `enable_hrbac = true` in config
 - [ ] HRBAC permissions added to defaults
-- [ ] All 9 HRBAC tables created
+- [ ] All HRBAC tables created:
+  - [ ] `hazo_scopes_l1` through `hazo_scopes_l7` (with org_id, root_org_id FKs)
+  - [ ] `hazo_user_scopes` (junction table)
+  - [ ] `hazo_scope_labels` (custom labels per org)
+- [ ] Scope ID generator function created (PostgreSQL)
 - [ ] Grants applied (PostgreSQL)
 - [ ] HRBAC tabs visible in User Management
 - [ ] Scope test page works
