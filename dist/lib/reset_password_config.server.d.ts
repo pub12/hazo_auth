@@ -1,4 +1,3 @@
-import type { StaticImageData } from "next/image";
 export type ResetPasswordConfig = {
     errorMessage: string;
     successMessage: string;
@@ -16,7 +15,7 @@ export type ResetPasswordConfig = {
         require_number: boolean;
         require_special: boolean;
     };
-    imageSrc: string | StaticImageData;
+    imageSrc: string;
     imageAlt: string;
     imageBackgroundColor: string;
 };

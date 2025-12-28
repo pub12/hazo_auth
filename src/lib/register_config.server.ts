@@ -4,11 +4,13 @@ import { get_config_boolean, get_config_value, read_config_section } from "./con
 import { get_password_requirements_config } from "./password_requirements_config.server";
 import { get_already_logged_in_config } from "./already_logged_in_config.server";
 import { get_user_fields_config } from "./user_fields_config.server";
-import registerDefaultImage from "../assets/images/register_default.jpg";
+
+// Default image path - consuming apps should either:
+// 1. Configure their own image_src in hazo_auth_config.ini
+// 2. Copy the default images from node_modules/hazo_auth/public/hazo_auth/images/ to their public folder
+const DEFAULT_REGISTER_IMAGE_PATH = "/hazo_auth/images/register_default.jpg";
 
 // section: types
-import type { StaticImageData } from "next/image";
-
 export type RegisterConfig = {
   showNameField: boolean;
   passwordRequirements: {
@@ -25,7 +27,7 @@ export type RegisterConfig = {
   returnHomePath: string;
   signInPath: string;
   signInLabel: string;
-  imageSrc: string | StaticImageData;
+  imageSrc: string;
   imageAlt: string;
   imageBackgroundColor: string;
 };
@@ -65,12 +67,13 @@ export function get_register_config(): RegisterConfig {
   );
 
   // Read image configuration
-  // If not set in config, falls back to default image from assets
+  // If not set in config, falls back to default path-based image
+  // Consuming apps should copy images to public/hazo_auth/images/ or configure their own image_src
   const imageSrc = get_config_value(
     "hazo_auth__register_layout",
     "image_src",
-    "" // Empty string means not set in config
-  ) || registerDefaultImage;
+    DEFAULT_REGISTER_IMAGE_PATH
+  );
 
   const imageAlt = get_config_value(
     "hazo_auth__register_layout",

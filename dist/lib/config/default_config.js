@@ -160,8 +160,8 @@ export const DEFAULT_MULTI_TENANCY = {
 export const DEFAULT_NAVBAR = {
     /** Enable navbar on auth pages */
     enable_navbar: true,
-    /** Logo image path (default: /logo.png in public folder) */
-    logo_path: "/logo.png",
+    /** Logo image path (empty = no logo shown, configure to show) */
+    logo_path: "",
     /** Logo width in pixels */
     logo_width: 32,
     /** Logo height in pixels */
@@ -196,8 +196,8 @@ export const DEFAULT_DEV_LOCK = {
     session_duration_days: 7,
     /** Background color (default: black) */
     background_color: "#000000",
-    /** Logo image path (default: /logo.png in public folder) */
-    logo_path: "/logo.png",
+    /** Logo image path (empty = no logo shown, configure to show) */
+    logo_path: "",
     /** Logo width in pixels */
     logo_width: 120,
     /** Logo height in pixels */

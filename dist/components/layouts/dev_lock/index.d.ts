@@ -1,7 +1,7 @@
 export type DevLockLayoutProps = {
     /** Background color (default: #000000 - black) */
     background_color?: string;
-    /** Logo image path (default: /logo.png) */
+    /** Logo image path (empty = no logo shown, configure to show) */
     logo_path?: string;
     /** Logo width in pixels (default: 120) */
     logo_width?: number;

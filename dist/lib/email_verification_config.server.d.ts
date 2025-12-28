@@ -1,11 +1,10 @@
-import type { StaticImageData } from "next/image";
 export type EmailVerificationConfig = {
     alreadyLoggedInMessage: string;
     showLogoutButton: boolean;
     showReturnHomeButton: boolean;
     returnHomeButtonLabel: string;
     returnHomePath: string;
-    imageSrc: string | StaticImageData;
+    imageSrc: string;
     imageAlt: string;
     imageBackgroundColor: string;
 };

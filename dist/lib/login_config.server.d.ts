@@ -1,5 +1,4 @@
 import { type OAuthConfig } from "./oauth_config.server";
-import type { StaticImageData } from "next/image";
 export type LoginConfig = {
     redirectRoute?: string;
     successMessage: string;
@@ -12,7 +11,7 @@ export type LoginConfig = {
     forgotPasswordLabel: string;
     createAccountPath: string;
     createAccountLabel: string;
-    imageSrc: string | StaticImageData;
+    imageSrc: string;
     imageAlt: string;
     imageBackgroundColor: string;
     /** OAuth configuration */

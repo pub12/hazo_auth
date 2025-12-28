@@ -10,7 +10,7 @@ import { cn } from "../../../../lib/utils";
 
 // section: types
 export type AuthNavbarProps = {
-  /** Logo image path */
+  /** Logo image path (empty string = no logo shown) */
   logo_path?: string;
   /** Logo width in pixels */
   logo_width?: number;
@@ -36,7 +36,7 @@ export type AuthNavbarProps = {
 
 // section: component
 export function AuthNavbar({
-  logo_path = "/logo.png",
+  logo_path = "",
   logo_width = 32,
   logo_height = 32,
   company_name = "",
@@ -48,6 +48,8 @@ export function AuthNavbar({
   height = 64,
   className,
 }: AuthNavbarProps) {
+  // Only show logo if logo_path is configured (non-empty)
+  const showLogo = logo_path !== "";
   const navStyle: React.CSSProperties = {
     height: `${height}px`,
     ...(background_color && { backgroundColor: background_color }),
@@ -65,20 +67,24 @@ export function AuthNavbar({
     >
       {/* Left: Logo and Company Name */}
       <div className="cls_auth_navbar_brand flex items-center gap-3">
-        <Link href={home_path} className="cls_auth_navbar_logo_link flex items-center gap-3">
-          <Image
-            src={logo_path}
-            alt={company_name ? `${company_name} logo` : "Logo"}
-            width={logo_width}
-            height={logo_height}
-            className="cls_auth_navbar_logo object-contain"
-          />
-          {company_name && (
-            <span className="cls_auth_navbar_company_name text-lg font-semibold text-foreground">
-              {company_name}
-            </span>
-          )}
-        </Link>
+        {(showLogo || company_name) && (
+          <Link href={home_path} className="cls_auth_navbar_logo_link flex items-center gap-3">
+            {showLogo && (
+              <Image
+                src={logo_path}
+                alt={company_name ? `${company_name} logo` : "Logo"}
+                width={logo_width}
+                height={logo_height}
+                className="cls_auth_navbar_logo object-contain"
+              />
+            )}
+            {company_name && (
+              <span className="cls_auth_navbar_company_name text-lg font-semibold text-foreground">
+                {company_name}
+              </span>
+            )}
+          </Link>
+        )}
       </div>
 
       {/* Right: Home Link */}

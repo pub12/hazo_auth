@@ -3,11 +3,13 @@
 import { get_config_value } from "./config/config_loader.server";
 import { get_already_logged_in_config } from "./already_logged_in_config.server";
 import { get_password_requirements_config } from "./password_requirements_config.server";
-import resetPasswordDefaultImage from "../assets/images/reset_password_default.jpg";
+
+// Default image path - consuming apps should either:
+// 1. Configure their own image_src in hazo_auth_config.ini
+// 2. Copy the default images from node_modules/hazo_auth/public/hazo_auth/images/ to their public folder
+const DEFAULT_RESET_PASSWORD_IMAGE_PATH = "/hazo_auth/images/reset_password_default.jpg";
 
 // section: types
-import type { StaticImageData } from "next/image";
-
 export type ResetPasswordConfig = {
   errorMessage: string;
   successMessage: string;
@@ -25,7 +27,7 @@ export type ResetPasswordConfig = {
     require_number: boolean;
     require_special: boolean;
   };
-  imageSrc: string | StaticImageData;
+  imageSrc: string;
   imageAlt: string;
   imageBackgroundColor: string;
 };
@@ -66,12 +68,13 @@ export function get_reset_password_config(): ResetPasswordConfig {
   const passwordRequirements = get_password_requirements_config();
 
   // Read image configuration
-  // If not set in config, falls back to default image from assets
+  // If not set in config, falls back to default path-based image
+  // Consuming apps should copy images to public/hazo_auth/images/ or configure their own image_src
   const imageSrc = get_config_value(
     section,
     "image_src",
-    "" // Empty string means not set in config
-  ) || resetPasswordDefaultImage;
+    DEFAULT_RESET_PASSWORD_IMAGE_PATH
+  );
 
   const imageAlt = get_config_value(
     section,

@@ -136,8 +136,8 @@ export declare const DEFAULT_MULTI_TENANCY: {
 export declare const DEFAULT_NAVBAR: {
     /** Enable navbar on auth pages */
     readonly enable_navbar: true;
-    /** Logo image path (default: /logo.png in public folder) */
-    readonly logo_path: "/logo.png";
+    /** Logo image path (empty = no logo shown, configure to show) */
+    readonly logo_path: "";
     /** Logo width in pixels */
     readonly logo_width: 32;
     /** Logo height in pixels */
@@ -170,8 +170,8 @@ export declare const DEFAULT_DEV_LOCK: {
     readonly session_duration_days: 7;
     /** Background color (default: black) */
     readonly background_color: "#000000";
-    /** Logo image path (default: /logo.png in public folder) */
-    readonly logo_path: "/logo.png";
+    /** Logo image path (empty = no logo shown, configure to show) */
+    readonly logo_path: "";
     /** Logo width in pixels */
     readonly logo_width: 120;
     /** Logo height in pixels */
@@ -328,8 +328,8 @@ export declare const HAZO_AUTH_DEFAULTS: {
         readonly session_duration_days: 7;
         /** Background color (default: black) */
         readonly background_color: "#000000";
-        /** Logo image path (default: /logo.png in public folder) */
-        readonly logo_path: "/logo.png";
+        /** Logo image path (empty = no logo shown, configure to show) */
+        readonly logo_path: "";
         /** Logo width in pixels */
         readonly logo_width: 120;
         /** Logo height in pixels */
@@ -362,8 +362,8 @@ export declare const HAZO_AUTH_DEFAULTS: {
     readonly navbar: {
         /** Enable navbar on auth pages */
         readonly enable_navbar: true;
-        /** Logo image path (default: /logo.png in public folder) */
-        readonly logo_path: "/logo.png";
+        /** Logo image path (empty = no logo shown, configure to show) */
+        readonly logo_path: "";
         /** Logo width in pixels */
         readonly logo_width: 32;
         /** Logo height in pixels */

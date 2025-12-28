@@ -29,33 +29,33 @@ export function FormActionButtons({
 }: FormActionButtonsProps) {
   return (
     <div
-      className={`cls_form_action_buttons mt-2 flex items-center justify-end gap-4 ${className ?? ""}`}
+      className={`cls_form_action_buttons mt-2 flex flex-wrap items-center justify-end gap-4 ${className ?? ""}`}
     >
       <Button
         type="submit"
         disabled={isSubmitDisabled}
-        className="cls_form_action_submit_button flex items-center gap-2"
+        className="cls_form_action_submit_button flex shrink-0 items-center gap-2"
         aria-label={submitAriaLabel}
         style={{
           backgroundColor: buttonPalette.submitBackground,
           color: buttonPalette.submitText,
         }}
       >
-        <CircleCheckBig className="h-4 w-4" aria-hidden="true" />
+        <CircleCheckBig className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span>{submitLabel}</span>
       </Button>
       <Button
         type="button"
         variant="outline"
         onClick={onCancel}
-        className="cls_form_action_cancel_button flex items-center gap-2"
+        className="cls_form_action_cancel_button flex shrink-0 items-center gap-2"
         aria-label={cancelAriaLabel}
         style={{
           borderColor: buttonPalette.cancelBorder,
           color: buttonPalette.cancelText,
         }}
       >
-        <CircleX className="h-4 w-4" aria-hidden="true" />
+        <CircleX className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span>{cancelLabel}</span>
       </Button>
     </div>

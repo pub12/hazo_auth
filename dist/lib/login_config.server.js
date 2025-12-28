@@ -3,7 +3,10 @@
 import { get_config_value } from "./config/config_loader.server";
 import { get_already_logged_in_config } from "./already_logged_in_config.server";
 import { get_oauth_config } from "./oauth_config.server";
-import loginDefaultImage from "../assets/images/login_default.jpg";
+// Default image path - consuming apps should either:
+// 1. Configure their own image_src in hazo_auth_config.ini
+// 2. Copy the default images from node_modules/hazo_auth/public/hazo_auth/images/ to their public folder
+const DEFAULT_LOGIN_IMAGE_PATH = "/hazo_auth/images/login_default.jpg";
 // section: helpers
 /**
  * Reads login layout configuration from hazo_auth_config.ini file
@@ -24,9 +27,9 @@ export function get_login_config() {
     // Get shared already logged in config
     const alreadyLoggedInConfig = get_already_logged_in_config();
     // Read image configuration
-    // If not set in config, falls back to default image from assets
-    const imageSrc = get_config_value(section, "image_src", "" // Empty string means not set in config
-    ) || loginDefaultImage;
+    // If not set in config, falls back to default path-based image
+    // Consuming apps should copy images to public/hazo_auth/images/ or configure their own image_src
+    const imageSrc = get_config_value(section, "image_src", DEFAULT_LOGIN_IMAGE_PATH);
     const imageAlt = get_config_value(section, "image_alt", "Secure login illustration");
     const imageBackgroundColor = get_config_value(section, "image_background_color", "#f1f5f9");
     // Get OAuth configuration

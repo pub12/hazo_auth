@@ -14,7 +14,7 @@ import { Lock, AlertCircle, Loader2 } from "lucide-react";
 export type DevLockLayoutProps = {
   /** Background color (default: #000000 - black) */
   background_color?: string;
-  /** Logo image path (default: /logo.png) */
+  /** Logo image path (empty = no logo shown, configure to show) */
   logo_path?: string;
   /** Logo width in pixels (default: 120) */
   logo_width?: number;
@@ -41,7 +41,7 @@ export type DevLockLayoutProps = {
 // section: component
 export default function DevLockLayout({
   background_color = "#000000",
-  logo_path = "/logo.png",
+  logo_path = "",
   logo_width = 120,
   logo_height = 120,
   application_name = "",
@@ -53,6 +53,8 @@ export default function DevLockLayout({
   accent_color = "#3b82f6",
   onUnlock,
 }: DevLockLayoutProps) {
+  // Only show logo if logo_path is configured (non-empty)
+  const showLogo = logo_path !== "";
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -107,17 +109,19 @@ export default function DevLockLayout({
       style={{ backgroundColor: background_color }}
     >
       <div className="cls_dev_lock_container flex flex-col items-center gap-6 max-w-sm w-full">
-        {/* Logo */}
-        <div className="cls_dev_lock_logo">
-          <Image
-            src={logo_path}
-            alt="Application logo"
-            width={logo_width}
-            height={logo_height}
-            className="object-contain"
-            priority
-          />
-        </div>
+        {/* Logo - only shown if configured */}
+        {showLogo && (
+          <div className="cls_dev_lock_logo">
+            <Image
+              src={logo_path}
+              alt="Application logo"
+              width={logo_width}
+              height={logo_height}
+              className="object-contain"
+              priority
+            />
+          </div>
+        )}
 
         {/* Application Name */}
         {application_name && (

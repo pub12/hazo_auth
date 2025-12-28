@@ -1,5 +1,5 @@
 export type AuthNavbarProps = {
-    /** Logo image path */
+    /** Logo image path (empty string = no logo shown) */
     logo_path?: string;
     /** Logo width in pixels */
     logo_width?: number;

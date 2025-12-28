@@ -1,4 +1,3 @@
-import type { StaticImageData } from "next/image";
 export type RegisterConfig = {
     showNameField: boolean;
     passwordRequirements: {
@@ -15,7 +14,7 @@ export type RegisterConfig = {
     returnHomePath: string;
     signInPath: string;
     signInLabel: string;
-    imageSrc: string | StaticImageData;
+    imageSrc: string;
     imageAlt: string;
     imageBackgroundColor: string;
 };
