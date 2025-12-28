@@ -112,7 +112,7 @@ export function ScopeTestPageClient({ hrbacEnabled }: ScopeTestPageClientProps) 
 
   // Clear results
   const handleClear = () => {
-    setScopeType("");
+    setScopeType("__none__");
     setScopeId("");
     setScopeSeq("");
     setRequiredPermissions("");

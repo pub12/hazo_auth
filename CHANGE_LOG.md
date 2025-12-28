@@ -7,6 +7,149 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed - Zero-Config Server Pages Now Include Navbar Automatically
+
+**Feature Enhancement**: All 6 zero-config server page components now include the AuthPageShell wrapper internally, enabling the navbar to work automatically based on configuration without requiring consuming apps to wrap pages manually.
+
+**Why this change**: The navbar feature required consuming apps to manually wrap page components with `AuthPageShell`, creating unnecessary boilerplate and friction. By embedding the wrapper directly in server page components, the navbar now works out-of-the-box with zero configuration, improving the developer experience and reducing setup complexity.
+
+**What Changed**:
+- **Server Page Components Updated** (all 6 files): Each server page now wraps its layout component in `AuthPageShell`, passing navbar configuration and the `disableNavbar` prop
+  - `src/server_pages/login.tsx` - Login page
+  - `src/server_pages/register.tsx` - Register page
+  - `src/server_pages/forgot_password.tsx` - Forgot password page
+  - `src/server_pages/reset_password.tsx` - Reset password page
+  - `src/server_pages/verify_email.tsx` - Email verification page
+  - `src/server_pages/my_settings.tsx` - My Settings page
+
+**Files Modified**:
+1. `src/server_pages/login.tsx` - Added AuthPageShell wrapper with navbar config
+2. `src/server_pages/register.tsx` - Added AuthPageShell wrapper with navbar config
+3. `src/server_pages/forgot_password.tsx` - Added AuthPageShell wrapper with navbar config
+4. `src/server_pages/reset_password.tsx` - Added AuthPageShell wrapper with navbar config
+5. `src/server_pages/verify_email.tsx` - Added AuthPageShell wrapper with navbar config (navbar disabled by default)
+6. `src/server_pages/my_settings.tsx` - Added AuthPageShell wrapper with navbar config
+7. `src/app/hazo_auth/login/page.tsx` - Removed redundant AuthPageShell wrapper
+8. `src/app/hazo_auth/register/page.tsx` - Removed redundant AuthPageShell wrapper
+9. `src/app/hazo_auth/forgot_password/page.tsx` - Removed redundant AuthPageShell wrapper
+10. `src/app/hazo_auth/reset_password/page.tsx` - Removed redundant AuthPageShell wrapper
+11. `src/app/hazo_auth/verify_email/page.tsx` - Removed redundant AuthPageShell wrapper
+12. `src/app/hazo_auth/my_settings/page.tsx` - Removed redundant AuthPageShell wrapper
+
+**Before (consuming apps had to wrap manually)**:
+```typescript
+// app/hazo_auth/login/page.tsx
+import { LoginPage } from "hazo_auth/pages/login";
+import { AuthPageShell } from "hazo_auth/components/layouts/shared/components/auth_page_shell";
+
+export default function Page() {
+  const navbarConfig = get_navbar_config();
+  return (
+    <AuthPageShell navbarConfig={navbarConfig}>
+      <LoginPage />
+    </AuthPageShell>
+  );
+}
+```
+
+**After (navbar works automatically)**:
+```typescript
+// app/hazo_auth/login/page.tsx
+import { LoginPage } from "hazo_auth/pages/login";
+
+export default function Page() {
+  return <LoginPage />;  // Navbar automatically enabled if configured
+}
+```
+
+**Behavior**:
+- Navbar appears automatically on all auth pages when `enable_navbar = true` in `[hazo_auth__navbar]` config section
+- Navbar can be disabled per-page by passing `disableNavbar={true}` prop
+- Email verification page has navbar disabled by default (since it's often accessed from email links without context)
+- Vertical centering works automatically when navbar is enabled and `vertical_center = auto` in `[hazo_auth__ui_shell]` config
+
+**Backward Compatibility**:
+- No breaking changes for consuming applications
+- Existing pages work unchanged (navbar appears if configured)
+- Manual AuthPageShell wrappers still work but are now redundant
+- New projects get navbar automatically with zero configuration
+
+**Design Rationale**:
+- **Developer Experience**: Reduces boilerplate code in consuming applications
+- **Zero-Config Philosophy**: Aligns with the zero-config page component design
+- **Single Source of Truth**: Configuration in INI file controls navbar appearance, not wrapper code
+- **Consistency**: All auth pages behave the same way regarding navbar rendering
+
+---
+
+### Fixed - Password Toggle Button Positioning
+
+**Issue**: Password toggle button (eye icon) in password input fields had inconsistent vertical centering due to using `top-1/2 -translate-y-1/2`, which could misalign with different font sizes or input heights in custom themes.
+
+**Root Cause**: The `absolute right-0.5 top-1/2 h-9 w-9 -translate-y-1/2` positioning approach relied on percentage-based centering, which doesn't account for the parent container's padding or border, causing slight misalignment in some themes.
+
+**Fix Applied**:
+Changed positioning in `src/components/layouts/shared/components/password_field.tsx` from:
+```tsx
+className="absolute right-0.5 top-1/2 h-9 w-9 -translate-y-1/2"
+```
+
+To:
+```tsx
+className="absolute inset-y-0 right-1 my-auto h-8 w-8"
+```
+
+**Why This is Better**:
+- `inset-y-0` with `my-auto` provides more robust vertical centering using flexbox auto-margins
+- Doesn't rely on transform-based centering which can be affected by parent container metrics
+- Works consistently across different input heights and custom themes
+- Slightly smaller button size (h-8 w-8 vs h-9 w-9) provides better visual balance
+- Increased right spacing (right-1 vs right-0.5) prevents button from touching input border
+
+**Files Modified**:
+- `src/components/layouts/shared/components/password_field.tsx` - Updated button positioning classes
+
+**Impact**: Password toggle button now centers perfectly in all themes and input sizes, improving visual consistency across the application.
+
+---
+
+### Changed - Improved Auth Card Padding on Mobile and Small Tablets
+
+**Enhancement**: Increased horizontal margins in `TwoColumnAuthLayout` component for better visual spacing on mobile and small tablet devices.
+
+**Why this change**: The previous `mx-4` (16px horizontal margins) felt cramped on modern mobile devices with larger screens. Increasing margins to `mx-6` (24px) on mobile and `mx-8` (32px) on small tablets provides better breathing room and improves readability on smaller viewports.
+
+**What Changed**:
+Updated `src/components/layouts/shared/components/two_column_auth_layout.tsx`:
+
+**Before**:
+```tsx
+className="mx-4 rounded-2xl border bg-card"
+```
+
+**After**:
+```tsx
+className="mx-6 rounded-2xl border bg-card sm:mx-8"
+```
+
+**Breakpoint Behavior**:
+- **Mobile (< 640px)**: 24px horizontal margins (`mx-6`)
+- **Small tablets (≥ 640px)**: 32px horizontal margins (`sm:mx-8`)
+- **Larger screens**: Existing max-width constraints continue to apply
+
+**Files Modified**:
+- `src/components/layouts/shared/components/two_column_auth_layout.tsx` - Updated container margin classes
+
+**Visual Impact**:
+- Better visual hierarchy on mobile devices
+- Improved readability with more whitespace
+- Card feels less cramped on small screens
+- Maintains existing desktop appearance
+
+**Backward Compatibility**: No breaking changes - purely visual enhancement that improves mobile UX.
+
+---
+
 ### Added - App User Data (Custom User Metadata)
 
 **Feature**: Flexible JSON field for consuming applications to store custom user-specific data without modifying the `hazo_users` table schema.

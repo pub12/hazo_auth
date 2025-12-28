@@ -3,6 +3,7 @@ import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports
 import { get_forgot_password_config } from "../lib/forgot_password_config.server";
 import { ForgotPasswordClientWrapper } from "./forgot_password_client_wrapper";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
 import { DEFAULT_FORGOT_PASSWORD } from "../lib/config/default_config";
 // section: component
 /**
@@ -35,8 +36,8 @@ export default function ForgotPasswordPage({ image_src, image_alt, image_backgro
     const finalImageSrc = image_src || config.imageSrc;
     const finalImageAlt = image_alt || config.imageAlt;
     const finalImageBackgroundColor = image_background_color || config.imageBackgroundColor;
-    // Pass serializable config to client wrapper
-    return (_jsx(ForgotPasswordClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, sign_in_path: sign_in_path, sign_in_label: sign_in_label, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath }));
+    // Pass serializable config to client wrapper, wrapped in AuthPageShell for navbar support
+    return (_jsx(AuthPageShell, { children: _jsx(ForgotPasswordClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, sign_in_path: sign_in_path, sign_in_label: sign_in_label, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath }) }));
 }
 // Named export for direct imports
 export { ForgotPasswordPage };

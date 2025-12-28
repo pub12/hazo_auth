@@ -94,6 +94,7 @@ export default function Page() {
 - ✅ Database connection initialized server-side via hazo_connect singleton
 - ✅ Configuration loaded from hazo_auth_config.ini (or uses sensible defaults)
 - ✅ All props automatically configured
+- ✅ Navbar automatically rendered based on config (no manual wrapping needed)
 - ✅ Page renders immediately - NO loading state!
 
 **Available zero-config pages:**
@@ -1180,6 +1181,8 @@ vertical_center = auto  # 'auto' enables vertical centering when navbar is prese
 
 ### Authentication Page Navbar
 
+**The navbar now works automatically** - zero-config server page components include the navbar based on configuration without manual wrapping.
+
 When using `layout_mode = standalone`, you can enable a configurable navbar that appears on all auth pages:
 
 ```ini
@@ -1199,7 +1202,17 @@ height = 64                       # Navbar height in pixels
 
 The navbar provides consistent branding across authentication pages with your company logo, name, and optional home link. It automatically vertically centers auth content when enabled.
 
-**Customize via props:**
+**Zero-config usage (recommended):**
+```typescript
+// app/hazo_auth/login/page.tsx
+import { LoginPage } from "hazo_auth/pages/login";
+
+export default function Page() {
+  return <LoginPage />;  // Navbar appears automatically if enabled in config
+}
+```
+
+**Customize via props (advanced):**
 ```typescript
 import { LoginLayout } from "hazo_auth/components/layouts/login";
 
@@ -1218,6 +1231,8 @@ export default function Page() {
 
 **Disable for specific pages:**
 ```typescript
+<LoginPage disableNavbar={true} />
+// OR for layout components:
 <LoginLayout navbar={{ enable_navbar: false }} />
 ```
 

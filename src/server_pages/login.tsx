@@ -3,6 +3,7 @@
 // section: imports
 import { get_login_config } from "../lib/login_config.server";
 import { LoginClientWrapper } from "./login_client_wrapper";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
 import type { StaticImageData } from "next/image";
 
 export type LoginPageProps = {
@@ -62,30 +63,32 @@ export default function LoginPage({
   const finalImageAlt = image_alt || config.imageAlt;
   const finalImageBackgroundColor = image_background_color || config.imageBackgroundColor;
 
-  // Pass serializable config to client wrapper
+  // Pass serializable config to client wrapper, wrapped in AuthPageShell for navbar support
   return (
-    <LoginClientWrapper
-      image_src={finalImageSrc}
-      image_alt={finalImageAlt}
-      image_background_color={finalImageBackgroundColor}
-      redirectRoute={config.redirectRoute}
-      successMessage={config.successMessage}
-      alreadyLoggedInMessage={config.alreadyLoggedInMessage}
-      showLogoutButton={config.showLogoutButton}
-      showReturnHomeButton={config.showReturnHomeButton}
-      returnHomeButtonLabel={config.returnHomeButtonLabel}
-      returnHomePath={config.returnHomePath}
-      forgotPasswordPath={config.forgotPasswordPath}
-      forgotPasswordLabel={config.forgotPasswordLabel}
-      createAccountPath={config.createAccountPath}
-      createAccountLabel={config.createAccountLabel}
-      oauth={{
-        enable_google: config.oauth.enable_google,
-        enable_email_password: config.oauth.enable_email_password,
-        google_button_text: config.oauth.google_button_text,
-        oauth_divider_text: config.oauth.oauth_divider_text,
-      }}
-    />
+    <AuthPageShell>
+      <LoginClientWrapper
+        image_src={finalImageSrc}
+        image_alt={finalImageAlt}
+        image_background_color={finalImageBackgroundColor}
+        redirectRoute={config.redirectRoute}
+        successMessage={config.successMessage}
+        alreadyLoggedInMessage={config.alreadyLoggedInMessage}
+        showLogoutButton={config.showLogoutButton}
+        showReturnHomeButton={config.showReturnHomeButton}
+        returnHomeButtonLabel={config.returnHomeButtonLabel}
+        returnHomePath={config.returnHomePath}
+        forgotPasswordPath={config.forgotPasswordPath}
+        forgotPasswordLabel={config.forgotPasswordLabel}
+        createAccountPath={config.createAccountPath}
+        createAccountLabel={config.createAccountLabel}
+        oauth={{
+          enable_google: config.oauth.enable_google,
+          enable_email_password: config.oauth.enable_email_password,
+          google_button_text: config.oauth.google_button_text,
+          oauth_divider_text: config.oauth.oauth_divider_text,
+        }}
+      />
+    </AuthPageShell>
   );
 }
 

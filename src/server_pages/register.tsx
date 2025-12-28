@@ -3,6 +3,7 @@
 // section: imports
 import { get_register_config } from "../lib/register_config.server";
 import { RegisterClientWrapper } from "./register_client_wrapper";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
 import type { StaticImageData } from "next/image";
 
 export type RegisterPageProps = {
@@ -65,22 +66,24 @@ export default function RegisterPage({
   const finalImageAlt = image_alt || config.imageAlt;
   const finalImageBackgroundColor = image_background_color || config.imageBackgroundColor;
 
-  // Pass serializable config to client wrapper
+  // Pass serializable config to client wrapper, wrapped in AuthPageShell for navbar support
   return (
-    <RegisterClientWrapper
-      image_src={finalImageSrc}
-      image_alt={finalImageAlt}
-      image_background_color={finalImageBackgroundColor}
-      showNameField={config.showNameField}
-      passwordRequirements={config.passwordRequirements}
-      alreadyLoggedInMessage={config.alreadyLoggedInMessage}
-      showLogoutButton={config.showLogoutButton}
-      showReturnHomeButton={config.showReturnHomeButton}
-      returnHomeButtonLabel={config.returnHomeButtonLabel}
-      returnHomePath={config.returnHomePath}
-      signInPath={config.signInPath}
-      signInLabel={config.signInLabel}
-    />
+    <AuthPageShell>
+      <RegisterClientWrapper
+        image_src={finalImageSrc}
+        image_alt={finalImageAlt}
+        image_background_color={finalImageBackgroundColor}
+        showNameField={config.showNameField}
+        passwordRequirements={config.passwordRequirements}
+        alreadyLoggedInMessage={config.alreadyLoggedInMessage}
+        showLogoutButton={config.showLogoutButton}
+        showReturnHomeButton={config.showReturnHomeButton}
+        returnHomeButtonLabel={config.returnHomeButtonLabel}
+        returnHomePath={config.returnHomePath}
+        signInPath={config.signInPath}
+        signInLabel={config.signInLabel}
+      />
+    </AuthPageShell>
   );
 }
 

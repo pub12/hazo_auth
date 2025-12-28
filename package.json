@@ -1,6 +1,31 @@
 {
   "name": "hazo_auth",
   "version": "4.5.6",
+  "description": "Zero-config authentication UI components for Next.js with RBAC, OAuth, multi-tenancy, and hierarchical scopes",
+  "keywords": [
+    "authentication",
+    "nextjs",
+    "react",
+    "rbac",
+    "oauth",
+    "google-signin",
+    "jwt",
+    "multi-tenancy",
+    "user-management",
+    "tailwindcss",
+    "shadcn-ui",
+    "server-components"
+  ],
+  "license": "MIT",
+  "author": "hazo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hazolabs/hazo_auth.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hazolabs/hazo_auth/issues"
+  },
+  "homepage": "https://github.com/hazolabs/hazo_auth#readme",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",

@@ -3,6 +3,7 @@ import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports
 import { get_reset_password_config } from "../lib/reset_password_config.server";
 import { ResetPasswordClientWrapper } from "./reset_password_client_wrapper";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
 // section: component
 /**
  * Zero-config ResetPasswordPage server component
@@ -35,8 +36,8 @@ export default function ResetPasswordPage({ image_src, image_alt, image_backgrou
     const finalImageSrc = image_src || config.imageSrc;
     const finalImageAlt = image_alt || config.imageAlt;
     const finalImageBackgroundColor = image_background_color || config.imageBackgroundColor;
-    // Pass serializable config to client wrapper
-    return (_jsx(ResetPasswordClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, passwordRequirements: config.passwordRequirements, errorMessage: config.errorMessage, successMessage: config.successMessage, loginPath: config.loginPath, forgotPasswordPath: config.forgotPasswordPath, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath }));
+    // Pass serializable config to client wrapper, wrapped in AuthPageShell for navbar support
+    return (_jsx(AuthPageShell, { children: _jsx(ResetPasswordClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, passwordRequirements: config.passwordRequirements, errorMessage: config.errorMessage, successMessage: config.successMessage, loginPath: config.loginPath, forgotPasswordPath: config.forgotPasswordPath, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath }) }));
 }
 // Named export for direct imports
 export { ResetPasswordPage };

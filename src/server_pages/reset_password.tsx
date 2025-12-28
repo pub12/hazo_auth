@@ -3,6 +3,7 @@
 // section: imports
 import { get_reset_password_config } from "../lib/reset_password_config.server";
 import { ResetPasswordClientWrapper } from "./reset_password_client_wrapper";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
 import type { StaticImageData } from "next/image";
 
 export type ResetPasswordPageProps = {
@@ -63,23 +64,25 @@ export default function ResetPasswordPage({
   const finalImageAlt = image_alt || config.imageAlt;
   const finalImageBackgroundColor = image_background_color || config.imageBackgroundColor;
 
-  // Pass serializable config to client wrapper
+  // Pass serializable config to client wrapper, wrapped in AuthPageShell for navbar support
   return (
-    <ResetPasswordClientWrapper
-      image_src={finalImageSrc}
-      image_alt={finalImageAlt}
-      image_background_color={finalImageBackgroundColor}
-      passwordRequirements={config.passwordRequirements}
-      errorMessage={config.errorMessage}
-      successMessage={config.successMessage}
-      loginPath={config.loginPath}
-      forgotPasswordPath={config.forgotPasswordPath}
-      alreadyLoggedInMessage={config.alreadyLoggedInMessage}
-      showLogoutButton={config.showLogoutButton}
-      showReturnHomeButton={config.showReturnHomeButton}
-      returnHomeButtonLabel={config.returnHomeButtonLabel}
-      returnHomePath={config.returnHomePath}
-    />
+    <AuthPageShell>
+      <ResetPasswordClientWrapper
+        image_src={finalImageSrc}
+        image_alt={finalImageAlt}
+        image_background_color={finalImageBackgroundColor}
+        passwordRequirements={config.passwordRequirements}
+        errorMessage={config.errorMessage}
+        successMessage={config.successMessage}
+        loginPath={config.loginPath}
+        forgotPasswordPath={config.forgotPasswordPath}
+        alreadyLoggedInMessage={config.alreadyLoggedInMessage}
+        showLogoutButton={config.showLogoutButton}
+        showReturnHomeButton={config.showReturnHomeButton}
+        returnHomeButtonLabel={config.returnHomeButtonLabel}
+        returnHomePath={config.returnHomePath}
+      />
+    </AuthPageShell>
   );
 }
 

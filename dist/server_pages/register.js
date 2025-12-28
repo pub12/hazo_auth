@@ -3,6 +3,7 @@ import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports
 import { get_register_config } from "../lib/register_config.server";
 import { RegisterClientWrapper } from "./register_client_wrapper";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
 // section: component
 /**
  * Zero-config RegisterPage server component
@@ -36,8 +37,8 @@ export default function RegisterPage({ image_src, image_alt, image_background_co
     const finalImageSrc = image_src || config.imageSrc;
     const finalImageAlt = image_alt || config.imageAlt;
     const finalImageBackgroundColor = image_background_color || config.imageBackgroundColor;
-    // Pass serializable config to client wrapper
-    return (_jsx(RegisterClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, showNameField: config.showNameField, passwordRequirements: config.passwordRequirements, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath, signInPath: config.signInPath, signInLabel: config.signInLabel }));
+    // Pass serializable config to client wrapper, wrapped in AuthPageShell for navbar support
+    return (_jsx(AuthPageShell, { children: _jsx(RegisterClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, showNameField: config.showNameField, passwordRequirements: config.passwordRequirements, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath, signInPath: config.signInPath, signInLabel: config.signInLabel }) }));
 }
 // Named export for direct imports
 export { RegisterPage };

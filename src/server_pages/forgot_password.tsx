@@ -3,6 +3,7 @@
 // section: imports
 import { get_forgot_password_config } from "../lib/forgot_password_config.server";
 import { ForgotPasswordClientWrapper } from "./forgot_password_client_wrapper";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
 import { DEFAULT_FORGOT_PASSWORD } from "../lib/config/default_config";
 import type { StaticImageData } from "next/image";
 
@@ -77,20 +78,22 @@ export default function ForgotPasswordPage({
   const finalImageAlt = image_alt || config.imageAlt;
   const finalImageBackgroundColor = image_background_color || config.imageBackgroundColor;
 
-  // Pass serializable config to client wrapper
+  // Pass serializable config to client wrapper, wrapped in AuthPageShell for navbar support
   return (
-    <ForgotPasswordClientWrapper
-      image_src={finalImageSrc}
-      image_alt={finalImageAlt}
-      image_background_color={finalImageBackgroundColor}
-      sign_in_path={sign_in_path}
-      sign_in_label={sign_in_label}
-      alreadyLoggedInMessage={config.alreadyLoggedInMessage}
-      showLogoutButton={config.showLogoutButton}
-      showReturnHomeButton={config.showReturnHomeButton}
-      returnHomeButtonLabel={config.returnHomeButtonLabel}
-      returnHomePath={config.returnHomePath}
-    />
+    <AuthPageShell>
+      <ForgotPasswordClientWrapper
+        image_src={finalImageSrc}
+        image_alt={finalImageAlt}
+        image_background_color={finalImageBackgroundColor}
+        sign_in_path={sign_in_path}
+        sign_in_label={sign_in_label}
+        alreadyLoggedInMessage={config.alreadyLoggedInMessage}
+        showLogoutButton={config.showLogoutButton}
+        showReturnHomeButton={config.showReturnHomeButton}
+        returnHomeButtonLabel={config.returnHomeButtonLabel}
+        returnHomePath={config.returnHomePath}
+      />
+    </AuthPageShell>
   );
 }
 

@@ -52,7 +52,7 @@ export function PasswordField({
           size="icon"
           aria-label={`${isVisible ? "Hide" : "Show"} ${ariaLabel.toLowerCase()}`}
           onClick={onToggleVisibility}
-          className="cls_password_field_toggle absolute right-0.5 top-1/2 h-9 w-9 -translate-y-1/2 text-slate-600 hover:bg-transparent hover:text-slate-900"
+          className="cls_password_field_toggle absolute inset-y-0 right-1 my-auto h-8 w-8 text-muted-foreground hover:bg-transparent hover:text-foreground"
         >
           {isVisible ? (
             <EyeOff className="h-4 w-4" aria-hidden="true" />

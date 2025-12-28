@@ -3,6 +3,7 @@ import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports
 import { get_email_verification_config } from "../lib/email_verification_config.server";
 import { VerifyEmailClientWrapper } from "./verify_email_client_wrapper";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
 import { DEFAULT_EMAIL_VERIFICATION } from "../lib/config/default_config";
 // section: component
 /**
@@ -35,8 +36,8 @@ export default function VerifyEmailPage({ image_src, image_alt, image_background
     const finalImageSrc = image_src || config.imageSrc;
     const finalImageAlt = image_alt || config.imageAlt;
     const finalImageBackgroundColor = image_background_color || config.imageBackgroundColor;
-    // Pass serializable config to client wrapper
-    return (_jsx(VerifyEmailClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, redirect_delay: redirect_delay, login_path: login_path, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath }));
+    // Pass serializable config to client wrapper, wrapped in AuthPageShell for navbar support
+    return (_jsx(AuthPageShell, { children: _jsx(VerifyEmailClientWrapper, { image_src: finalImageSrc, image_alt: finalImageAlt, image_background_color: finalImageBackgroundColor, redirect_delay: redirect_delay, login_path: login_path, alreadyLoggedInMessage: config.alreadyLoggedInMessage, showLogoutButton: config.showLogoutButton, showReturnHomeButton: config.showReturnHomeButton, returnHomeButtonLabel: config.returnHomeButtonLabel, returnHomePath: config.returnHomePath }) }));
 }
 // Named export for direct imports
 export { VerifyEmailPage };

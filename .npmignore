@@ -18,15 +18,14 @@ jest.config.ts
 test-utils/
 **/test-utils/
 
-# Build outputs
+# Build outputs - CRITICAL: dist/ must be INCLUDED in npm package (controlled by package.json files field)
+# Exclude Next.js and Storybook build artifacts
 .next/
 **/.next/
 out/
 **/out/
 build/
 **/build/
-dist/
-**/dist/
 storybook-static/
 **/storybook-static/
 *.tsbuildinfo

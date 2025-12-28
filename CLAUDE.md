@@ -552,7 +552,7 @@ import { ProfileStamp } from "hazo_auth/client";
 
 ## Authentication Page Navbar
 
-The navbar feature provides a configurable navigation bar for all authentication pages when using standalone layout mode.
+The navbar feature provides a configurable navigation bar for all authentication pages when using standalone layout mode. **The navbar now works automatically** - zero-config server page components include the navbar based on configuration without manual wrapping.
 
 **Configuration:**
 ```ini
@@ -570,10 +570,28 @@ text_color =
 height = 64
 ```
 
+**Zero-Config Usage:**
+All server page components (`LoginPage`, `RegisterPage`, `ForgotPasswordPage`, `ResetPasswordPage`, `VerifyEmailPage`, `MySettingsPage`) automatically include the navbar when `enable_navbar = true`. No wrapper code needed.
+
+```typescript
+// app/hazo_auth/login/page.tsx
+import { LoginPage } from "hazo_auth/pages/login";
+
+export default function Page() {
+  return <LoginPage />;  // Navbar appears automatically if configured
+}
+```
+
+**Disable for specific pages:**
+```typescript
+<LoginPage disableNavbar={true} />
+```
+
 **Files:**
 - `src/lib/navbar_config.server.ts` - Server-side config loader
 - `src/components/layouts/shared/components/auth_navbar.tsx` - Navbar component
 - `src/components/layouts/shared/components/standalone_layout_wrapper.tsx` - Wrapper with navbar slot
+- `src/components/layouts/shared/components/auth_page_shell.tsx` - Shell wrapper (now included in server pages)
 
 ## Development Lock Screen
 

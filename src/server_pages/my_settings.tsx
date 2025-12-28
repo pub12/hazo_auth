@@ -3,6 +3,7 @@
 // section: imports
 import { get_my_settings_config } from "../lib/my_settings_config.server";
 import MySettingsLayout from "../components/layouts/my_settings";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
 
 export type MySettingsPageProps = {
   /**
@@ -63,31 +64,33 @@ export default function MySettingsPage({
   // Load configuration from INI file (with defaults)
   const config = get_my_settings_config();
 
-  // Render layout with all server-initialized configuration
+  // Render layout with all server-initialized configuration, wrapped in AuthPageShell for navbar support
   return (
-    <MySettingsLayout
-      className={className}
-      password_requirements={config.passwordRequirements}
-      profilePicture={config.profilePicture}
-      userFields={config.userFields}
-      unauthorizedMessage={config.unauthorizedMessage}
-      loginButtonLabel={config.loginButtonLabel}
-      loginPath={config.loginPath}
-      heading={config.heading}
-      subHeading={config.subHeading}
-      profilePhotoLabel={config.profilePhotoLabel}
-      profilePhotoRecommendation={config.profilePhotoRecommendation}
-      uploadPhotoButtonLabel={config.uploadPhotoButtonLabel}
-      removePhotoButtonLabel={config.removePhotoButtonLabel}
-      profileInformationLabel={config.profileInformationLabel}
-      passwordLabel={config.passwordLabel}
-      currentPasswordLabel={config.currentPasswordLabel}
-      newPasswordLabel={config.newPasswordLabel}
-      confirmPasswordLabel={config.confirmPasswordLabel}
-      messages={config.messages}
-      uiSizes={config.uiSizes}
-      fileTypes={config.fileTypes}
-    />
+    <AuthPageShell>
+      <MySettingsLayout
+        className={className}
+        password_requirements={config.passwordRequirements}
+        profilePicture={config.profilePicture}
+        userFields={config.userFields}
+        unauthorizedMessage={config.unauthorizedMessage}
+        loginButtonLabel={config.loginButtonLabel}
+        loginPath={config.loginPath}
+        heading={config.heading}
+        subHeading={config.subHeading}
+        profilePhotoLabel={config.profilePhotoLabel}
+        profilePhotoRecommendation={config.profilePhotoRecommendation}
+        uploadPhotoButtonLabel={config.uploadPhotoButtonLabel}
+        removePhotoButtonLabel={config.removePhotoButtonLabel}
+        profileInformationLabel={config.profileInformationLabel}
+        passwordLabel={config.passwordLabel}
+        currentPasswordLabel={config.currentPasswordLabel}
+        newPasswordLabel={config.newPasswordLabel}
+        confirmPasswordLabel={config.confirmPasswordLabel}
+        messages={config.messages}
+        uiSizes={config.uiSizes}
+        fileTypes={config.fileTypes}
+      />
+    </AuthPageShell>
   );
 }
 
