@@ -1,1 +1,1 @@
-{"version":3,"file":"route.d.ts","sourceRoot":"","sources":["../../../../../src/app/api/hazo_auth/logout/route.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,WAAW,EAAE,YAAY,EAAE,MAAM,aAAa,CAAC;AAOxD,wBAAsB,IAAI,CAAC,OAAO,EAAE,WAAW;;;;;IAkH9C"}
+{"version":3,"file":"route.d.ts","sourceRoot":"","sources":["../../../../../src/app/api/hazo_auth/logout/route.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,WAAW,EAAE,YAAY,EAAE,MAAM,aAAa,CAAC;AAQxD,wBAAsB,IAAI,CAAC,OAAO,EAAE,WAAW;;;;;IA8G9C"}

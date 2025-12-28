@@ -8,6 +8,7 @@ export type ValidateSessionCookieResult = {
  * Validates session cookie from NextRequest (Edge-compatible)
  * Extracts hazo_auth_session cookie and validates JWT signature and expiry
  * Works in Edge Runtime (Next.js proxy/middleware)
+ * Uses HAZO_AUTH_COOKIE_PREFIX env var for configurable cookie name
  * @param request - NextRequest object
  * @returns Validation result with user_id and email if valid
  */

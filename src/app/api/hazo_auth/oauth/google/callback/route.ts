@@ -6,6 +6,7 @@ import { create_app_logger } from "../../../../../../lib/app_logger";
 import { create_session_token } from "../../../../../../lib/services/session_token_service";
 import { get_filename, get_line_number } from "../../../../../../lib/utils/api_route_helpers";
 import { get_login_config } from "../../../../../../lib/login_config.server";
+import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../../../../../lib/cookies_config.server";
 
 // section: types
 type NextAuthToken = {
@@ -86,32 +87,23 @@ export async function GET(request: NextRequest) {
     const redirect_url = new URL(redirectUrl, request.url);
     const response = NextResponse.redirect(redirect_url);
 
-    // Set authentication cookies (same as login route)
-    response.cookies.set("hazo_auth_user_id", user_id, {
+    // Set authentication cookies (same as login route, with configurable prefix and domain)
+    const base_cookie_options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "lax" as const,
       path: "/",
       maxAge: 60 * 60 * 24 * 30, // 30 days
-    });
-    response.cookies.set("hazo_auth_user_email", email, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-    });
+    };
+    const cookie_options = get_cookie_options(base_cookie_options);
+
+    response.cookies.set(get_cookie_name(BASE_COOKIE_NAMES.USER_ID), user_id, cookie_options);
+    response.cookies.set(get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL), email, cookie_options);
 
     // Create and set JWT session token
     try {
       const session_token = await create_session_token(user_id, email);
-      response.cookies.set("hazo_auth_session", session_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-      });
+      response.cookies.set(get_cookie_name(BASE_COOKIE_NAMES.SESSION), session_token, cookie_options);
     } catch (token_error) {
       const token_error_message =
         token_error instanceof Error ? token_error.message : "Unknown error";

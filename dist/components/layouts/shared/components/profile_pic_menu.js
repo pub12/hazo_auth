@@ -10,8 +10,10 @@ import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
 import { Button } from "../../../ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, } from "../../../ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, } from "../../../ui/dialog";
+import { RolesMatrix } from "../../user_management/components/roles_matrix";
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, } from "../../../ui/sidebar";
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { use_auth_status, trigger_auth_status_refresh } from "../hooks/use_auth_status";
 import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
@@ -30,6 +32,8 @@ export function ProfilePicMenu({ show_single_button = false, sign_up_label = "Si
     const router = useRouter();
     const authStatus = use_auth_status();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [shiftKeyHeld, setShiftKeyHeld] = useState(false);
+    const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
     // Use provided logout_path or default to context-based path
     const effectiveLogoutPath = logout_path || `${apiBasePath}/logout`;
     // Get initials from name or email
@@ -161,48 +165,50 @@ export function ProfilePicMenu({ show_single_button = false, sign_up_label = "Si
     // Authenticated - render based on variant
     if (variant === "sidebar") {
         // Sidebar variant: show profile picture and name only, clicking opens dropdown
-        return (_jsxs(SidebarGroup, { className: `cls_profile_pic_menu_sidebar ${className || ""}`, children: [_jsx(SidebarGroupLabel, { className: "cls_profile_pic_menu_sidebar_label", children: sidebar_group_label }), _jsx(SidebarMenu, { className: "cls_profile_pic_menu_sidebar_menu", children: _jsx(SidebarMenuItem, { className: "cls_profile_pic_menu_sidebar_user_info", children: _jsxs(DropdownMenu, { children: [_jsx(DropdownMenuTrigger, { asChild: true, children: _jsx("button", { className: "cls_profile_pic_menu_sidebar_trigger w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-md", "aria-label": "Profile menu", children: _jsxs("div", { className: "cls_profile_pic_menu_sidebar_user flex items-center gap-3 px-2 py-2 hover:bg-sidebar-accent rounded-md transition-colors", children: [_jsxs(Avatar, { className: `cls_profile_pic_menu_avatar ${avatarSizeClasses[avatar_size]} cursor-pointer`, children: [_jsx(AvatarImage, { src: authStatus.profile_picture_url, alt: authStatus.name ? `Profile picture of ${authStatus.name}` : "Profile picture", className: "cls_profile_pic_menu_image" }), _jsx(AvatarFallback, { className: "cls_profile_pic_menu_fallback bg-[var(--hazo-bg-emphasis)] text-[var(--hazo-text-muted)]", children: getInitials() })] }), authStatus.name && (_jsx("span", { className: "cls_profile_pic_menu_sidebar_user_name text-sm font-medium text-sidebar-foreground truncate", children: authStatus.name }))] }) }) }), _jsx(DropdownMenuContent, { align: "end", className: "cls_profile_pic_menu_dropdown w-56", children: menuItems.map((item) => {
-                                        if (item.type === "separator") {
-                                            return _jsx(DropdownMenuSeparator, { className: "cls_profile_pic_menu_separator" }, item.id);
-                                        }
-                                        if (item.type === "info") {
-                                            return (_jsx("div", { className: "cls_profile_pic_menu_info", children: item.value && (_jsx("div", { className: "cls_profile_pic_menu_info_value px-2 py-1.5 text-sm text-foreground", children: item.value })) }, item.id));
-                                        }
-                                        if (item.type === "link") {
-                                            // Special handling for logout
-                                            if (item.id === "default_logout") {
-                                                return (_jsxs(DropdownMenuItem, { onClick: handleLogout, disabled: isLoggingOut, className: "cls_profile_pic_menu_logout cursor-pointer text-destructive focus:text-destructive", children: [_jsx(LogOut, { className: "mr-2 h-4 w-4" }), isLoggingOut ? "Logging out..." : item.label] }, item.id));
-                                            }
-                                            // Special handling for settings
-                                            if (item.id === "default_settings") {
-                                                return (_jsx(DropdownMenuItem, { asChild: true, className: "cls_profile_pic_menu_settings cursor-pointer", children: _jsxs(Link, { href: item.href || settings_path, children: [_jsx(Settings, { className: "mr-2 h-4 w-4" }), item.label] }) }, item.id));
-                                            }
-                                            // Generic link handling
-                                            return (_jsx(DropdownMenuItem, { asChild: true, className: "cls_profile_pic_menu_link cursor-pointer", children: _jsx(Link, { href: item.href || "#", children: item.label }) }, item.id));
-                                        }
-                                        return null;
-                                    }) })] }) }) })] }));
+        return (_jsxs(SidebarGroup, { className: `cls_profile_pic_menu_sidebar ${className || ""}`, children: [_jsx(SidebarGroupLabel, { className: "cls_profile_pic_menu_sidebar_label", children: sidebar_group_label }), _jsx(SidebarMenu, { className: "cls_profile_pic_menu_sidebar_menu", children: _jsxs(SidebarMenuItem, { className: "cls_profile_pic_menu_sidebar_user_info", children: [_jsxs(DropdownMenu, { onOpenChange: (open) => { if (!open)
+                                    setShiftKeyHeld(false); }, children: [_jsx(DropdownMenuTrigger, { asChild: true, children: _jsx("button", { className: "cls_profile_pic_menu_sidebar_trigger w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-md", "aria-label": "Profile menu", onClick: (e) => setShiftKeyHeld(e.shiftKey), children: _jsxs("div", { className: "cls_profile_pic_menu_sidebar_user flex items-center gap-3 px-2 py-2 hover:bg-sidebar-accent rounded-md transition-colors", children: [_jsxs(Avatar, { className: `cls_profile_pic_menu_avatar ${avatarSizeClasses[avatar_size]} cursor-pointer`, children: [_jsx(AvatarImage, { src: authStatus.profile_picture_url, alt: authStatus.name ? `Profile picture of ${authStatus.name}` : "Profile picture", className: "cls_profile_pic_menu_image" }), _jsx(AvatarFallback, { className: "cls_profile_pic_menu_fallback bg-[var(--hazo-bg-emphasis)] text-[var(--hazo-text-muted)]", children: getInitials() })] }), authStatus.name && (_jsx("span", { className: "cls_profile_pic_menu_sidebar_user_name text-sm font-medium text-sidebar-foreground truncate", children: authStatus.name }))] }) }) }), _jsxs(DropdownMenuContent, { align: "end", className: "cls_profile_pic_menu_dropdown w-56", children: [menuItems.map((item) => {
+                                                if (item.type === "separator") {
+                                                    return _jsx(DropdownMenuSeparator, { className: "cls_profile_pic_menu_separator" }, item.id);
+                                                }
+                                                if (item.type === "info") {
+                                                    return (_jsx("div", { className: "cls_profile_pic_menu_info", children: item.value && (_jsx("div", { className: "cls_profile_pic_menu_info_value px-2 py-1.5 text-sm text-foreground", children: item.value })) }, item.id));
+                                                }
+                                                if (item.type === "link") {
+                                                    // Special handling for logout
+                                                    if (item.id === "default_logout") {
+                                                        return (_jsxs(DropdownMenuItem, { onClick: handleLogout, disabled: isLoggingOut, className: "cls_profile_pic_menu_logout cursor-pointer text-destructive focus:text-destructive", children: [_jsx(LogOut, { className: "mr-2 h-4 w-4" }), isLoggingOut ? "Logging out..." : item.label] }, item.id));
+                                                    }
+                                                    // Special handling for settings
+                                                    if (item.id === "default_settings") {
+                                                        return (_jsx(DropdownMenuItem, { asChild: true, className: "cls_profile_pic_menu_settings cursor-pointer", children: _jsxs(Link, { href: item.href || settings_path, children: [_jsx(Settings, { className: "mr-2 h-4 w-4" }), item.label] }) }, item.id));
+                                                    }
+                                                    // Generic link handling
+                                                    return (_jsx(DropdownMenuItem, { asChild: true, className: "cls_profile_pic_menu_link cursor-pointer", children: _jsx(Link, { href: item.href || "#", children: item.label }) }, item.id));
+                                                }
+                                                return null;
+                                            }), shiftKeyHeld && (_jsxs(_Fragment, { children: [_jsx(DropdownMenuSeparator, { className: "cls_profile_pic_menu_separator" }), _jsxs(DropdownMenuItem, { onClick: () => setShowPermissionsDialog(true), className: "cls_profile_pic_menu_permissions cursor-pointer", children: [_jsx(Shield, { className: "mr-2 h-4 w-4" }), "My Permissions"] })] }))] })] }), _jsx(Dialog, { open: showPermissionsDialog, onOpenChange: setShowPermissionsDialog, children: _jsxs(DialogContent, { className: "cls_profile_pic_menu_permissions_dialog max-w-2xl max-h-[80vh] flex flex-col", children: [_jsxs(DialogHeader, { children: [_jsx(DialogTitle, { children: "My Permissions" }), _jsx(DialogDescription, { children: "Your assigned roles and their permissions" })] }), _jsx("div", { className: "flex-1 overflow-y-auto", children: _jsx(RolesMatrix, { user_id: authStatus.user_id, add_button_enabled: false, role_name_selection_enabled: false, permissions_read_only: true, show_save_cancel: false }) })] }) })] }) })] }));
     }
     // Default dropdown variant: show profile picture with dropdown menu
-    return (_jsx("div", { className: `cls_profile_pic_menu ${className || ""}`, children: _jsxs(DropdownMenu, { children: [_jsx(DropdownMenuTrigger, { asChild: true, children: _jsx("button", { className: "cls_profile_pic_menu_trigger focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full", "aria-label": "Profile menu", children: _jsxs(Avatar, { className: `cls_profile_pic_menu_avatar ${avatarSizeClasses[avatar_size]} cursor-pointer`, children: [_jsx(AvatarImage, { src: authStatus.profile_picture_url, alt: authStatus.name ? `Profile picture of ${authStatus.name}` : "Profile picture", className: "cls_profile_pic_menu_image" }), _jsx(AvatarFallback, { className: "cls_profile_pic_menu_fallback bg-[var(--hazo-bg-emphasis)] text-[var(--hazo-text-muted)]", children: getInitials() })] }) }) }), _jsx(DropdownMenuContent, { align: "end", className: "cls_profile_pic_menu_dropdown w-56", children: menuItems.map((item) => {
-                        if (item.type === "separator") {
-                            return _jsx(DropdownMenuSeparator, { className: "cls_profile_pic_menu_separator" }, item.id);
-                        }
-                        if (item.type === "info") {
-                            return (_jsx("div", { className: "cls_profile_pic_menu_info", children: item.value && (_jsx("div", { className: "cls_profile_pic_menu_info_value px-2 py-1.5 text-sm text-foreground", children: item.value })) }, item.id));
-                        }
-                        if (item.type === "link") {
-                            // Special handling for logout
-                            if (item.id === "default_logout") {
-                                return (_jsxs(DropdownMenuItem, { onClick: handleLogout, disabled: isLoggingOut, className: "cls_profile_pic_menu_logout cursor-pointer text-destructive focus:text-destructive", children: [_jsx(LogOut, { className: "mr-2 h-4 w-4" }), isLoggingOut ? "Logging out..." : item.label] }, item.id));
-                            }
-                            // Special handling for settings
-                            if (item.id === "default_settings") {
-                                return (_jsx(DropdownMenuItem, { asChild: true, className: "cls_profile_pic_menu_settings cursor-pointer", children: _jsxs(Link, { href: item.href || settings_path, children: [_jsx(Settings, { className: "mr-2 h-4 w-4" }), item.label] }) }, item.id));
-                            }
-                            // Generic link handling
-                            return (_jsx(DropdownMenuItem, { asChild: true, className: "cls_profile_pic_menu_link cursor-pointer", children: _jsx(Link, { href: item.href || "#", children: item.label }) }, item.id));
-                        }
-                        return null;
-                    }) })] }) }));
+    return (_jsxs("div", { className: `cls_profile_pic_menu ${className || ""}`, children: [_jsxs(DropdownMenu, { onOpenChange: (open) => { if (!open)
+                    setShiftKeyHeld(false); }, children: [_jsx(DropdownMenuTrigger, { asChild: true, children: _jsx("button", { className: "cls_profile_pic_menu_trigger focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full", "aria-label": "Profile menu", onClick: (e) => setShiftKeyHeld(e.shiftKey), children: _jsxs(Avatar, { className: `cls_profile_pic_menu_avatar ${avatarSizeClasses[avatar_size]} cursor-pointer`, children: [_jsx(AvatarImage, { src: authStatus.profile_picture_url, alt: authStatus.name ? `Profile picture of ${authStatus.name}` : "Profile picture", className: "cls_profile_pic_menu_image" }), _jsx(AvatarFallback, { className: "cls_profile_pic_menu_fallback bg-[var(--hazo-bg-emphasis)] text-[var(--hazo-text-muted)]", children: getInitials() })] }) }) }), _jsxs(DropdownMenuContent, { align: "end", className: "cls_profile_pic_menu_dropdown w-56", children: [menuItems.map((item) => {
+                                if (item.type === "separator") {
+                                    return _jsx(DropdownMenuSeparator, { className: "cls_profile_pic_menu_separator" }, item.id);
+                                }
+                                if (item.type === "info") {
+                                    return (_jsx("div", { className: "cls_profile_pic_menu_info", children: item.value && (_jsx("div", { className: "cls_profile_pic_menu_info_value px-2 py-1.5 text-sm text-foreground", children: item.value })) }, item.id));
+                                }
+                                if (item.type === "link") {
+                                    // Special handling for logout
+                                    if (item.id === "default_logout") {
+                                        return (_jsxs(DropdownMenuItem, { onClick: handleLogout, disabled: isLoggingOut, className: "cls_profile_pic_menu_logout cursor-pointer text-destructive focus:text-destructive", children: [_jsx(LogOut, { className: "mr-2 h-4 w-4" }), isLoggingOut ? "Logging out..." : item.label] }, item.id));
+                                    }
+                                    // Special handling for settings
+                                    if (item.id === "default_settings") {
+                                        return (_jsx(DropdownMenuItem, { asChild: true, className: "cls_profile_pic_menu_settings cursor-pointer", children: _jsxs(Link, { href: item.href || settings_path, children: [_jsx(Settings, { className: "mr-2 h-4 w-4" }), item.label] }) }, item.id));
+                                    }
+                                    // Generic link handling
+                                    return (_jsx(DropdownMenuItem, { asChild: true, className: "cls_profile_pic_menu_link cursor-pointer", children: _jsx(Link, { href: item.href || "#", children: item.label }) }, item.id));
+                                }
+                                return null;
+                            }), shiftKeyHeld && (_jsxs(_Fragment, { children: [_jsx(DropdownMenuSeparator, { className: "cls_profile_pic_menu_separator" }), _jsxs(DropdownMenuItem, { onClick: () => setShowPermissionsDialog(true), className: "cls_profile_pic_menu_permissions cursor-pointer", children: [_jsx(Shield, { className: "mr-2 h-4 w-4" }), "My Permissions"] })] }))] })] }), _jsx(Dialog, { open: showPermissionsDialog, onOpenChange: setShowPermissionsDialog, children: _jsxs(DialogContent, { className: "cls_profile_pic_menu_permissions_dialog max-w-2xl max-h-[80vh] flex flex-col", children: [_jsxs(DialogHeader, { children: [_jsx(DialogTitle, { children: "My Permissions" }), _jsx(DialogDescription, { children: "Your assigned roles and their permissions" })] }), _jsx("div", { className: "flex-1 overflow-y-auto", children: _jsx(RolesMatrix, { user_id: authStatus.user_id, add_button_enabled: false, role_name_selection_enabled: false, permissions_read_only: true, show_save_cancel: false }) })] }) })] }));
 }

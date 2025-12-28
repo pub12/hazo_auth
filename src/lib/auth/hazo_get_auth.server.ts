@@ -17,6 +17,7 @@ import { check_user_scope_access, get_user_scopes, type UserScope } from "../ser
 import { is_valid_scope_level, type ScopeLevel } from "../services/scope_service";
 import { is_multi_tenancy_enabled, get_multi_tenancy_config } from "../multi_tenancy_config.server";
 import { get_org_cache, type OrgCacheEntry } from "./org_cache";
+import { get_cookie_name, BASE_COOKIE_NAMES } from "../cookies_config.server";
 
 // section: helpers
 
@@ -407,13 +408,13 @@ export async function hazo_get_auth(
   );
   const rate_limiter = get_rate_limiter();
 
-  // Fast path: Check for authentication cookies
+  // Fast path: Check for authentication cookies (with configurable prefix)
   // Priority: 1. JWT session token (new), 2. Simple cookies (backward compatibility)
   let user_id: string | undefined;
   let user_email: string | undefined;
-  
+
   // Check for JWT session token first
-  const session_token = request.cookies.get("hazo_auth_session")?.value;
+  const session_token = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.SESSION))?.value;
   if (session_token) {
     try {
       const token_result = await validate_session_token(session_token);
@@ -435,8 +436,8 @@ export async function hazo_get_auth(
   
   // Fall back to simple cookies if JWT not present or invalid (backward compatibility)
   if (!user_id || !user_email) {
-    user_id = request.cookies.get("hazo_auth_user_id")?.value;
-    user_email = request.cookies.get("hazo_auth_user_email")?.value;
+    user_id = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.USER_ID))?.value;
+    user_email = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL))?.value;
   }
 
   if (!user_id || !user_email) {

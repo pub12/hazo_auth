@@ -7,6 +7,7 @@ import { createCrudService } from "hazo_connect/server";
 import { create_app_logger } from "../../../../lib/app_logger";
 import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
 import { get_config_boolean } from "../../../../lib/config/config_loader.server";
+import { get_cookie_name, BASE_COOKIE_NAMES } from "../../../../lib/cookies_config.server";
 
 // section: route_config
 export const dynamic = "force-dynamic";
@@ -60,14 +61,14 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Get cookie status
+    // Get cookie status (using configurable cookie names)
     const cookie_status: Record<string, string | null> = {};
     const auth_cookies = [
-      "hazo_auth_session",
-      "hazo_auth_user_id",
-      "hazo_auth_user_email",
+      get_cookie_name(BASE_COOKIE_NAMES.SESSION),
+      get_cookie_name(BASE_COOKIE_NAMES.USER_ID),
+      get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL),
     ];
-    
+
     for (const cookie_name of auth_cookies) {
       const cookie = request.cookies.get(cookie_name);
       cookie_status[cookie_name] = cookie?.value || null;

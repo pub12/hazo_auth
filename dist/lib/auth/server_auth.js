@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { get_hazo_connect_instance } from "../hazo_connect_instance.server";
 import { createCrudService } from "hazo_connect/server";
 import { map_db_source_to_ui } from "../services/profile_picture_source_mapper";
+import { get_cookie_name, BASE_COOKIE_NAMES } from "../cookies_config.server";
 // section: functions
 /**
  * Gets authenticated user in server components/pages
@@ -13,8 +14,8 @@ import { map_db_source_to_ui } from "../services/profile_picture_source_mapper";
 export async function get_server_auth_user() {
     var _a, _b;
     const cookie_store = await cookies();
-    const user_id = (_a = cookie_store.get("hazo_auth_user_id")) === null || _a === void 0 ? void 0 : _a.value;
-    const user_email = (_b = cookie_store.get("hazo_auth_user_email")) === null || _b === void 0 ? void 0 : _b.value;
+    const user_id = (_a = cookie_store.get(get_cookie_name(BASE_COOKIE_NAMES.USER_ID))) === null || _a === void 0 ? void 0 : _a.value;
+    const user_email = (_b = cookie_store.get(get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL))) === null || _b === void 0 ? void 0 : _b.value;
     if (!user_id || !user_email) {
         return { authenticated: false };
     }

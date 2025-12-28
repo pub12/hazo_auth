@@ -4,21 +4,20 @@ import { NextResponse } from "next/server";
 import { get_hazo_connect_instance } from "../hazo_connect_instance.server";
 import { createCrudService } from "hazo_connect/server";
 import { map_db_source_to_ui } from "../services/profile_picture_source_mapper";
+import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../cookies_config.server";
 // section: helpers
 /**
- * Clears authentication cookies from response
+ * Clears authentication cookies from response (with configurable prefix and domain)
  * @param response - NextResponse object to clear cookies from
  * @returns The response with cleared cookies
  */
 function clear_auth_cookies(response) {
-    response.cookies.set("hazo_auth_user_email", "", {
+    const clear_cookie_options = get_cookie_options({
         expires: new Date(0),
         path: "/",
     });
-    response.cookies.set("hazo_auth_user_id", "", {
-        expires: new Date(0),
-        path: "/",
-    });
+    response.cookies.set(get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL), "", clear_cookie_options);
+    response.cookies.set(get_cookie_name(BASE_COOKIE_NAMES.USER_ID), "", clear_cookie_options);
     return response;
 }
 // section: functions
@@ -30,8 +29,8 @@ function clear_auth_cookies(response) {
  */
 export async function get_authenticated_user(request) {
     var _a, _b;
-    const user_id = (_a = request.cookies.get("hazo_auth_user_id")) === null || _a === void 0 ? void 0 : _a.value;
-    const user_email = (_b = request.cookies.get("hazo_auth_user_email")) === null || _b === void 0 ? void 0 : _b.value;
+    const user_id = (_a = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.USER_ID))) === null || _a === void 0 ? void 0 : _a.value;
+    const user_email = (_b = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL))) === null || _b === void 0 ? void 0 : _b.value;
     if (!user_id || !user_email) {
         return { authenticated: false };
     }
@@ -100,8 +99,8 @@ export async function require_auth(request) {
  */
 export async function get_authenticated_user_with_response(request) {
     var _a, _b;
-    const user_id = (_a = request.cookies.get("hazo_auth_user_id")) === null || _a === void 0 ? void 0 : _a.value;
-    const user_email = (_b = request.cookies.get("hazo_auth_user_email")) === null || _b === void 0 ? void 0 : _b.value;
+    const user_id = (_a = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.USER_ID))) === null || _a === void 0 ? void 0 : _a.value;
+    const user_email = (_b = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL))) === null || _b === void 0 ? void 0 : _b.value;
     if (!user_id || !user_email) {
         return { auth_result: { authenticated: false } };
     }

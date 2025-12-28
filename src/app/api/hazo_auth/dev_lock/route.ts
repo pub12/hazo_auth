@@ -7,6 +7,7 @@ import {
   get_dev_lock_cookie_name,
 } from "../../../../lib/auth/dev_lock_validator.edge";
 import { get_dev_lock_config } from "../../../../lib/dev_lock_config.server";
+import { get_cookie_options } from "../../../../lib/cookies_config.server";
 
 // section: api_handler
 export async function POST(request: NextRequest) {
@@ -55,14 +56,16 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // Set the dev lock cookie
-    response.cookies.set(get_dev_lock_cookie_name(), cookie_data.value, {
+    // Set the dev lock cookie (with configurable domain)
+    const base_cookie_options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "lax" as const,
       path: "/",
       maxAge: cookie_data.max_age,
-    });
+    };
+    const cookie_options = get_cookie_options(base_cookie_options);
+    response.cookies.set(get_dev_lock_cookie_name(), cookie_data.value, cookie_options);
 
     return response;
   } catch (error) {

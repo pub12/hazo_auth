@@ -6,6 +6,7 @@ import { create_app_logger } from "../../../../lib/app_logger";
 import { update_user_profile } from "../../../../lib/services/user_update_service";
 import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
 import { require_auth } from "../../../../lib/auth/auth_utils.server";
+import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../../../lib/cookies_config.server";
 
 // section: api_handler
 export async function PATCH(request: NextRequest) {
@@ -93,15 +94,17 @@ export async function PATCH(request: NextRequest) {
       { status: 200 }
     );
 
-    // If email changed, update the cookie (match login route cookie settings)
+    // If email changed, update the cookie (match login route cookie settings, with configurable prefix and domain)
     if (result.email_changed && email) {
-      response.cookies.set("hazo_auth_user_email", email, {
+      const base_cookie_options = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: "lax" as const,
         path: "/",
         maxAge: 60 * 60 * 24 * 30, // 30 days
-      });
+      };
+      const cookie_options = get_cookie_options(base_cookie_options);
+      response.cookies.set(get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL), email, cookie_options);
     }
 
     return response;

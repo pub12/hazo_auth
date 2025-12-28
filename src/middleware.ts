@@ -5,18 +5,20 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { validate_dev_lock_cookie } from "./lib/auth/dev_lock_validator.edge";
+import { get_cookie_name_edge, BASE_COOKIE_NAMES } from "./lib/cookies_config.edge";
 
 // section: helpers
 /**
  * Checks if authentication cookies exist (lightweight check for Edge Runtime)
  * Does not validate against database - that happens in API routes
+ * Uses HAZO_AUTH_COOKIE_PREFIX env var for configurable cookie names
  * @param request - NextRequest object
  * @returns true if cookies exist, false otherwise
  */
 function has_auth_cookies(request: NextRequest): boolean {
-  const user_id = request.cookies.get("hazo_auth_user_id")?.value;
-  const user_email = request.cookies.get("hazo_auth_user_email")?.value;
-  
+  const user_id = request.cookies.get(get_cookie_name_edge(BASE_COOKIE_NAMES.USER_ID))?.value;
+  const user_email = request.cookies.get(get_cookie_name_edge(BASE_COOKIE_NAMES.USER_EMAIL))?.value;
+
   return !!(user_id && user_email);
 }
 

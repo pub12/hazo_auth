@@ -7,6 +7,118 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Configurable Cookie Prefix and Domain
+
+**Feature**: Customizable cookie prefix and domain settings to prevent cookie conflicts when running multiple apps.
+
+**Why this addition**: When running two apps that both use hazo_auth on localhost (different ports), cookies would conflict because browser cookie isolation is based on domain, not port. This caused authentication state to be shared between apps, leading to unexpected logouts or incorrect user sessions.
+
+**Core Features**:
+- **Cookie Prefix**: Add a custom prefix to all hazo_auth cookies (e.g., `myapp_hazo_auth_session`)
+- **Cookie Domain**: Optionally set cookie domain for cross-subdomain sharing (e.g., `.example.com`)
+- **Edge Runtime Support**: Environment variables for middleware (since Edge Runtime can't read config files)
+- **Zero Breaking Changes**: Default behavior unchanged - only applies when configured
+
+**New Configuration** (`hazo_auth_config.ini`):
+```ini
+[hazo_auth__cookies]
+# Cookie prefix for all hazo_auth cookies (default: empty string)
+cookie_prefix =
+# Optional domain for cookies (default: not set - browser determines domain)
+cookie_domain =
+```
+
+**New Environment Variables** (Required for Edge Runtime):
+```bash
+# Cookie prefix for Edge runtime (middleware)
+HAZO_AUTH_COOKIE_PREFIX=myapp_
+
+# Cookie domain for Edge runtime (optional)
+HAZO_AUTH_COOKIE_DOMAIN=.example.com
+```
+
+**Cookie Names Affected**:
+- `hazo_auth_session` → `{prefix}hazo_auth_session` (JWT session token)
+- `hazo_auth_user_id` → `{prefix}hazo_auth_user_id`
+- `hazo_auth_user_email` → `{prefix}hazo_auth_user_email`
+- `hazo_auth_dev_lock` → `{prefix}hazo_auth_dev_lock` (if dev lock enabled)
+
+**Use Case - Multiple Apps on Localhost:**
+
+**App 1** (port 3000):
+```ini
+[hazo_auth__cookies]
+cookie_prefix = app1_
+```
+```env
+HAZO_AUTH_COOKIE_PREFIX=app1_
+```
+
+**App 2** (port 3001):
+```ini
+[hazo_auth__cookies]
+cookie_prefix = app2_
+```
+```env
+HAZO_AUTH_COOKIE_PREFIX=app2_
+```
+
+Now both apps can run simultaneously without cookie conflicts!
+
+**Files Created**:
+1. `src/lib/cookies_config.server.ts` - Server-side cookie configuration loader with helper functions
+2. `src/lib/cookies_config.edge.ts` - Edge-compatible cookie configuration (uses env vars only)
+
+**Files Modified**:
+1. `hazo_auth_config.example.ini` - Added `[hazo_auth__cookies]` section with documentation
+2. All routes that set/read cookies:
+   - `src/app/api/hazo_auth/login/route.ts`
+   - `src/app/api/hazo_auth/logout/route.ts`
+   - `src/app/api/hazo_auth/oauth/google/callback/route.ts`
+   - `src/app/api/hazo_auth/update_user/route.ts`
+   - `src/app/api/hazo_auth/dev_lock/route.ts`
+3. Authentication utilities:
+   - `src/lib/auth/hazo_get_auth.server.ts`
+   - `src/lib/auth/auth_utils.server.ts`
+   - `src/lib/auth/server_auth.ts`
+   - `src/lib/auth/session_token_validator.edge.ts`
+   - `src/lib/auth/dev_lock_validator.edge.ts`
+4. Middleware:
+   - `src/server/middleware.ts`
+5. Debug route:
+   - `src/app/api/hazo_auth/debug_auth/route.ts`
+
+**Helper Functions** (`cookies_config.server.ts` and `cookies_config.edge.ts`):
+```typescript
+// Get cookie configuration
+export function get_cookies_config(): CookiesConfig
+
+// Get prefixed cookie name (e.g., "app1_hazo_auth_session")
+export function get_cookie_name(base_name: string): string
+
+// Get cookie options (with domain if configured)
+export function get_cookie_options(options?: ResponseCookie): ResponseCookie
+```
+
+**Backward Compatibility**:
+- Default prefix is empty string (no prefix) - existing apps work unchanged
+- Default domain is not set - browser determines domain as before
+- Cookie behavior identical when not configured
+- No breaking changes to existing authentication flows
+
+**Security Notes**:
+- Cookie prefix does not affect security - cookies still HttpOnly, Secure, SameSite=Lax
+- Domain setting enables cross-subdomain sharing if needed (e.g., `app.example.com` and `admin.example.com`)
+- Edge Runtime validation uses same prefix/domain from environment variables
+
+**Design Rationale**:
+1. **Two Configuration Sources**: Config file for server-side (most routes), env vars for Edge Runtime (middleware)
+2. **Helper Functions**: Centralized cookie name/options generation prevents inconsistencies
+3. **Additive Only**: No changes to existing behavior when not configured
+4. **Simple API**: Single `cookie_prefix` setting affects all cookies uniformly
+
+---
+
 ### Changed - Zero-Config Server Pages Now Include Navbar Automatically
 
 **Feature Enhancement**: All 6 zero-config server page components now include the AuthPageShell wrapper internally, enabling the navbar to work automatically based on configuration without requiring consuming apps to wrap pages manually.

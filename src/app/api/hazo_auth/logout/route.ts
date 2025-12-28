@@ -5,15 +5,16 @@ import { create_app_logger } from "../../../../lib/app_logger";
 import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
 import { get_auth_cache } from "../../../../lib/auth/auth_cache";
 import { get_auth_utility_config } from "../../../../lib/auth_utility_config.server";
+import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../../../lib/cookies_config.server";
 
 // section: api_handler
 export async function POST(request: NextRequest) {
   const logger = create_app_logger();
 
   try {
-    // Get user info from cookie before clearing
-    const user_email = request.cookies.get("hazo_auth_user_email")?.value;
-    const user_id = request.cookies.get("hazo_auth_user_id")?.value;
+    // Get user info from cookie before clearing (using configurable cookie names)
+    const user_email = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL))?.value;
+    const user_id = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.USER_ID))?.value;
 
     // Clear authentication cookies
     const response = NextResponse.json(
@@ -24,20 +25,16 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // Clear cookies by setting them to expire in the past
-    response.cookies.set("hazo_auth_user_email", "", {
+    // Clear cookies by setting them to expire in the past (with configurable domain)
+    const clear_cookie_options = get_cookie_options({
       expires: new Date(0),
       path: "/",
     });
-    response.cookies.set("hazo_auth_user_id", "", {
-      expires: new Date(0),
-      path: "/",
-    });
+
+    response.cookies.set(get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL), "", clear_cookie_options);
+    response.cookies.set(get_cookie_name(BASE_COOKIE_NAMES.USER_ID), "", clear_cookie_options);
     // Clear JWT session token cookie
-    response.cookies.set("hazo_auth_session", "", {
-      expires: new Date(0),
-      path: "/",
-    });
+    response.cookies.set(get_cookie_name(BASE_COOKIE_NAMES.SESSION), "", clear_cookie_options);
     // Clear NextAuth session cookies (for OAuth users)
     response.cookies.set("next-auth.session-token", "", {
       expires: new Date(0),

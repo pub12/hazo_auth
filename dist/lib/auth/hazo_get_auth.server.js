@@ -13,6 +13,7 @@ import { check_user_scope_access, get_user_scopes } from "../services/user_scope
 import { is_valid_scope_level } from "../services/scope_service";
 import { is_multi_tenancy_enabled, get_multi_tenancy_config } from "../multi_tenancy_config.server";
 import { get_org_cache } from "./org_cache";
+import { get_cookie_name, BASE_COOKIE_NAMES } from "../cookies_config.server";
 // section: helpers
 /**
  * Parse JSON string to object, returning null on failure
@@ -310,12 +311,12 @@ export async function hazo_get_auth(request, options) {
     const config = get_auth_utility_config();
     const cache = get_auth_cache(config.cache_max_users, config.cache_ttl_minutes, config.cache_max_age_minutes);
     const rate_limiter = get_rate_limiter();
-    // Fast path: Check for authentication cookies
+    // Fast path: Check for authentication cookies (with configurable prefix)
     // Priority: 1. JWT session token (new), 2. Simple cookies (backward compatibility)
     let user_id;
     let user_email;
     // Check for JWT session token first
-    const session_token = (_a = request.cookies.get("hazo_auth_session")) === null || _a === void 0 ? void 0 : _a.value;
+    const session_token = (_a = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.SESSION))) === null || _a === void 0 ? void 0 : _a.value;
     if (session_token) {
         try {
             const token_result = await validate_session_token(session_token);
@@ -337,8 +338,8 @@ export async function hazo_get_auth(request, options) {
     }
     // Fall back to simple cookies if JWT not present or invalid (backward compatibility)
     if (!user_id || !user_email) {
-        user_id = (_b = request.cookies.get("hazo_auth_user_id")) === null || _b === void 0 ? void 0 : _b.value;
-        user_email = (_c = request.cookies.get("hazo_auth_user_email")) === null || _c === void 0 ? void 0 : _c.value;
+        user_id = (_b = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.USER_ID))) === null || _b === void 0 ? void 0 : _b.value;
+        user_email = (_c = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL))) === null || _c === void 0 ? void 0 : _c.value;
     }
     if (!user_id || !user_email) {
         // Unauthenticated - check rate limit by IP

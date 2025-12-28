@@ -2,6 +2,7 @@
 // Uses jose library which works in Edge Runtime
 // section: imports
 import { jwtVerify } from "jose";
+import { get_cookie_name_edge, BASE_COOKIE_NAMES } from "../cookies_config.edge";
 // section: helpers
 /**
  * Gets JWT secret from environment variables
@@ -23,14 +24,15 @@ function get_jwt_secret() {
  * Validates session cookie from NextRequest (Edge-compatible)
  * Extracts hazo_auth_session cookie and validates JWT signature and expiry
  * Works in Edge Runtime (Next.js proxy/middleware)
+ * Uses HAZO_AUTH_COOKIE_PREFIX env var for configurable cookie name
  * @param request - NextRequest object
  * @returns Validation result with user_id and email if valid
  */
 export async function validate_session_cookie(request) {
     var _a;
     try {
-        // Extract session cookie
-        const session_cookie = (_a = request.cookies.get("hazo_auth_session")) === null || _a === void 0 ? void 0 : _a.value;
+        // Extract session cookie (with configurable prefix from env var)
+        const session_cookie = (_a = request.cookies.get(get_cookie_name_edge(BASE_COOKIE_NAMES.SESSION))) === null || _a === void 0 ? void 0 : _a.value;
         if (!session_cookie) {
             return { valid: false };
         }

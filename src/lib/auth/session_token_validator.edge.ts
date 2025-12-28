@@ -3,6 +3,7 @@
 // section: imports
 import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
+import { get_cookie_name_edge, BASE_COOKIE_NAMES } from "../cookies_config.edge";
 
 // section: types
 export type ValidateSessionCookieResult = {
@@ -35,6 +36,7 @@ function get_jwt_secret(): Uint8Array | null {
  * Validates session cookie from NextRequest (Edge-compatible)
  * Extracts hazo_auth_session cookie and validates JWT signature and expiry
  * Works in Edge Runtime (Next.js proxy/middleware)
+ * Uses HAZO_AUTH_COOKIE_PREFIX env var for configurable cookie name
  * @param request - NextRequest object
  * @returns Validation result with user_id and email if valid
  */
@@ -42,8 +44,8 @@ export async function validate_session_cookie(
   request: NextRequest,
 ): Promise<ValidateSessionCookieResult> {
   try {
-    // Extract session cookie
-    const session_cookie = request.cookies.get("hazo_auth_session")?.value;
+    // Extract session cookie (with configurable prefix from env var)
+    const session_cookie = request.cookies.get(get_cookie_name_edge(BASE_COOKIE_NAMES.SESSION))?.value;
     
     if (!session_cookie) {
       return { valid: false };

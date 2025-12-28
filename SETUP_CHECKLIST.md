@@ -197,11 +197,27 @@ HAZO_CONNECT_POSTGREST_API_KEY=your_postgrest_api_key_here
 # Required for JWT authentication
 JWT_SECRET=your_secure_random_string_at_least_32_characters
 # Note: JWT_SECRET is required for JWT session token functionality (Edge-compatible proxy/middleware authentication)
+
+# Optional: Cookie customization (prevents conflicts when running multiple apps)
+HAZO_AUTH_COOKIE_PREFIX=myapp_
+HAZO_AUTH_COOKIE_DOMAIN=
 ```
 
 **Generate a secure JWT secret:**
 ```bash
 openssl rand -base64 32
+```
+
+**Cookie Customization (Optional):**
+If you're running multiple apps that use hazo_auth on localhost (different ports), set `HAZO_AUTH_COOKIE_PREFIX` to prevent cookie conflicts. For example:
+- App 1 (port 3000): `HAZO_AUTH_COOKIE_PREFIX=app1_`
+- App 2 (port 3001): `HAZO_AUTH_COOKIE_PREFIX=app2_`
+
+Also configure in `hazo_auth_config.ini`:
+```ini
+[hazo_auth__cookies]
+cookie_prefix = myapp_
+cookie_domain =
 ```
 
 ### Step 2.2: Configure email settings

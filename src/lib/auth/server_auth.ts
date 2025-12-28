@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { get_hazo_connect_instance } from "../hazo_connect_instance.server";
 import { createCrudService } from "hazo_connect/server";
 import { map_db_source_to_ui } from "../services/profile_picture_source_mapper";
+import { get_cookie_name, BASE_COOKIE_NAMES } from "../cookies_config.server";
 
 // section: types
 export type ServerAuthUser = {
@@ -30,8 +31,8 @@ export type ServerAuthResult =
  */
 export async function get_server_auth_user(): Promise<ServerAuthResult> {
   const cookie_store = await cookies();
-  const user_id = cookie_store.get("hazo_auth_user_id")?.value;
-  const user_email = cookie_store.get("hazo_auth_user_email")?.value;
+  const user_id = cookie_store.get(get_cookie_name(BASE_COOKIE_NAMES.USER_ID))?.value;
+  const user_email = cookie_store.get(get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL))?.value;
 
   if (!user_id || !user_email) {
     return { authenticated: false };

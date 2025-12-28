@@ -30,8 +30,9 @@ export declare function validate_dev_lock_cookie(request: NextRequest): Promise<
  */
 export declare function validate_dev_lock_password(password: string): boolean;
 /**
- * Gets the dev lock cookie name
+ * Gets the dev lock cookie name (with configurable prefix)
  * Exported for use in API routes when setting the cookie
+ * Uses HAZO_AUTH_COOKIE_PREFIX env var for configurable prefix
  * @returns Cookie name string
  */
 export declare function get_dev_lock_cookie_name(): string;

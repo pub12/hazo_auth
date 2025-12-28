@@ -2,9 +2,9 @@
 // Uses Web Crypto API which works in Edge Runtime (no Node.js crypto module)
 // section: imports
 import type { NextRequest } from "next/server";
+import { get_cookie_name_edge, BASE_COOKIE_NAMES } from "../cookies_config.edge";
 
 // section: constants
-const COOKIE_NAME = "hazo_auth_dev_lock";
 const SEPARATOR = "|";
 
 // section: types
@@ -105,7 +105,7 @@ export async function validate_dev_lock_cookie(
     return { valid: false };
   }
 
-  const cookie = request.cookies.get(COOKIE_NAME)?.value;
+  const cookie = request.cookies.get(get_cookie_name_edge(BASE_COOKIE_NAMES.DEV_LOCK))?.value;
 
   if (!cookie) {
     return { valid: false };
@@ -162,10 +162,11 @@ export function validate_dev_lock_password(password: string): boolean {
 }
 
 /**
- * Gets the dev lock cookie name
+ * Gets the dev lock cookie name (with configurable prefix)
  * Exported for use in API routes when setting the cookie
+ * Uses HAZO_AUTH_COOKIE_PREFIX env var for configurable prefix
  * @returns Cookie name string
  */
 export function get_dev_lock_cookie_name(): string {
-  return COOKIE_NAME;
+  return get_cookie_name_edge(BASE_COOKIE_NAMES.DEV_LOCK);
 }

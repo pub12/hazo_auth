@@ -1,5 +1,5 @@
+import { get_cookie_name_edge, BASE_COOKIE_NAMES } from "../cookies_config.edge";
 // section: constants
-const COOKIE_NAME = "hazo_auth_dev_lock";
 const SEPARATOR = "|";
 // section: helpers
 /**
@@ -67,7 +67,7 @@ export async function validate_dev_lock_cookie(request) {
         // No password set - cannot validate
         return { valid: false };
     }
-    const cookie = (_a = request.cookies.get(COOKIE_NAME)) === null || _a === void 0 ? void 0 : _a.value;
+    const cookie = (_a = request.cookies.get(get_cookie_name_edge(BASE_COOKIE_NAMES.DEV_LOCK))) === null || _a === void 0 ? void 0 : _a.value;
     if (!cookie) {
         return { valid: false };
     }
@@ -113,10 +113,11 @@ export function validate_dev_lock_password(password) {
     return constant_time_compare(password, expected);
 }
 /**
- * Gets the dev lock cookie name
+ * Gets the dev lock cookie name (with configurable prefix)
  * Exported for use in API routes when setting the cookie
+ * Uses HAZO_AUTH_COOKIE_PREFIX env var for configurable prefix
  * @returns Cookie name string
  */
 export function get_dev_lock_cookie_name() {
-    return COOKIE_NAME;
+    return get_cookie_name_edge(BASE_COOKIE_NAMES.DEV_LOCK);
 }

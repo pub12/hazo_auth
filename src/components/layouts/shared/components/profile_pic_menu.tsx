@@ -17,13 +17,21 @@ import {
   DropdownMenuTrigger,
 } from "../../../ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../../../ui/dialog";
+import { RolesMatrix } from "../../user_management/components/roles_matrix";
+import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
 } from "../../../ui/sidebar";
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { use_auth_status, trigger_auth_status_refresh } from "../hooks/use_auth_status";
 // Type-only import from server file is safe (types are erased at runtime)
@@ -74,6 +82,8 @@ export function ProfilePicMenu({
   const router = useRouter();
   const authStatus = use_auth_status();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [shiftKeyHeld, setShiftKeyHeld] = useState(false);
+  const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
 
   // Use provided logout_path or default to context-based path
   const effectiveLogoutPath = logout_path || `${apiBasePath}/logout`;
@@ -302,11 +312,12 @@ export function ProfilePicMenu({
         </SidebarGroupLabel>
         <SidebarMenu className="cls_profile_pic_menu_sidebar_menu">
           <SidebarMenuItem className="cls_profile_pic_menu_sidebar_user_info">
-            <DropdownMenu>
+            <DropdownMenu onOpenChange={(open) => { if (!open) setShiftKeyHeld(false); }}>
               <DropdownMenuTrigger asChild>
                 <button
                   className="cls_profile_pic_menu_sidebar_trigger w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-md"
                   aria-label="Profile menu"
+                  onClick={(e) => setShiftKeyHeld(e.shiftKey)}
                 >
                   <div className="cls_profile_pic_menu_sidebar_user flex items-center gap-3 px-2 py-2 hover:bg-sidebar-accent rounded-md transition-colors">
                     <Avatar className={`cls_profile_pic_menu_avatar ${avatarSizeClasses[avatar_size]} cursor-pointer`}>
@@ -393,8 +404,41 @@ export function ProfilePicMenu({
 
                   return null;
                 })}
+                {shiftKeyHeld && (
+                  <>
+                    <DropdownMenuSeparator className="cls_profile_pic_menu_separator" />
+                    <DropdownMenuItem
+                      onClick={() => setShowPermissionsDialog(true)}
+                      className="cls_profile_pic_menu_permissions cursor-pointer"
+                    >
+                      <Shield className="mr-2 h-4 w-4" />
+                      My Permissions
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* My Permissions Dialog (sidebar variant) */}
+            <Dialog open={showPermissionsDialog} onOpenChange={setShowPermissionsDialog}>
+              <DialogContent className="cls_profile_pic_menu_permissions_dialog max-w-2xl max-h-[80vh] flex flex-col">
+                <DialogHeader>
+                  <DialogTitle>My Permissions</DialogTitle>
+                  <DialogDescription>
+                    Your assigned roles and their permissions
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 overflow-y-auto">
+                  <RolesMatrix
+                    user_id={authStatus.user_id}
+                    add_button_enabled={false}
+                    role_name_selection_enabled={false}
+                    permissions_read_only={true}
+                    show_save_cancel={false}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarGroup>
@@ -404,11 +448,12 @@ export function ProfilePicMenu({
   // Default dropdown variant: show profile picture with dropdown menu
   return (
     <div className={`cls_profile_pic_menu ${className || ""}`}>
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={(open) => { if (!open) setShiftKeyHeld(false); }}>
         <DropdownMenuTrigger asChild>
           <button
             className="cls_profile_pic_menu_trigger focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full"
             aria-label="Profile menu"
+            onClick={(e) => setShiftKeyHeld(e.shiftKey)}
           >
             <Avatar className={`cls_profile_pic_menu_avatar ${avatarSizeClasses[avatar_size]} cursor-pointer`}>
               <AvatarImage
@@ -488,8 +533,41 @@ export function ProfilePicMenu({
 
             return null;
           })}
+          {shiftKeyHeld && (
+            <>
+              <DropdownMenuSeparator className="cls_profile_pic_menu_separator" />
+              <DropdownMenuItem
+                onClick={() => setShowPermissionsDialog(true)}
+                className="cls_profile_pic_menu_permissions cursor-pointer"
+              >
+                <Shield className="mr-2 h-4 w-4" />
+                My Permissions
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* My Permissions Dialog */}
+      <Dialog open={showPermissionsDialog} onOpenChange={setShowPermissionsDialog}>
+        <DialogContent className="cls_profile_pic_menu_permissions_dialog max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>My Permissions</DialogTitle>
+            <DialogDescription>
+              Your assigned roles and their permissions
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto">
+            <RolesMatrix
+              user_id={authStatus.user_id}
+              add_button_enabled={false}
+              role_name_selection_enabled={false}
+              permissions_read_only={true}
+              show_save_cancel={false}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

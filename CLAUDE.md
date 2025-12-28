@@ -106,6 +106,7 @@ All configuration comes from `hazo_auth_config.ini` in the project root (where `
 - **Email Settings:** `[hazo_auth__email]` (templates, from_email, base_url)
 - **Profile Pictures:** `[hazo_auth__profile_picture]` (upload path, priorities)
 - **Multi-Tenancy:** `[hazo_auth__multi_tenancy]` (enable, cache settings, user limits)
+- **Cookies:** `[hazo_auth__cookies]` (cookie_prefix, cookie_domain) - prevents cookie conflicts
 
 Configuration is loaded via `hazo_config` package and cached at runtime.
 
@@ -508,6 +509,10 @@ src/
 - `HAZO_AUTH_GOOGLE_CLIENT_ID` - Google OAuth client ID (from Google Cloud Console)
 - `HAZO_AUTH_GOOGLE_CLIENT_SECRET` - Google OAuth client secret
 
+**Required for Edge Runtime (Middleware):**
+- `HAZO_AUTH_COOKIE_PREFIX` - Cookie prefix for Edge runtime (e.g., `myapp_`)
+- `HAZO_AUTH_COOKIE_DOMAIN` - Cookie domain for Edge runtime (optional, e.g., `.example.com`)
+
 **Optional:**
 - `POSTGREST_URL` - PostgREST API URL (if using PostgreSQL)
 - `POSTGREST_API_KEY` - PostgREST API key
@@ -618,6 +623,66 @@ application_name = My Application
 2. Middleware check - first check before auth, validates signed cookie using HMAC-SHA256
 3. Lock screen at `/hazo_auth/dev_lock` - posts to `/api/hazo_auth/dev_lock` to validate
 4. Cookie is HttpOnly, Secure (in production), SameSite=Lax
+
+## Configurable Cookie System
+
+**New Feature**: Customizable cookie prefix and domain to prevent cookie conflicts when running multiple apps.
+
+**Problem Solved**: When running two apps that both use hazo_auth on localhost (different ports), cookies would conflict because browser cookie isolation is based on domain, not port.
+
+**Configuration** (`hazo_auth_config.ini`):
+```ini
+[hazo_auth__cookies]
+# Cookie prefix for all hazo_auth cookies (e.g., "myapp_" → "myapp_hazo_auth_session")
+cookie_prefix =
+# Optional domain for cookies (e.g., ".example.com" for cross-subdomain sharing)
+cookie_domain =
+```
+
+**Environment Variables** (Required for Edge Runtime):
+Since middleware runs in Edge Runtime and can't read config files, you must also set:
+```bash
+HAZO_AUTH_COOKIE_PREFIX=myapp_
+HAZO_AUTH_COOKIE_DOMAIN=  # Optional
+```
+
+**Default Behavior** (no prefix):
+- `hazo_auth_session` - JWT session token
+- `hazo_auth_user_id` - User ID
+- `hazo_auth_user_email` - User email
+- `hazo_auth_dev_lock` - Dev lock session (if enabled)
+
+**With prefix** (e.g., `cookie_prefix = app1_`):
+- `app1_hazo_auth_session` - JWT session token
+- `app1_hazo_auth_user_id` - User ID
+- `app1_hazo_auth_user_email` - User email
+- `app1_hazo_auth_dev_lock` - Dev lock session (if enabled)
+
+**Use Case Example - Multiple Apps on Localhost:**
+
+**App 1** (port 3000):
+```ini
+[hazo_auth__cookies]
+cookie_prefix = app1_
+```
+```bash
+HAZO_AUTH_COOKIE_PREFIX=app1_
+```
+
+**App 2** (port 3001):
+```ini
+[hazo_auth__cookies]
+cookie_prefix = app2_
+```
+```bash
+HAZO_AUTH_COOKIE_PREFIX=app2_
+```
+
+Now you can run both apps simultaneously without cookie conflicts!
+
+**Files:**
+- `src/lib/cookies_config.server.ts` - Server-side cookie config with helpers
+- `src/lib/cookies_config.edge.ts` - Edge-compatible cookie config (uses env vars)
 
 ## App User Data (Custom User Metadata)
 

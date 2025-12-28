@@ -382,6 +382,22 @@ HAZO_AUTH_GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 See [Google OAuth Setup](#google-oauth-setup) for detailed instructions.
 
+**For Cookie Customization (optional):**
+```env
+# Cookie prefix (prevents conflicts when running multiple apps on localhost)
+HAZO_AUTH_COOKIE_PREFIX=myapp_
+
+# Cookie domain (optional, for cross-subdomain sharing)
+HAZO_AUTH_COOKIE_DOMAIN=.example.com
+```
+
+These environment variables are required for Edge Runtime (middleware) when using cookie customization. Also set in `hazo_auth_config.ini`:
+```ini
+[hazo_auth__cookies]
+cookie_prefix = myapp_
+cookie_domain = .example.com
+```
+
 **Important:** The configuration files must be located in your project root directory (where `process.cwd()` points to), not inside `node_modules`. The package reads configuration from `process.cwd()` at runtime, so storing them elsewhere (including `node_modules/hazo_auth`) will break runtime access.
 
 ---
