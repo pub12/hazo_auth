@@ -10,4 +10,5 @@ export * from "./registration_service";
 export * from "./token_service";
 export * from "./user_profiles_service";
 export * from "./user_update_service";
+export * from "./app_user_data_service";
 //# sourceMappingURL=index.d.ts.map

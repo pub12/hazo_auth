@@ -7,6 +7,7 @@ export type HazoAuthUser = {
     email_address: string;
     is_active: boolean;
     profile_picture_url: string | null;
+    app_user_data: Record<string, unknown> | null;
     org_id?: string | null;
     org_name?: string | null;
     parent_org_id?: string | null;

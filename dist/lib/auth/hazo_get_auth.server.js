@@ -15,6 +15,29 @@ import { is_multi_tenancy_enabled, get_multi_tenancy_config } from "../multi_ten
 import { get_org_cache } from "./org_cache";
 // section: helpers
 /**
+ * Parse JSON string to object, returning null on failure
+ * @param json_string - JSON string to parse
+ * @returns Parsed object or null
+ */
+function parse_app_user_data(json_string) {
+    if (json_string === null || json_string === undefined || json_string === "") {
+        return null;
+    }
+    if (typeof json_string !== "string") {
+        return null;
+    }
+    try {
+        const parsed = JSON.parse(json_string);
+        if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+            return parsed;
+        }
+        return null;
+    }
+    catch (_a) {
+        return null;
+    }
+}
+/**
  * Gets client IP address from request
  * @param request - NextRequest object
  * @returns IP address string
@@ -58,6 +81,7 @@ async function fetch_user_data_from_db(user_id) {
         email_address: user_db.email_address,
         is_active: user_db.is_active === true,
         profile_picture_url: user_db.profile_picture_url || null,
+        app_user_data: parse_app_user_data(user_db.app_user_data),
     };
     // Fetch org info if multi-tenancy is enabled and user has org_id
     if (is_multi_tenancy_enabled() && user_db.org_id) {

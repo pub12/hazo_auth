@@ -10,6 +10,8 @@ export type HazoAuthUser = {
   email_address: string;
   is_active: boolean;
   profile_picture_url: string | null;
+  // App-specific user data (JSON object stored as TEXT in database)
+  app_user_data: Record<string, unknown> | null;
   // Multi-tenancy fields (only populated when multi-tenancy is enabled)
   org_id?: string | null;
   org_name?: string | null;

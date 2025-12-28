@@ -2066,6 +2066,180 @@ For full documentation, see `CLAUDE.md` or `TECHDOC.md`.
 
 ---
 
+## App User Data (Custom User Metadata)
+
+hazo_auth provides a flexible JSON field for storing custom user-specific data without modifying the `hazo_users` table schema. This allows consuming applications to store user preferences, settings, and app-specific state.
+
+### Overview
+
+- **JSON Storage**: Single TEXT column stores JSON objects (no schema restrictions)
+- **Deep Merge Support**: PATCH endpoint merges new data with existing data
+- **Full Replace**: PUT endpoint replaces entire JSON object
+- **Clear Data**: DELETE endpoint sets field to NULL
+- **Type-Safe**: TypeScript service layer with validation
+- **Included in Auth Response**: Available in `/api/hazo_auth/me` response
+
+### Quick Start
+
+1. **Run database migration**:
+   ```bash
+   npm run migrate migrations/008_add_app_user_data_to_hazo_users.sql
+   ```
+
+2. **Create API route** (`app/api/hazo_auth/app_user_data/route.ts`):
+   ```typescript
+   export {
+     appUserDataGET as GET,
+     appUserDataPATCH as PATCH,
+     appUserDataPUT as PUT,
+     appUserDataDELETE as DELETE
+   } from "hazo_auth/server/routes";
+   ```
+
+   Or use CLI: `npx hazo_auth generate-routes`
+
+3. **Use in your app**:
+   ```typescript
+   // Store user preferences (deep merge)
+   PATCH /api/hazo_auth/app_user_data
+   {
+     data: {
+       theme: "dark",
+       language: "en-US",
+       sidebar_collapsed: true
+     }
+   }
+
+   // Access in client components
+   const { app_user_data } = use_hazo_auth();
+   console.log(app_user_data?.theme); // "dark"
+   ```
+
+### API Endpoints
+
+**GET `/api/hazo_auth/app_user_data`** - Get current user's data
+```typescript
+Response: { data: { theme: "dark", sidebar_collapsed: true } | null }
+```
+
+**PATCH `/api/hazo_auth/app_user_data`** - Merge with existing data (preserves other fields)
+```typescript
+Request: { data: { theme: "light" } }
+// If existing: { theme: "dark", sidebar_collapsed: true }
+// Result: { theme: "light", sidebar_collapsed: true }
+```
+
+**PUT `/api/hazo_auth/app_user_data`** - Replace entire object
+```typescript
+Request: { data: { theme: "light" } }
+// Result: { theme: "light" } (sidebar_collapsed removed)
+```
+
+**DELETE `/api/hazo_auth/app_user_data`** - Clear all data (sets to NULL)
+
+### Service Functions
+
+```typescript
+import {
+  get_app_user_data,
+  update_app_user_data,
+  clear_app_user_data
+} from "hazo_auth";
+
+// Get data
+const data = await get_app_user_data(adapter, user_id);
+
+// Update with merge (default)
+await update_app_user_data(adapter, user_id, { theme: "light" }, true);
+
+// Replace entirely
+await update_app_user_data(adapter, user_id, { theme: "light" }, false);
+
+// Clear data
+await clear_app_user_data(adapter, user_id);
+```
+
+### Access in `/api/hazo_auth/me`
+
+The `app_user_data` field is included in the authentication response:
+
+```typescript
+{
+  authenticated: true,
+  user: { ... },
+  permissions: [...],
+  app_user_data: { theme: "dark", sidebar_collapsed: true } | null
+}
+```
+
+### Use Cases
+
+**Store user preferences:**
+```typescript
+{
+  theme: "dark",
+  language: "en-US",
+  timezone: "America/New_York"
+}
+```
+
+**Store app-specific state:**
+```typescript
+{
+  dashboard_layout: "grid",
+  sidebar_collapsed: true,
+  recent_searches: ["tax forms", "invoices"]
+}
+```
+
+**Store nested configuration:**
+```typescript
+{
+  notifications: {
+    email: true,
+    sms: false,
+    push: true
+  },
+  privacy: {
+    profile_public: false,
+    show_email: false
+  }
+}
+```
+
+### Deep Merge Behavior
+
+```typescript
+// Existing data
+{ user: { name: "Alice", age: 30 }, theme: "dark" }
+
+// PATCH with
+{ user: { age: 31 }, sidebar: true }
+
+// Result (deep merge)
+{ user: { name: "Alice", age: 31 }, theme: "dark", sidebar: true }
+```
+
+### Test Page
+
+Visit `/hazo_auth/app_user_data_test` in your dev environment to test the API with an interactive UI:
+- View current data (live refresh)
+- Merge data (PATCH)
+- Replace data (PUT)
+- Clear data (DELETE)
+- JSON validation
+
+### Performance & Limits
+
+- **Recommended max size**: ~10KB per user (for preferences/settings)
+- **Storage**: JSON stored as TEXT (no compression)
+- **Caching**: Benefits from `hazo_get_auth()` LRU cache
+- **Large datasets**: Use separate tables for complex relational data
+
+For full documentation, see `CHANGE_LOG.md` and `TECHDOC.md`.
+
+---
+
 ## User Profile Service
 
 The `hazo_auth` package provides a batch user profile retrieval service for applications that need basic user information, such as chat applications or user lists.

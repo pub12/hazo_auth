@@ -17,7 +17,7 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "../../../ui/sidebar";
-import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, User, ShieldCheck, CircleUserRound } from "lucide-react";
+import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, User, ShieldCheck, CircleUserRound, FileJson } from "lucide-react";
 import { use_auth_status } from "../hooks/use_auth_status";
 import { ProfilePicMenu } from "./profile_pic_menu";
 
@@ -152,6 +152,18 @@ export function SidebarLayoutWrapper({ children }: SidebarLayoutWrapperProps) {
                     >
                       <CircleUserRound className="h-4 w-4" aria-hidden="true" />
                       <span>ProfileStamp Test</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem className="cls_sidebar_layout_app_user_data_test_item">
+                  <SidebarMenuButton asChild>
+                    <Link
+                      href="/hazo_auth/app_user_data_test"
+                      className="cls_sidebar_layout_app_user_data_test_link flex items-center gap-2"
+                      aria-label="Test app_user_data JSON storage"
+                    >
+                      <FileJson className="h-4 w-4" aria-hidden="true" />
+                      <span>App User Data Test</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

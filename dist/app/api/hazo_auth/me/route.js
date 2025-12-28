@@ -29,7 +29,8 @@ import { is_user_types_enabled, get_user_type_by_key, } from "../../../../lib/us
  *   avatar_url: string | null,         // alias for profile_picture_url
  *   image: string | null,              // alias for profile_picture_url
  *   profile_source: "upload" | "library" | "gravatar" | "custom" | undefined,
- *   user: { id, email_address, name, is_active, profile_picture_url },
+ *   app_user_data: Record<string, unknown> | null,  // custom app-specific data
+ *   user: { id, email_address, name, is_active, profile_picture_url, app_user_data },
  *   permissions: string[],
  *   permission_ok: boolean,
  *   missing_permissions?: string[],
@@ -108,6 +109,8 @@ export async function GET(request) {
             // User type fields (when feature is enabled)
             user_type,
             user_type_info,
+            // App-specific user data (JSON object, always included)
+            app_user_data: auth_result.user.app_user_data,
             // Permissions and user object (always included)
             user: auth_result.user,
             permissions: auth_result.permissions,

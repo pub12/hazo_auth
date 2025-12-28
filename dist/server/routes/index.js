@@ -30,3 +30,5 @@ export { GET as userManagementRolesGET, POST as userManagementRolesPOST, PUT as 
 export { GET as userManagementUsersRolesGET, POST as userManagementUsersRolesPOST, PUT as userManagementUsersRolesPUT } from "./user_management_users_roles.js";
 // Organization management routes
 export { GET as orgManagementOrgsGET, POST as orgManagementOrgsPOST, PATCH as orgManagementOrgsPATCH, DELETE as orgManagementOrgsDELETE } from "./org_management_orgs.js";
+// App user data routes (custom application-specific user data)
+export { GET as appUserDataGET, PATCH as appUserDataPATCH, PUT as appUserDataPUT, DELETE as appUserDataDELETE } from "./app_user_data.js";

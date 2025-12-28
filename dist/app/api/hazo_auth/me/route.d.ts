@@ -18,7 +18,8 @@ import { NextRequest, NextResponse } from "next/server";
  *   avatar_url: string | null,         // alias for profile_picture_url
  *   image: string | null,              // alias for profile_picture_url
  *   profile_source: "upload" | "library" | "gravatar" | "custom" | undefined,
- *   user: { id, email_address, name, is_active, profile_picture_url },
+ *   app_user_data: Record<string, unknown> | null,  // custom app-specific data
+ *   user: { id, email_address, name, is_active, profile_picture_url, app_user_data },
  *   permissions: string[],
  *   permission_ok: boolean,
  *   missing_permissions?: string[],

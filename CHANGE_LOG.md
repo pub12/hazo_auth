@@ -5,6 +5,342 @@ All notable changes to the hazo_auth package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added - App User Data (Custom User Metadata)
+
+**Feature**: Flexible JSON field for consuming applications to store custom user-specific data without modifying the `hazo_users` table schema.
+
+**Why this addition**: Many applications need to store custom user metadata (preferences, settings, app-specific state) without altering the core authentication schema. The `app_user_data` field provides a flexible, JSON-based storage solution that allows consuming applications to store arbitrary key-value data per user without database migrations or schema changes.
+
+**Core Features**:
+- **JSON Storage**: Single TEXT column stores JSON objects (no schema restrictions)
+- **Deep Merge Support**: PATCH endpoint merges new data with existing (preserves unmodified fields)
+- **Full Replace**: PUT endpoint replaces entire JSON object
+- **Clear Data**: DELETE endpoint sets field to NULL
+- **Type-Safe Service Layer**: TypeScript service with validation and error handling
+- **Included in Auth Response**: Returns in `/api/hazo_auth/me` response for client access
+- **Zero Impact When Unused**: Nullable column, no performance impact when not populated
+
+**Database Changes** (Migration `008_add_app_user_data_to_hazo_users.sql`):
+```sql
+-- Add app_user_data column to hazo_users
+ALTER TABLE hazo_users
+ADD COLUMN app_user_data TEXT;
+```
+
+Adds single `app_user_data` TEXT column to `hazo_users` table. No indexes (JSON queries use application-level filtering). Compatible with both PostgreSQL and SQLite.
+
+**New API Endpoints**:
+
+1. **`GET /api/hazo_auth/app_user_data`**:
+   - Returns current user's `app_user_data` as parsed JSON
+   - Returns `null` if no data set
+   - Requires authentication
+
+   ```typescript
+   Response:
+   {
+     data: { theme: "dark", sidebar_collapsed: true } | null
+   }
+   ```
+
+2. **`PATCH /api/hazo_auth/app_user_data`** (Merge):
+   - Deep merges provided JSON with existing data
+   - Preserves fields not in request body
+   - Creates nested objects if they don't exist
+
+   ```typescript
+   Request:
+   {
+     data: { theme: "light" }
+   }
+
+   // If existing data: { theme: "dark", sidebar_collapsed: true }
+   // Result: { theme: "light", sidebar_collapsed: true }
+   ```
+
+3. **`PUT /api/hazo_auth/app_user_data`** (Replace):
+   - Replaces entire `app_user_data` object
+   - Existing fields not in request are removed
+
+   ```typescript
+   Request:
+   {
+     data: { theme: "light" }
+   }
+
+   // If existing data: { theme: "dark", sidebar_collapsed: true }
+   // Result: { theme: "light" }
+   ```
+
+4. **`DELETE /api/hazo_auth/app_user_data`** (Clear):
+   - Sets `app_user_data` to NULL
+   - Removes all custom data for user
+
+**API Response Changes**:
+
+**`/api/hazo_auth/me` Enhanced**:
+```typescript
+{
+  authenticated: true,
+  // ... existing fields
+  app_user_data: { theme: "dark", sidebar_collapsed: true } | null  // NEW
+}
+```
+
+**New Service** (`src/lib/services/app_user_data_service.ts`):
+
+```typescript
+/**
+ * Get user's app_user_data
+ * @param adapter - hazo_connect adapter
+ * @param user_id - User ID
+ * @returns Parsed JSON object or null
+ */
+export async function get_app_user_data(
+  adapter: HazoConnectAdapter,
+  user_id: string
+): Promise<Record<string, any> | null>
+
+/**
+ * Update user's app_user_data (deep merge or replace)
+ * @param adapter - hazo_connect adapter
+ * @param user_id - User ID
+ * @param new_data - New data object
+ * @param merge - If true, deep merge; if false, replace entirely
+ */
+export async function update_app_user_data(
+  adapter: HazoConnectAdapter,
+  user_id: string,
+  new_data: Record<string, any>,
+  merge: boolean = true
+): Promise<void>
+
+/**
+ * Clear user's app_user_data (set to null)
+ * @param adapter - hazo_connect adapter
+ * @param user_id - User ID
+ */
+export async function clear_app_user_data(
+  adapter: HazoConnectAdapter,
+  user_id: string
+): Promise<void>
+```
+
+**Deep Merge Algorithm**:
+- Recursively merges nested objects
+- Arrays are replaced (not merged)
+- Null values in new_data delete fields from existing data
+- Primitives (string, number, boolean) are replaced
+
+**Example Merge Behavior**:
+```typescript
+// Existing data
+{ user: { name: "Alice", age: 30 }, theme: "dark" }
+
+// PATCH with
+{ user: { age: 31 }, sidebar: true }
+
+// Result
+{ user: { name: "Alice", age: 31 }, theme: "dark", sidebar: true }
+```
+
+**Type Definitions** (`src/lib/auth/auth_types.ts`):
+
+```typescript
+export type HazoAuthUser = {
+  id: string;
+  email_address: string;
+  name: string | null;
+  is_active: boolean;
+  profile_picture_url: string | null;
+  url_on_logon: string | null;
+  app_user_data: Record<string, any> | null;  // NEW
+};
+```
+
+**New Test UI** (`src/components/layouts/app_user_data_test/index.tsx`):
+
+Interactive test page at `/hazo_auth/app_user_data_test` with:
+- View current `app_user_data` (live refresh)
+- Merge data form (PATCH)
+- Replace data form (PUT)
+- Clear data button (DELETE)
+- JSON validation before submission
+- Success/error toast notifications
+- Live data preview with syntax highlighting
+
+**Files Created**:
+1. `migrations/008_add_app_user_data_to_hazo_users.sql` - Database migration
+2. `src/lib/services/app_user_data_service.ts` - Service layer with get/update/clear functions
+3. `src/app/api/hazo_auth/app_user_data/route.ts` - API route handlers (GET, PATCH, PUT, DELETE)
+4. `src/server/routes/app_user_data.ts` - Route handler exports for consuming apps
+5. `src/components/layouts/app_user_data_test/index.tsx` - Test UI component
+6. `src/app/hazo_auth/app_user_data_test/page.tsx` - Test page
+7. `src/app/hazo_auth/app_user_data_test/app_user_data_test_page_client.tsx` - Client component wrapper
+
+**Files Modified**:
+1. `src/lib/auth/auth_types.ts` - Added `app_user_data` to `HazoAuthUser` type
+2. `src/lib/auth/hazo_get_auth.server.ts` - Returns `app_user_data` in user object
+3. `src/app/api/hazo_auth/me/route.ts` - Includes `app_user_data` in response
+4. `src/server/routes/index.ts` - Exports app_user_data route handlers
+5. `src/components/layouts/shared/components/sidebar_layout_wrapper.tsx` - Added "App User Data Test" link to sidebar
+
+**Usage Patterns**:
+
+1. **Store user preferences**:
+   ```typescript
+   PATCH /api/hazo_auth/app_user_data
+   {
+     data: {
+       theme: "dark",
+       language: "en-US",
+       timezone: "America/New_York"
+     }
+   }
+   ```
+
+2. **Store app-specific state**:
+   ```typescript
+   PATCH /api/hazo_auth/app_user_data
+   {
+     data: {
+       dashboard_layout: "grid",
+       sidebar_collapsed: true,
+       recent_searches: ["tax forms", "invoices"]
+     }
+   }
+   ```
+
+3. **Store nested configuration**:
+   ```typescript
+   PATCH /api/hazo_auth/app_user_data
+   {
+     data: {
+       notifications: {
+         email: true,
+         sms: false,
+         push: true
+       },
+       privacy: {
+         profile_public: false,
+         show_email: false
+       }
+     }
+   }
+   ```
+
+4. **Update nested field (deep merge)**:
+   ```typescript
+   // Existing: { notifications: { email: true, sms: false } }
+   PATCH /api/hazo_auth/app_user_data
+   {
+     data: {
+       notifications: { sms: true }
+     }
+   }
+   // Result: { notifications: { email: true, sms: true } }
+   ```
+
+5. **Replace entire object**:
+   ```typescript
+   PUT /api/hazo_auth/app_user_data
+   {
+     data: { theme: "light" }
+   }
+   // Removes all other fields, sets only theme
+   ```
+
+6. **Clear all data**:
+   ```typescript
+   DELETE /api/hazo_auth/app_user_data
+   // Sets app_user_data to NULL
+   ```
+
+**Route Handler Setup** (Consuming Apps):
+
+```typescript
+// app/api/hazo_auth/app_user_data/route.ts
+export {
+  appUserDataGET as GET,
+  appUserDataPATCH as PATCH,
+  appUserDataPUT as PUT,
+  appUserDataDELETE as DELETE
+} from "hazo_auth/server/routes";
+```
+
+Or use CLI: `npx hazo_auth generate-routes`
+
+**Design Rationale**:
+
+1. **Single JSON Column (not separate table)**:
+   - **Pro**: Zero schema changes needed for new app-specific fields
+   - **Pro**: Simple migration (single ALTER TABLE)
+   - **Pro**: No joins required for user queries
+   - **Pro**: Flexible structure per application's needs
+   - **Con**: No relational queries on custom data (acceptable tradeoff)
+
+2. **Deep Merge by Default (PATCH)**:
+   - **Pro**: Preserves unmodified fields (prevents data loss)
+   - **Pro**: Allows incremental updates without fetching existing data first
+   - **Pro**: Intuitive API behavior for most use cases
+   - **Con**: Slightly more complex than simple replace (mitigated by service layer)
+
+3. **Separate PUT for Replace**:
+   - **Pro**: Explicit intent when full replacement is needed
+   - **Pro**: RESTful semantics (PATCH = partial, PUT = full)
+   - **Pro**: Prevents accidental data loss from merge behavior
+
+4. **No Schema Validation**:
+   - **Pro**: Maximum flexibility for consuming applications
+   - **Pro**: No breaking changes when app requirements change
+   - **Con**: No database-level validation (consuming apps handle validation)
+
+5. **Included in `/api/hazo_auth/me`**:
+   - **Pro**: Single request for auth status + custom data
+   - **Pro**: Available to client components via `use_hazo_auth()` hook
+   - **Pro**: Reduces API round trips
+
+**Performance Considerations**:
+
+**Storage**:
+- JSON stored as TEXT (no compression)
+- Recommended max size: ~10KB per user (reasonable for preferences/settings)
+- Large data sets should use separate tables
+
+**Querying**:
+- No indexes on `app_user_data` (JSON queries are application-level)
+- Use separate columns if database-level filtering needed
+- Deep merge performance: O(n) where n = number of keys (fast for small objects)
+
+**Caching**:
+- Returned by `hazo_get_auth()` (benefits from LRU cache)
+- Cache invalidation happens on user data changes
+- No additional database queries for authenticated requests
+
+**Backward Compatibility**:
+- Nullable column (existing users have NULL)
+- No breaking changes to existing API responses
+- New field ignored by clients that don't use it
+- Migration is additive (no data removal)
+
+**Security Considerations**:
+- Data is user-scoped (users can only access/modify their own data)
+- Authentication required for all endpoints
+- JSON parsing errors handled gracefully (returns 400)
+- No SQL injection risk (JSON stored as TEXT)
+- Rate limiting inherits from existing auth endpoints
+
+**Future Enhancements (not in this release)**:
+- Schema validation (Zod schemas for app-specific structure)
+- Size limits (prevent abuse with large JSON objects)
+- Encryption for sensitive custom data
+- Audit logging for data changes
+- Bulk export/import for user data migration
+
+---
+
 ## [4.5.4] - 2025-12-23
 
 ### Fixed - User Management UI Improvements
