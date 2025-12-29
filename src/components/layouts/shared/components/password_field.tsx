@@ -35,7 +35,7 @@ export function PasswordField({
 }: PasswordFieldProps) {
   return (
     <div className="cls_password_field_wrapper">
-      <div className="relative">
+      <div className="cls_password_field_container relative" style={{ position: "relative" }}>
         <Input
           id={inputId}
           type={isVisible ? "text" : "password"}
@@ -45,6 +45,7 @@ export function PasswordField({
           placeholder={placeholder}
           aria-label={ariaLabel}
           className="cls_password_field_input pr-11"
+          style={{ paddingRight: "2.75rem" }}
         />
         <Button
           type="button"
@@ -53,6 +54,14 @@ export function PasswordField({
           aria-label={`${isVisible ? "Hide" : "Show"} ${ariaLabel.toLowerCase()}`}
           onClick={onToggleVisibility}
           className="cls_password_field_toggle absolute inset-y-0 right-1 my-auto h-8 w-8 text-muted-foreground hover:bg-transparent hover:text-foreground"
+          style={{
+            position: "absolute",
+            top: "50%",
+            right: "0.25rem",
+            transform: "translateY(-50%)",
+            height: "2rem",
+            width: "2rem",
+          }}
         >
           {isVisible ? (
             <EyeOff className="h-4 w-4" aria-hidden="true" />
