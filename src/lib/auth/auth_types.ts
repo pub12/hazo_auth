@@ -100,6 +100,7 @@ export type HazoAuthOptions = {
 /**
  * Custom error class for permission denials
  * Includes technical and user-friendly error messages
+ * Optionally includes permission descriptions for debugging
  */
 export class PermissionError extends Error {
   constructor(
@@ -107,6 +108,7 @@ export class PermissionError extends Error {
     public user_permissions: string[],
     public required_permissions: string[],
     public user_friendly_message?: string,
+    public permission_descriptions?: Map<string, string>,
   ) {
     super(`Missing permissions: ${missing_permissions.join(", ")}`);
     this.name = "PermissionError";

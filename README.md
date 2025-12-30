@@ -1102,6 +1102,9 @@ The `UserManagementLayout` component provides a comprehensive admin interface fo
 - `admin_user_management` - Access to Users tab
 - `admin_role_management` - Access to Roles tab
 - `admin_permission_management` - Access to Permissions tab
+- `admin_scope_hierarchy_management` - Access to Scope Hierarchy tab (HRBAC)
+- `admin_system` - Access to Scope Labels tab (HRBAC)
+- `admin_user_scope_assignment` - Access to User Scopes tab (HRBAC)
 
 **Required API Routes:**
 The `UserManagementLayout` component requires the following API routes to be created in your project:
@@ -1735,7 +1738,8 @@ Users assigned to a higher-level scope automatically have access to all descenda
 
 ### Required Permissions for Management
 
-- `admin_scope_hierarchy_management` - Manage scopes and scope labels
+- `admin_scope_hierarchy_management` - Manage scope hierarchy (create, edit, delete scopes)
+- `admin_system` - System-level administration (scope labels configuration)
 - `admin_user_scope_assignment` - Assign scopes to users
 - `admin_test_access` - Access the RBAC/HRBAC test tool
 
@@ -1743,15 +1747,19 @@ Add these to your `application_permission_list_defaults` in `hazo_auth_config.in
 
 ```ini
 [hazo_auth__user_management]
-application_permission_list_defaults = admin_user_management,admin_role_management,admin_permission_management,admin_scope_hierarchy_management,admin_user_scope_assignment,admin_test_access
+application_permission_list_defaults = admin_user_management,admin_role_management,admin_permission_management,admin_scope_hierarchy_management,admin_system,admin_user_scope_assignment,admin_test_access
 ```
 
 ### User Management UI
 
 When HRBAC is enabled and the user has appropriate permissions, three new tabs appear in the User Management layout:
-- **Scope Hierarchy** - Create, edit, and delete scopes at each level
-- **Scope Labels** - Customize labels for scope levels per organization
-- **User Scopes** - Assign and remove scope assignments for users
+- **Scope Hierarchy** - Create, edit, and delete scopes at each level (requires `admin_scope_hierarchy_management`)
+- **Scope Labels** - Customize labels for scope levels per organization (requires `admin_system`)
+- **User Scopes** - Assign and remove scope assignments for users (requires `admin_user_scope_assignment`)
+
+**Organization Assignment (when multi-tenancy enabled):**
+- **Global admins** (`hazo_org_global_admin` permission) can assign users to any organization
+- **Non-global admins** can only assign users to organizations within their own org tree (filtered by `root_org_id`)
 
 ### RBAC/HRBAC Test Tool
 

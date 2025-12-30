@@ -7,6 +7,197 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed - Scope Permission Clarification and Org Assignment Restriction
+
+**Feature Enhancement**: Separated permission requirements for scope labels and improved organization assignment security.
+
+**Why this change**: The scope labels tab requires system-level permissions beyond standard scope hierarchy management. Additionally, non-global admins should only be able to assign users to organizations within their own org tree for security and data segregation.
+
+**What Changed**:
+
+**1. Scope Labels Tab Permission:**
+- **Scope Labels tab** now requires `admin_system` permission (NEW permission added to defaults)
+- **Scope Hierarchy tab** continues using `admin_scope_hierarchy_management`
+- **User Scopes tab** continues using `admin_user_scope_assignment`
+- Changed in `src/components/layouts/user_management/index.tsx`
+
+**2. Organization Assignment Restriction:**
+- Org assignment dialog now filters orgs based on admin's permissions
+- **Global admins** (`hazo_org_global_admin` permission) see all organizations
+- **Non-global admins** only see their own org tree (filtered by `root_org_id`)
+- Changed in `src/components/layouts/user_management/index.tsx`
+
+**Security Rationale**:
+- Prevents non-global admins from assigning users to organizations outside their tree
+- Reduces risk of accidental cross-org data exposure
+- Clear separation between system-level and scope-level permissions
+
+**Files Modified**:
+- `src/components/layouts/user_management/index.tsx` - Updated permission checks and org filtering
+- `hazo_auth_config.ini` - Added `admin_system` to `application_permission_list_defaults`
+
+**Backward Compatibility**:
+- Existing users with `admin_scope_hierarchy_management` can still manage scope hierarchy
+- New `admin_system` permission required for scope labels (add via `npm run init-users`)
+- Org assignment restriction only affects non-global admins
+
+---
+
+### Added - App Permission Declaration via INI Config
+
+**Feature**: Consuming applications can now declare required permissions with descriptions for debugging and error handling.
+
+**Why this addition**: When permission checks fail in production, developers and users need clear context about which permissions were checked and what they control. Declaring permissions in config enables centralized permission documentation and better error messages when access is denied.
+
+**Core Features**:
+- **INI-based declaration**: Define permissions in `[hazo_auth__app_permissions]` section
+- **Permission descriptions**: Each permission has a description for debugging
+- **API endpoint**: `GET /api/hazo_auth/permissions/app` lists registered app permissions
+- **Enhanced error messages**: `PermissionError` includes permission descriptions when available
+- **Zero impact when unused**: Optional feature, no changes to existing flows
+
+**New Configuration** (`hazo_auth_config.ini`):
+```ini
+[hazo_auth__app_permissions]
+# Format: app_permission_N = permission_name:Description for debugging
+app_permission_1 = view_reports:View financial reports and analytics
+app_permission_2 = edit_invoices:Create and edit client invoices
+app_permission_3 = admin_billing:Manage billing settings and subscriptions
+```
+
+**New API Endpoint**:
+**`GET /api/hazo_auth/permissions/app`** - List registered app permissions
+```typescript
+// Response
+{
+  permissions: [
+    { name: "view_reports", description: "View financial reports and analytics" },
+    { name: "edit_invoices", description: "Create and edit client invoices" }
+  ]
+}
+```
+
+**Enhanced Permission Errors**:
+When `strict: true` and permissions are missing, errors now include descriptions:
+
+```typescript
+try {
+  await hazo_get_auth(request, {
+    required_permissions: ["view_reports", "admin_billing"],
+    strict: true
+  });
+} catch (error) {
+  if (error instanceof PermissionError) {
+    console.log(error.user_friendly_message);
+    // "Access denied: Missing permissions: view_reports (View financial reports and analytics), admin_billing (Manage billing settings and subscriptions)"
+  }
+}
+```
+
+**Updated `PermissionError` Class** (`src/lib/auth/auth_types.ts`):
+```typescript
+export class PermissionError extends Error {
+  constructor(
+    missing_permissions: string[],
+    public user_friendly_message: string,
+    public permission_descriptions?: Map<string, string>  // NEW
+  ) {
+    super(user_friendly_message);
+    this.name = "PermissionError";
+    this.missing_permissions = missing_permissions;
+    this.permission_descriptions = permission_descriptions;
+  }
+
+  missing_permissions: string[];
+  permission_descriptions?: Map<string, string>;
+}
+```
+
+**Service Functions** (`src/lib/app_permissions_config.server.ts`):
+```typescript
+// Get app permissions configuration
+export function get_app_permissions_config(): AppPermissionsConfig
+
+// Get permission description by name
+export function get_permission_description(permission_name: string): string | undefined
+
+// Check if permission is registered in config
+export function is_registered_app_permission(permission_name: string): boolean
+```
+
+**Integration with `hazo_get_auth`** (`src/lib/auth/hazo_get_auth.server.ts`):
+- When `strict: true` and permissions are missing, error includes descriptions
+- Automatically looks up descriptions from app permissions config
+- Falls back to permission names if no description found
+- Enhanced user-friendly error messages for better UX
+
+**Files Created**:
+1. `src/lib/app_permissions_config.server.ts` - Config loader for app permissions
+2. `src/app/api/hazo_auth/permissions/app/route.ts` - API endpoint for listing permissions
+
+**Files Modified**:
+1. `src/lib/auth/auth_types.ts` - Updated `PermissionError` with `permission_descriptions`
+2. `src/lib/auth/hazo_get_auth.server.ts` - Enhanced error messages with descriptions
+3. `hazo_auth_config.ini` - Added `[hazo_auth__app_permissions]` section example
+
+**Use Cases**:
+
+**1. Production error debugging:**
+```typescript
+// When access is denied, error includes clear context
+PermissionError: Access denied: Missing permissions:
+- view_reports (View financial reports and analytics)
+- admin_billing (Manage billing settings and subscriptions)
+```
+
+**2. Admin UI for permission management:**
+```typescript
+// Fetch registered permissions to populate dropdown with descriptions
+const response = await fetch("/api/hazo_auth/permissions/app");
+const { permissions } = await response.json();
+// [{ name: "view_reports", description: "View financial reports..." }]
+```
+
+**3. Documentation generation:**
+```typescript
+// Auto-generate permission documentation from config
+const config = get_app_permissions_config();
+console.log(config.permissions);
+// Map { "view_reports" => "View financial reports and analytics" }
+```
+
+**Design Rationale**:
+
+1. **INI-based (not database)**:
+   - Config file is version-controlled (permissions are code-level concerns)
+   - No CRUD UI needed for permission descriptions
+   - Easier to maintain consistent permissions across environments
+   - Prevents runtime permission description changes
+
+2. **Optional feature**:
+   - Zero impact when not configured
+   - Existing apps work unchanged
+   - Descriptions are informational, not required for functionality
+
+3. **Separation from RBAC**:
+   - RBAC permissions stored in database (runtime management)
+   - App permission descriptions stored in config (deployment-time declaration)
+   - Config serves as documentation, not permission enforcement
+
+**Backward Compatibility**:
+- No breaking changes - new config section is optional
+- `PermissionError` class extended (existing code works unchanged)
+- New API endpoint is additive
+- `hazo_get_auth` behavior unchanged when config section not present
+
+**Future Enhancements (not in this release)**:
+- UI for viewing all registered app permissions with descriptions
+- Permission usage analytics (which permissions are most commonly denied)
+- Auto-generate permission documentation from config
+- Validate that permissions in config exist in database
+
+---
+
 ### Added - Configurable Cookie Prefix and Domain
 
 **Feature**: Customizable cookie prefix and domain settings to prevent cookie conflicts when running multiple apps.

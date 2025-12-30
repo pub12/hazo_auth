@@ -39,46 +39,52 @@ export function StandaloneLayoutWrapper({
   const navbarHeight = hasNavbar ? (navbar?.height ?? 64) : 0;
 
   return (
+    // Outer wrapper: Consuming app's wrapperClassName applied here for theming/background
+    // This is isolated from the internal layout structure
     <div
       className={cn(
-        "cls_standalone_layout_wrapper flex min-h-screen w-full flex-col bg-background",
+        "cls_standalone_layout_outer min-h-screen w-full bg-background",
         wrapperClassName
       )}
     >
-      {/* Navbar */}
-      {hasNavbar && <AuthNavbar {...navbar} />}
+      {/* Inner wrapper: hazo_auth's internal layout structure (self-contained)
+          This should NOT be affected by the consuming app's wrapper classes */}
+      <div className="cls_standalone_layout_wrapper flex min-h-screen w-full flex-col">
+        {/* Navbar */}
+        {hasNavbar && <AuthNavbar {...navbar} />}
 
-      {/* Main content area with vertical centering */}
-      <div
-        className={cn(
-          "cls_standalone_layout_content_area flex-1",
-          verticalCenter && "flex items-center justify-center"
-        )}
-        style={
-          verticalCenter ? { minHeight: `calc(100vh - ${navbarHeight}px)` } : undefined
-        }
-      >
+        {/* Main content area with vertical centering */}
         <div
           className={cn(
-            "cls_standalone_layout_content mx-auto flex w-full max-w-5xl flex-col gap-8 p-6",
-            contentClassName
+            "cls_standalone_layout_content_area flex-1",
+            verticalCenter && "flex items-center justify-center"
           )}
+          style={
+            verticalCenter ? { minHeight: `calc(100vh - ${navbarHeight}px)` } : undefined
+          }
         >
-          {(showHeading || showDescription) && (
-            <div className="cls_standalone_layout_header text-center">
-              {showHeading && (
-                <h1 className="cls_standalone_layout_title text-2xl font-semibold tracking-tight text-foreground">
-                  {heading}
-                </h1>
-              )}
-              {showDescription && (
-                <p className="cls_standalone_layout_description mt-2 text-sm text-muted-foreground">
-                  {description}
-                </p>
-              )}
-            </div>
-          )}
-          <div className="cls_standalone_layout_body">{children}</div>
+          <div
+            className={cn(
+              "cls_standalone_layout_content mx-auto flex w-full max-w-5xl flex-col gap-8 p-6",
+              contentClassName
+            )}
+          >
+            {(showHeading || showDescription) && (
+              <div className="cls_standalone_layout_header text-center">
+                {showHeading && (
+                  <h1 className="cls_standalone_layout_title text-2xl font-semibold tracking-tight text-foreground">
+                    {heading}
+                  </h1>
+                )}
+                {showDescription && (
+                  <p className="cls_standalone_layout_description mt-2 text-sm text-muted-foreground">
+                    {description}
+                  </p>
+                )}
+              </div>
+            )}
+            <div className="cls_standalone_layout_body">{children}</div>
+          </div>
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@ import { is_valid_scope_level } from "../services/scope_service";
 import { is_multi_tenancy_enabled, get_multi_tenancy_config } from "../multi_tenancy_config.server";
 import { get_org_cache } from "./org_cache";
 import { get_cookie_name, BASE_COOKIE_NAMES } from "../cookies_config.server";
+import { get_app_permission_descriptions } from "../app_permissions_config.server";
 // section: helpers
 /**
  * Parse JSON string to object, returning null on failure
@@ -430,7 +431,9 @@ export async function hazo_get_auth(request, options) {
         // Throw error if strict mode
         if (!permission_ok && options.strict) {
             const friendly_message = get_friendly_error_message(missing_permissions, config);
-            throw new PermissionError(missing_permissions, permissions, options.required_permissions, friendly_message);
+            // Include permission descriptions for debugging
+            const permission_descriptions = get_app_permission_descriptions(missing_permissions);
+            throw new PermissionError(missing_permissions, permissions, options.required_permissions, friendly_message, permission_descriptions);
         }
     }
     // Check HRBAC scope access if enabled and scope options provided

@@ -49,7 +49,7 @@ import { ScopeHierarchyTab } from "./components/scope_hierarchy_tab";
 import { ScopeLabelsTab } from "./components/scope_labels_tab";
 import { UserScopesTab } from "./components/user_scopes_tab";
 import { OrgHierarchyTab } from "./components/org_hierarchy_tab";
-import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus, Building2 } from "lucide-react";
+import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus, Building2, ChevronRight, ChevronDown } from "lucide-react";
 import { TreeView, type TreeDataItem } from "../../ui/tree-view";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
@@ -89,6 +89,7 @@ type User = {
   user_type: string | null;
   org_id: string | null;
   root_org_id: string | null;
+  app_user_data: Record<string, unknown> | null;
 };
 
 type OrgOption = {
@@ -103,6 +104,133 @@ type Permission = {
   description: string;
   source: "db" | "config";
 };
+
+// section: helper_components
+
+/**
+ * Recursive JSON tree node component for displaying app_user_data.
+ * Renders objects and arrays as expandable/collapsible nodes.
+ */
+function JsonTreeNode({
+  data,
+  keyName,
+  level = 0,
+  defaultExpanded = true,
+}: {
+  data: unknown;
+  keyName?: string;
+  level?: number;
+  defaultExpanded?: boolean;
+}) {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const indent = level * 16;
+
+  // Handle null/undefined
+  if (data === null || data === undefined) {
+    return (
+      <div className="flex items-center py-0.5" style={{ paddingLeft: indent }}>
+        {keyName && <span className="text-muted-foreground">{keyName}:</span>}
+        <span className="ml-1 text-slate-500 italic">null</span>
+      </div>
+    );
+  }
+
+  // Handle arrays
+  if (Array.isArray(data)) {
+    const hasChildren = data.length > 0;
+    return (
+      <div>
+        <div
+          className={`flex items-center py-0.5 ${hasChildren ? "cursor-pointer hover:bg-muted/50 rounded" : ""}`}
+          style={{ paddingLeft: indent }}
+          onClick={() => hasChildren && setIsExpanded(!isExpanded)}
+        >
+          {hasChildren ? (
+            isExpanded ? (
+              <ChevronDown className="h-3 w-3 mr-1 text-muted-foreground shrink-0" />
+            ) : (
+              <ChevronRight className="h-3 w-3 mr-1 text-muted-foreground shrink-0" />
+            )
+          ) : (
+            <span className="w-4 mr-1" />
+          )}
+          {keyName && <span className="text-muted-foreground">{keyName}</span>}
+          <span className="ml-1 text-slate-500">[{data.length}]</span>
+        </div>
+        {isExpanded && hasChildren && (
+          <div className="border-l border-slate-200 ml-2" style={{ marginLeft: indent + 8 }}>
+            {data.map((item, index) => (
+              <JsonTreeNode
+                key={index}
+                data={item}
+                keyName={`[${index}]`}
+                level={0}
+                defaultExpanded={defaultExpanded}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Handle objects
+  if (typeof data === "object") {
+    const entries = Object.entries(data);
+    const hasChildren = entries.length > 0;
+    return (
+      <div>
+        <div
+          className={`flex items-center py-0.5 ${hasChildren ? "cursor-pointer hover:bg-muted/50 rounded" : ""}`}
+          style={{ paddingLeft: indent }}
+          onClick={() => hasChildren && setIsExpanded(!isExpanded)}
+        >
+          {hasChildren ? (
+            isExpanded ? (
+              <ChevronDown className="h-3 w-3 mr-1 text-muted-foreground shrink-0" />
+            ) : (
+              <ChevronRight className="h-3 w-3 mr-1 text-muted-foreground shrink-0" />
+            )
+          ) : (
+            <span className="w-4 mr-1" />
+          )}
+          {keyName && <span className="text-muted-foreground">{keyName}</span>}
+          {keyName && <span className="ml-1 text-slate-500">{`{${entries.length}}`}</span>}
+        </div>
+        {isExpanded && hasChildren && (
+          <div className="border-l border-slate-200 ml-2" style={{ marginLeft: indent + 8 }}>
+            {entries.map(([key, value]) => (
+              <JsonTreeNode
+                key={key}
+                data={value}
+                keyName={key}
+                level={0}
+                defaultExpanded={defaultExpanded}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Handle primitives (string, number, boolean)
+  const valueStr = String(data);
+  const displayValue = valueStr.length > 80 ? valueStr.substring(0, 80) + "..." : valueStr;
+  const valueColor = typeof data === "number" ? "text-blue-600" :
+                     typeof data === "boolean" ? "text-orange-600" :
+                     "text-green-700";
+
+  return (
+    <div className="flex items-center py-0.5" style={{ paddingLeft: indent }}>
+      <span className="w-4 mr-1" />
+      {keyName && <span className="text-muted-foreground">{keyName}:</span>}
+      <span className={`ml-1 ${valueColor}`}>
+        {typeof data === "string" ? `"${displayValue}"` : displayValue}
+      </span>
+    </div>
+  );
+}
 
 // section: component
 /**
@@ -135,13 +263,15 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
     authResult.permissions.includes("hazo_perm_org_management");
   const hasOrgGlobalAdminPermission = authResult.authenticated &&
     authResult.permissions.includes("hazo_org_global_admin");
+  const hasSystemPermission = authResult.authenticated &&
+    authResult.permissions.includes("admin_system");
 
   // Determine which tabs to show
   const showUsersTab = hasUserManagementPermission;
   const showRolesTab = hasRoleManagementPermission;
   const showPermissionsTab = hasPermissionManagementPermission;
   const showScopeHierarchyTab = hrbacEnabled && hasScopeHierarchyPermission;
-  const showScopeLabelsTab = hrbacEnabled && hasScopeHierarchyPermission;
+  const showScopeLabelsTab = hrbacEnabled && hasSystemPermission;
   const showUserScopesTab = hrbacEnabled && hasUserScopeAssignmentPermission;
   const showOrgsTab = multiTenancyEnabled && hasOrgManagementPermission;
   const hasAnyPermission = showUsersTab || showRolesTab || showPermissionsTab || showScopeHierarchyTab || showScopeLabelsTab || showUserScopesTab || showOrgsTab;
@@ -207,6 +337,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
   }, [showUsersTab, loadUsers]);
 
   // Load organizations (only if multi-tenancy is enabled and user has permission)
+  // Non-global admins can only see orgs in their tree
   useEffect(() => {
     if (!multiTenancyEnabled || !showUsersTab) {
       return;
@@ -214,7 +345,21 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
 
     const loadOrgs = async () => {
       try {
-        const response = await fetch(`${apiBasePath}/org_management/orgs`);
+        const params = new URLSearchParams();
+        // Non-global admins can only see orgs in their tree
+        if (!hasOrgGlobalAdminPermission && authResult.authenticated) {
+          const userRootOrgId = authResult.user?.root_org_id || authResult.user?.org_id;
+          if (userRootOrgId) {
+            params.set("root_org_id", userRootOrgId);
+          }
+        }
+
+        const queryString = params.toString();
+        const url = queryString
+          ? `${apiBasePath}/org_management/orgs?${queryString}`
+          : `${apiBasePath}/org_management/orgs`;
+
+        const response = await fetch(url);
         const data = await response.json();
 
         if (data.success && Array.isArray(data.orgs)) {
@@ -233,7 +378,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
     };
 
     void loadOrgs();
-  }, [multiTenancyEnabled, showUsersTab, apiBasePath]);
+  }, [multiTenancyEnabled, showUsersTab, apiBasePath, hasOrgGlobalAdminPermission, authResult]);
 
   // Load permissions (only if user has permission)
   useEffect(() => {
@@ -1652,6 +1797,30 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                     </div>
                   </div>
                 )}
+
+                {/* App User Data section */}
+                <div className="cls_user_management_user_detail_field_app_user_data flex flex-col gap-2">
+                  <Label className="cls_user_management_user_detail_label font-semibold">
+                    App User Data
+                  </Label>
+                  <div className="cls_user_management_user_detail_app_user_data_value">
+                    {selectedUser.app_user_data && Object.keys(selectedUser.app_user_data).length > 0 ? (
+                      <div className="border rounded-lg max-h-[200px] overflow-y-auto p-2 bg-slate-50 text-sm font-mono">
+                        {Object.entries(selectedUser.app_user_data).map(([key, value]) => (
+                          <JsonTreeNode
+                            key={key}
+                            data={value}
+                            keyName={key}
+                            level={0}
+                            defaultExpanded={true}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">No app user data</span>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>

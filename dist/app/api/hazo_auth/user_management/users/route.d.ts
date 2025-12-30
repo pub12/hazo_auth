@@ -26,6 +26,7 @@ export declare function GET(request: NextRequest): Promise<NextResponse<{
         profile_picture_url: {} | null;
         profile_source: {} | null;
         user_type: string | null;
+        app_user_data: Record<string, unknown> | null;
         org_id: string | null | undefined;
         root_org_id: string | null | undefined;
     }[];

@@ -238,6 +238,8 @@ const auth = await hazo_get_auth(request, { require_org: true });
 
 **User Management UI Features (when multi-tenancy enabled):**
 - Organization Assignment Button with TreeView dialog
+  - **Global admins** (`hazo_org_global_admin` permission) see all organizations
+  - **Non-global admins** only see their own org tree (filtered by `root_org_id`)
 - User Details Dialog with scrollable content (`max-h-[80vh] overflow-y-auto`)
 - Select components use `value="__none__"` for "None" options (Radix UI requirement)
 
@@ -782,11 +784,48 @@ export type HazoAuthUser = {
 
 | Permission | Purpose |
 |------------|---------|
-| `admin_scope_hierarchy_management` | Manage scopes and labels |
+| `admin_system` | System-level configuration (scope labels) |
+| `admin_scope_hierarchy_management` | Manage scope hierarchy |
 | `admin_user_scope_assignment` | Assign scopes to users |
 | `admin_test_access` | Access the RBAC/HRBAC test tool |
 | `hazo_perm_org_management` | CRUD operations on organizations |
 | `hazo_org_global_admin` | View/manage all organizations and scopes across the system |
+
+## App Permission Declaration
+
+Consuming applications can declare their required permissions with descriptions in the config file.
+This helps with debugging when permission checks fail by including descriptions in error messages.
+
+**Configuration:**
+```ini
+[hazo_auth__app_permissions]
+# Format: app_permission_X = permission_name:Description for debugging
+app_permission_1 = view_reports:Access to view all reports
+app_permission_2 = edit_settings:Ability to modify application settings
+app_permission_3 = manage_users:Permission to manage other users
+```
+
+**API Endpoint:**
+- `GET /api/hazo_auth/permissions/app` - List all registered app permissions with descriptions
+
+**Usage in Error Messages:**
+When permission checks fail (with `strict: true`), the error response includes descriptions from this config:
+```json
+{
+  "error": "Permission denied",
+  "missing_permissions": ["view_reports"],
+  "permission_details": [
+    {
+      "permission": "view_reports",
+      "description": "Access to view all reports"
+    }
+  ]
+}
+```
+
+**Files:**
+- `src/lib/app_permissions_config.server.ts` - Config loader
+- `src/app/api/hazo_auth/permissions/app/route.ts` - API endpoint
 
 ## Common Issues
 

@@ -85,13 +85,15 @@ export type HazoAuthOptions = {
 /**
  * Custom error class for permission denials
  * Includes technical and user-friendly error messages
+ * Optionally includes permission descriptions for debugging
  */
 export declare class PermissionError extends Error {
     missing_permissions: string[];
     user_permissions: string[];
     required_permissions: string[];
     user_friendly_message?: string | undefined;
-    constructor(missing_permissions: string[], user_permissions: string[], required_permissions: string[], user_friendly_message?: string | undefined);
+    permission_descriptions?: Map<string, string> | undefined;
+    constructor(missing_permissions: string[], user_permissions: string[], required_permissions: string[], user_friendly_message?: string | undefined, permission_descriptions?: Map<string, string> | undefined);
 }
 /**
  * Custom error class for scope access denials in HRBAC

@@ -74,21 +74,38 @@ export async function GET(request: NextRequest) {
         user_types_enabled,
         available_user_types,
         multi_tenancy_enabled,
-        users: users.map((user) => ({
-          id: user.id,
-          name: user.name || null,
-          email_address: user.email_address,
-          email_verified: user.email_verified || false,
-          is_active: user.is_active !== false,
-          last_logon: user.last_logon || null,
-          created_at: user.created_at || null,
-          profile_picture_url: user.profile_picture_url || null,
-          profile_source: user.profile_source || null,
-          user_type: (user.user_type as string | null) || null,
-          // Include org info when multi-tenancy is enabled
-          org_id: multi_tenancy_enabled ? (user.org_id as string | null) || null : undefined,
-          root_org_id: multi_tenancy_enabled ? (user.root_org_id as string | null) || null : undefined,
-        })),
+        users: users.map((user) => {
+          // Parse app_user_data if it's a string (JSON stored as TEXT in DB)
+          let app_user_data: Record<string, unknown> | null = null;
+          if (user.app_user_data) {
+            if (typeof user.app_user_data === "string") {
+              try {
+                app_user_data = JSON.parse(user.app_user_data);
+              } catch {
+                app_user_data = null;
+              }
+            } else {
+              app_user_data = user.app_user_data as Record<string, unknown>;
+            }
+          }
+
+          return {
+            id: user.id,
+            name: user.name || null,
+            email_address: user.email_address,
+            email_verified: user.email_verified || false,
+            is_active: user.is_active !== false,
+            last_logon: user.last_logon || null,
+            created_at: user.created_at || null,
+            profile_picture_url: user.profile_picture_url || null,
+            profile_source: user.profile_source || null,
+            user_type: (user.user_type as string | null) || null,
+            app_user_data,
+            // Include org info when multi-tenancy is enabled
+            org_id: multi_tenancy_enabled ? (user.org_id as string | null) || null : undefined,
+            root_org_id: multi_tenancy_enabled ? (user.root_org_id as string | null) || null : undefined,
+          };
+        }),
       },
       { status: 200 }
     );

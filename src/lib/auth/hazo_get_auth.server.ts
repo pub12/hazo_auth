@@ -18,6 +18,7 @@ import { is_valid_scope_level, type ScopeLevel } from "../services/scope_service
 import { is_multi_tenancy_enabled, get_multi_tenancy_config } from "../multi_tenancy_config.server";
 import { get_org_cache, type OrgCacheEntry } from "./org_cache";
 import { get_cookie_name, BASE_COOKIE_NAMES } from "../cookies_config.server";
+import { get_app_permission_descriptions } from "../app_permissions_config.server";
 
 // section: helpers
 
@@ -544,12 +545,15 @@ export async function hazo_get_auth(
         missing_permissions,
         config,
       );
+      // Include permission descriptions for debugging
+      const permission_descriptions = get_app_permission_descriptions(missing_permissions);
 
       throw new PermissionError(
         missing_permissions,
         permissions,
         options.required_permissions,
         friendly_message,
+        permission_descriptions,
       );
     }
   }
