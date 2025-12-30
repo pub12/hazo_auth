@@ -1,6 +1,6 @@
 {
   "name": "hazo_auth",
-  "version": "4.6.2",
+  "version": "4.6.3",
   "description": "Zero-config authentication UI components for Next.js with RBAC, OAuth, multi-tenancy, and hierarchical scopes",
   "keywords": [
     "authentication",
