@@ -4,8 +4,7 @@ export type ScopeHierarchyTabProps = {
 /**
  * Scope Hierarchy tab component for managing HRBAC scopes
  * Displays scopes in a tree view for intuitive hierarchy configuration
- * Non-global admins see only their org's scopes (auto-filtered by API)
- * Global admins can view/manage any org's scopes by providing org_id
+ * Uses unified hazo_scopes table with parent_id for hierarchy
  * @param props - Component props
  * @returns Scope Hierarchy tab component
  */

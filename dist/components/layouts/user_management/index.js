@@ -17,11 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "
 import { UserTypeBadge } from "../../ui/user-type-badge";
 import { RolesMatrix } from "./components/roles_matrix";
 import { ScopeHierarchyTab } from "./components/scope_hierarchy_tab";
-import { ScopeLabelsTab } from "./components/scope_labels_tab";
 import { UserScopesTab } from "./components/user_scopes_tab";
-import { OrgHierarchyTab } from "./components/org_hierarchy_tab";
-import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus, Building2, ChevronRight, ChevronDown } from "lucide-react";
-import { TreeView } from "../../ui/tree-view";
+import { AppUserDataEditor } from "./components/app_user_data_editor";
+import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus, ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
 import { useHazoAuthConfig } from "../../../contexts/hazo_auth_provider";
@@ -68,7 +66,7 @@ function JsonTreeNode({ data, keyName, level = 0, defaultExpanded = true, }) {
  * @param props - Component props
  * @returns User Management layout component
  */
-export function UserManagementLayout({ className, hrbacEnabled = false, multiTenancyEnabled = false, userTypesEnabled = false, availableUserTypes = [] }) {
+export function UserManagementLayout({ className, hrbacEnabled = false, userTypesEnabled = false, availableUserTypes = [] }) {
     const { apiBasePath } = useHazoAuthConfig();
     // Permission checks
     const authResult = use_hazo_auth();
@@ -82,10 +80,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
         authResult.permissions.includes("admin_scope_hierarchy_management");
     const hasUserScopeAssignmentPermission = authResult.authenticated &&
         authResult.permissions.includes("admin_user_scope_assignment");
-    const hasOrgManagementPermission = authResult.authenticated &&
-        authResult.permissions.includes("hazo_perm_org_management");
-    const hasOrgGlobalAdminPermission = authResult.authenticated &&
-        authResult.permissions.includes("hazo_org_global_admin");
     const hasSystemPermission = authResult.authenticated &&
         authResult.permissions.includes("admin_system");
     // Determine which tabs to show
@@ -95,8 +89,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
     const showScopeHierarchyTab = hrbacEnabled && hasScopeHierarchyPermission;
     const showScopeLabelsTab = hrbacEnabled && hasSystemPermission;
     const showUserScopesTab = hrbacEnabled && hasUserScopeAssignmentPermission;
-    const showOrgsTab = multiTenancyEnabled && hasOrgManagementPermission;
-    const hasAnyPermission = showUsersTab || showRolesTab || showPermissionsTab || showScopeHierarchyTab || showScopeLabelsTab || showUserScopesTab || showOrgsTab;
+    const hasAnyPermission = showUsersTab || showRolesTab || showPermissionsTab || showScopeHierarchyTab || showScopeLabelsTab || showUserScopesTab;
     // Tab 1: Users state
     const [users, setUsers] = useState([]);
     const [usersLoading, setUsersLoading] = useState(true);
@@ -107,13 +100,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
     const [selectedUser, setSelectedUser] = useState(null);
     const [usersActionLoading, setUsersActionLoading] = useState(false);
     const [userTypeUpdateLoading, setUserTypeUpdateLoading] = useState(false);
-    const [orgUpdateLoading, setOrgUpdateLoading] = useState(false);
-    const [availableOrgs, setAvailableOrgs] = useState([]);
-    // Org assignment dialog state
-    const [orgAssignDialogOpen, setOrgAssignDialogOpen] = useState(false);
-    const [orgAssignUser, setOrgAssignUser] = useState(null);
-    const [selectedOrgForAssign, setSelectedOrgForAssign] = useState(null);
-    const [orgAssignLoading, setOrgAssignLoading] = useState(false);
     // Tab 3: Permissions state
     const [permissions, setPermissions] = useState([]);
     const [permissionsLoading, setPermissionsLoading] = useState(true);
@@ -153,44 +139,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
         }
         void loadUsers();
     }, [showUsersTab, loadUsers]);
-    // Load organizations (only if multi-tenancy is enabled and user has permission)
-    // Non-global admins can only see orgs in their tree
-    useEffect(() => {
-        if (!multiTenancyEnabled || !showUsersTab) {
-            return;
-        }
-        const loadOrgs = async () => {
-            var _a, _b;
-            try {
-                const params = new URLSearchParams();
-                // Non-global admins can only see orgs in their tree
-                if (!hasOrgGlobalAdminPermission && authResult.authenticated) {
-                    const userRootOrgId = ((_a = authResult.user) === null || _a === void 0 ? void 0 : _a.root_org_id) || ((_b = authResult.user) === null || _b === void 0 ? void 0 : _b.org_id);
-                    if (userRootOrgId) {
-                        params.set("root_org_id", userRootOrgId);
-                    }
-                }
-                const queryString = params.toString();
-                const url = queryString
-                    ? `${apiBasePath}/org_management/orgs?${queryString}`
-                    : `${apiBasePath}/org_management/orgs`;
-                const response = await fetch(url);
-                const data = await response.json();
-                if (data.success && Array.isArray(data.orgs)) {
-                    setAvailableOrgs(data.orgs.map((org) => ({
-                        id: org.id,
-                        name: org.name,
-                        parent_org_id: org.parent_org_id,
-                    })));
-                }
-            }
-            catch (error) {
-                // Silently fail - orgs dropdown will just be empty
-                console.error("Failed to load organizations:", error);
-            }
-        };
-        void loadOrgs();
-    }, [multiTenancyEnabled, showUsersTab, apiBasePath, hasOrgGlobalAdminPermission, authResult]);
     // Load permissions (only if user has permission)
     useEffect(() => {
         if (!showPermissionsTab) {
@@ -343,120 +291,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
         finally {
             setUserTypeUpdateLoading(false);
         }
-    };
-    // Handle org change
-    const handleOrgChange = async (newOrgId) => {
-        if (!selectedUser)
-            return;
-        setOrgUpdateLoading(true);
-        try {
-            // Convert sentinel value "__none__" to null for API
-            const orgIdValue = newOrgId === "__none__" ? null : newOrgId;
-            const response = await fetch(`${apiBasePath}/user_management/users`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    user_id: selectedUser.id,
-                    org_id: orgIdValue,
-                }),
-            });
-            const data = await response.json();
-            if (data.success) {
-                toast.success("Organization updated successfully");
-                // Update local state
-                setSelectedUser(Object.assign(Object.assign({}, selectedUser), { org_id: newOrgId || null }));
-                // Reload users list to get updated root_org_id from server
-                await loadUsers();
-            }
-            else {
-                toast.error(data.error || "Failed to update organization");
-            }
-        }
-        catch (error) {
-            toast.error("Failed to update organization");
-        }
-        finally {
-            setOrgUpdateLoading(false);
-        }
-    };
-    // Build org tree from flat list for TreeView component
-    const buildOrgTree = (orgs) => {
-        // Create a map for quick lookup
-        const orgMap = new Map();
-        orgs.forEach((org) => {
-            orgMap.set(org.id, Object.assign(Object.assign({}, org), { children: [] }));
-        });
-        const rootNodes = [];
-        // Build tree structure
-        orgs.forEach((org) => {
-            const node = orgMap.get(org.id);
-            const treeItem = {
-                id: org.id,
-                name: org.name,
-                children: node.children.length > 0 ? node.children : undefined,
-            };
-            if (org.parent_org_id && orgMap.has(org.parent_org_id)) {
-                const parent = orgMap.get(org.parent_org_id);
-                parent.children.push(treeItem);
-            }
-            else {
-                rootNodes.push(treeItem);
-            }
-        });
-        // Update children in the tree
-        const updateChildren = (nodes) => {
-            return nodes.map((node) => {
-                const orgNode = orgMap.get(node.id);
-                if (orgNode && orgNode.children.length > 0) {
-                    return Object.assign(Object.assign({}, node), { children: updateChildren(orgNode.children) });
-                }
-                return node;
-            });
-        };
-        return updateChildren(rootNodes);
-    };
-    // Handle org assignment from dialog
-    const handleOrgAssignFromDialog = async () => {
-        if (!orgAssignUser)
-            return;
-        setOrgAssignLoading(true);
-        try {
-            const orgIdValue = selectedOrgForAssign;
-            const response = await fetch(`${apiBasePath}/user_management/users`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    user_id: orgAssignUser.id,
-                    org_id: orgIdValue,
-                }),
-            });
-            const data = await response.json();
-            if (data.success) {
-                toast.success("Organization updated successfully");
-                setOrgAssignDialogOpen(false);
-                // Reload users list to get updated org info
-                await loadUsers();
-            }
-            else {
-                toast.error(data.error || "Failed to update organization");
-            }
-        }
-        catch (error) {
-            toast.error("Failed to update organization");
-        }
-        finally {
-            setOrgAssignLoading(false);
-        }
-    };
-    // Open org assignment dialog for a user
-    const openOrgAssignDialog = (user) => {
-        setOrgAssignUser(user);
-        setSelectedOrgForAssign(user.org_id);
-        setOrgAssignDialogOpen(true);
     };
     // Handle migrate permissions
     const handleMigratePermissions = async () => {
@@ -679,9 +513,8 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
     return (_jsxs("div", { className: `cls_user_management_layout flex flex-col gap-4 w-full ${className || ""}`, children: [authResult.loading ? (_jsx("div", { className: "cls_user_management_permissions_loading flex items-center justify-center p-8", children: _jsx(Loader2, { className: "h-6 w-6 animate-spin text-slate-400" }) })) : !hasAnyPermission ? (_jsxs("div", { className: "cls_user_management_no_permissions flex flex-col items-center justify-center p-8 gap-4", children: [_jsx("p", { className: "text-lg font-semibold text-slate-700", children: "Access Denied" }), _jsx("p", { className: "text-sm text-muted-foreground text-center", children: "You don't have permission to access User Management. Please contact your administrator." })] })) : (_jsxs(Tabs, { defaultValue: showUsersTab ? "users" :
                     showRolesTab ? "roles" :
                         showPermissionsTab ? "permissions" :
-                            showScopeLabelsTab ? "scope_labels" :
-                                showScopeHierarchyTab ? "scope_hierarchy" :
-                                    showUserScopesTab ? "user_scopes" : "users", className: "cls_user_management_tabs w-full", children: [_jsxs(TabsList, { className: "cls_user_management_tabs_list flex w-full flex-wrap", children: [showUsersTab && (_jsx(TabsTrigger, { value: "users", className: "cls_user_management_tabs_trigger flex-1", children: "Manage Users" })), showRolesTab && (_jsx(TabsTrigger, { value: "roles", className: "cls_user_management_tabs_trigger flex-1", children: "Roles" })), showPermissionsTab && (_jsx(TabsTrigger, { value: "permissions", className: "cls_user_management_tabs_trigger flex-1", children: "Permissions" })), showScopeLabelsTab && (_jsx(TabsTrigger, { value: "scope_labels", className: "cls_user_management_tabs_trigger flex-1", children: "Scope Labels" })), showScopeHierarchyTab && (_jsx(TabsTrigger, { value: "scope_hierarchy", className: "cls_user_management_tabs_trigger flex-1", children: "Scope Hierarchy" })), showUserScopesTab && (_jsx(TabsTrigger, { value: "user_scopes", className: "cls_user_management_tabs_trigger flex-1", children: "User Scopes" })), showOrgsTab && (_jsx(TabsTrigger, { value: "organizations", className: "cls_user_management_tabs_trigger flex-1", children: "Organizations" }))] }), showUsersTab && (_jsx(TabsContent, { value: "users", className: "cls_user_management_tab_users w-full", children: usersLoading ? (_jsx("div", { className: "cls_user_management_users_loading flex items-center justify-center p-8", children: _jsx(Loader2, { className: "h-6 w-6 animate-spin text-slate-400" }) })) : (_jsx("div", { className: "cls_user_management_users_table_container border rounded-lg overflow-auto w-full", children: _jsxs(Table, { className: "cls_user_management_users_table w-full", children: [_jsx(TableHeader, { className: "cls_user_management_users_table_header", children: _jsxs(TableRow, { className: "cls_user_management_users_table_header_row", children: [_jsx(TableHead, { className: "cls_user_management_users_table_header_profile_pic w-16", children: "Photo" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_id", children: "ID" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_name", children: "Name" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_email", children: "Email" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_email_verified", children: "Email Verified" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_is_active", children: "Active" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_last_logon", children: "Last Logon" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_created_at", children: "Created At" }), userTypesEnabled && (_jsx(TableHead, { className: "cls_user_management_users_table_header_user_type", children: "User Type" })), _jsx(TableHead, { className: "cls_user_management_users_table_header_actions text-right", children: "Actions" })] }) }), _jsx(TableBody, { className: "cls_user_management_users_table_body", children: users.length === 0 ? (_jsx(TableRow, { className: "cls_user_management_users_table_row_empty", children: _jsx(TableCell, { colSpan: userTypesEnabled ? 10 : 9, className: "text-center text-muted-foreground py-8", children: "No users found." }) })) : (users.map((user) => (_jsxs(TableRow, { className: "cls_user_management_users_table_row cursor-pointer hover:bg-muted/50", onClick: () => {
+                            showScopeHierarchyTab ? "scope_hierarchy" :
+                                showUserScopesTab ? "user_scopes" : "users", className: "cls_user_management_tabs w-full", children: [_jsxs(TabsList, { className: "cls_user_management_tabs_list flex w-full flex-wrap", children: [showUsersTab && (_jsx(TabsTrigger, { value: "users", className: "cls_user_management_tabs_trigger flex-1", children: "Manage Users" })), showRolesTab && (_jsx(TabsTrigger, { value: "roles", className: "cls_user_management_tabs_trigger flex-1", children: "Roles" })), showPermissionsTab && (_jsx(TabsTrigger, { value: "permissions", className: "cls_user_management_tabs_trigger flex-1", children: "Permissions" })), showScopeHierarchyTab && (_jsx(TabsTrigger, { value: "scope_hierarchy", className: "cls_user_management_tabs_trigger flex-1", children: "Scope Hierarchy" })), showUserScopesTab && (_jsx(TabsTrigger, { value: "user_scopes", className: "cls_user_management_tabs_trigger flex-1", children: "User Scopes" }))] }), showUsersTab && (_jsx(TabsContent, { value: "users", className: "cls_user_management_tab_users w-full", children: usersLoading ? (_jsx("div", { className: "cls_user_management_users_loading flex items-center justify-center p-8", children: _jsx(Loader2, { className: "h-6 w-6 animate-spin text-slate-400" }) })) : (_jsx("div", { className: "cls_user_management_users_table_container border rounded-lg overflow-auto w-full", children: _jsxs(Table, { className: "cls_user_management_users_table w-full", children: [_jsx(TableHeader, { className: "cls_user_management_users_table_header", children: _jsxs(TableRow, { className: "cls_user_management_users_table_header_row", children: [_jsx(TableHead, { className: "cls_user_management_users_table_header_profile_pic w-16", children: "Photo" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_id", children: "ID" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_name", children: "Name" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_email", children: "Email" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_email_verified", children: "Email Verified" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_is_active", children: "Active" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_last_logon", children: "Last Logon" }), _jsx(TableHead, { className: "cls_user_management_users_table_header_created_at", children: "Created At" }), userTypesEnabled && (_jsx(TableHead, { className: "cls_user_management_users_table_header_user_type", children: "User Type" })), _jsx(TableHead, { className: "cls_user_management_users_table_header_actions text-right", children: "Actions" })] }) }), _jsx(TableBody, { className: "cls_user_management_users_table_body", children: users.length === 0 ? (_jsx(TableRow, { className: "cls_user_management_users_table_row_empty", children: _jsx(TableCell, { colSpan: userTypesEnabled ? 10 : 9, className: "text-center text-muted-foreground py-8", children: "No users found." }) })) : (users.map((user) => (_jsxs(TableRow, { className: "cls_user_management_users_table_row cursor-pointer hover:bg-muted/50", onClick: () => {
                                                 setSelectedUser(user);
                                                 setUserDetailDialogOpen(true);
                                             }, children: [_jsx(TableCell, { className: "cls_user_management_users_table_cell_profile_pic", children: _jsxs(Avatar, { className: "cls_user_management_users_table_avatar h-8 w-8", children: [_jsx(AvatarImage, { src: user.profile_picture_url || undefined, alt: user.name ? `Profile picture of ${user.name}` : "Profile picture", className: "cls_user_management_users_table_avatar_image" }), _jsx(AvatarFallback, { className: "cls_user_management_users_table_avatar_fallback bg-slate-200 text-slate-600 text-xs", children: getUserInitials(user) })] }) }), _jsxs(TableCell, { className: "cls_user_management_users_table_cell_id font-mono text-xs", children: [user.id.substring(0, 8), "..."] }), _jsx(TableCell, { className: "cls_user_management_users_table_cell_name", children: user.name || "-" }), _jsx(TableCell, { className: "cls_user_management_users_table_cell_email", children: user.email_address }), _jsx(TableCell, { className: "cls_user_management_users_table_cell_email_verified", children: user.email_verified ? (_jsx("span", { className: "text-green-600", children: "Yes" })) : (_jsx("span", { className: "text-red-600", children: "No" })) }), _jsx(TableCell, { className: "cls_user_management_users_table_cell_is_active", children: user.is_active ? (_jsx("span", { className: "text-green-600", children: "Active" })) : (_jsx("span", { className: "text-red-600", children: "Inactive" })) }), _jsx(TableCell, { className: "cls_user_management_users_table_cell_last_logon", children: user.last_logon
@@ -694,7 +527,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                                                     })() })), _jsx(TableCell, { className: "cls_user_management_users_table_cell_actions text-right", children: _jsx(TooltipProvider, { children: _jsxs("div", { className: "cls_user_management_users_table_actions flex items-center justify-end gap-2", onClick: (e) => e.stopPropagation(), children: [_jsxs(Tooltip, { children: [_jsx(TooltipTrigger, { asChild: true, children: _jsx(Button, { onClick: () => {
                                                                                     setSelectedUser(user);
                                                                                     setAssignRolesDialogOpen(true);
-                                                                                }, variant: "outline", size: "sm", className: "cls_user_management_users_table_action_assign_roles", children: _jsx(UserPlus, { className: "h-4 w-4" }) }) }), _jsx(TooltipContent, { children: _jsx("p", { children: "Assign Roles" }) })] }), multiTenancyEnabled && (_jsxs(Tooltip, { children: [_jsx(TooltipTrigger, { asChild: true, children: _jsx(Button, { onClick: () => openOrgAssignDialog(user), variant: "outline", size: "sm", className: "cls_user_management_users_table_action_assign_org", children: _jsx(Building2, { className: "h-4 w-4" }) }) }), _jsx(TooltipContent, { children: _jsx("p", { children: "Assign Organization" }) })] })), user.is_active && (_jsxs(Tooltip, { children: [_jsx(TooltipTrigger, { asChild: true, children: _jsx(Button, { onClick: () => {
+                                                                                }, variant: "outline", size: "sm", className: "cls_user_management_users_table_action_assign_roles", children: _jsx(UserPlus, { className: "h-4 w-4" }) }) }), _jsx(TooltipContent, { children: _jsx("p", { children: "Assign Roles" }) })] }), user.is_active && (_jsxs(Tooltip, { children: [_jsx(TooltipTrigger, { asChild: true, children: _jsx(Button, { onClick: () => {
                                                                                     setSelectedUser(user);
                                                                                     setDeactivateDialogOpen(true);
                                                                                 }, variant: "outline", size: "sm", className: "cls_user_management_users_table_action_deactivate", children: _jsx(UserX, { className: "h-4 w-4" }) }) }), _jsx(TooltipContent, { children: _jsx("p", { children: "Deactivate" }) })] })), _jsxs(Tooltip, { children: [_jsx(TooltipTrigger, { asChild: true, children: _jsx(Button, { onClick: () => {
@@ -709,7 +542,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                                                                                 setEditingPermission(permission);
                                                                                 setEditDescription(permission.description);
                                                                                 setEditPermissionDialogOpen(true);
-                                                                            }, variant: "outline", size: "sm", className: "cls_user_management_permissions_table_action_edit", children: [_jsx(Edit, { className: "h-4 w-4 mr-1" }), "Edit"] }), _jsxs(Button, { onClick: () => handleDeletePermission(permission), disabled: permissionsActionLoading, variant: "outline", size: "sm", className: "cls_user_management_permissions_table_action_delete text-destructive", children: [_jsx(Trash2, { className: "h-4 w-4 mr-1" }), "Delete"] })] })) }) })] }, `${permission.source}-${permission.id}-${permission.permission_name}`)))) })] }) }))] }) })), showScopeLabelsTab && (_jsx(TabsContent, { value: "scope_labels", className: "cls_user_management_tab_scope_labels w-full", children: _jsx(ScopeLabelsTab, {}) })), showScopeHierarchyTab && (_jsx(TabsContent, { value: "scope_hierarchy", className: "cls_user_management_tab_scope_hierarchy w-full", children: _jsx(ScopeHierarchyTab, {}) })), showUserScopesTab && (_jsx(TabsContent, { value: "user_scopes", className: "cls_user_management_tab_user_scopes w-full", children: _jsx(UserScopesTab, {}) })), showOrgsTab && (_jsx(TabsContent, { value: "organizations", className: "cls_user_management_tab_organizations w-full", children: _jsx(OrgHierarchyTab, { isGlobalAdmin: hasOrgGlobalAdminPermission }) }))] })), _jsx(AlertDialog, { open: deactivateDialogOpen, onOpenChange: setDeactivateDialogOpen, children: _jsxs(AlertDialogContent, { className: "cls_user_management_deactivate_dialog", children: [_jsxs(AlertDialogHeader, { children: [_jsx(AlertDialogTitle, { children: "Deactivate User" }), _jsxs(AlertDialogDescription, { children: ["Are you sure you want to deactivate ", (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.name) || (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address), "? They will not be able to log in until reactivated."] })] }), _jsxs(AlertDialogFooter, { className: "cls_user_management_deactivate_dialog_footer", children: [_jsx(AlertDialogAction, { onClick: handleDeactivateUser, disabled: usersActionLoading, className: "cls_user_management_deactivate_dialog_confirm", children: usersActionLoading ? (_jsxs(_Fragment, { children: [_jsx(Loader2, { className: "h-4 w-4 mr-2 animate-spin" }), "Deactivating..."] })) : ("Deactivate") }), _jsx(AlertDialogCancel, { onClick: () => {
+                                                                            }, variant: "outline", size: "sm", className: "cls_user_management_permissions_table_action_edit", children: [_jsx(Edit, { className: "h-4 w-4 mr-1" }), "Edit"] }), _jsxs(Button, { onClick: () => handleDeletePermission(permission), disabled: permissionsActionLoading, variant: "outline", size: "sm", className: "cls_user_management_permissions_table_action_delete text-destructive", children: [_jsx(Trash2, { className: "h-4 w-4 mr-1" }), "Delete"] })] })) }) })] }, `${permission.source}-${permission.id}-${permission.permission_name}`)))) })] }) }))] }) })), showScopeHierarchyTab && (_jsx(TabsContent, { value: "scope_hierarchy", className: "cls_user_management_tab_scope_hierarchy w-full", children: _jsx(ScopeHierarchyTab, {}) })), showUserScopesTab && (_jsx(TabsContent, { value: "user_scopes", className: "cls_user_management_tab_user_scopes w-full", children: _jsx(UserScopesTab, {}) }))] })), _jsx(AlertDialog, { open: deactivateDialogOpen, onOpenChange: setDeactivateDialogOpen, children: _jsxs(AlertDialogContent, { className: "cls_user_management_deactivate_dialog", children: [_jsxs(AlertDialogHeader, { children: [_jsx(AlertDialogTitle, { children: "Deactivate User" }), _jsxs(AlertDialogDescription, { children: ["Are you sure you want to deactivate ", (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.name) || (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address), "? They will not be able to log in until reactivated."] })] }), _jsxs(AlertDialogFooter, { className: "cls_user_management_deactivate_dialog_footer", children: [_jsx(AlertDialogAction, { onClick: handleDeactivateUser, disabled: usersActionLoading, className: "cls_user_management_deactivate_dialog_confirm", children: usersActionLoading ? (_jsxs(_Fragment, { children: [_jsx(Loader2, { className: "h-4 w-4 mr-2 animate-spin" }), "Deactivating..."] })) : ("Deactivate") }), _jsx(AlertDialogCancel, { onClick: () => {
                                         setDeactivateDialogOpen(false);
                                         setSelectedUser(null);
                                     }, className: "cls_user_management_deactivate_dialog_cancel", children: "Cancel" })] })] }) }), _jsx(AlertDialog, { open: resetPasswordDialogOpen, onOpenChange: setResetPasswordDialogOpen, children: _jsxs(AlertDialogContent, { className: "cls_user_management_reset_password_dialog", children: [_jsxs(AlertDialogHeader, { children: [_jsx(AlertDialogTitle, { children: "Reset Password" }), _jsxs(AlertDialogDescription, { children: ["Send a password reset email to ", selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address, "? They will receive a link to reset their password."] })] }), _jsxs(AlertDialogFooter, { className: "cls_user_management_reset_password_dialog_footer", children: [_jsx(AlertDialogAction, { onClick: handleResetPassword, disabled: usersActionLoading, className: "cls_user_management_reset_password_dialog_confirm", children: usersActionLoading ? (_jsxs(_Fragment, { children: [_jsx(Loader2, { className: "h-4 w-4 mr-2 animate-spin" }), "Sending..."] })) : ("Send Reset Email") }), _jsx(AlertDialogCancel, { onClick: () => {
@@ -731,23 +564,25 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                                         setAddPermissionDialogOpen(false);
                                         setNewPermissionName("");
                                         setNewPermissionDescription("");
-                                    }, variant: "outline", className: "cls_user_management_add_permission_dialog_cancel", children: [_jsx(CircleX, { className: "h-4 w-4 mr-2" }), "Cancel"] })] })] }) }), _jsx(Dialog, { open: userDetailDialogOpen, onOpenChange: setUserDetailDialogOpen, children: _jsxs(DialogContent, { className: "cls_user_management_user_detail_dialog max-w-2xl max-h-[80vh] overflow-y-auto", children: [_jsxs(DialogHeader, { children: [_jsx(DialogTitle, { children: "User Details" }), _jsxs(DialogDescription, { children: ["Complete information for ", (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.name) || (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address)] })] }), _jsx("div", { className: "cls_user_management_user_detail_dialog_content flex flex-col gap-4 py-4", children: selectedUser && (_jsxs("div", { className: "cls_user_management_user_detail_fields grid grid-cols-1 gap-4", children: [_jsxs("div", { className: "cls_user_management_user_detail_field_profile_pic flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "Profile Picture" }), _jsxs("div", { className: "cls_user_management_user_detail_profile_pic_container flex items-center gap-4", children: [_jsxs(Avatar, { className: "cls_user_management_user_detail_avatar h-16 w-16", children: [_jsx(AvatarImage, { src: selectedUser.profile_picture_url || undefined, alt: selectedUser.name ? `Profile picture of ${selectedUser.name}` : "Profile picture", className: "cls_user_management_user_detail_avatar_image" }), _jsx(AvatarFallback, { className: "cls_user_management_user_detail_avatar_fallback bg-slate-200 text-slate-600 text-lg", children: getUserInitials(selectedUser) })] }), _jsxs("div", { className: "cls_user_management_user_detail_profile_pic_info flex flex-col gap-1", children: [_jsx("span", { className: "cls_user_management_user_detail_profile_pic_url text-sm text-muted-foreground", children: selectedUser.profile_picture_url || "No profile picture" }), _jsxs("span", { className: "cls_user_management_user_detail_profile_pic_source text-xs text-muted-foreground", children: ["Source: ", selectedUser.profile_source || "N/A"] })] })] })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_id flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "User ID" }), _jsx("div", { className: "cls_user_management_user_detail_id_value font-mono text-sm bg-muted p-2 rounded", children: selectedUser.id })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_name flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "Name" }), _jsx("div", { className: "cls_user_management_user_detail_name_value text-sm", children: selectedUser.name || "-" })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_email flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "Email Address" }), _jsx("div", { className: "cls_user_management_user_detail_email_value text-sm", children: selectedUser.email_address })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_email_verified flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "Email Verified" }), _jsx("div", { className: "cls_user_management_user_detail_email_verified_value", children: selectedUser.email_verified ? (_jsx("span", { className: "text-green-600 font-medium", children: "Yes" })) : (_jsx("span", { className: "text-red-600 font-medium", children: "No" })) })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_is_active flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "Active Status" }), _jsx("div", { className: "cls_user_management_user_detail_is_active_value", children: selectedUser.is_active ? (_jsx("span", { className: "text-green-600 font-medium", children: "Active" })) : (_jsx("span", { className: "text-red-600 font-medium", children: "Inactive" })) })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_last_logon flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "Last Logon" }), _jsx("div", { className: "cls_user_management_user_detail_last_logon_value text-sm", children: selectedUser.last_logon ? (_jsx("span", { className: "font-medium", children: new Date(selectedUser.last_logon).toLocaleString(undefined, {
-                                                        year: "numeric",
-                                                        month: "long",
-                                                        day: "numeric",
-                                                        hour: "2-digit",
-                                                        minute: "2-digit",
-                                                        second: "2-digit",
-                                                        timeZoneName: "short",
-                                                    }) })) : (_jsx("span", { className: "text-muted-foreground", children: "Never" })) })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_created_at flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "Created At" }), _jsx("div", { className: "cls_user_management_user_detail_created_at_value text-sm", children: selectedUser.created_at ? (_jsx("span", { className: "font-medium", children: new Date(selectedUser.created_at).toLocaleString(undefined, {
-                                                        year: "numeric",
-                                                        month: "long",
-                                                        day: "numeric",
-                                                        hour: "2-digit",
-                                                        minute: "2-digit",
-                                                        second: "2-digit",
-                                                        timeZoneName: "short",
-                                                    }) })) : (_jsx("span", { className: "text-muted-foreground", children: "-" })) })] }), userTypesEnabled && (_jsxs("div", { className: "cls_user_management_user_detail_field_user_type flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "User Type" }), _jsxs("div", { className: "cls_user_management_user_detail_user_type_value flex items-center gap-2", children: [_jsxs(Select, { value: selectedUser.user_type || "__none__", onValueChange: (value) => handleUserTypeChange(value), disabled: userTypeUpdateLoading, children: [_jsx(SelectTrigger, { className: "w-48", children: _jsx(SelectValue, { placeholder: "Select user type" }) }), _jsxs(SelectContent, { children: [_jsx(SelectItem, { value: "__none__", children: "None" }), availableUserTypes.map((type) => (_jsx(SelectItem, { value: type.key, children: type.label }, type.key)))] })] }), userTypeUpdateLoading && (_jsx(Loader2, { className: "h-4 w-4 animate-spin text-muted-foreground" }))] })] })), multiTenancyEnabled && (_jsxs("div", { className: "cls_user_management_user_detail_field_org flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "Organization" }), _jsxs("div", { className: "cls_user_management_user_detail_org_value flex items-center gap-2", children: [_jsxs(Select, { value: selectedUser.org_id || "__none__", onValueChange: (value) => handleOrgChange(value), disabled: orgUpdateLoading, children: [_jsx(SelectTrigger, { className: "w-64", children: _jsx(SelectValue, { placeholder: "Select organization" }) }), _jsxs(SelectContent, { children: [_jsx(SelectItem, { value: "__none__", children: "None" }), availableOrgs.map((org) => (_jsx(SelectItem, { value: org.id, children: org.name }, org.id)))] })] }), orgUpdateLoading && (_jsx(Loader2, { className: "h-4 w-4 animate-spin text-muted-foreground" }))] })] })), _jsxs("div", { className: "cls_user_management_user_detail_field_app_user_data flex flex-col gap-2", children: [_jsx(Label, { className: "cls_user_management_user_detail_label font-semibold", children: "App User Data" }), _jsx("div", { className: "cls_user_management_user_detail_app_user_data_value", children: selectedUser.app_user_data && Object.keys(selectedUser.app_user_data).length > 0 ? (_jsx("div", { className: "border rounded-lg max-h-[200px] overflow-y-auto p-2 bg-slate-50 text-sm font-mono", children: Object.entries(selectedUser.app_user_data).map(([key, value]) => (_jsx(JsonTreeNode, { data: value, keyName: key, level: 0, defaultExpanded: true }, key))) })) : (_jsx("span", { className: "text-muted-foreground text-sm", children: "No app user data" })) })] })] })) }), _jsx(DialogFooter, { className: "cls_user_management_user_detail_dialog_footer", children: _jsx(Button, { onClick: () => setUserDetailDialogOpen(false), variant: "outline", className: "cls_user_management_user_detail_dialog_close", children: "Close" }) })] }) }), _jsx(Dialog, { open: assignRolesDialogOpen, onOpenChange: setAssignRolesDialogOpen, children: _jsxs(DialogContent, { className: "cls_user_management_assign_roles_dialog max-w-4xl max-h-[80vh] overflow-y-auto", children: [_jsxs(DialogHeader, { children: [_jsx(DialogTitle, { children: "Assign Roles to User" }), _jsxs(DialogDescription, { children: ["Select roles to assign to ", (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.name) || (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address), ". Check the roles you want to assign, then click Save."] })] }), _jsx("div", { className: "cls_user_management_assign_roles_dialog_content py-4", children: _jsx(RolesMatrix, { add_button_enabled: false, role_name_selection_enabled: true, permissions_read_only: true, show_save_cancel: true, user_id: selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.id, onSave: (data) => {
+                                    }, variant: "outline", className: "cls_user_management_add_permission_dialog_cancel", children: [_jsx(CircleX, { className: "h-4 w-4 mr-2" }), "Cancel"] })] })] }) }), _jsx(Dialog, { open: userDetailDialogOpen, onOpenChange: setUserDetailDialogOpen, children: _jsxs(DialogContent, { className: "cls_user_management_user_detail_dialog max-w-5xl max-h-[80vh] overflow-y-auto", children: [_jsxs(DialogHeader, { children: [_jsx(DialogTitle, { children: "User Details" }), _jsxs(DialogDescription, { children: ["Complete information for ", (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.name) || (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address)] })] }), _jsx("div", { className: "cls_user_management_user_detail_dialog_content flex flex-col gap-6 py-4", children: selectedUser && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "cls_user_management_user_detail_fields grid grid-cols-2 gap-6", children: [_jsxs("div", { className: "flex flex-col gap-4", children: [_jsxs("div", { className: "cls_user_management_user_detail_field_profile_pic flex flex-col gap-1", children: [_jsx("span", { className: "text-xs text-muted-foreground uppercase tracking-wide", children: "Profile Picture" }), _jsxs("div", { className: "cls_user_management_user_detail_profile_pic_container flex items-center gap-4 bg-muted/30 px-3 py-2.5 rounded", children: [_jsxs(Avatar, { className: "cls_user_management_user_detail_avatar h-14 w-14", children: [_jsx(AvatarImage, { src: selectedUser.profile_picture_url || undefined, alt: selectedUser.name ? `Profile picture of ${selectedUser.name}` : "Profile picture", className: "cls_user_management_user_detail_avatar_image" }), _jsx(AvatarFallback, { className: "cls_user_management_user_detail_avatar_fallback bg-slate-200 text-slate-600 text-lg", children: getUserInitials(selectedUser) })] }), _jsxs("div", { className: "cls_user_management_user_detail_profile_pic_info flex flex-col gap-0.5", children: [_jsx("span", { className: "cls_user_management_user_detail_profile_pic_url text-sm font-medium truncate max-w-[200px]", children: selectedUser.profile_picture_url ? "Custom photo" : "No profile picture" }), _jsxs("span", { className: "cls_user_management_user_detail_profile_pic_source text-xs text-muted-foreground", children: ["Source: ", selectedUser.profile_source || "N/A"] })] })] })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_id flex flex-col gap-1", children: [_jsx("span", { className: "text-xs text-muted-foreground uppercase tracking-wide", children: "User ID" }), _jsx("div", { className: "cls_user_management_user_detail_id_value font-mono text-sm bg-muted/30 px-3 py-2 rounded", children: selectedUser.id })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_name flex flex-col gap-1", children: [_jsx("span", { className: "text-xs text-muted-foreground uppercase tracking-wide", children: "Name" }), _jsx("div", { className: "cls_user_management_user_detail_name_value text-sm font-medium bg-muted/30 px-3 py-2 rounded", children: selectedUser.name || "-" })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_email flex flex-col gap-1", children: [_jsx("span", { className: "text-xs text-muted-foreground uppercase tracking-wide", children: "Email Address" }), _jsx("div", { className: "cls_user_management_user_detail_email_value text-sm font-medium bg-muted/30 px-3 py-2 rounded", children: selectedUser.email_address })] })] }), _jsxs("div", { className: "flex flex-col gap-4", children: [_jsxs("div", { className: "cls_user_management_user_detail_field_email_verified flex flex-col gap-1", children: [_jsx("span", { className: "text-xs text-muted-foreground uppercase tracking-wide", children: "Email Verified" }), _jsx("div", { className: "cls_user_management_user_detail_email_verified_value bg-muted/30 px-3 py-2 rounded", children: selectedUser.email_verified ? (_jsx("span", { className: "text-green-600 font-medium text-sm", children: "Yes" })) : (_jsx("span", { className: "text-red-600 font-medium text-sm", children: "No" })) })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_is_active flex flex-col gap-1", children: [_jsx("span", { className: "text-xs text-muted-foreground uppercase tracking-wide", children: "Active Status" }), _jsx("div", { className: "cls_user_management_user_detail_is_active_value bg-muted/30 px-3 py-2 rounded", children: selectedUser.is_active ? (_jsx("span", { className: "text-green-600 font-medium text-sm", children: "Active" })) : (_jsx("span", { className: "text-red-600 font-medium text-sm", children: "Inactive" })) })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_last_logon flex flex-col gap-1", children: [_jsx("span", { className: "text-xs text-muted-foreground uppercase tracking-wide", children: "Last Logon" }), _jsx("div", { className: "cls_user_management_user_detail_last_logon_value text-sm bg-muted/30 px-3 py-2 rounded", children: selectedUser.last_logon ? (_jsx("span", { className: "font-medium", children: new Date(selectedUser.last_logon).toLocaleString(undefined, {
+                                                                        year: "numeric",
+                                                                        month: "short",
+                                                                        day: "numeric",
+                                                                        hour: "2-digit",
+                                                                        minute: "2-digit",
+                                                                    }) })) : (_jsx("span", { className: "text-muted-foreground", children: "Never" })) })] }), _jsxs("div", { className: "cls_user_management_user_detail_field_created_at flex flex-col gap-1", children: [_jsx("span", { className: "text-xs text-muted-foreground uppercase tracking-wide", children: "Created At" }), _jsx("div", { className: "cls_user_management_user_detail_created_at_value text-sm bg-muted/30 px-3 py-2 rounded", children: selectedUser.created_at ? (_jsx("span", { className: "font-medium", children: new Date(selectedUser.created_at).toLocaleString(undefined, {
+                                                                        year: "numeric",
+                                                                        month: "short",
+                                                                        day: "numeric",
+                                                                        hour: "2-digit",
+                                                                        minute: "2-digit",
+                                                                    }) })) : (_jsx("span", { className: "text-muted-foreground", children: "-" })) })] }), userTypesEnabled && (_jsxs("div", { className: "cls_user_management_user_detail_field_user_type flex flex-col gap-1", children: [_jsx("span", { className: "text-xs text-muted-foreground uppercase tracking-wide", children: "User Type" }), _jsxs("div", { className: "cls_user_management_user_detail_user_type_value flex items-center gap-2", children: [_jsxs(Select, { value: selectedUser.user_type || "__none__", onValueChange: (value) => handleUserTypeChange(value), disabled: userTypeUpdateLoading, children: [_jsx(SelectTrigger, { className: "h-9", children: _jsx(SelectValue, { placeholder: "Select user type" }) }), _jsxs(SelectContent, { children: [_jsx(SelectItem, { value: "__none__", children: "None" }), availableUserTypes.map((type) => (_jsx(SelectItem, { value: type.key, children: type.label }, type.key)))] })] }), userTypeUpdateLoading && (_jsx(Loader2, { className: "h-4 w-4 animate-spin text-muted-foreground" }))] })] }))] })] }), _jsx("div", { className: "cls_user_management_user_detail_field_app_user_data border-t pt-4", children: _jsx("div", { className: "cls_user_management_user_detail_app_user_data_value", children: _jsx(AppUserDataEditor, { userId: selectedUser.id, currentData: selectedUser.app_user_data, onSave: (newData) => {
+                                                    // Update selected user's app_user_data locally
+                                                    setSelectedUser((prev) => prev ? Object.assign(Object.assign({}, prev), { app_user_data: newData }) : null);
+                                                    // Also update in the users list
+                                                    setUsers((prevUsers) => prevUsers.map((u) => u.id === selectedUser.id
+                                                        ? Object.assign(Object.assign({}, u), { app_user_data: newData }) : u));
+                                                } }) }) })] })) }), _jsx(DialogFooter, { className: "cls_user_management_user_detail_dialog_footer", children: _jsx(Button, { onClick: () => setUserDetailDialogOpen(false), variant: "outline", className: "cls_user_management_user_detail_dialog_close", children: "Close" }) })] }) }), _jsx(Dialog, { open: assignRolesDialogOpen, onOpenChange: setAssignRolesDialogOpen, children: _jsxs(DialogContent, { className: "cls_user_management_assign_roles_dialog max-w-4xl max-h-[80vh] overflow-y-auto", children: [_jsxs(DialogHeader, { children: [_jsx(DialogTitle, { children: "Assign Roles to User" }), _jsxs(DialogDescription, { children: ["Select roles to assign to ", (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.name) || (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address), ". Check the roles you want to assign, then click Save."] })] }), _jsx("div", { className: "cls_user_management_assign_roles_dialog_content py-4", children: _jsx(RolesMatrix, { add_button_enabled: false, role_name_selection_enabled: true, permissions_read_only: true, show_save_cancel: true, user_id: selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.id, onSave: (data) => {
                                     // Data is already saved by RolesMatrix component
                                     console.log("User roles saved:", data);
                                     // Refresh users list to show updated roles
@@ -757,11 +592,5 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                                 }, onCancel: () => {
                                     setAssignRolesDialogOpen(false);
                                     setSelectedUser(null);
-                                }, className: "cls_user_management_assign_roles_matrix" }) })] }) }), _jsx(Dialog, { open: orgAssignDialogOpen, onOpenChange: setOrgAssignDialogOpen, children: _jsxs(DialogContent, { className: "cls_user_management_org_assign_dialog max-w-lg max-h-[80vh] flex flex-col", children: [_jsxs(DialogHeader, { children: [_jsx(DialogTitle, { children: "Assign Organization" }), _jsxs(DialogDescription, { children: ["Select an organization for ", (orgAssignUser === null || orgAssignUser === void 0 ? void 0 : orgAssignUser.name) || (orgAssignUser === null || orgAssignUser === void 0 ? void 0 : orgAssignUser.email_address)] })] }), _jsxs("div", { className: "cls_user_management_org_assign_dialog_content flex-1 overflow-y-auto py-4 min-h-0", children: [_jsxs("div", { className: `cls_user_management_org_assign_none p-3 mb-2 rounded-lg border cursor-pointer transition-colors ${selectedOrgForAssign === null
-                                        ? "border-primary bg-primary/10"
-                                        : "border-border hover:bg-muted"}`, onClick: () => setSelectedOrgForAssign(null), children: [_jsxs("div", { className: "flex items-center gap-2", children: [_jsx(CircleX, { className: "h-4 w-4 text-muted-foreground" }), _jsx("span", { className: "font-medium", children: "None" })] }), _jsx("p", { className: "text-sm text-muted-foreground mt-1", children: "Remove organization assignment" })] }), availableOrgs.length > 0 ? (_jsx("div", { className: "cls_user_management_org_assign_tree border rounded-lg overflow-auto min-h-[200px]", children: _jsx(TreeView, { data: buildOrgTree(availableOrgs), expandAll: true, defaultNodeIcon: Building2, defaultLeafIcon: Building2, onSelectChange: (item) => {
-                                            if (item) {
-                                                setSelectedOrgForAssign(item.id);
-                                            }
-                                        }, initialSelectedItemId: selectedOrgForAssign || undefined, className: "w-full p-2" }) })) : (_jsx("div", { className: "cls_user_management_org_assign_empty text-center py-8 text-muted-foreground", children: "No organizations available" }))] }), _jsxs(DialogFooter, { className: "cls_user_management_org_assign_dialog_footer", children: [_jsx(Button, { variant: "outline", onClick: () => setOrgAssignDialogOpen(false), disabled: orgAssignLoading, children: "Cancel" }), _jsx(Button, { onClick: handleOrgAssignFromDialog, disabled: orgAssignLoading, children: orgAssignLoading ? (_jsxs(_Fragment, { children: [_jsx(Loader2, { className: "mr-2 h-4 w-4 animate-spin" }), "Saving..."] })) : ("Save") })] })] }) })] }));
+                                }, className: "cls_user_management_assign_roles_matrix" }) })] }) })] }));
 }

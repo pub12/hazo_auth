@@ -17,26 +17,14 @@ export class PermissionError extends Error {
     }
 }
 /**
- * Custom error class for scope access denials in HRBAC
+ * Custom error class for scope access denials
  * Thrown when strict mode is enabled and user lacks access to required scope
  */
 export class ScopeAccessError extends Error {
-    constructor(scope_type, scope_identifier, user_scopes) {
-        super(`Access denied to scope: ${scope_type} / ${scope_identifier}`);
-        this.scope_type = scope_type;
-        this.scope_identifier = scope_identifier;
+    constructor(scope_id, user_scopes) {
+        super(`Access denied to scope: ${scope_id}`);
+        this.scope_id = scope_id;
         this.user_scopes = user_scopes;
         this.name = "ScopeAccessError";
-    }
-}
-/**
- * Custom error class for missing organization assignment
- * Thrown when require_org: true is set but user has no org_id assigned
- */
-export class OrgRequiredError extends Error {
-    constructor(user_id) {
-        super(`User ${user_id} is not assigned to an organization`);
-        this.user_id = user_id;
-        this.name = "OrgRequiredError";
     }
 }

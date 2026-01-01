@@ -1,27 +1,31 @@
-// file_description: service for HRBAC scope operations using hazo_connect
+// file_description: service for scope operations using unified hazo_scopes table
 // section: imports
 import type { HazoConnectAdapter } from "hazo_connect";
 import { createCrudService } from "hazo_connect/server";
 import { create_app_logger } from "../app_logger";
 import { sanitize_error_for_user } from "../utils/error_sanitizer";
 
+// section: constants
+
+/**
+ * Super admin scope ID - special UUID for system-level administrators
+ * Users assigned to this scope have global access
+ */
+export const SUPER_ADMIN_SCOPE_ID = "00000000-0000-0000-0000-000000000000";
+
+/**
+ * Default system scope ID - for non-multi-tenancy mode
+ * All users are assigned to this scope when multi-tenancy is disabled
+ */
+export const DEFAULT_SYSTEM_SCOPE_ID = "00000000-0000-0000-0000-000000000001";
+
 // section: types
-export type ScopeLevel =
-  | "hazo_scopes_l1"
-  | "hazo_scopes_l2"
-  | "hazo_scopes_l3"
-  | "hazo_scopes_l4"
-  | "hazo_scopes_l5"
-  | "hazo_scopes_l6"
-  | "hazo_scopes_l7";
 
 export type ScopeRecord = {
   id: string;
-  seq: string;
-  org_id: string;
-  root_org_id: string;
   name: string;
-  parent_scope_id?: string | null;
+  level: string; // descriptive name like "HQ", "Division", "Department", "system", "default"
+  parent_id: string | null;
   created_at: string;
   changed_at: string;
 };
@@ -34,81 +38,59 @@ export type ScopeServiceResult = {
 };
 
 export type CreateScopeData = {
-  org_id: string;
-  root_org_id: string;
   name: string;
-  parent_scope_id?: string;
+  level: string;
+  parent_id?: string | null;
 };
 
 export type UpdateScopeData = {
   name?: string;
-  parent_scope_id?: string | null;
+  level?: string;
+  parent_id?: string | null;
 };
 
-// section: constants
-export const SCOPE_LEVELS: ScopeLevel[] = [
-  "hazo_scopes_l1",
-  "hazo_scopes_l2",
-  "hazo_scopes_l3",
-  "hazo_scopes_l4",
-  "hazo_scopes_l5",
-  "hazo_scopes_l6",
-  "hazo_scopes_l7",
-];
-
-export const SCOPE_LEVEL_NUMBERS: Record<ScopeLevel, number> = {
-  hazo_scopes_l1: 1,
-  hazo_scopes_l2: 2,
-  hazo_scopes_l3: 3,
-  hazo_scopes_l4: 4,
-  hazo_scopes_l5: 5,
-  hazo_scopes_l6: 6,
-  hazo_scopes_l7: 7,
+export type ScopeTreeNode = ScopeRecord & {
+  children?: ScopeTreeNode[];
 };
 
 // section: helpers
 
 /**
- * Validates that the provided string is a valid scope level
+ * Checks if the given scope_id is the super admin scope
  */
-export function is_valid_scope_level(level: string): level is ScopeLevel {
-  return SCOPE_LEVELS.includes(level as ScopeLevel);
+export function is_super_admin_scope(scope_id: string): boolean {
+  return scope_id === SUPER_ADMIN_SCOPE_ID;
 }
 
 /**
- * Gets the parent level for a given scope level
- * Returns undefined for L1 (root level)
+ * Checks if the given scope_id is the default system scope
  */
-export function get_parent_level(level: ScopeLevel): ScopeLevel | undefined {
-  const level_num = SCOPE_LEVEL_NUMBERS[level];
-  if (level_num === 1) return undefined;
-  return `hazo_scopes_l${level_num - 1}` as ScopeLevel;
+export function is_default_system_scope(scope_id: string): boolean {
+  return scope_id === DEFAULT_SYSTEM_SCOPE_ID;
 }
 
 /**
- * Gets the child level for a given scope level
- * Returns undefined for L7 (leaf level)
+ * Checks if the given scope_id is a system scope (super admin or default system)
  */
-export function get_child_level(level: ScopeLevel): ScopeLevel | undefined {
-  const level_num = SCOPE_LEVEL_NUMBERS[level];
-  if (level_num === 7) return undefined;
-  return `hazo_scopes_l${level_num + 1}` as ScopeLevel;
+export function is_system_scope(scope_id: string): boolean {
+  return is_super_admin_scope(scope_id) || is_default_system_scope(scope_id);
 }
 
+// section: crud operations
+
 /**
- * Gets all scopes for a given level, optionally filtered by organization
+ * Gets all scopes, optionally filtered by parent_id
  */
-export async function get_scopes_by_level(
+export async function get_all_scopes(
   adapter: HazoConnectAdapter,
-  level: ScopeLevel,
-  org_id?: string,
+  parent_id?: string | null,
 ): Promise<ScopeServiceResult> {
   try {
-    const scope_service = createCrudService(adapter, level);
+    const scope_service = createCrudService(adapter, "hazo_scopes");
 
     let scopes: unknown[];
-    if (org_id) {
-      scopes = await scope_service.findBy({ org_id });
+    if (parent_id !== undefined) {
+      scopes = await scope_service.findBy({ parent_id });
     } else {
       scopes = await scope_service.findBy({});
     }
@@ -133,9 +115,8 @@ export async function get_scopes_by_level(
       context: {
         filename: "scope_service.ts",
         line_number: 0,
-        operation: "get_scopes_by_level",
-        level,
-        org_id,
+        operation: "get_all_scopes",
+        parent_id,
       },
     });
 
@@ -147,15 +128,23 @@ export async function get_scopes_by_level(
 }
 
 /**
+ * Gets root scopes (scopes with no parent)
+ */
+export async function get_root_scopes(
+  adapter: HazoConnectAdapter,
+): Promise<ScopeServiceResult> {
+  return get_all_scopes(adapter, null);
+}
+
+/**
  * Gets a single scope by ID
  */
 export async function get_scope_by_id(
   adapter: HazoConnectAdapter,
-  level: ScopeLevel,
   scope_id: string,
 ): Promise<ScopeServiceResult> {
   try {
-    const scope_service = createCrudService(adapter, level);
+    const scope_service = createCrudService(adapter, "hazo_scopes");
     const scopes = await scope_service.findBy({ id: scope_id });
 
     if (!Array.isArray(scopes) || scopes.length === 0) {
@@ -179,7 +168,6 @@ export async function get_scope_by_id(
         filename: "scope_service.ts",
         line_number: 0,
         operation: "get_scope_by_id",
-        level,
         scope_id,
       },
     });
@@ -192,16 +180,15 @@ export async function get_scope_by_id(
 }
 
 /**
- * Gets a single scope by seq (friendly ID)
+ * Gets a single scope by name (case-insensitive partial match not supported - exact match)
  */
-export async function get_scope_by_seq(
+export async function get_scope_by_name(
   adapter: HazoConnectAdapter,
-  level: ScopeLevel,
-  seq: string,
+  name: string,
 ): Promise<ScopeServiceResult> {
   try {
-    const scope_service = createCrudService(adapter, level);
-    const scopes = await scope_service.findBy({ seq });
+    const scope_service = createCrudService(adapter, "hazo_scopes");
+    const scopes = await scope_service.findBy({ name });
 
     if (!Array.isArray(scopes) || scopes.length === 0) {
       return {
@@ -223,9 +210,8 @@ export async function get_scope_by_seq(
       context: {
         filename: "scope_service.ts",
         line_number: 0,
-        operation: "get_scope_by_seq",
-        level,
-        seq,
+        operation: "get_scope_by_name",
+        name,
       },
     });
 
@@ -238,33 +224,18 @@ export async function get_scope_by_seq(
 
 /**
  * Creates a new scope
- * Note: The seq field is auto-generated by the database via hazo_scope_id_generator function
  */
 export async function create_scope(
   adapter: HazoConnectAdapter,
-  level: ScopeLevel,
   data: CreateScopeData,
 ): Promise<ScopeServiceResult> {
   try {
-    const scope_service = createCrudService(adapter, level);
+    const scope_service = createCrudService(adapter, "hazo_scopes");
     const now = new Date().toISOString();
 
-    // Validate parent_scope_id is required for L2-L7
-    const parent_level = get_parent_level(level);
-    if (parent_level && !data.parent_scope_id) {
-      return {
-        success: false,
-        error: `parent_scope_id is required for ${level}`,
-      };
-    }
-
     // Validate parent exists if provided
-    if (data.parent_scope_id && parent_level) {
-      const parent_result = await get_scope_by_id(
-        adapter,
-        parent_level,
-        data.parent_scope_id,
-      );
+    if (data.parent_id) {
+      const parent_result = await get_scope_by_id(adapter, data.parent_id);
       if (!parent_result.success) {
         return {
           success: false,
@@ -274,16 +245,12 @@ export async function create_scope(
     }
 
     const insert_data: Record<string, unknown> = {
-      org_id: data.org_id,
-      root_org_id: data.root_org_id,
       name: data.name,
+      level: data.level,
+      parent_id: data.parent_id || null,
       created_at: now,
       changed_at: now,
     };
-
-    if (data.parent_scope_id) {
-      insert_data.parent_scope_id = data.parent_scope_id;
-    }
 
     const inserted = await scope_service.insert(insert_data);
 
@@ -308,7 +275,6 @@ export async function create_scope(
         filename: "scope_service.ts",
         line_number: 0,
         operation: "create_scope",
-        level,
         data,
       },
     });
@@ -325,35 +291,55 @@ export async function create_scope(
  */
 export async function update_scope(
   adapter: HazoConnectAdapter,
-  level: ScopeLevel,
   scope_id: string,
   data: UpdateScopeData,
 ): Promise<ScopeServiceResult> {
   try {
-    const scope_service = createCrudService(adapter, level);
+    // Prevent updating system scopes
+    if (is_system_scope(scope_id)) {
+      return {
+        success: false,
+        error: "Cannot modify system scopes",
+      };
+    }
+
+    const scope_service = createCrudService(adapter, "hazo_scopes");
     const now = new Date().toISOString();
 
     // Check scope exists
-    const existing = await get_scope_by_id(adapter, level, scope_id);
+    const existing = await get_scope_by_id(adapter, scope_id);
     if (!existing.success) {
       return existing;
     }
 
     // Validate parent if being changed
-    if (data.parent_scope_id !== undefined) {
-      const parent_level = get_parent_level(level);
-      if (parent_level && data.parent_scope_id) {
-        const parent_result = await get_scope_by_id(
-          adapter,
-          parent_level,
-          data.parent_scope_id,
-        );
-        if (!parent_result.success) {
-          return {
-            success: false,
-            error: "Parent scope not found",
-          };
-        }
+    if (data.parent_id !== undefined && data.parent_id !== null) {
+      // Prevent circular reference
+      if (data.parent_id === scope_id) {
+        return {
+          success: false,
+          error: "Cannot set scope as its own parent",
+        };
+      }
+
+      const parent_result = await get_scope_by_id(adapter, data.parent_id);
+      if (!parent_result.success) {
+        return {
+          success: false,
+          error: "Parent scope not found",
+        };
+      }
+
+      // Check if new parent is a descendant of this scope (would create cycle)
+      const descendants = await get_scope_descendants(adapter, scope_id);
+      if (
+        descendants.success &&
+        descendants.scopes?.some((s) => s.id === data.parent_id)
+      ) {
+        return {
+          success: false,
+          error: "Cannot set a descendant as parent (would create cycle)",
+        };
       }
     }
 
@@ -365,8 +351,12 @@ export async function update_scope(
       update_data.name = data.name;
     }
 
-    if (data.parent_scope_id !== undefined) {
-      update_data.parent_scope_id = data.parent_scope_id;
+    if (data.level !== undefined) {
+      update_data.level = data.level;
+    }
+
+    if (data.parent_id !== undefined) {
+      update_data.parent_id = data.parent_id;
     }
 
     const updated = await scope_service.updateById(scope_id, update_data);
@@ -392,7 +382,6 @@ export async function update_scope(
         filename: "scope_service.ts",
         line_number: 0,
         operation: "update_scope",
-        level,
         scope_id,
         data,
       },
@@ -410,14 +399,21 @@ export async function update_scope(
  */
 export async function delete_scope(
   adapter: HazoConnectAdapter,
-  level: ScopeLevel,
   scope_id: string,
 ): Promise<ScopeServiceResult> {
   try {
-    const scope_service = createCrudService(adapter, level);
+    // Prevent deleting system scopes
+    if (is_system_scope(scope_id)) {
+      return {
+        success: false,
+        error: "Cannot delete system scopes",
+      };
+    }
+
+    const scope_service = createCrudService(adapter, "hazo_scopes");
 
     // Check scope exists
-    const existing = await get_scope_by_id(adapter, level, scope_id);
+    const existing = await get_scope_by_id(adapter, scope_id);
     if (!existing.success) {
       return existing;
     }
@@ -438,7 +434,6 @@ export async function delete_scope(
         filename: "scope_service.ts",
         line_number: 0,
         operation: "delete_scope",
-        level,
         scope_id,
       },
     });
@@ -450,25 +445,18 @@ export async function delete_scope(
   }
 }
 
+// section: hierarchy operations
+
 /**
  * Gets immediate children of a scope
  */
 export async function get_scope_children(
   adapter: HazoConnectAdapter,
-  level: ScopeLevel,
   scope_id: string,
 ): Promise<ScopeServiceResult> {
   try {
-    const child_level = get_child_level(level);
-    if (!child_level) {
-      return {
-        success: true,
-        scopes: [], // L7 has no children
-      };
-    }
-
-    const child_service = createCrudService(adapter, child_level);
-    const children = await child_service.findBy({ parent_scope_id: scope_id });
+    const scope_service = createCrudService(adapter, "hazo_scopes");
+    const children = await scope_service.findBy({ parent_id: scope_id });
 
     return {
       success: true,
@@ -484,7 +472,6 @@ export async function get_scope_children(
         filename: "scope_service.ts",
         line_number: 0,
         operation: "get_scope_children",
-        level,
         scope_id,
       },
     });
@@ -497,42 +484,35 @@ export async function get_scope_children(
 }
 
 /**
- * Gets all ancestors of a scope up to L1 (root)
- * Returns array ordered from immediate parent to root (L1)
+ * Gets all ancestors of a scope up to root
+ * Returns array ordered from immediate parent to root
  */
 export async function get_scope_ancestors(
   adapter: HazoConnectAdapter,
-  level: ScopeLevel,
   scope_id: string,
 ): Promise<ScopeServiceResult> {
   try {
     const ancestors: ScopeRecord[] = [];
 
     // Get the scope first
-    const scope_result = await get_scope_by_id(adapter, level, scope_id);
+    const scope_result = await get_scope_by_id(adapter, scope_id);
     if (!scope_result.success || !scope_result.scope) {
       return scope_result;
     }
 
     let current_scope = scope_result.scope;
-    let current_level = level;
 
-    // Walk up the hierarchy
-    while (current_scope.parent_scope_id) {
-      const parent_level = get_parent_level(current_level);
-      if (!parent_level) break;
-
+    // Walk up the hierarchy following parent_id
+    while (current_scope.parent_id) {
       const parent_result = await get_scope_by_id(
         adapter,
-        parent_level,
-        current_scope.parent_scope_id,
+        current_scope.parent_id,
       );
 
       if (!parent_result.success || !parent_result.scope) break;
 
       ancestors.push(parent_result.scope);
       current_scope = parent_result.scope;
-      current_level = parent_level;
     }
 
     return {
@@ -549,7 +529,6 @@ export async function get_scope_ancestors(
         filename: "scope_service.ts",
         line_number: 0,
         operation: "get_scope_ancestors",
-        level,
         scope_id,
       },
     });
@@ -562,40 +541,29 @@ export async function get_scope_ancestors(
 }
 
 /**
- * Gets all descendants of a scope down to L7 (leaves)
+ * Gets all descendants of a scope (all levels below)
  * Returns flat array of all descendant scopes
  */
 export async function get_scope_descendants(
   adapter: HazoConnectAdapter,
-  level: ScopeLevel,
   scope_id: string,
 ): Promise<ScopeServiceResult> {
   try {
     const descendants: ScopeRecord[] = [];
 
-    // Recursive function to get all children
-    async function collect_descendants(
-      current_level: ScopeLevel,
-      current_id: string,
-    ): Promise<void> {
-      const children_result = await get_scope_children(
-        adapter,
-        current_level,
-        current_id,
-      );
+    // Recursive function to collect all descendants
+    async function collect_descendants(current_id: string): Promise<void> {
+      const children_result = await get_scope_children(adapter, current_id);
 
       if (children_result.success && children_result.scopes) {
         for (const child of children_result.scopes) {
           descendants.push(child);
-          const child_level = get_child_level(current_level);
-          if (child_level) {
-            await collect_descendants(child_level, child.id);
-          }
+          await collect_descendants(child.id);
         }
       }
     }
 
-    await collect_descendants(level, scope_id);
+    await collect_descendants(scope_id);
 
     return {
       success: true,
@@ -611,7 +579,6 @@ export async function get_scope_descendants(
         filename: "scope_service.ts",
         line_number: 0,
         operation: "get_scope_descendants",
-        level,
         scope_id,
       },
     });
@@ -624,72 +591,91 @@ export async function get_scope_descendants(
 }
 
 /**
- * Gets scope hierarchy tree for a given organization
- * Returns nested structure starting from L1
+ * Gets the root scope ID for a given scope (follows parent_id to root)
  */
-export type ScopeTreeNode = ScopeRecord & {
-  children?: ScopeTreeNode[];
-  level: ScopeLevel;
-};
-
-/**
- * Organization tree node that groups scopes by organization
- */
-export type OrgScopeTreeNode = {
-  id: string;
-  name: string;
-  org_id: string;
-  root_org_id: string;
-  isOrgNode: true;
-  children: ScopeTreeNode[];
-};
-
-export async function get_scope_tree(
+export async function get_root_scope_id(
   adapter: HazoConnectAdapter,
-  org_id: string,
-): Promise<{ success: boolean; tree?: ScopeTreeNode[]; error?: string }> {
+  scope_id: string,
+): Promise<string | null> {
   try {
-    // Get all L1 scopes for this org
-    const l1_result = await get_scopes_by_level(adapter, "hazo_scopes_l1", org_id);
-    if (!l1_result.success || !l1_result.scopes) {
-      return l1_result;
+    const scope_result = await get_scope_by_id(adapter, scope_id);
+    if (!scope_result.success || !scope_result.scope) {
+      return null;
     }
 
+    // If no parent, this is the root
+    if (!scope_result.scope.parent_id) {
+      return scope_id;
+    }
+
+    // Get ancestors and return the last one (root)
+    const ancestors_result = await get_scope_ancestors(adapter, scope_id);
+    if (!ancestors_result.success || !ancestors_result.scopes?.length) {
+      return scope_id; // Fallback to self
+    }
+
+    // Last ancestor is the root
+    return ancestors_result.scopes[ancestors_result.scopes.length - 1].id;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Gets scope hierarchy tree starting from root scopes or a specific scope
+ */
+export async function get_scope_tree(
+  adapter: HazoConnectAdapter,
+  root_scope_id?: string,
+): Promise<{ success: boolean; tree?: ScopeTreeNode[]; error?: string }> {
+  try {
     // Build tree recursively
-    async function build_tree(
-      scope: ScopeRecord,
-      level: ScopeLevel,
-    ): Promise<ScopeTreeNode> {
+    async function build_tree(scope: ScopeRecord): Promise<ScopeTreeNode> {
       const node: ScopeTreeNode = {
         ...scope,
-        level,
         children: [],
       };
 
-      const children_result = await get_scope_children(adapter, level, scope.id);
+      const children_result = await get_scope_children(adapter, scope.id);
       if (children_result.success && children_result.scopes) {
-        const child_level = get_child_level(level);
-        if (child_level) {
-          for (const child of children_result.scopes) {
-            const child_node = await build_tree(child, child_level);
-            node.children!.push(child_node);
-          }
+        for (const child of children_result.scopes) {
+          const child_node = await build_tree(child);
+          node.children!.push(child_node);
         }
       }
 
       return node;
     }
 
+    // If specific root provided, start from there
+    if (root_scope_id) {
+      const root_result = await get_scope_by_id(adapter, root_scope_id);
+      if (!root_result.success || !root_result.scope) {
+        return { success: false, error: "Root scope not found" };
+      }
+
+      const tree_node = await build_tree(root_result.scope);
+      return { success: true, tree: [tree_node] };
+    }
+
+    // Otherwise get all root scopes and build trees
+    const roots_result = await get_root_scopes(adapter);
+    if (!roots_result.success || !roots_result.scopes) {
+      return { success: true, tree: [] };
+    }
+
+    // Exclude system scopes from tree view unless specifically requested
+    const non_system_roots = roots_result.scopes.filter(
+      (s) => !is_system_scope(s.id),
+    );
+
     const tree: ScopeTreeNode[] = [];
-    for (const l1_scope of l1_result.scopes) {
-      const node = await build_tree(l1_scope, "hazo_scopes_l1");
+    for (const root_scope of non_system_roots) {
+      const node = await build_tree(root_scope);
       tree.push(node);
     }
 
-    return {
-      success: true,
-      tree,
-    };
+    return { success: true, tree };
   } catch (error) {
     const logger = create_app_logger();
     const error_message = sanitize_error_for_user(error, {
@@ -700,7 +686,7 @@ export async function get_scope_tree(
         filename: "scope_service.ts",
         line_number: 0,
         operation: "get_scope_tree",
-        org_id,
+        root_scope_id,
       },
     });
 
@@ -712,54 +698,41 @@ export async function get_scope_tree(
 }
 
 /**
- * Gets all scope trees across all organizations
- * Returns trees for all L1 scopes (top level)
+ * Ensures the super admin scope exists
  */
-export async function get_all_scope_trees(
+export async function ensure_super_admin_scope(
   adapter: HazoConnectAdapter,
-): Promise<{ success: boolean; trees?: ScopeTreeNode[]; error?: string }> {
+): Promise<ScopeServiceResult> {
   try {
-    // Get all L1 scopes (no org filter)
-    const l1_result = await get_scopes_by_level(adapter, "hazo_scopes_l1");
-    if (!l1_result.success || !l1_result.scopes) {
-      return { success: true, trees: [] };
+    // Check if already exists
+    const existing = await get_scope_by_id(adapter, SUPER_ADMIN_SCOPE_ID);
+    if (existing.success && existing.scope) {
+      return existing;
     }
 
-    // Build tree recursively
-    async function build_tree(
-      scope: ScopeRecord,
-      level: ScopeLevel,
-    ): Promise<ScopeTreeNode> {
-      const node: ScopeTreeNode = {
-        ...scope,
-        level,
-        children: [],
+    // Create it
+    const scope_service = createCrudService(adapter, "hazo_scopes");
+    const now = new Date().toISOString();
+
+    const inserted = await scope_service.insert({
+      id: SUPER_ADMIN_SCOPE_ID,
+      name: "Super Admin",
+      level: "system",
+      parent_id: null,
+      created_at: now,
+      changed_at: now,
+    });
+
+    if (!Array.isArray(inserted) || inserted.length === 0) {
+      return {
+        success: false,
+        error: "Failed to create super admin scope",
       };
-
-      const children_result = await get_scope_children(adapter, level, scope.id);
-      if (children_result.success && children_result.scopes) {
-        const child_level = get_child_level(level);
-        if (child_level) {
-          for (const child of children_result.scopes) {
-            const child_node = await build_tree(child, child_level);
-            node.children!.push(child_node);
-          }
-        }
-      }
-
-      return node;
-    }
-
-    // Build trees for all L1 scopes
-    const trees: ScopeTreeNode[] = [];
-    for (const scope of l1_result.scopes) {
-      const scopeTree = await build_tree(scope, "hazo_scopes_l1");
-      trees.push(scopeTree);
     }
 
     return {
       success: true,
-      trees,
+      scope: inserted[0] as ScopeRecord,
     };
   } catch (error) {
     const logger = create_app_logger();
@@ -770,7 +743,64 @@ export async function get_all_scope_trees(
       context: {
         filename: "scope_service.ts",
         line_number: 0,
-        operation: "get_all_scope_trees",
+        operation: "ensure_super_admin_scope",
+      },
+    });
+
+    return {
+      success: false,
+      error: error_message,
+    };
+  }
+}
+
+/**
+ * Ensures the default system scope exists
+ */
+export async function ensure_default_system_scope(
+  adapter: HazoConnectAdapter,
+): Promise<ScopeServiceResult> {
+  try {
+    // Check if already exists
+    const existing = await get_scope_by_id(adapter, DEFAULT_SYSTEM_SCOPE_ID);
+    if (existing.success && existing.scope) {
+      return existing;
+    }
+
+    // Create it
+    const scope_service = createCrudService(adapter, "hazo_scopes");
+    const now = new Date().toISOString();
+
+    const inserted = await scope_service.insert({
+      id: DEFAULT_SYSTEM_SCOPE_ID,
+      name: "System",
+      level: "default",
+      parent_id: null,
+      created_at: now,
+      changed_at: now,
+    });
+
+    if (!Array.isArray(inserted) || inserted.length === 0) {
+      return {
+        success: false,
+        error: "Failed to create default system scope",
+      };
+    }
+
+    return {
+      success: true,
+      scope: inserted[0] as ScopeRecord,
+    };
+  } catch (error) {
+    const logger = create_app_logger();
+    const error_message = sanitize_error_for_user(error, {
+      logToConsole: true,
+      logToLogger: true,
+      logger,
+      context: {
+        filename: "scope_service.ts",
+        line_number: 0,
+        operation: "ensure_default_system_scope",
       },
     });
 

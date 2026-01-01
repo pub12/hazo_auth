@@ -5,18 +5,24 @@ import { get_hazo_connect_instance } from "../hazo_connect_instance.server";
 import { createCrudService } from "hazo_connect/server";
 import { create_app_logger } from "../app_logger";
 import { get_filename, get_line_number } from "../utils/api_route_helpers";
-import type { HazoAuthResult, HazoAuthUser, HazoAuthOptions, ScopeAccessInfo } from "./auth_types";
-import { PermissionError, ScopeAccessError, OrgRequiredError } from "./auth_types";
+import type {
+  HazoAuthResult,
+  HazoAuthUser,
+  HazoAuthOptions,
+  ScopeAccessInfo,
+} from "./auth_types";
+import { PermissionError, ScopeAccessError } from "./auth_types";
 import { get_auth_cache } from "./auth_cache";
 import { get_scope_cache, type UserScopeEntry } from "./scope_cache";
 import { get_rate_limiter } from "./auth_rate_limiter";
 import { get_auth_utility_config } from "../auth_utility_config.server";
 import { validate_session_token } from "../services/session_token_service";
 import { is_hrbac_enabled, get_scope_hierarchy_config } from "../scope_hierarchy_config.server";
-import { check_user_scope_access, get_user_scopes, type UserScope } from "../services/user_scope_service";
-import { is_valid_scope_level, type ScopeLevel } from "../services/scope_service";
-import { is_multi_tenancy_enabled, get_multi_tenancy_config } from "../multi_tenancy_config.server";
-import { get_org_cache, type OrgCacheEntry } from "./org_cache";
+import {
+  check_user_scope_access,
+  get_user_scopes,
+  type UserScope,
+} from "../services/user_scope_service";
 import { get_cookie_name, BASE_COOKIE_NAMES } from "../cookies_config.server";
 import { get_app_permission_descriptions } from "../app_permissions_config.server";
 
@@ -27,7 +33,9 @@ import { get_app_permission_descriptions } from "../app_permissions_config.serve
  * @param json_string - JSON string to parse
  * @returns Parsed object or null
  */
-function parse_app_user_data(json_string: unknown): Record<string, unknown> | null {
+function parse_app_user_data(
+  json_string: unknown,
+): Record<string, unknown> | null {
   if (json_string === null || json_string === undefined || json_string === "") {
     return null;
   }
@@ -94,90 +102,21 @@ async function fetch_user_data_from_db(user_id: string): Promise<{
 
   const user_db = users[0];
 
-  // Check if user is active
-  if (user_db.is_active === false) {
+  // Check if user is active (status must be 'active')
+  if (user_db.status !== "active") {
     throw new Error("User is inactive");
   }
 
-  // Build user object with base fields
+  // Build user object
   const user: HazoAuthUser = {
     id: user_db.id as string,
     name: (user_db.name as string | null) || null,
     email_address: user_db.email_address as string,
-    is_active: user_db.is_active === true,
+    is_active: user_db.status === "active", // Derived from status column
     profile_picture_url:
       (user_db.profile_picture_url as string | null) || null,
     app_user_data: parse_app_user_data(user_db.app_user_data),
   };
-
-  // Fetch org info if multi-tenancy is enabled and user has org_id
-  if (is_multi_tenancy_enabled() && user_db.org_id) {
-    const mt_config = get_multi_tenancy_config();
-    const org_cache = get_org_cache(
-      mt_config.org_cache_max_entries,
-      mt_config.org_cache_ttl_minutes,
-    );
-
-    const user_org_id = user_db.org_id as string;
-
-    // Check org cache first
-    let cached_org = org_cache.get(user_org_id);
-
-    if (!cached_org) {
-      // Fetch org info from database
-      const org_service = createCrudService(hazoConnect, "hazo_org");
-      const orgs = await org_service.findBy({ id: user_org_id });
-
-      if (Array.isArray(orgs) && orgs.length > 0) {
-        const org = orgs[0];
-        const org_entry: OrgCacheEntry = {
-          org_id: org.id as string,
-          org_name: org.name as string,
-          parent_org_id: (org.parent_org_id as string | null) || null,
-          parent_org_name: null,
-          root_org_id: (org.root_org_id as string | null) || null,
-          root_org_name: null,
-        };
-
-        // Fetch parent org name if exists
-        if (org_entry.parent_org_id) {
-          const parent_orgs = await org_service.findBy({ id: org_entry.parent_org_id });
-          if (Array.isArray(parent_orgs) && parent_orgs.length > 0) {
-            org_entry.parent_org_name = parent_orgs[0].name as string;
-          }
-        }
-
-        // Fetch root org name if exists
-        if (org_entry.root_org_id) {
-          const root_orgs = await org_service.findBy({ id: org_entry.root_org_id });
-          if (Array.isArray(root_orgs) && root_orgs.length > 0) {
-            org_entry.root_org_name = root_orgs[0].name as string;
-          }
-        } else if (user_db.root_org_id) {
-          // Fallback to user's root_org_id if org doesn't have one
-          const root_orgs = await org_service.findBy({ id: user_db.root_org_id });
-          if (Array.isArray(root_orgs) && root_orgs.length > 0) {
-            org_entry.root_org_id = root_orgs[0].id as string;
-            org_entry.root_org_name = root_orgs[0].name as string;
-          }
-        }
-
-        // Cache the org info
-        org_cache.set(user_org_id, org_entry);
-        cached_org = org_entry;
-      }
-    }
-
-    // Add org info to user object
-    if (cached_org) {
-      user.org_id = cached_org.org_id;
-      user.org_name = cached_org.org_name;
-      user.parent_org_id = cached_org.parent_org_id;
-      user.parent_org_name = cached_org.parent_org_name;
-      user.root_org_id = cached_org.root_org_id;
-      user.root_org_name = cached_org.root_org_name;
-    }
-  }
 
   // Fetch user roles
   const user_roles = await user_roles_service.findBy({ user_id });
@@ -313,9 +252,9 @@ async function get_user_scopes_cached(user_id: string): Promise<UserScopeEntry[]
 
   // Convert to cache entry format and cache
   const scopes: UserScopeEntry[] = result.scopes.map((s: UserScope) => ({
-    scope_type: s.scope_type as ScopeLevel,
     scope_id: s.scope_id,
-    scope_seq: s.scope_seq,
+    root_scope_id: s.root_scope_id,
+    role_id: s.role_id,
   }));
 
   scope_cache.set(user_id, scopes);
@@ -326,56 +265,31 @@ async function get_user_scopes_cached(user_id: string): Promise<UserScopeEntry[]
 /**
  * Checks if user has access to a specific scope
  * @param user_id - User ID
- * @param scope_type - Scope level
- * @param scope_id - Scope ID (optional)
- * @param scope_seq - Scope seq (optional)
+ * @param scope_id - Scope ID to check access for
  * @returns Object with scope_ok and access_via info
  */
-async function check_scope_access(
+async function check_scope_access_internal(
   user_id: string,
-  scope_type: string,
-  scope_id?: string,
-  scope_seq?: string,
+  scope_id: string,
 ): Promise<{
   scope_ok: boolean;
   scope_access_via?: ScopeAccessInfo;
-  user_scopes: Array<{ scope_type: string; scope_id: string; scope_seq: string }>;
+  user_scopes: Array<{ scope_id: string; scope_name?: string }>;
 }> {
-  const logger = create_app_logger();
-
-  // Validate scope_type
-  if (!is_valid_scope_level(scope_type)) {
-    logger.warn("auth_utility_invalid_scope_type", {
-      filename: get_filename(),
-      line_number: get_line_number(),
-      scope_type,
-      user_id,
-    });
-    return { scope_ok: false, user_scopes: [] };
-  }
-
   const hazoConnect = get_hazo_connect_instance();
-  const result = await check_user_scope_access(
-    hazoConnect,
-    user_id,
-    scope_type as ScopeLevel,
-    scope_id,
-    scope_seq,
-  );
+  const result = await check_user_scope_access(hazoConnect, user_id, scope_id);
 
   const user_scopes = (result.user_scopes || []).map((s) => ({
-    scope_type: s.scope_type,
     scope_id: s.scope_id,
-    scope_seq: s.scope_seq,
   }));
 
   if (result.has_access && result.access_via) {
     return {
       scope_ok: true,
       scope_access_via: {
-        scope_type: result.access_via.scope_type,
         scope_id: result.access_via.scope_id,
-        scope_seq: result.access_via.scope_seq,
+        scope_name: result.access_via.scope_name,
+        is_super_admin: result.is_super_admin,
       },
       user_scopes,
     };
@@ -389,9 +303,9 @@ async function check_scope_access(
 /**
  * Main hazo_get_auth function for server-side use in API routes
  * Returns user details, permissions, and checks required permissions
- * Optionally checks HRBAC scope access when scope options are provided
+ * Optionally checks scope access when scope_id option is provided
  * @param request - NextRequest object
- * @param options - Optional parameters for permission checking and HRBAC scope checking
+ * @param options - Optional parameters for permission checking and scope checking
  * @returns HazoAuthResult with user data, permissions, and optional scope access info
  * @throws PermissionError if strict mode and permissions are missing
  * @throws ScopeAccessError if strict mode and scope access is denied
@@ -415,7 +329,9 @@ export async function hazo_get_auth(
   let user_email: string | undefined;
 
   // Check for JWT session token first
-  const session_token = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.SESSION))?.value;
+  const session_token = request.cookies.get(
+    get_cookie_name(BASE_COOKIE_NAMES.SESSION),
+  )?.value;
   if (session_token) {
     try {
       const token_result = await validate_session_token(session_token);
@@ -425,7 +341,8 @@ export async function hazo_get_auth(
       }
     } catch (token_error) {
       // If token validation fails, fall back to simple cookies
-      const token_error_message = token_error instanceof Error ? token_error.message : "Unknown error";
+      const token_error_message =
+        token_error instanceof Error ? token_error.message : "Unknown error";
       logger.debug("auth_utility_jwt_validation_failed", {
         filename: get_filename(),
         line_number: get_line_number(),
@@ -434,11 +351,15 @@ export async function hazo_get_auth(
       });
     }
   }
-  
+
   // Fall back to simple cookies if JWT not present or invalid (backward compatibility)
   if (!user_id || !user_email) {
-    user_id = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.USER_ID))?.value;
-    user_email = request.cookies.get(get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL))?.value;
+    user_id = request.cookies.get(
+      get_cookie_name(BASE_COOKIE_NAMES.USER_ID),
+    )?.value;
+    user_email = request.cookies.get(
+      get_cookie_name(BASE_COOKIE_NAMES.USER_EMAIL),
+    )?.value;
   }
 
   if (!user_id || !user_email) {
@@ -546,7 +467,9 @@ export async function hazo_get_auth(
         config,
       );
       // Include permission descriptions for debugging
-      const permission_descriptions = get_app_permission_descriptions(missing_permissions);
+      const permission_descriptions = get_app_permission_descriptions(
+        missing_permissions,
+      );
 
       throw new PermissionError(
         missing_permissions,
@@ -558,19 +481,16 @@ export async function hazo_get_auth(
     }
   }
 
-  // Check HRBAC scope access if enabled and scope options provided
+  // Check scope access if enabled and scope_id provided
   let scope_ok: boolean | undefined;
   let scope_access_via: ScopeAccessInfo | undefined;
 
   const hrbac_enabled = is_hrbac_enabled();
-  const has_scope_options = options?.scope_type && (options?.scope_id || options?.scope_seq);
 
-  if (hrbac_enabled && has_scope_options) {
-    const scope_result = await check_scope_access(
+  if (hrbac_enabled && options?.scope_id) {
+    const scope_result = await check_scope_access_internal(
       user.id,
-      options!.scope_type!,
-      options?.scope_id,
-      options?.scope_seq,
+      options.scope_id,
     );
 
     scope_ok = scope_result.scope_ok;
@@ -583,44 +503,15 @@ export async function hazo_get_auth(
         filename: get_filename(),
         line_number: get_line_number(),
         user_id: user.id,
-        scope_type: options!.scope_type,
-        scope_id: options?.scope_id,
-        scope_seq: options?.scope_seq,
+        scope_id: options.scope_id,
         user_scopes: scope_result.user_scopes,
         ip: client_ip,
       });
     }
 
     // Throw error if strict mode and scope access denied
-    if (!scope_ok && options?.strict) {
-      throw new ScopeAccessError(
-        options!.scope_type!,
-        options?.scope_id || options?.scope_seq || "unknown",
-        scope_result.user_scopes,
-      );
-    }
-  }
-
-  // Check org requirement if specified (only when multi-tenancy is enabled)
-  let org_ok: boolean | undefined;
-
-  if (options?.require_org && is_multi_tenancy_enabled()) {
-    org_ok = !!user.org_id;
-
-    if (!org_ok) {
-      // Log org requirement failure if permission logging is enabled
-      if (config.log_permission_denials) {
-        const client_ip = get_client_ip(request);
-        logger.warn("auth_utility_org_required_missing", {
-          filename: get_filename(),
-          line_number: get_line_number(),
-          user_id: user.id,
-          ip: client_ip,
-        });
-      }
-
-      // Always throw error when org is required but missing
-      throw new OrgRequiredError(user.id);
+    if (!scope_ok && options.strict) {
+      throw new ScopeAccessError(options.scope_id, scope_result.user_scopes);
     }
   }
 
@@ -632,7 +523,5 @@ export async function hazo_get_auth(
     missing_permissions,
     scope_ok,
     scope_access_via,
-    org_ok,
   };
 }
-

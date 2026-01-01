@@ -13,5 +13,11 @@ export * from "./token_service";
 export * from "./user_profiles_service";
 export * from "./user_update_service";
 export * from "./app_user_data_service";
+export * from "./invitation_service";
+export * from "./firm_service";
+export * from "./post_verification_service";
+export * from "./scope_service";
+export * from "./user_scope_service";
+export * from "./oauth_service";
 
 

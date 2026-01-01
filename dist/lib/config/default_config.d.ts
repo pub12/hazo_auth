@@ -123,16 +123,6 @@ export declare const DEFAULT_OAUTH: {
     /** Text displayed on the divider between OAuth and email/password form */
     readonly oauth_divider_text: "or continue with email";
 };
-export declare const DEFAULT_MULTI_TENANCY: {
-    /** Enable multi-tenancy support (default: false) */
-    readonly enable_multi_tenancy: false;
-    /** Cache TTL in minutes for org lookups (default: 15) */
-    readonly org_cache_ttl_minutes: 15;
-    /** Maximum entries in org cache (default: 1000) */
-    readonly org_cache_max_entries: 1000;
-    /** Default user limit per organization (0 = unlimited) */
-    readonly default_user_limit: 0;
-};
 export declare const DEFAULT_NAVBAR: {
     /** Enable navbar on auth pages */
     readonly enable_navbar: true;
@@ -348,16 +338,6 @@ export declare const HAZO_AUTH_DEFAULTS: {
         readonly text_color: "#ffffff";
         /** Accent color for button (default: blue) */
         readonly accent_color: "#3b82f6";
-    };
-    readonly multiTenancy: {
-        /** Enable multi-tenancy support (default: false) */
-        readonly enable_multi_tenancy: false;
-        /** Cache TTL in minutes for org lookups (default: 15) */
-        readonly org_cache_ttl_minutes: 15;
-        /** Maximum entries in org cache (default: 1000) */
-        readonly org_cache_max_entries: 1000;
-        /** Default user limit per organization (0 = unlimited) */
-        readonly default_user_limit: 0;
     };
     readonly navbar: {
         /** Enable navbar on auth pages */

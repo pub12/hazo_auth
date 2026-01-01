@@ -1,4 +1,6 @@
 // file_description: API route for managing user scope assignments in HRBAC
+// Uses unified hazo_scopes table with parent_id hierarchy
+
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
 import { get_hazo_connect_instance } from "../../../../../../lib/hazo_connect_instance.server";
@@ -11,9 +13,9 @@ import {
   assign_user_scope,
   remove_user_scope,
   update_user_scopes,
-  get_user_effective_scopes,
+  get_user_direct_scopes,
 } from "../../../../../../lib/services/user_scope_service";
-import { is_valid_scope_level, type ScopeLevel } from "../../../../../../lib/services/scope_service";
+import { get_scope_by_id } from "../../../../../../lib/services/scope_service";
 
 // section: route_config
 export const dynamic = "force-dynamic";
@@ -53,8 +55,8 @@ async function check_permission(request: NextRequest): Promise<{ authorized: boo
  * GET - Fetch user's scope assignments
  * Query params:
  * - user_id: string (required)
- * - include_effective: 'true' | 'false' (optional, default: 'false')
- *   If true, also returns inherited scope levels
+ * - include_details: 'true' | 'false' (optional, default: 'false')
+ *   If true, includes scope name and level for each assignment
  */
 export async function GET(request: NextRequest) {
   const logger = create_app_logger();
@@ -76,7 +78,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const user_id = searchParams.get("user_id");
-    const include_effective = searchParams.get("include_effective") === "true";
+    const include_details = searchParams.get("include_details") === "true";
 
     if (!user_id) {
       return NextResponse.json(
@@ -87,25 +89,24 @@ export async function GET(request: NextRequest) {
 
     const adapter = get_hazo_connect_instance();
 
-    if (include_effective) {
-      const result = await get_user_effective_scopes(adapter, user_id);
+    if (include_details) {
+      const result = await get_user_direct_scopes(adapter, user_id);
       if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: 500 });
       }
 
-      logger.info("user_management_user_scopes_effective_fetched", {
+      logger.info("user_management_user_scopes_fetched", {
         filename: get_filename(),
         line_number: get_line_number(),
         user_id,
-        direct_count: result.direct_scopes?.length || 0,
-        inherited_levels: result.inherited_scope_types?.length || 0,
+        count: result.scopes?.length || 0,
+        include_details: true,
       });
 
       return NextResponse.json({
         success: true,
         user_id,
-        direct_scopes: result.direct_scopes,
-        inherited_scope_types: result.inherited_scope_types,
+        scopes: result.scopes,
       });
     }
 
@@ -125,7 +126,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       user_id,
-      scopes: result.scopes,
+      user_scopes: result.scopes,
     });
   } catch (error) {
     const error_message = error instanceof Error ? error.message : "Unknown error";
@@ -141,7 +142,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST - Assign a scope to a user
- * Body: { user_id: string, scope_type: ScopeLevel, scope_id: string, scope_seq: string }
+ * Body: { user_id: string, scope_id: string, role_id: string }
  */
 export async function POST(request: NextRequest) {
   const logger = create_app_logger();
@@ -162,19 +163,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { user_id, scope_type, scope_id, scope_seq } = body;
+    const { user_id, scope_id, role_id } = body;
 
     // Validate required fields
     if (!user_id || typeof user_id !== "string") {
       return NextResponse.json(
         { error: "user_id is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!scope_type || !is_valid_scope_level(scope_type)) {
-      return NextResponse.json(
-        { error: "Valid scope_type is required (hazo_scopes_l1 through hazo_scopes_l7)" },
         { status: 400 }
       );
     }
@@ -186,21 +180,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!scope_seq || typeof scope_seq !== "string") {
+    if (!role_id || typeof role_id !== "string") {
       return NextResponse.json(
-        { error: "scope_seq is required" },
+        { error: "role_id is required" },
         { status: 400 }
       );
     }
 
+    // Verify scope exists
     const adapter = get_hazo_connect_instance();
-    const result = await assign_user_scope(
-      adapter,
+    const scope_check = await get_scope_by_id(adapter, scope_id);
+    if (!scope_check.success) {
+      return NextResponse.json(
+        { error: "Scope not found" },
+        { status: 404 }
+      );
+    }
+
+    const result = await assign_user_scope(adapter, {
       user_id,
-      scope_type as ScopeLevel,
       scope_id,
-      scope_seq
-    );
+      role_id,
+    });
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -210,14 +211,14 @@ export async function POST(request: NextRequest) {
       filename: get_filename(),
       line_number: get_line_number(),
       user_id,
-      scope_type,
       scope_id,
+      role_id,
     });
 
     return NextResponse.json(
       {
         success: true,
-        scope: result.scope,
+        user_scope: result.scope,
       },
       { status: 201 }
     );
@@ -236,7 +237,7 @@ export async function POST(request: NextRequest) {
 /**
  * PUT - Bulk update user's scope assignments
  * Replaces all existing assignments with the new set
- * Body: { user_id: string, scopes: Array<{ scope_type: ScopeLevel, scope_id: string, scope_seq: string }> }
+ * Body: { user_id: string, scopes: Array<{ scope_id: string, role_id: string }> }
  */
 export async function PUT(request: NextRequest) {
   const logger = create_app_logger();
@@ -275,21 +276,15 @@ export async function PUT(request: NextRequest) {
 
     // Validate all scopes
     for (const scope of scopes) {
-      if (!scope.scope_type || !is_valid_scope_level(scope.scope_type)) {
-        return NextResponse.json(
-          { error: `Invalid scope_type: ${scope.scope_type}` },
-          { status: 400 }
-        );
-      }
       if (!scope.scope_id || typeof scope.scope_id !== "string") {
         return NextResponse.json(
           { error: "scope_id is required for each scope" },
           { status: 400 }
         );
       }
-      if (!scope.scope_seq || typeof scope.scope_seq !== "string") {
+      if (!scope.role_id || typeof scope.role_id !== "string") {
         return NextResponse.json(
-          { error: "scope_seq is required for each scope" },
+          { error: "role_id is required for each scope" },
           { status: 400 }
         );
       }
@@ -299,10 +294,9 @@ export async function PUT(request: NextRequest) {
     const result = await update_user_scopes(
       adapter,
       user_id,
-      scopes.map((s: { scope_type: ScopeLevel; scope_id: string; scope_seq: string }) => ({
-        scope_type: s.scope_type,
+      scopes.map((s: { scope_id: string; role_id: string }) => ({
         scope_id: s.scope_id,
-        scope_seq: s.scope_seq,
+        role_id: s.role_id,
       }))
     );
 
@@ -320,7 +314,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       user_id,
-      scopes: result.scopes,
+      user_scopes: result.scopes,
     });
   } catch (error) {
     const error_message = error instanceof Error ? error.message : "Unknown error";
@@ -336,7 +330,7 @@ export async function PUT(request: NextRequest) {
 
 /**
  * DELETE - Remove a scope assignment from a user
- * Query params: user_id, scope_type, scope_id
+ * Query params: user_id, scope_id
  */
 export async function DELETE(request: NextRequest) {
   const logger = create_app_logger();
@@ -358,19 +352,11 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const user_id = searchParams.get("user_id");
-    const scope_type = searchParams.get("scope_type");
     const scope_id = searchParams.get("scope_id");
 
     if (!user_id) {
       return NextResponse.json(
         { error: "user_id query parameter is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!scope_type || !is_valid_scope_level(scope_type)) {
-      return NextResponse.json(
-        { error: "Valid scope_type query parameter is required" },
         { status: 400 }
       );
     }
@@ -383,12 +369,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const adapter = get_hazo_connect_instance();
-    const result = await remove_user_scope(
-      adapter,
-      user_id,
-      scope_type as ScopeLevel,
-      scope_id
-    );
+    const result = await remove_user_scope(adapter, user_id, scope_id);
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -398,7 +379,6 @@ export async function DELETE(request: NextRequest) {
       filename: get_filename(),
       line_number: get_line_number(),
       user_id,
-      scope_type,
       scope_id,
     });
 

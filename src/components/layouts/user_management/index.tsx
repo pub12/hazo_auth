@@ -46,11 +46,9 @@ import {
 import { UserTypeBadge } from "../../ui/user-type-badge";
 import { RolesMatrix } from "./components/roles_matrix";
 import { ScopeHierarchyTab } from "./components/scope_hierarchy_tab";
-import { ScopeLabelsTab } from "./components/scope_labels_tab";
 import { UserScopesTab } from "./components/user_scopes_tab";
-import { OrgHierarchyTab } from "./components/org_hierarchy_tab";
-import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus, Building2, ChevronRight, ChevronDown } from "lucide-react";
-import { TreeView, type TreeDataItem } from "../../ui/tree-view";
+import { AppUserDataEditor } from "./components/app_user_data_editor";
+import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus, ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
 import { useHazoAuthConfig } from "../../../contexts/hazo_auth_provider";
@@ -68,8 +66,6 @@ export type UserManagementLayoutProps = {
   className?: string;
   /** Whether HRBAC is enabled (passed from server) */
   hrbacEnabled?: boolean;
-  /** Whether multi-tenancy is enabled (passed from server) */
-  multiTenancyEnabled?: boolean;
   /** Whether user types feature is enabled (passed from server) */
   userTypesEnabled?: boolean;
   /** Available user types for dropdown (passed from server) */
@@ -87,15 +83,7 @@ type User = {
   profile_picture_url: string | null;
   profile_source: string | null;
   user_type: string | null;
-  org_id: string | null;
-  root_org_id: string | null;
   app_user_data: Record<string, unknown> | null;
-};
-
-type OrgOption = {
-  id: string;
-  name: string;
-  parent_org_id: string | null;
 };
 
 type Permission = {
@@ -244,7 +232,7 @@ function JsonTreeNode({
  * @param props - Component props
  * @returns User Management layout component
  */
-export function UserManagementLayout({ className, hrbacEnabled = false, multiTenancyEnabled = false, userTypesEnabled = false, availableUserTypes = [] }: UserManagementLayoutProps) {
+export function UserManagementLayout({ className, hrbacEnabled = false, userTypesEnabled = false, availableUserTypes = [] }: UserManagementLayoutProps) {
   const { apiBasePath } = useHazoAuthConfig();
 
   // Permission checks
@@ -259,10 +247,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
     authResult.permissions.includes("admin_scope_hierarchy_management");
   const hasUserScopeAssignmentPermission = authResult.authenticated &&
     authResult.permissions.includes("admin_user_scope_assignment");
-  const hasOrgManagementPermission = authResult.authenticated &&
-    authResult.permissions.includes("hazo_perm_org_management");
-  const hasOrgGlobalAdminPermission = authResult.authenticated &&
-    authResult.permissions.includes("hazo_org_global_admin");
   const hasSystemPermission = authResult.authenticated &&
     authResult.permissions.includes("admin_system");
 
@@ -273,8 +257,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
   const showScopeHierarchyTab = hrbacEnabled && hasScopeHierarchyPermission;
   const showScopeLabelsTab = hrbacEnabled && hasSystemPermission;
   const showUserScopesTab = hrbacEnabled && hasUserScopeAssignmentPermission;
-  const showOrgsTab = multiTenancyEnabled && hasOrgManagementPermission;
-  const hasAnyPermission = showUsersTab || showRolesTab || showPermissionsTab || showScopeHierarchyTab || showScopeLabelsTab || showUserScopesTab || showOrgsTab;
+  const hasAnyPermission = showUsersTab || showRolesTab || showPermissionsTab || showScopeHierarchyTab || showScopeLabelsTab || showUserScopesTab;
 
   // Tab 1: Users state
   const [users, setUsers] = useState<User[]>([]);
@@ -286,14 +269,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [usersActionLoading, setUsersActionLoading] = useState(false);
   const [userTypeUpdateLoading, setUserTypeUpdateLoading] = useState(false);
-  const [orgUpdateLoading, setOrgUpdateLoading] = useState(false);
-  const [availableOrgs, setAvailableOrgs] = useState<OrgOption[]>([]);
-
-  // Org assignment dialog state
-  const [orgAssignDialogOpen, setOrgAssignDialogOpen] = useState(false);
-  const [orgAssignUser, setOrgAssignUser] = useState<User | null>(null);
-  const [selectedOrgForAssign, setSelectedOrgForAssign] = useState<string | null>(null);
-  const [orgAssignLoading, setOrgAssignLoading] = useState(false);
 
   // Tab 3: Permissions state
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -335,50 +310,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
 
     void loadUsers();
   }, [showUsersTab, loadUsers]);
-
-  // Load organizations (only if multi-tenancy is enabled and user has permission)
-  // Non-global admins can only see orgs in their tree
-  useEffect(() => {
-    if (!multiTenancyEnabled || !showUsersTab) {
-      return;
-    }
-
-    const loadOrgs = async () => {
-      try {
-        const params = new URLSearchParams();
-        // Non-global admins can only see orgs in their tree
-        if (!hasOrgGlobalAdminPermission && authResult.authenticated) {
-          const userRootOrgId = authResult.user?.root_org_id || authResult.user?.org_id;
-          if (userRootOrgId) {
-            params.set("root_org_id", userRootOrgId);
-          }
-        }
-
-        const queryString = params.toString();
-        const url = queryString
-          ? `${apiBasePath}/org_management/orgs?${queryString}`
-          : `${apiBasePath}/org_management/orgs`;
-
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data.success && Array.isArray(data.orgs)) {
-          setAvailableOrgs(
-            data.orgs.map((org: { id: string; name: string; parent_org_id: string | null }) => ({
-              id: org.id,
-              name: org.name,
-              parent_org_id: org.parent_org_id,
-            }))
-          );
-        }
-      } catch (error) {
-        // Silently fail - orgs dropdown will just be empty
-        console.error("Failed to load organizations:", error);
-      }
-    };
-
-    void loadOrgs();
-  }, [multiTenancyEnabled, showUsersTab, apiBasePath, hasOrgGlobalAdminPermission, authResult]);
 
   // Load permissions (only if user has permission)
   useEffect(() => {
@@ -539,132 +470,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
     } finally {
       setUserTypeUpdateLoading(false);
     }
-  };
-
-  // Handle org change
-  const handleOrgChange = async (newOrgId: string) => {
-    if (!selectedUser) return;
-
-    setOrgUpdateLoading(true);
-    try {
-      // Convert sentinel value "__none__" to null for API
-      const orgIdValue = newOrgId === "__none__" ? null : newOrgId;
-      const response = await fetch(`${apiBasePath}/user_management/users`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_id: selectedUser.id,
-          org_id: orgIdValue,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success("Organization updated successfully");
-        // Update local state
-        setSelectedUser({
-          ...selectedUser,
-          org_id: newOrgId || null,
-        });
-        // Reload users list to get updated root_org_id from server
-        await loadUsers();
-      } else {
-        toast.error(data.error || "Failed to update organization");
-      }
-    } catch (error) {
-      toast.error("Failed to update organization");
-    } finally {
-      setOrgUpdateLoading(false);
-    }
-  };
-
-  // Build org tree from flat list for TreeView component
-  const buildOrgTree = (orgs: OrgOption[]): TreeDataItem[] => {
-    // Create a map for quick lookup
-    const orgMap = new Map<string, OrgOption & { children: TreeDataItem[] }>();
-    orgs.forEach((org) => {
-      orgMap.set(org.id, { ...org, children: [] });
-    });
-
-    const rootNodes: TreeDataItem[] = [];
-
-    // Build tree structure
-    orgs.forEach((org) => {
-      const node = orgMap.get(org.id)!;
-      const treeItem: TreeDataItem = {
-        id: org.id,
-        name: org.name,
-        children: node.children.length > 0 ? node.children : undefined,
-      };
-
-      if (org.parent_org_id && orgMap.has(org.parent_org_id)) {
-        const parent = orgMap.get(org.parent_org_id)!;
-        parent.children.push(treeItem);
-      } else {
-        rootNodes.push(treeItem);
-      }
-    });
-
-    // Update children in the tree
-    const updateChildren = (nodes: TreeDataItem[]): TreeDataItem[] => {
-      return nodes.map((node) => {
-        const orgNode = orgMap.get(node.id);
-        if (orgNode && orgNode.children.length > 0) {
-          return {
-            ...node,
-            children: updateChildren(orgNode.children),
-          };
-        }
-        return node;
-      });
-    };
-
-    return updateChildren(rootNodes);
-  };
-
-  // Handle org assignment from dialog
-  const handleOrgAssignFromDialog = async () => {
-    if (!orgAssignUser) return;
-
-    setOrgAssignLoading(true);
-    try {
-      const orgIdValue = selectedOrgForAssign;
-      const response = await fetch(`${apiBasePath}/user_management/users`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_id: orgAssignUser.id,
-          org_id: orgIdValue,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success("Organization updated successfully");
-        setOrgAssignDialogOpen(false);
-        // Reload users list to get updated org info
-        await loadUsers();
-      } else {
-        toast.error(data.error || "Failed to update organization");
-      }
-    } catch (error) {
-      toast.error("Failed to update organization");
-    } finally {
-      setOrgAssignLoading(false);
-    }
-  };
-
-  // Open org assignment dialog for a user
-  const openOrgAssignDialog = (user: User) => {
-    setOrgAssignUser(user);
-    setSelectedOrgForAssign(user.org_id);
-    setOrgAssignDialogOpen(true);
   };
 
   // Handle migrate permissions
@@ -941,7 +746,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
             showUsersTab ? "users" :
             showRolesTab ? "roles" :
             showPermissionsTab ? "permissions" :
-            showScopeLabelsTab ? "scope_labels" :
             showScopeHierarchyTab ? "scope_hierarchy" :
             showUserScopesTab ? "user_scopes" : "users"
           }
@@ -963,11 +767,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                 Permissions
               </TabsTrigger>
             )}
-            {showScopeLabelsTab && (
-              <TabsTrigger value="scope_labels" className="cls_user_management_tabs_trigger flex-1">
-                Scope Labels
-              </TabsTrigger>
-            )}
             {showScopeHierarchyTab && (
               <TabsTrigger value="scope_hierarchy" className="cls_user_management_tabs_trigger flex-1">
                 Scope Hierarchy
@@ -976,11 +775,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
             {showUserScopesTab && (
               <TabsTrigger value="user_scopes" className="cls_user_management_tabs_trigger flex-1">
                 User Scopes
-              </TabsTrigger>
-            )}
-            {showOrgsTab && (
-              <TabsTrigger value="organizations" className="cls_user_management_tabs_trigger flex-1">
-                Organizations
               </TabsTrigger>
             )}
           </TabsList>
@@ -1130,23 +924,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
                                   <p>Assign Roles</p>
                                 </TooltipContent>
                               </Tooltip>
-                              {multiTenancyEnabled && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      onClick={() => openOrgAssignDialog(user)}
-                                      variant="outline"
-                                      size="sm"
-                                      className="cls_user_management_users_table_action_assign_org"
-                                    >
-                                      <Building2 className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Assign Organization</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
                               {user.is_active && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -1349,14 +1126,7 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
             </TabsContent>
           )}
 
-          {/* Tab 4: Scope Labels (HRBAC) */}
-          {showScopeLabelsTab && (
-            <TabsContent value="scope_labels" className="cls_user_management_tab_scope_labels w-full">
-              <ScopeLabelsTab />
-            </TabsContent>
-          )}
-
-          {/* Tab 5: Scope Hierarchy (HRBAC) */}
+          {/* Tab 4: Scope Hierarchy (HRBAC) */}
           {showScopeHierarchyTab && (
             <TabsContent value="scope_hierarchy" className="cls_user_management_tab_scope_hierarchy w-full">
               <ScopeHierarchyTab />
@@ -1367,13 +1137,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
           {showUserScopesTab && (
             <TabsContent value="user_scopes" className="cls_user_management_tab_user_scopes w-full">
               <UserScopesTab />
-            </TabsContent>
-          )}
-
-          {/* Tab 7: Organizations (Multi-tenancy) */}
-          {showOrgsTab && (
-            <TabsContent value="organizations" className="cls_user_management_tab_organizations w-full">
-              <OrgHierarchyTab isGlobalAdmin={hasOrgGlobalAdminPermission} />
             </TabsContent>
           )}
         </Tabs>
@@ -1593,235 +1356,209 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
 
       {/* User Detail Dialog */}
       <Dialog open={userDetailDialogOpen} onOpenChange={setUserDetailDialogOpen}>
-        <DialogContent className="cls_user_management_user_detail_dialog max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="cls_user_management_user_detail_dialog max-w-5xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>User Details</DialogTitle>
             <DialogDescription>
               Complete information for {selectedUser?.name || selectedUser?.email_address}
             </DialogDescription>
           </DialogHeader>
-          <div className="cls_user_management_user_detail_dialog_content flex flex-col gap-4 py-4">
+          <div className="cls_user_management_user_detail_dialog_content flex flex-col gap-6 py-4">
             {selectedUser && (
-              <div className="cls_user_management_user_detail_fields grid grid-cols-1 gap-4">
-                {/* Profile Picture */}
-                <div className="cls_user_management_user_detail_field_profile_pic flex flex-col gap-2">
-                  <Label className="cls_user_management_user_detail_label font-semibold">
-                    Profile Picture
-                  </Label>
-                  <div className="cls_user_management_user_detail_profile_pic_container flex items-center gap-4">
-                    <Avatar className="cls_user_management_user_detail_avatar h-16 w-16">
-                      <AvatarImage
-                        src={selectedUser.profile_picture_url || undefined}
-                        alt={selectedUser.name ? `Profile picture of ${selectedUser.name}` : "Profile picture"}
-                        className="cls_user_management_user_detail_avatar_image"
-                      />
-                      <AvatarFallback className="cls_user_management_user_detail_avatar_fallback bg-slate-200 text-slate-600 text-lg">
-                        {getUserInitials(selectedUser)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="cls_user_management_user_detail_profile_pic_info flex flex-col gap-1">
-                      <span className="cls_user_management_user_detail_profile_pic_url text-sm text-muted-foreground">
-                        {selectedUser.profile_picture_url || "No profile picture"}
+              <>
+                {/* Two-column grid for user info */}
+                <div className="cls_user_management_user_detail_fields grid grid-cols-2 gap-6">
+                  {/* Left column - Profile & basic info */}
+                  <div className="flex flex-col gap-4">
+                    {/* Profile Picture */}
+                    <div className="cls_user_management_user_detail_field_profile_pic flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Profile Picture
                       </span>
-                      <span className="cls_user_management_user_detail_profile_pic_source text-xs text-muted-foreground">
-                        Source: {selectedUser.profile_source || "N/A"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* User ID */}
-                <div className="cls_user_management_user_detail_field_id flex flex-col gap-2">
-                  <Label className="cls_user_management_user_detail_label font-semibold">
-                    User ID
-                  </Label>
-                  <div className="cls_user_management_user_detail_id_value font-mono text-sm bg-muted p-2 rounded">
-                    {selectedUser.id}
-                  </div>
-                </div>
-
-                {/* Name */}
-                <div className="cls_user_management_user_detail_field_name flex flex-col gap-2">
-                  <Label className="cls_user_management_user_detail_label font-semibold">
-                    Name
-                  </Label>
-                  <div className="cls_user_management_user_detail_name_value text-sm">
-                    {selectedUser.name || "-"}
-                  </div>
-                </div>
-
-                {/* Email */}
-                <div className="cls_user_management_user_detail_field_email flex flex-col gap-2">
-                  <Label className="cls_user_management_user_detail_label font-semibold">
-                    Email Address
-                  </Label>
-                  <div className="cls_user_management_user_detail_email_value text-sm">
-                    {selectedUser.email_address}
-                  </div>
-                </div>
-
-                {/* Email Verified */}
-                <div className="cls_user_management_user_detail_field_email_verified flex flex-col gap-2">
-                  <Label className="cls_user_management_user_detail_label font-semibold">
-                    Email Verified
-                  </Label>
-                  <div className="cls_user_management_user_detail_email_verified_value">
-                    {selectedUser.email_verified ? (
-                      <span className="text-green-600 font-medium">Yes</span>
-                    ) : (
-                      <span className="text-red-600 font-medium">No</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Active Status */}
-                <div className="cls_user_management_user_detail_field_is_active flex flex-col gap-2">
-                  <Label className="cls_user_management_user_detail_label font-semibold">
-                    Active Status
-                  </Label>
-                  <div className="cls_user_management_user_detail_is_active_value">
-                    {selectedUser.is_active ? (
-                      <span className="text-green-600 font-medium">Active</span>
-                    ) : (
-                      <span className="text-red-600 font-medium">Inactive</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Last Logon */}
-                <div className="cls_user_management_user_detail_field_last_logon flex flex-col gap-2">
-                  <Label className="cls_user_management_user_detail_label font-semibold">
-                    Last Logon
-                  </Label>
-                  <div className="cls_user_management_user_detail_last_logon_value text-sm">
-                    {selectedUser.last_logon ? (
-                      <span className="font-medium">
-                        {new Date(selectedUser.last_logon).toLocaleString(undefined, {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                          timeZoneName: "short",
-                        })}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">Never</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Created At */}
-                <div className="cls_user_management_user_detail_field_created_at flex flex-col gap-2">
-                  <Label className="cls_user_management_user_detail_label font-semibold">
-                    Created At
-                  </Label>
-                  <div className="cls_user_management_user_detail_created_at_value text-sm">
-                    {selectedUser.created_at ? (
-                      <span className="font-medium">
-                        {new Date(selectedUser.created_at).toLocaleString(undefined, {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                          timeZoneName: "short",
-                        })}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* User Type (if enabled) */}
-                {userTypesEnabled && (
-                  <div className="cls_user_management_user_detail_field_user_type flex flex-col gap-2">
-                    <Label className="cls_user_management_user_detail_label font-semibold">
-                      User Type
-                    </Label>
-                    <div className="cls_user_management_user_detail_user_type_value flex items-center gap-2">
-                      <Select
-                        value={selectedUser.user_type || "__none__"}
-                        onValueChange={(value) => handleUserTypeChange(value)}
-                        disabled={userTypeUpdateLoading}
-                      >
-                        <SelectTrigger className="w-48">
-                          <SelectValue placeholder="Select user type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__">None</SelectItem>
-                          {availableUserTypes.map((type) => (
-                            <SelectItem key={type.key} value={type.key}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {userTypeUpdateLoading && (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Organization (if multi-tenancy enabled) */}
-                {multiTenancyEnabled && (
-                  <div className="cls_user_management_user_detail_field_org flex flex-col gap-2">
-                    <Label className="cls_user_management_user_detail_label font-semibold">
-                      Organization
-                    </Label>
-                    <div className="cls_user_management_user_detail_org_value flex items-center gap-2">
-                      <Select
-                        value={selectedUser.org_id || "__none__"}
-                        onValueChange={(value) => handleOrgChange(value)}
-                        disabled={orgUpdateLoading}
-                      >
-                        <SelectTrigger className="w-64">
-                          <SelectValue placeholder="Select organization" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__">None</SelectItem>
-                          {availableOrgs.map((org) => (
-                            <SelectItem key={org.id} value={org.id}>
-                              {org.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {orgUpdateLoading && (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* App User Data section */}
-                <div className="cls_user_management_user_detail_field_app_user_data flex flex-col gap-2">
-                  <Label className="cls_user_management_user_detail_label font-semibold">
-                    App User Data
-                  </Label>
-                  <div className="cls_user_management_user_detail_app_user_data_value">
-                    {selectedUser.app_user_data && Object.keys(selectedUser.app_user_data).length > 0 ? (
-                      <div className="border rounded-lg max-h-[200px] overflow-y-auto p-2 bg-slate-50 text-sm font-mono">
-                        {Object.entries(selectedUser.app_user_data).map(([key, value]) => (
-                          <JsonTreeNode
-                            key={key}
-                            data={value}
-                            keyName={key}
-                            level={0}
-                            defaultExpanded={true}
+                      <div className="cls_user_management_user_detail_profile_pic_container flex items-center gap-4 bg-muted/30 px-3 py-2.5 rounded">
+                        <Avatar className="cls_user_management_user_detail_avatar h-14 w-14">
+                          <AvatarImage
+                            src={selectedUser.profile_picture_url || undefined}
+                            alt={selectedUser.name ? `Profile picture of ${selectedUser.name}` : "Profile picture"}
+                            className="cls_user_management_user_detail_avatar_image"
                           />
-                        ))}
+                          <AvatarFallback className="cls_user_management_user_detail_avatar_fallback bg-slate-200 text-slate-600 text-lg">
+                            {getUserInitials(selectedUser)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="cls_user_management_user_detail_profile_pic_info flex flex-col gap-0.5">
+                          <span className="cls_user_management_user_detail_profile_pic_url text-sm font-medium truncate max-w-[200px]">
+                            {selectedUser.profile_picture_url ? "Custom photo" : "No profile picture"}
+                          </span>
+                          <span className="cls_user_management_user_detail_profile_pic_source text-xs text-muted-foreground">
+                            Source: {selectedUser.profile_source || "N/A"}
+                          </span>
+                        </div>
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">No app user data</span>
+                    </div>
+
+                    {/* User ID */}
+                    <div className="cls_user_management_user_detail_field_id flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                        User ID
+                      </span>
+                      <div className="cls_user_management_user_detail_id_value font-mono text-sm bg-muted/30 px-3 py-2 rounded">
+                        {selectedUser.id}
+                      </div>
+                    </div>
+
+                    {/* Name */}
+                    <div className="cls_user_management_user_detail_field_name flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Name
+                      </span>
+                      <div className="cls_user_management_user_detail_name_value text-sm font-medium bg-muted/30 px-3 py-2 rounded">
+                        {selectedUser.name || "-"}
+                      </div>
+                    </div>
+
+                    {/* Email */}
+                    <div className="cls_user_management_user_detail_field_email flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Email Address
+                      </span>
+                      <div className="cls_user_management_user_detail_email_value text-sm font-medium bg-muted/30 px-3 py-2 rounded">
+                        {selectedUser.email_address}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right column - Status fields */}
+                  <div className="flex flex-col gap-4">
+                    {/* Email Verified */}
+                    <div className="cls_user_management_user_detail_field_email_verified flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Email Verified
+                      </span>
+                      <div className="cls_user_management_user_detail_email_verified_value bg-muted/30 px-3 py-2 rounded">
+                        {selectedUser.email_verified ? (
+                          <span className="text-green-600 font-medium text-sm">Yes</span>
+                        ) : (
+                          <span className="text-red-600 font-medium text-sm">No</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Active Status */}
+                    <div className="cls_user_management_user_detail_field_is_active flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Active Status
+                      </span>
+                      <div className="cls_user_management_user_detail_is_active_value bg-muted/30 px-3 py-2 rounded">
+                        {selectedUser.is_active ? (
+                          <span className="text-green-600 font-medium text-sm">Active</span>
+                        ) : (
+                          <span className="text-red-600 font-medium text-sm">Inactive</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Last Logon */}
+                    <div className="cls_user_management_user_detail_field_last_logon flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Last Logon
+                      </span>
+                      <div className="cls_user_management_user_detail_last_logon_value text-sm bg-muted/30 px-3 py-2 rounded">
+                        {selectedUser.last_logon ? (
+                          <span className="font-medium">
+                            {new Date(selectedUser.last_logon).toLocaleString(undefined, {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Never</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Created At */}
+                    <div className="cls_user_management_user_detail_field_created_at flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Created At
+                      </span>
+                      <div className="cls_user_management_user_detail_created_at_value text-sm bg-muted/30 px-3 py-2 rounded">
+                        {selectedUser.created_at ? (
+                          <span className="font-medium">
+                            {new Date(selectedUser.created_at).toLocaleString(undefined, {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* User Type (if enabled) */}
+                    {userTypesEnabled && (
+                      <div className="cls_user_management_user_detail_field_user_type flex flex-col gap-1">
+                        <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                          User Type
+                        </span>
+                        <div className="cls_user_management_user_detail_user_type_value flex items-center gap-2">
+                          <Select
+                            value={selectedUser.user_type || "__none__"}
+                            onValueChange={(value) => handleUserTypeChange(value)}
+                            disabled={userTypeUpdateLoading}
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder="Select user type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">None</SelectItem>
+                              {availableUserTypes.map((type) => (
+                                <SelectItem key={type.key} value={type.key}>
+                                  {type.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {userTypeUpdateLoading && (
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
-              </div>
+
+                {/* App User Data section - full width below */}
+                <div className="cls_user_management_user_detail_field_app_user_data border-t pt-4">
+                  <div className="cls_user_management_user_detail_app_user_data_value">
+                    <AppUserDataEditor
+                      userId={selectedUser.id}
+                      currentData={selectedUser.app_user_data}
+                      onSave={(newData) => {
+                        // Update selected user's app_user_data locally
+                        setSelectedUser((prev) =>
+                          prev ? { ...prev, app_user_data: newData } : null
+                        );
+                        // Also update in the users list
+                        setUsers((prevUsers) =>
+                          prevUsers.map((u) =>
+                            u.id === selectedUser.id
+                              ? { ...u, app_user_data: newData }
+                              : u
+                          )
+                        );
+                      }}
+                    />
+                  </div>
+                </div>
+              </>
             )}
           </div>
           <DialogFooter className="cls_user_management_user_detail_dialog_footer">
@@ -1868,82 +1605,6 @@ export function UserManagementLayout({ className, hrbacEnabled = false, multiTen
               className="cls_user_management_assign_roles_matrix"
             />
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Org Assignment Dialog */}
-      <Dialog open={orgAssignDialogOpen} onOpenChange={setOrgAssignDialogOpen}>
-        <DialogContent className="cls_user_management_org_assign_dialog max-w-lg max-h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Assign Organization</DialogTitle>
-            <DialogDescription>
-              Select an organization for {orgAssignUser?.name || orgAssignUser?.email_address}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="cls_user_management_org_assign_dialog_content flex-1 overflow-y-auto py-4 min-h-0">
-            {/* None option */}
-            <div
-              className={`cls_user_management_org_assign_none p-3 mb-2 rounded-lg border cursor-pointer transition-colors ${
-                selectedOrgForAssign === null
-                  ? "border-primary bg-primary/10"
-                  : "border-border hover:bg-muted"
-              }`}
-              onClick={() => setSelectedOrgForAssign(null)}
-            >
-              <div className="flex items-center gap-2">
-                <CircleX className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">None</span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Remove organization assignment
-              </p>
-            </div>
-
-            {/* Org tree */}
-            {availableOrgs.length > 0 ? (
-              <div className="cls_user_management_org_assign_tree border rounded-lg overflow-auto min-h-[200px]">
-                <TreeView
-                  data={buildOrgTree(availableOrgs)}
-                  expandAll
-                  defaultNodeIcon={Building2}
-                  defaultLeafIcon={Building2}
-                  onSelectChange={(item) => {
-                    if (item) {
-                      setSelectedOrgForAssign(item.id);
-                    }
-                  }}
-                  initialSelectedItemId={selectedOrgForAssign || undefined}
-                  className="w-full p-2"
-                />
-              </div>
-            ) : (
-              <div className="cls_user_management_org_assign_empty text-center py-8 text-muted-foreground">
-                No organizations available
-              </div>
-            )}
-          </div>
-          <DialogFooter className="cls_user_management_org_assign_dialog_footer">
-            <Button
-              variant="outline"
-              onClick={() => setOrgAssignDialogOpen(false)}
-              disabled={orgAssignLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleOrgAssignFromDialog}
-              disabled={orgAssignLoading}
-            >
-              {orgAssignLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save"
-              )}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

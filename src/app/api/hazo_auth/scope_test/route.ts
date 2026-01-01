@@ -1,4 +1,6 @@
 // file_description: API route for testing hazo_get_auth with HRBAC scope options
+// Uses unified hazo_scopes table with parent_id hierarchy
+
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
 import { hazo_get_auth } from "../../../../lib/auth/hazo_get_auth.server";
@@ -12,9 +14,7 @@ export const dynamic = "force-dynamic";
 /**
  * GET - Test hazo_get_auth with scope options
  * Query params:
- * - scope_type: ScopeLevel (optional)
- * - scope_id: string (optional)
- * - scope_seq: string (optional)
+ * - scope_id: string (optional) - The scope ID to test access against
  * - required_permissions: string[] (optional, can repeat)
  */
 export async function GET(request: NextRequest) {
@@ -32,23 +32,17 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const scope_type = searchParams.get("scope_type") || undefined;
     const scope_id = searchParams.get("scope_id") || undefined;
-    const scope_seq = searchParams.get("scope_seq") || undefined;
     const required_permissions = searchParams.getAll("required_permissions").filter((p) => p.trim());
 
     // Build options
     const options: {
-      scope_type?: string;
       scope_id?: string;
-      scope_seq?: string;
       required_permissions?: string[];
       strict?: boolean;
     } = {};
 
-    if (scope_type) options.scope_type = scope_type;
     if (scope_id) options.scope_id = scope_id;
-    if (scope_seq) options.scope_seq = scope_seq;
     if (required_permissions.length > 0) options.required_permissions = required_permissions;
     options.strict = false; // Don't throw errors in test mode
 
@@ -89,8 +83,7 @@ export async function GET(request: NextRequest) {
         permission_ok: true,
         scope_ok: false,
         error: error.message,
-        scope_type: error.scope_type,
-        scope_identifier: error.scope_identifier,
+        scope_id: error.scope_identifier,
       });
     }
 

@@ -1,11 +1,10 @@
-import type { ScopeLevel } from "../services/scope_service";
 /**
  * User scope assignment record
  */
 export type UserScopeEntry = {
-    scope_type: ScopeLevel;
     scope_id: string;
-    scope_seq: string;
+    root_scope_id: string;
+    role_id: string;
 };
 /**
  * Cache entry structure for user scopes
@@ -48,15 +47,14 @@ declare class ScopeCache {
     /**
      * Invalidates cache for all users with a specific scope
      * Uses cache version to determine if invalidation is needed
-     * @param scope_type - Scope level
      * @param scope_id - Scope ID to invalidate
      */
-    invalidate_by_scope(scope_type: ScopeLevel, scope_id: string): void;
+    invalidate_by_scope(scope_id: string): void;
     /**
-     * Invalidates cache for all users with any scope of a specific level
-     * @param scope_type - Scope level to invalidate
+     * Invalidates cache for all users with any scope in a specific root scope tree
+     * @param root_scope_id - Root scope ID to invalidate
      */
-    invalidate_by_scope_level(scope_type: ScopeLevel): void;
+    invalidate_by_root_scope(root_scope_id: string): void;
     /**
      * Invalidates all cache entries
      */

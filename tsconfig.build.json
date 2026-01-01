@@ -39,7 +39,10 @@
     "src/stories/**/*",
     "**/*.test.ts",
     "**/*.test.tsx",
-    "**/*.stories.tsx"
+    "**/*.stories.tsx",
+    "src/components/layouts/app_user_data_test/**/*",
+    "src/components/layouts/profile_stamp_test/**/*",
+    "src/components/layouts/rbac_test/**/*"
   ]
 }
 

@@ -14,6 +14,21 @@
             "date": 1767051493112,
             "name": "/Users/pubs/Local/01.code/00.lib/hazo_auth/logs/hazo-2025-12-30.log",
             "hash": "a3486f1b59684d2b0739abfa3cde0a3bc047be0b573241fd269ceedfc4c7d75c"
+        },
+        {
+            "date": 1767114826747,
+            "name": "/Users/pubs/Local/01.code/00.lib/hazo_auth/logs/hazo-2025-12-31.log",
+            "hash": "f44725b00bf0b4d85ff774683a790e20a0a11a646c7a8e58a2b2de30ba266d97"
+        },
+        {
+            "date": 1767265387190,
+            "name": "/Users/pubs/Local/01.code/00.lib/hazo_auth/logs/hazo-2026-01-01.log",
+            "hash": "0492beff0f5d6927794738c1420fe20b08f17da8d06b0db8b75ad929dc7f9510"
+        },
+        {
+            "date": 1767272696566,
+            "name": "/Users/pubs/Local/01.code/00.lib/hazo_auth/logs/hazo-2026-01-02.log",
+            "hash": "28bbe715e5c7bc8eab40bb5841b5dcb8d701aeef7b26f64f8c3564d3a0efe0a4"
         }
     ],
     "hashType": "sha256"

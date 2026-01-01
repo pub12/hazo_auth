@@ -1,4 +1,5 @@
 // file_description: Client component for scope test page - tests hazo_get_auth with HRBAC scope options
+// Uses unified hazo_scopes table with parent_id hierarchy
 // section: client_directive
 "use client";
 
@@ -7,13 +8,6 @@ import { useState } from "react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Loader2, Play, AlertCircle, CheckCircle } from "lucide-react";
 import { useHazoAuthConfig } from "../../../contexts/hazo_auth_provider";
@@ -24,17 +18,14 @@ type ScopeTestPageClientProps = {
   hrbacEnabled: boolean;
 };
 
-type ScopeLevel = "hazo_scopes_l1" | "hazo_scopes_l2" | "hazo_scopes_l3" | "hazo_scopes_l4" | "hazo_scopes_l5" | "hazo_scopes_l6" | "hazo_scopes_l7";
-
 type TestResult = {
   success: boolean;
   authenticated: boolean;
   permission_ok: boolean;
   scope_ok?: boolean;
   scope_access_via?: {
-    scope_type: string;
     scope_id: string;
-    scope_seq: string;
+    scope_name?: string;
   };
   user?: {
     id: string;
@@ -44,16 +35,6 @@ type TestResult = {
   permissions?: string[];
   error?: string;
 };
-
-const SCOPE_LEVELS: { value: ScopeLevel; label: string }[] = [
-  { value: "hazo_scopes_l1", label: "Level 1" },
-  { value: "hazo_scopes_l2", label: "Level 2" },
-  { value: "hazo_scopes_l3", label: "Level 3" },
-  { value: "hazo_scopes_l4", label: "Level 4" },
-  { value: "hazo_scopes_l5", label: "Level 5" },
-  { value: "hazo_scopes_l6", label: "Level 6" },
-  { value: "hazo_scopes_l7", label: "Level 7" },
-];
 
 // section: component
 /**
@@ -67,9 +48,7 @@ export function ScopeTestPageClient({ hrbacEnabled }: ScopeTestPageClientProps) 
   const authResult = use_hazo_auth();
 
   // Form state
-  const [scopeType, setScopeType] = useState<ScopeLevel | "__none__">("__none__");
   const [scopeId, setScopeId] = useState("");
-  const [scopeSeq, setScopeSeq] = useState("");
   const [requiredPermissions, setRequiredPermissions] = useState("");
 
   // Test state
@@ -84,9 +63,7 @@ export function ScopeTestPageClient({ hrbacEnabled }: ScopeTestPageClientProps) 
     try {
       // Build query params
       const params = new URLSearchParams();
-      if (scopeType && scopeType !== "__none__") params.append("scope_type", scopeType);
       if (scopeId) params.append("scope_id", scopeId);
-      if (scopeSeq) params.append("scope_seq", scopeSeq);
       if (requiredPermissions) {
         requiredPermissions.split(",").forEach((p) => {
           const trimmed = p.trim();
@@ -112,9 +89,7 @@ export function ScopeTestPageClient({ hrbacEnabled }: ScopeTestPageClientProps) 
 
   // Clear results
   const handleClear = () => {
-    setScopeType("__none__");
     setScopeId("");
-    setScopeSeq("");
     setRequiredPermissions("");
     setTestResult(null);
   };
@@ -189,41 +164,17 @@ export function ScopeTestPageClient({ hrbacEnabled }: ScopeTestPageClientProps) 
           <CardDescription>Configure scope and permission options for the test</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="scope_type">Scope Type</Label>
-              <Select value={scopeType} onValueChange={(v: string) => setScopeType(v as ScopeLevel | "__none__")}>
-                <SelectTrigger id="scope_type">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {SCOPE_LEVELS.map((level) => (
-                    <SelectItem key={level.value} value={level.value}>
-                      {level.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="scope_id">Scope ID (UUID)</Label>
-              <Input
-                id="scope_id"
-                value={scopeId}
-                onChange={(e) => setScopeId(e.target.value)}
-                placeholder="Enter scope UUID"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="scope_seq">Scope Seq</Label>
-              <Input
-                id="scope_seq"
-                value={scopeSeq}
-                onChange={(e) => setScopeSeq(e.target.value)}
-                placeholder="e.g., L3_001"
-              />
-            </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="scope_id">Scope ID (UUID)</Label>
+            <Input
+              id="scope_id"
+              value={scopeId}
+              onChange={(e) => setScopeId(e.target.value)}
+              placeholder="Enter scope UUID to test access against"
+            />
+            <p className="text-xs text-muted-foreground">
+              Leave empty to test without scope checking
+            </p>
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="required_permissions">Required Permissions (comma-separated)</Label>
@@ -309,7 +260,7 @@ export function ScopeTestPageClient({ hrbacEnabled }: ScopeTestPageClientProps) 
                 <Label className="text-muted-foreground text-xs">Access Via</Label>
                 <p className="text-sm">
                   {testResult.scope_access_via
-                    ? `${testResult.scope_access_via.scope_type} (${testResult.scope_access_via.scope_seq})`
+                    ? testResult.scope_access_via.scope_name || testResult.scope_access_via.scope_id.substring(0, 8) + "..."
                     : "N/A"}
                 </p>
               </div>
@@ -318,8 +269,7 @@ export function ScopeTestPageClient({ hrbacEnabled }: ScopeTestPageClientProps) 
             {testResult.scope_access_via && (
               <div className="bg-green-50 border border-green-200 rounded p-3">
                 <p className="text-green-700 text-sm">
-                  Access granted via scope: <strong>{testResult.scope_access_via.scope_seq}</strong>{" "}
-                  ({testResult.scope_access_via.scope_type})
+                  Access granted via scope: <strong>{testResult.scope_access_via.scope_name || testResult.scope_access_via.scope_id}</strong>
                 </p>
               </div>
             )}

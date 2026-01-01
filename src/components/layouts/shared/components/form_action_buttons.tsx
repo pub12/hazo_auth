@@ -7,25 +7,28 @@ import type { ButtonPaletteDefaults } from "../config/layout_customization";
 // section: types
 type FormActionButtonsProps = {
   submitLabel: string;
-  cancelLabel: string;
+  cancelLabel?: string;
   buttonPalette: ButtonPaletteDefaults;
   isSubmitDisabled: boolean;
-  onCancel: () => void;
+  onCancel?: () => void;
   submitAriaLabel?: string;
   cancelAriaLabel?: string;
   className?: string;
+  /** Hide the cancel button (default: false) */
+  hideCancel?: boolean;
 };
 
 // section: component
 export function FormActionButtons({
   submitLabel,
-  cancelLabel,
+  cancelLabel = "Cancel",
   buttonPalette,
   isSubmitDisabled,
   onCancel,
   submitAriaLabel = "Submit form",
   cancelAriaLabel = "Cancel form",
   className,
+  hideCancel = false,
 }: FormActionButtonsProps) {
   return (
     <div
@@ -44,20 +47,22 @@ export function FormActionButtons({
         <CircleCheckBig className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span>{submitLabel}</span>
       </Button>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={onCancel}
-        className="cls_form_action_cancel_button flex shrink-0 items-center gap-2"
-        aria-label={cancelAriaLabel}
-        style={{
-          borderColor: buttonPalette.cancelBorder,
-          color: buttonPalette.cancelText,
-        }}
-      >
-        <CircleX className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>{cancelLabel}</span>
-      </Button>
+      {!hideCancel && onCancel && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          className="cls_form_action_cancel_button flex shrink-0 items-center gap-2"
+          aria-label={cancelAriaLabel}
+          style={{
+            borderColor: buttonPalette.cancelBorder,
+            color: buttonPalette.cancelText,
+          }}
+        >
+          <CircleX className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{cancelLabel}</span>
+        </Button>
+      )}
     </div>
   );
 }

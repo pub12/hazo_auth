@@ -8,8 +8,6 @@ export type UserManagementLayoutProps = {
     className?: string;
     /** Whether HRBAC is enabled (passed from server) */
     hrbacEnabled?: boolean;
-    /** Whether multi-tenancy is enabled (passed from server) */
-    multiTenancyEnabled?: boolean;
     /** Whether user types feature is enabled (passed from server) */
     userTypesEnabled?: boolean;
     /** Available user types for dropdown (passed from server) */
@@ -26,5 +24,5 @@ export type UserManagementLayoutProps = {
  * @param props - Component props
  * @returns User Management layout component
  */
-export declare function UserManagementLayout({ className, hrbacEnabled, multiTenancyEnabled, userTypesEnabled, availableUserTypes }: UserManagementLayoutProps): import("react/jsx-runtime").JSX.Element;
+export declare function UserManagementLayout({ className, hrbacEnabled, userTypesEnabled, availableUserTypes }: UserManagementLayoutProps): import("react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=index.d.ts.map

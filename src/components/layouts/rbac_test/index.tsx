@@ -1,4 +1,5 @@
 // file_description: RBAC/HRBAC Test layout component for testing role-based and hierarchical access control
+// Uses unified hazo_scopes table with parent_id hierarchy
 // section: client_directive
 "use client";
 
@@ -47,23 +48,11 @@ export type RbacTestLayoutProps = {
   hrbacEnabled?: boolean;
 };
 
-type ScopeLevel =
-  | "hazo_scopes_l1"
-  | "hazo_scopes_l2"
-  | "hazo_scopes_l3"
-  | "hazo_scopes_l4"
-  | "hazo_scopes_l5"
-  | "hazo_scopes_l6"
-  | "hazo_scopes_l7";
-
 type ScopeTreeNode = {
   id: string;
-  seq: string;
-  org_id: string;
-  root_org_id: string;
   name: string;
-  parent_scope_id?: string;
-  level: ScopeLevel;
+  level: string; // Descriptive label (e.g., "HQ", "Division")
+  parent_id: string | null;
   children?: ScopeTreeNode[];
 };
 
@@ -77,9 +66,8 @@ type TestResult = {
   permission_ok: boolean;
   scope_ok?: boolean;
   scope_access_via?: {
-    scope_type: string;
     scope_id: string;
-    scope_seq: string;
+    scope_name?: string;
   };
   user?: {
     id: string;
@@ -106,22 +94,10 @@ type UserRecord = {
 };
 
 type UserScope = {
-  user_id: string;
   scope_id: string;
-  scope_seq: string;
-  scope_type: ScopeLevel;
   scope_name?: string;
-  created_at: string;
-};
-
-const SCOPE_LEVEL_LABELS: Record<ScopeLevel, string> = {
-  hazo_scopes_l1: "Level 1",
-  hazo_scopes_l2: "Level 2",
-  hazo_scopes_l3: "Level 3",
-  hazo_scopes_l4: "Level 4",
-  hazo_scopes_l5: "Level 5",
-  hazo_scopes_l6: "Level 6",
-  hazo_scopes_l7: "Level 7",
+  level?: string;
+  role_id: string;
 };
 
 // Convert ScopeTreeNode to TreeDataItem format for selection
@@ -131,7 +107,7 @@ function convertToTreeData(nodes: ScopeTreeNode[]): ExtendedTreeDataItem[] {
 
     const item: ExtendedTreeDataItem = {
       id: node.id,
-      name: `${node.name} (${node.seq})`,
+      name: `${node.name} (${node.level})`,
       icon: Building2,
       scopeData: node,
     };
@@ -280,12 +256,12 @@ export function RbacTestLayout({
       // Load user scopes if HRBAC is enabled
       if (hrbacEnabled) {
         const scopesResponse = await fetch(
-          `${apiBasePath}/user_management/users/scopes?user_id=${selectedUserId}&include_effective=true`
+          `${apiBasePath}/user_management/users/scopes?user_id=${selectedUserId}&include_details=true`
         );
         const scopesData = await scopesResponse.json();
 
         if (scopesData.success) {
-          setUserScopes(scopesData.direct_scopes || []);
+          setUserScopes(scopesData.scopes || []);
         } else {
           setUserScopes([]);
         }
@@ -353,12 +329,12 @@ export function RbacTestLayout({
 
     setTreeLoading(true);
     try {
-      const params = new URLSearchParams({ action: "tree_all" });
+      const params = new URLSearchParams({ action: "tree" });
       const response = await fetch(`${apiBasePath}/scope_management/scopes?${params}`);
       const data = await response.json();
 
       if (data.success) {
-        setScopeTree(data.trees || []);
+        setScopeTree(data.tree || []);
       } else {
         setScopeTree([]);
       }
@@ -452,7 +428,6 @@ export function RbacTestLayout({
     try {
       const params = new URLSearchParams();
       params.append("test_user_id", selectedUserId);
-      params.append("scope_type", selectedTreeItem.scopeData.level);
       params.append("scope_id", selectedTreeItem.scopeData.id);
       hrbacPermissions.forEach((p) => {
         params.append("required_permissions", p);
@@ -627,11 +602,11 @@ export function RbacTestLayout({
                         {userScopes.length > 0 ? (
                           userScopes.map((s) => (
                             <span
-                              key={`${s.scope_type}-${s.scope_id}`}
+                              key={s.scope_id}
                               className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs"
-                              title={`${SCOPE_LEVEL_LABELS[s.scope_type]}: ${s.scope_seq}`}
+                              title={`${s.level}: ${s.scope_name || s.scope_id}`}
                             >
-                              {s.scope_seq}
+                              {s.scope_name || s.scope_id.substring(0, 8) + "..."}
                             </span>
                           ))
                         ) : (
@@ -872,8 +847,7 @@ export function RbacTestLayout({
                         {selectedTreeItem.scopeData.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {SCOPE_LEVEL_LABELS[selectedTreeItem.scopeData.level]} -{" "}
-                        {selectedTreeItem.scopeData.seq}
+                        {selectedTreeItem.scopeData.level} - {selectedTreeItem.scopeData.id.substring(0, 8)}...
                       </p>
                     </div>
                   )}
@@ -1002,7 +976,7 @@ export function RbacTestLayout({
                         <Label className="text-muted-foreground text-xs">Access Via</Label>
                         <p className="text-sm">
                           {hrbacResult.scope_access_via
-                            ? `${hrbacResult.scope_access_via.scope_seq}`
+                            ? hrbacResult.scope_access_via.scope_name || hrbacResult.scope_access_via.scope_id.substring(0, 8) + "..."
                             : "N/A"}
                         </p>
                       </div>
@@ -1012,8 +986,7 @@ export function RbacTestLayout({
                       <div className="bg-green-100 border border-green-200 rounded p-3">
                         <p className="text-green-700 text-sm">
                           Access granted via scope:{" "}
-                          <strong>{hrbacResult.scope_access_via.scope_seq}</strong> (
-                          {hrbacResult.scope_access_via.scope_type})
+                          <strong>{hrbacResult.scope_access_via.scope_name || hrbacResult.scope_access_via.scope_id}</strong>
                         </p>
                       </div>
                     )}

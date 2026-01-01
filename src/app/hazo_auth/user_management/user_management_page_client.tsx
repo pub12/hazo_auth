@@ -14,7 +14,6 @@ type UserTypeOption = {
 
 type UserManagementPageClientProps = {
   hrbacEnabled?: boolean;
-  multiTenancyEnabled?: boolean;
   userTypesEnabled?: boolean;
   availableUserTypes?: UserTypeOption[];
 };
@@ -22,13 +21,11 @@ type UserManagementPageClientProps = {
 // section: component
 /**
  * Client component for user management page
- * Note: org_id is now determined from the authenticated user's context via API
  * @param props - Component props
  * @returns User Management layout component
  */
 export function UserManagementPageClient({
   hrbacEnabled = false,
-  multiTenancyEnabled = false,
   userTypesEnabled = false,
   availableUserTypes = [],
 }: UserManagementPageClientProps) {
@@ -36,10 +33,8 @@ export function UserManagementPageClient({
     <UserManagementLayout
       className="w-full"
       hrbacEnabled={hrbacEnabled}
-      multiTenancyEnabled={multiTenancyEnabled}
       userTypesEnabled={userTypesEnabled}
       availableUserTypes={availableUserTypes}
     />
   );
 }
-

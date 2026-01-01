@@ -1,16 +1,13 @@
-// file_description: LRU cache implementation for HRBAC scope lookups with TTL and size limits
-// section: imports
-import type { ScopeLevel } from "../services/scope_service";
-
+// file_description: LRU cache implementation for scope lookups with TTL and size limits
 // section: types
 
 /**
  * User scope assignment record
  */
 export type UserScopeEntry = {
-  scope_type: ScopeLevel;
   scope_id: string;
-  scope_seq: string;
+  root_scope_id: string;
+  role_id: string;
 };
 
 /**
@@ -117,21 +114,17 @@ class ScopeCache {
   /**
    * Invalidates cache for all users with a specific scope
    * Uses cache version to determine if invalidation is needed
-   * @param scope_type - Scope level
    * @param scope_id - Scope ID to invalidate
    */
-  invalidate_by_scope(scope_type: ScopeLevel, scope_id: string): void {
-    const scope_key = `${scope_type}:${scope_id}`;
-    const current_version = this.scope_version_map.get(scope_key) || 0;
-    this.scope_version_map.set(scope_key, current_version + 1);
+  invalidate_by_scope(scope_id: string): void {
+    const current_version = this.scope_version_map.get(scope_id) || 0;
+    this.scope_version_map.set(scope_id, current_version + 1);
 
     // Remove entries where cache version is older than scope version
     const entries_to_remove: string[] = [];
     for (const [user_id, entry] of this.cache.entries()) {
       // Check if user has this scope
-      const has_scope = entry.scopes.some(
-        (s) => s.scope_type === scope_type && s.scope_id === scope_id
-      );
+      const has_scope = entry.scopes.some((s) => s.scope_id === scope_id);
       if (has_scope) {
         entries_to_remove.push(user_id);
       }
@@ -143,15 +136,15 @@ class ScopeCache {
   }
 
   /**
-   * Invalidates cache for all users with any scope of a specific level
-   * @param scope_type - Scope level to invalidate
+   * Invalidates cache for all users with any scope in a specific root scope tree
+   * @param root_scope_id - Root scope ID to invalidate
    */
-  invalidate_by_scope_level(scope_type: ScopeLevel): void {
+  invalidate_by_root_scope(root_scope_id: string): void {
     const entries_to_remove: string[] = [];
     for (const [user_id, entry] of this.cache.entries()) {
-      // Check if user has any scope of this level
-      const has_level = entry.scopes.some((s) => s.scope_type === scope_type);
-      if (has_level) {
+      // Check if user has any scope in this root tree
+      const has_root = entry.scopes.some((s) => s.root_scope_id === root_scope_id);
+      if (has_root) {
         entries_to_remove.push(user_id);
       }
     }
@@ -182,8 +175,7 @@ class ScopeCache {
 
     let max_version = 0;
     for (const scope of scopes) {
-      const scope_key = `${scope.scope_type}:${scope.scope_id}`;
-      const version = this.scope_version_map.get(scope_key) || 0;
+      const version = this.scope_version_map.get(scope.scope_id) || 0;
       max_version = Math.max(max_version, version);
     }
 
@@ -217,7 +209,7 @@ let scope_cache_instance: ScopeCache | null = null;
  */
 export function get_scope_cache(
   max_size: number = 5000,
-  ttl_minutes: number = 15
+  ttl_minutes: number = 15,
 ): ScopeCache {
   if (!scope_cache_instance) {
     scope_cache_instance = new ScopeCache(max_size, ttl_minutes);

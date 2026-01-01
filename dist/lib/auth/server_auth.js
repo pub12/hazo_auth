@@ -30,8 +30,8 @@ export async function get_server_auth_user() {
             return { authenticated: false };
         }
         const user = users[0];
-        // Check if user is active
-        if (user.is_active === false) {
+        // Check if user is active (status must be 'active')
+        if (user.status !== "active") {
             return { authenticated: false };
         }
         // Map database profile_source to UI representation
@@ -43,7 +43,7 @@ export async function get_server_auth_user() {
             email: user.email_address,
             name: user.name || undefined,
             email_verified: user.email_verified === true,
-            is_active: user.is_active === true,
+            is_active: user.status === "active", // Derived from status column
             last_logon: user.last_logon || undefined,
             profile_picture_url: user.profile_picture_url || undefined,
             profile_source: profile_source_ui,

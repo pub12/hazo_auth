@@ -113,21 +113,17 @@ Configuration is loaded via `hazo_config` package and cached at runtime.
 ### Database Schema
 
 **Core tables:**
-- `hazo_users` - User accounts (id, email_address, password_hash, profile fields, google_id, auth_providers, user_type, org_id, app_user_data)
+- `hazo_users` - User accounts (id, email_address, password_hash, profile fields, google_id, auth_providers, user_type, app_user_data)
 - `hazo_refresh_tokens` - Token storage (password reset, email verification)
 - `hazo_roles` - Role definitions
 - `hazo_permissions` - Permission definitions
 - `hazo_user_roles` - User-role junction table
 - `hazo_role_permissions` - Role-permission junction table
 
-**Multi-tenancy tables:**
-- `hazo_org` - Organization definitions (id, name, parent_org_id, root_org_id, user_limit, active, audit fields)
-
-**HRBAC tables (optional):**
-- `hazo_scopes_l1` through `hazo_scopes_l7` - Hierarchical scope levels
-- `hazo_user_scopes` - User-scope assignments
-- `hazo_scope_labels` - Custom labels for scope levels per organization
-- `hazo_enum_scope_types` - Enum for scope type validation
+**Scope-based multi-tenancy tables:**
+- `hazo_scopes` - Unified scope hierarchy (id, name, level, parent_id for tree structure)
+- `hazo_user_scopes` - User-scope assignments (membership-based multi-tenancy)
+- `hazo_invitations` - Invitation system for onboarding new users to existing scopes
 
 **Migration Pattern:**
 ```bash
@@ -136,17 +132,18 @@ npm run migrate migrations/003_add_url_on_logon_to_hazo_users.sql
 
 Migrations are executed via `scripts/apply_migration.ts` which supports both SQLite and PostgREST.
 
-### Hierarchical Role-Based Access Control (HRBAC)
+### Scope-Based Multi-Tenancy (v5.0+)
 
-HRBAC extends the standard RBAC model with 7 hierarchical scope levels (L1-L7). Users assigned to a higher-level scope automatically inherit access to all descendant scopes.
+The scope system provides a flexible, membership-based multi-tenancy model where users are assigned to scopes (firms, companies, organizations, etc.). **v5.0 completely removed the organization-based multi-tenancy** in favor of this unified approach.
 
 **Architecture:**
-- Scope tables have `org_id` and `root_org_id` foreign keys referencing `hazo_org` table
-- Scope tables use `parent_scope_id` to establish hierarchy (L2 references L1, L3 references L2, etc.)
-- User scope assignments in `hazo_user_scopes` table
-- Access checking uses ancestor traversal for inherited access
-- LRU cache for scope lookups (configurable TTL and size)
-- Multi-tenancy must be enabled to use HRBAC
+- Single unified `hazo_scopes` table with hierarchical structure (replaces `hazo_org` + 7 `hazo_scopes_lX` tables)
+- Each scope has: `id`, `name`, `level` (descriptive label), `parent_id` (for hierarchy)
+- Users assigned to scopes via `hazo_user_scopes` table (membership model, not org_id foreign key)
+- Super admin scope: `00000000-0000-0000-0000-000000000000` (for system administrators)
+- Default system scope: `00000000-0000-0000-0000-000000000001` (fallback for non-multi-tenancy mode)
+- Unlimited hierarchy depth via parent-child relationships
+- Invitations link new users to existing scopes before account creation
 
 **Configuration:**
 ```ini
@@ -154,94 +151,73 @@ HRBAC extends the standard RBAC model with 7 hierarchical scope levels (L1-L7). 
 enable_hrbac = true
 scope_cache_ttl_minutes = 15
 scope_cache_max_entries = 5000
-default_label_l1 = Company
-default_label_l2 = Division
-default_label_l3 = Department
-# ... through l7
-```
+super_admin_scope_id = 00000000-0000-0000-0000-000000000000
+default_system_scope_id = 00000000-0000-0000-0000-000000000001
 
-**Using hazo_get_auth with scope options:**
-```typescript
-const result = await hazo_get_auth(request, {
-  required_permissions: ['view_reports'],
-  scope_type: 'hazo_scopes_l3',
-  scope_id: 'uuid-of-scope',  // or use scope_seq
-  scope_seq: 'L3_001',
-  strict: true,  // throws ScopeAccessError if denied
-});
+[hazo_auth__invitations]
+invitation_expiry_days = 7
+send_invitation_email = true
 
-if (result.scope_ok) {
-  // Access granted via: result.scope_access_via
-}
+[hazo_auth__create_firm]
+enable_create_firm = true
+default_firm_image_path = /hazo_auth/images/new_firm_default.jpg
 ```
 
 **Services:**
-- `src/lib/services/scope_service.ts` - CRUD operations for scopes
-- `src/lib/services/scope_labels_service.ts` - Custom labels per organization
+- `src/lib/services/scope_service.ts` - CRUD operations for unified scopes (simplified from org model)
 - `src/lib/services/user_scope_service.ts` - User scope assignments and access checking
-- `src/lib/auth/scope_cache.ts` - LRU cache for scope lookups
+- `src/lib/services/invitation_service.ts` - Invitation system for new users (NEW in v5.0)
+- `src/lib/services/firm_service.ts` - Create firm flow (NEW in v5.0)
+- `src/lib/services/post_verification_service.ts` - Post-verification routing logic (NEW in v5.0)
 
-### Multi-Tenancy (Organization Hierarchy)
+### Invitation System
 
-Multi-tenancy enables hierarchical organization structures for company-wide access control. Organizations can have parent-child relationships, forming a tree structure.
+The invitation system allows existing users to invite new users to join their scope. Invitations are created with an email address and scope assignment, then sent to the invitee.
 
 **Architecture:**
-- User limit enforcement at root organization level only
-- Soft delete pattern (sets `active = false`, never deletes)
-- LRU cache for org lookups (configurable TTL and size)
-- `hazo_get_auth` returns org info when multi-tenancy is enabled
+- `hazo_invitations` table stores pending invitations
+- Invitation fields: `id`, `email`, `scope_id`, `invited_by_user_id`, `expires_at`, `status`
+- Status values: `pending`, `accepted`, `expired`, `cancelled`
+- Invitations checked after email verification to auto-assign users to scopes
+- Email sent with invitation link containing token
+
+**API Endpoints:**
+- `GET /api/hazo_auth/invitations` - List invitations (by email or invited_by)
+- `POST /api/hazo_auth/invitations` - Create invitation
+- `PATCH /api/hazo_auth/invitations` - Update invitation (cancel, resend)
+- `DELETE /api/hazo_auth/invitations` - Delete invitation
+
+**Service:**
+- `src/lib/services/invitation_service.ts` - CRUD operations for invitations
+
+### Create Firm Flow
+
+New users without scope assignments or invitations are prompted to create their own firm (scope) after email verification.
+
+**Architecture:**
+- Post-verification routing checks `hazo_user_scopes` table
+- If no scopes assigned, checks for pending invitations
+- If no invitations, redirects to "Create Firm" page
+- User creates firm, becomes owner/admin of new scope
+- Default firm image: `/hazo_auth/images/new_firm_default.jpg`
 
 **Configuration:**
 ```ini
-[hazo_auth__multi_tenancy]
-enable_multi_tenancy = true
-org_cache_ttl_minutes = 15
-org_cache_max_entries = 1000
-default_user_limit = 0
-```
-
-**Using hazo_get_auth with multi-tenancy:**
-```typescript
-const result = await hazo_get_auth(request, {
-  required_permissions: ['view_data'],
-});
-
-if (result.authenticated) {
-  result.user.org_id;           // User's direct org ID
-  result.user.org_name;         // User's direct org name
-  result.user.parent_org_id;    // Parent org ID (if any)
-  result.user.parent_org_name;  // Parent org name
-  result.user.root_org_id;      // Root org ID
-  result.user.root_org_name;    // Root org name
-}
-
-// Require org assignment for specific routes
-const auth = await hazo_get_auth(request, { require_org: true });
-// Throws OrgRequiredError if user has no org_id
+[hazo_auth__create_firm]
+enable_create_firm = true
+default_firm_image_path = /hazo_auth/images/new_firm_default.jpg
 ```
 
 **API Endpoints:**
-- `GET /api/hazo_auth/org_management/orgs` - List organizations (with `action=tree` for hierarchy)
-- `POST /api/hazo_auth/org_management/orgs` - Create organization
-- `PATCH /api/hazo_auth/org_management/orgs` - Update organization
-- `DELETE /api/hazo_auth/org_management/orgs?org_id=...` - Soft delete (deactivate)
+- `POST /api/hazo_auth/create_firm` - Create new firm (scope) and assign user
 
 **Services:**
-- `src/lib/services/org_service.ts` - CRUD operations for organizations
-- `src/lib/auth/org_cache.ts` - LRU cache for org lookups
-- `src/lib/multi_tenancy_config.server.ts` - Configuration loader
+- `src/lib/services/firm_service.ts` - Create firm logic
+- `src/lib/services/post_verification_service.ts` - Post-verification routing
 
 **Components:**
-- `OrgHierarchyTab` - TreeView component for org management (in user_management)
-- `OrgManagementLayout` - Standalone layout for org management
-- `OrgManagementPage` - Zero-config page component
-
-**User Management UI Features (when multi-tenancy enabled):**
-- Organization Assignment Button with TreeView dialog
-  - **Global admins** (`hazo_org_global_admin` permission) see all organizations
-  - **Non-global admins** only see their own org tree (filtered by `root_org_id`)
-- User Details Dialog with scrollable content (`max-h-[80vh] overflow-y-auto`)
-- Select components use `value="__none__"` for "None" options (Radix UI requirement)
+- `CreateFirmLayout` - Form for creating new firm
+- `CreateFirmPage` - Zero-config page component
 
 ### User Types (Optional Feature)
 
@@ -435,11 +411,23 @@ The singleton instance (`get_hazo_connect_instance()`) is configured via `hazo_a
 ### CLI Command Implementation
 
 CLI commands are in `src/cli/`:
-- `init.ts` - Initialize project structure
-- `generate.ts` - Generate route files
-- `validate.ts` - Validate setup
+- `init.ts` - Initialize project structure (creates directories, copies config files)
+- `generate.ts` - Generate route files (API routes and optional pages)
+- `validate.ts` - Validate setup (checks config, database, environment)
+- `init_users.ts` - Initialize permissions and create super user (calls init_permissions internally)
+- `init_permissions.ts` - Initialize permissions only (NEW in v5.0) - useful for production deployments
 
 Entry point is `src/cli/index.ts`, which uses `commander` for argument parsing.
+
+**Key Commands:**
+```bash
+npx hazo_auth init                     # Initialize project structure
+npx hazo_auth generate-routes          # Generate API routes only
+npx hazo_auth generate-routes --pages  # Generate API routes + demo pages
+npx hazo_auth validate                 # Validate project setup
+npx hazo_auth init-permissions         # Initialize permissions (v5.0+)
+npm run init-users                     # Initialize permissions + create super user
+```
 
 ### JWT Session Token System
 
@@ -766,6 +754,64 @@ Or use CLI: `npx hazo_auth generate-routes`
 - Benefits from `hazo_get_auth()` LRU cache
 - No database queries for cached authenticated requests
 
+### App User Data Schema Editor (User Management)
+
+Admins can view and edit any user's `app_user_data` through the User Management UI when schema-based editing is enabled. The form is generated from a JSON schema defined in config.
+
+**Configuration:**
+```ini
+[hazo_auth__app_user_data]
+# Enable schema-based editing in User Management
+enable_schema = true
+
+# JSON Schema defining the structure of app_user_data
+# Supports types: object, string, number, boolean
+# Top-level must be "object" with nested section objects
+schema = {"type":"object","properties":{"electronic_funds_transfer":{"type":"object","properties":{"eft_bsb_number":{"type":"string"},"eft_account_number":{"type":"string"},"eft_account_name":{"type":"string"}}},"contact_details":{"type":"object","properties":{"daytime_phone":{"type":"string"},"mobile_phone":{"type":"string"},"email_address":{"type":"string"}}}}}
+
+# Optional: Custom labels for top-level sections
+# Format: label_<key> = Display Label
+label_electronic_funds_transfer = Bank Account Details
+label_contact_details = Contact Information
+label_postal_address = Postal Address
+```
+
+**UI Features:**
+- Collapsible sections for each top-level schema property
+- View/Edit mode toggle (Edit button shows when not read-only)
+- Field types: text inputs for strings, number inputs for numbers, switches for booleans
+- Auto-generated labels from snake_case (e.g., `eft_bsb_number` → "BSB Number")
+- Falls back to raw JSON display when schema is disabled
+
+**Schema Structure:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "section_key": {
+      "type": "object",
+      "properties": {
+        "field_key": { "type": "string" },
+        "another_field": { "type": "number" },
+        "is_enabled": { "type": "boolean" }
+      }
+    }
+  }
+}
+```
+
+**API Endpoints:**
+- `GET /api/hazo_auth/app_user_data/schema` - Returns schema configuration for the editor
+- `PATCH /api/hazo_auth/user_management/users` - Admin endpoint to update any user's `app_user_data`
+
+**Files:**
+- `src/lib/app_user_data_config.server.ts` - Config loader for schema
+- `src/app/api/hazo_auth/app_user_data/schema/route.ts` - Schema API endpoint
+- `src/components/layouts/user_management/components/app_user_data_editor.tsx` - Editor component
+
+**Usage in User Detail Dialog:**
+The editor appears in the user detail dialog when viewing a user. It replaces the read-only JSON tree view when schema is enabled.
+
 **Type Definitions:**
 ```typescript
 // Updated in auth_types.ts
@@ -782,14 +828,19 @@ export type HazoAuthUser = {
 
 ## Permissions Reference
 
-| Permission | Purpose |
-|------------|---------|
-| `admin_system` | System-level configuration (scope labels) |
-| `admin_scope_hierarchy_management` | Manage scope hierarchy |
-| `admin_user_scope_assignment` | Assign scopes to users |
-| `admin_test_access` | Access the RBAC/HRBAC test tool |
-| `hazo_perm_org_management` | CRUD operations on organizations |
-| `hazo_org_global_admin` | View/manage all organizations and scopes across the system |
+| Permission | Purpose | Added in Version |
+|------------|---------|------------------|
+| `admin_system` | System-level configuration (e.g., scope labels in HRBAC) | v3.0 |
+| `admin_scope_hierarchy_management` | Manage scope hierarchy (create, edit, delete scopes) | v3.0 |
+| `admin_user_scope_assignment` | Assign scopes to users | v3.0 |
+| `admin_test_access` | Access the RBAC/HRBAC test tool | v3.0 |
+| `admin_user_management` | Access to User Management (Users tab) | v2.0 |
+| `admin_role_management` | Access to User Management (Roles tab) | v2.0 |
+| `admin_permission_management` | Access to User Management (Permissions tab) | v2.0 |
+
+**Removed in v5.0:**
+- ~~`hazo_perm_org_management`~~ - CRUD operations on organizations (org system removed)
+- ~~`hazo_org_global_admin`~~ - View/manage all organizations (org system removed)
 
 ## App Permission Declaration
 

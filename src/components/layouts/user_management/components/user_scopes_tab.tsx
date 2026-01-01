@@ -1,4 +1,5 @@
 // file_description: User Scopes tab component for assigning scopes to users in HRBAC
+// Uses unified hazo_scopes table with parent_id hierarchy
 // section: client_directive
 "use client";
 
@@ -61,52 +62,34 @@ type User = {
   profile_picture_url: string | null;
 };
 
-type ScopeLevel =
-  | "hazo_scopes_l1"
-  | "hazo_scopes_l2"
-  | "hazo_scopes_l3"
-  | "hazo_scopes_l4"
-  | "hazo_scopes_l5"
-  | "hazo_scopes_l6"
-  | "hazo_scopes_l7";
-
+// Unified UserScope type for membership-based multi-tenancy
 type UserScope = {
   user_id: string;
   scope_id: string;
-  scope_seq: string;
-  scope_type: ScopeLevel;
+  scope_name?: string;
+  level?: string;
+  role_id: string;
+  root_scope_id: string;
   created_at: string;
   changed_at: string;
 };
 
+// Unified ScopeRecord type for the single hazo_scopes table
 type ScopeRecord = {
   id: string;
-  seq: string;
-  org_id: string;
-  root_org_id: string;
   name: string;
-  parent_scope_id?: string;
+  level: string; // Descriptive label (e.g., "HQ", "Division", "Department")
+  parent_id: string | null;
   created_at: string;
   changed_at: string;
 };
 
 type ScopeTreeNode = ScopeRecord & {
   children?: ScopeTreeNode[];
-  level: ScopeLevel;
 };
 
 type ExtendedTreeDataItem = TreeDataItem & {
   scopeData?: ScopeTreeNode;
-};
-
-const SCOPE_LEVEL_LABELS: Record<ScopeLevel, string> = {
-  hazo_scopes_l1: "Level 1",
-  hazo_scopes_l2: "Level 2",
-  hazo_scopes_l3: "Level 3",
-  hazo_scopes_l4: "Level 4",
-  hazo_scopes_l5: "Level 5",
-  hazo_scopes_l6: "Level 6",
-  hazo_scopes_l7: "Level 7",
 };
 
 // Convert ScopeTreeNode to TreeDataItem format for selection
@@ -116,7 +99,7 @@ function convertToTreeData(nodes: ScopeTreeNode[]): ExtendedTreeDataItem[] {
 
     const item: ExtendedTreeDataItem = {
       id: node.id,
-      name: `${node.name} (${node.seq})`,
+      name: `${node.name} (${node.level})`,
       icon: Building2,
       scopeData: node,
     };
@@ -148,7 +131,7 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
   // User scopes state
   const [userScopes, setUserScopes] = useState<UserScope[]>([]);
   const [scopesLoading, setScopesLoading] = useState(false);
-  const [inheritedLevels, setInheritedLevels] = useState<ScopeLevel[]>([]);
+  const [inheritedScopeIds, setInheritedScopeIds] = useState<string[]>([]);
 
   // Add scope dialog state
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -189,7 +172,7 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
   const loadUserScopes = useCallback(async () => {
     if (!selectedUser) {
       setUserScopes([]);
-      setInheritedLevels([]);
+      setInheritedScopeIds([]);
       return;
     }
 
@@ -197,7 +180,7 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
     try {
       const params = new URLSearchParams({
         user_id: selectedUser.id,
-        include_effective: "true",
+        include_details: "true",
       });
       const response = await fetch(
         `${apiBasePath}/user_management/users/scopes?${params}`
@@ -206,7 +189,7 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
 
       if (data.success) {
         setUserScopes(data.direct_scopes || []);
-        setInheritedLevels(data.inherited_scope_types || []);
+        setInheritedScopeIds(data.inherited_scope_ids || []);
       } else {
         toast.error(data.error || "Failed to load user scopes");
       }
@@ -221,18 +204,18 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
     void loadUserScopes();
   }, [loadUserScopes]);
 
-  // Load scope tree for add dialog (all scopes across all orgs)
+  // Load scope tree for add dialog (all scopes)
   const loadScopeTree = useCallback(async () => {
     setTreeLoading(true);
     try {
-      const params = new URLSearchParams({ action: "tree_all" });
+      const params = new URLSearchParams({ action: "tree" });
       const response = await fetch(
         `${apiBasePath}/scope_management/scopes?${params}`
       );
       const data = await response.json();
 
       if (data.success) {
-        setScopeTree(data.trees || []);
+        setScopeTree(data.tree || []);
       } else {
         setScopeTree([]);
       }
@@ -298,9 +281,7 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             user_id: selectedUser.id,
-            scope_type: scope.level,
             scope_id: scope.id,
-            scope_seq: scope.seq,
           }),
         }
       );
@@ -330,7 +311,6 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
     try {
       const params = new URLSearchParams({
         user_id: selectedUser.id,
-        scope_type: scopeToDelete.scope_type,
         scope_id: scopeToDelete.scope_id,
       });
 
@@ -356,11 +336,6 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
     } finally {
       setActionLoading(false);
     }
-  };
-
-  // Get level label
-  const getLevelLabel = (level: ScopeLevel): string => {
-    return SCOPE_LEVEL_LABELS[level] || level;
   };
 
   return (
@@ -435,9 +410,9 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
                 ? `Scopes for ${selectedUser.name || selectedUser.email_address}`
                 : "Select a user to view scopes"}
             </h3>
-            {selectedUser && inheritedLevels.length > 0 && (
+            {selectedUser && inheritedScopeIds.length > 0 && (
               <p className="text-xs text-muted-foreground mt-1">
-                Inherits access to: {inheritedLevels.map(getLevelLabel).join(", ")}
+                Also has access to {inheritedScopeIds.length} inherited scope(s)
               </p>
             )}
           </div>
@@ -484,8 +459,8 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
             <Table className="w-full">
               <TableHeader>
                 <TableRow>
+                  <TableHead>Scope Name</TableHead>
                   <TableHead>Level</TableHead>
-                  <TableHead>Scope Seq</TableHead>
                   <TableHead>Scope ID</TableHead>
                   <TableHead>Assigned</TableHead>
                   <TableHead className="text-right w-[80px]">Actions</TableHead>
@@ -493,12 +468,12 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
               </TableHeader>
               <TableBody>
                 {userScopes.map((scope) => (
-                  <TableRow key={`${scope.scope_type}-${scope.scope_id}`}>
+                  <TableRow key={scope.scope_id}>
                     <TableCell className="font-medium">
-                      {getLevelLabel(scope.scope_type)}
+                      {scope.scope_name || "Unknown"}
                     </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {scope.scope_seq}
+                    <TableCell className="text-sm">
+                      {scope.level || "-"}
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
                       {scope.scope_id.substring(0, 8)}...
@@ -575,8 +550,7 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
                   {selectedTreeItem.scopeData.name}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {SCOPE_LEVEL_LABELS[selectedTreeItem.scopeData.level]} -{" "}
-                  {selectedTreeItem.scopeData.seq}
+                  {selectedTreeItem.scopeData.level} - ID: {selectedTreeItem.scopeData.id.substring(0, 8)}...
                 </p>
               </div>
             )}
@@ -614,9 +588,9 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
             <AlertDialogTitle>Remove Scope Assignment</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to remove the scope &quot;
-              {scopeToDelete?.scope_seq}&quot; from{" "}
+              {scopeToDelete?.scope_name || scopeToDelete?.scope_id.substring(0, 8)}&quot; from{" "}
               {selectedUser?.name || selectedUser?.email_address}? This will
-              also revoke access to any inherited scopes.
+              also revoke access to any child scopes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

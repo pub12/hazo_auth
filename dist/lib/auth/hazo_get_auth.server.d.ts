@@ -3,9 +3,9 @@ import type { HazoAuthResult, HazoAuthOptions } from "./auth_types";
 /**
  * Main hazo_get_auth function for server-side use in API routes
  * Returns user details, permissions, and checks required permissions
- * Optionally checks HRBAC scope access when scope options are provided
+ * Optionally checks scope access when scope_id option is provided
  * @param request - NextRequest object
- * @param options - Optional parameters for permission checking and HRBAC scope checking
+ * @param options - Optional parameters for permission checking and scope checking
  * @returns HazoAuthResult with user data, permissions, and optional scope access info
  * @throws PermissionError if strict mode and permissions are missing
  * @throws ScopeAccessError if strict mode and scope access is denied

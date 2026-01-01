@@ -7,5 +7,8 @@ export declare function GET(request: NextRequest): Promise<NextResponse<{
     message: string;
     user_id: string | undefined;
     email: string | undefined;
+    action: import("../../../..").PostVerificationAction;
+    redirect_url: string | undefined;
+    invitation_accepted: boolean | undefined;
 }>>;
 //# sourceMappingURL=route.d.ts.map

@@ -14,7 +14,6 @@ export declare function GET(request: NextRequest): Promise<NextResponse<{
         label: string;
         badge_color: string;
     }[];
-    multi_tenancy_enabled: boolean;
     users: {
         id: unknown;
         name: {} | null;
@@ -27,12 +26,10 @@ export declare function GET(request: NextRequest): Promise<NextResponse<{
         profile_source: {} | null;
         user_type: string | null;
         app_user_data: Record<string, unknown> | null;
-        org_id: string | null | undefined;
-        root_org_id: string | null | undefined;
     }[];
 }>>;
 /**
- * PATCH - Update user (deactivate: set is_active to false, assign org, etc.)
+ * PATCH - Update user (deactivate: set status to 'inactive', etc.)
  */
 export declare function PATCH(request: NextRequest): Promise<NextResponse<{
     error: string;

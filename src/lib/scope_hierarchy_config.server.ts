@@ -4,17 +4,14 @@ import {
   get_config_value,
   get_config_number,
   get_config_boolean,
-  get_config_array,
 } from "./config/config_loader.server";
-import type { ScopeLevel } from "./services/scope_service";
-import { SCOPE_LEVELS } from "./services/scope_service";
+import { SUPER_ADMIN_SCOPE_ID, DEFAULT_SYSTEM_SCOPE_ID } from "./services/scope_service";
 
 // section: types
 
 /**
  * Scope hierarchy configuration options for HRBAC
- * Note: Scopes are now connected to organizations via org_id and root_org_id
- * foreign keys referencing the hazo_org table.
+ * Uses unified hazo_scopes table with parent_id for hierarchy
  */
 export type ScopeHierarchyConfig = {
   /** Whether HRBAC is enabled (default: false) */
@@ -23,72 +20,21 @@ export type ScopeHierarchyConfig = {
   scope_cache_ttl_minutes: number;
   /** Maximum entries in scope cache (default: 5000) */
   scope_cache_max_entries: number;
-  /** Which scope levels are active/enabled */
-  active_levels: ScopeLevel[];
-  /** Default labels for each scope level */
-  default_labels: Record<ScopeLevel, string>;
+  /** Super admin scope ID */
+  super_admin_scope_id: string;
+  /** Default system scope ID (for non-multi-tenancy mode) */
+  default_system_scope_id: string;
 };
 
 // section: constants
 
 const SECTION_NAME = "hazo_auth__scope_hierarchy";
 
-const DEFAULT_LABELS: Record<ScopeLevel, string> = {
-  hazo_scopes_l1: "Level 1",
-  hazo_scopes_l2: "Level 2",
-  hazo_scopes_l3: "Level 3",
-  hazo_scopes_l4: "Level 4",
-  hazo_scopes_l5: "Level 5",
-  hazo_scopes_l6: "Level 6",
-  hazo_scopes_l7: "Level 7",
-};
-
 // section: helpers
-
-/**
- * Parses the active_levels config value into an array of ScopeLevel
- * If not configured, returns all levels
- */
-function parse_active_levels(config_value: string): ScopeLevel[] {
-  if (!config_value || config_value.trim().length === 0) {
-    return [...SCOPE_LEVELS]; // All levels active by default
-  }
-
-  const levels = config_value.split(",").map((s) => s.trim());
-  const valid_levels: ScopeLevel[] = [];
-
-  for (const level of levels) {
-    if (SCOPE_LEVELS.includes(level as ScopeLevel)) {
-      valid_levels.push(level as ScopeLevel);
-    }
-  }
-
-  return valid_levels.length > 0 ? valid_levels : [...SCOPE_LEVELS];
-}
-
-/**
- * Reads default labels from config, falling back to defaults
- */
-function get_default_labels(): Record<ScopeLevel, string> {
-  const labels = { ...DEFAULT_LABELS };
-
-  for (let i = 1; i <= 7; i++) {
-    const level = `hazo_scopes_l${i}` as ScopeLevel;
-    const config_key = `default_label_l${i}`;
-    const config_value = get_config_value(SECTION_NAME, config_key, "");
-
-    if (config_value && config_value.trim().length > 0) {
-      labels[level] = config_value.trim();
-    }
-  }
-
-  return labels;
-}
 
 /**
  * Reads HRBAC scope hierarchy configuration from hazo_auth_config.ini file
  * Falls back to defaults if config file is not found or section is missing
- * Note: Scopes are now connected to organizations via org_id/root_org_id FK references
  * @returns Scope hierarchy configuration options
  */
 export function get_scope_hierarchy_config(): ScopeHierarchyConfig {
@@ -107,19 +53,24 @@ export function get_scope_hierarchy_config(): ScopeHierarchyConfig {
     5000,
   );
 
-  // Active levels
-  const active_levels_str = get_config_value(SECTION_NAME, "active_levels", "");
-  const active_levels = parse_active_levels(active_levels_str);
-
-  // Default labels
-  const default_labels = get_default_labels();
+  // Scope IDs (with defaults)
+  const super_admin_scope_id = get_config_value(
+    SECTION_NAME,
+    "super_admin_scope_id",
+    SUPER_ADMIN_SCOPE_ID,
+  );
+  const default_system_scope_id = get_config_value(
+    SECTION_NAME,
+    "default_system_scope_id",
+    DEFAULT_SYSTEM_SCOPE_ID,
+  );
 
   return {
     enable_hrbac,
     scope_cache_ttl_minutes,
     scope_cache_max_entries,
-    active_levels,
-    default_labels,
+    super_admin_scope_id,
+    default_system_scope_id,
   };
 }
 
@@ -129,12 +80,4 @@ export function get_scope_hierarchy_config(): ScopeHierarchyConfig {
  */
 export function is_hrbac_enabled(): boolean {
   return get_config_boolean(SECTION_NAME, "enable_hrbac", false);
-}
-
-/**
- * Gets the default label for a scope level
- */
-export function get_default_label(level: ScopeLevel): string {
-  const config_key = `default_label_l${level.charAt(level.length - 1)}`;
-  return get_config_value(SECTION_NAME, config_key, DEFAULT_LABELS[level]);
 }

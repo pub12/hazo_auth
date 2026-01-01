@@ -31,13 +31,29 @@ storybook-static/
 *.tsbuildinfo
 **/*.tsbuildinfo
 
+# Exclude demo/test files from dist (these shouldn't be built but exclude as safeguard)
+dist/app/
+dist/components/layouts/app_user_data_test/
+dist/components/layouts/profile_stamp_test/
+dist/components/layouts/rbac_test/
+
 # Development files
 .storybook/
 **/.storybook/
 *.log
 **/*.log
+logs/
+**/logs/
 .DS_Store
 **/.DS_Store
+
+# SQLite database files (test fixtures only)
+*.sqlite
+*.sqlite3
+**/*.sqlite
+**/*.sqlite3
+*.db
+**/*.db
 
 # Large image libraries - now included in package
 # public/profile_pictures/library/ is included via files field in package.json
@@ -85,9 +101,8 @@ hazo_notify_config.ini
 *.pem
 **/*.pem
 
-# Source maps
-*.map
-**/*.map
+# Source maps (excluding .d.ts.map for TypeScript navigation)
+# Note: .d.ts.map files are INCLUDED for better IDE experience
 
 # Temporary files
 *.tmp

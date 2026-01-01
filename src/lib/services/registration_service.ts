@@ -73,7 +73,7 @@ export async function register_user(
       email_address: email,
       password_hash: password_hash,
       email_verified: false,
-      is_active: true,
+      status: "active",
       login_attempts: 0,
       auth_providers: "email", // Track that this user registered with email/password
       created_at: now,

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
 import { create_app_logger } from "../../../../lib/app_logger";
 import { verify_email_token } from "../../../../lib/services/email_verification_service";
+import { handle_post_verification } from "../../../../lib/services/post_verification_service";
 import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
 
 // section: route_config
@@ -59,12 +60,32 @@ export async function GET(request: NextRequest) {
       email: result.email,
     });
 
+    // Handle post-verification flow (check scopes, invitations, etc.)
+    const post_verification_result = await handle_post_verification(
+      hazoConnect,
+      result.user_id!,
+      result.email!,
+    );
+
+    logger.info("post_verification_completed", {
+      filename: get_filename(),
+      line_number: get_line_number(),
+      user_id: result.user_id,
+      action: post_verification_result.action,
+      redirect_url: post_verification_result.redirect_url,
+      invitation_accepted: post_verification_result.invitation_accepted,
+    });
+
     return NextResponse.json(
       {
         success: true,
         message: "Email verified successfully",
         user_id: result.user_id,
         email: result.email,
+        // Post-verification flow results
+        action: post_verification_result.action,
+        redirect_url: post_verification_result.redirect_url,
+        invitation_accepted: post_verification_result.invitation_accepted,
       },
       { status: 200 }
     );

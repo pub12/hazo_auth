@@ -1,14 +1,23 @@
 import { createCrudService } from "hazo_connect/server";
 import { create_app_logger } from "../app_logger";
 import { sanitize_error_for_user } from "../utils/error_sanitizer";
-import { SCOPE_LEVEL_NUMBERS, get_scope_by_id, get_scope_by_seq, get_scope_ancestors, } from "./scope_service";
+import { get_scope_by_id, get_scope_ancestors, get_root_scope_id, SUPER_ADMIN_SCOPE_ID, is_super_admin_scope, } from "./scope_service";
+// section: constants
+/**
+ * CRUD service options for hazo_user_scopes table
+ * This table uses a composite primary key (user_id, scope_id) and no 'id' column
+ */
+const USER_SCOPES_CRUD_OPTIONS = {
+    primaryKeys: ["user_id", "scope_id"],
+    autoId: false,
+};
 // section: helpers
 /**
  * Gets all scope assignments for a user
  */
 export async function get_user_scopes(adapter, user_id) {
     try {
-        const user_scope_service = createCrudService(adapter, "hazo_user_scopes");
+        const user_scope_service = createCrudService(adapter, "hazo_user_scopes", USER_SCOPES_CRUD_OPTIONS);
         const scopes = await user_scope_service.findBy({ user_id });
         return {
             success: true,
@@ -37,10 +46,10 @@ export async function get_user_scopes(adapter, user_id) {
 /**
  * Gets all users assigned to a specific scope
  */
-export async function get_users_by_scope(adapter, scope_type, scope_id) {
+export async function get_users_by_scope(adapter, scope_id) {
     try {
-        const user_scope_service = createCrudService(adapter, "hazo_user_scopes");
-        const scopes = await user_scope_service.findBy({ scope_type, scope_id });
+        const user_scope_service = createCrudService(adapter, "hazo_user_scopes", USER_SCOPES_CRUD_OPTIONS);
+        const scopes = await user_scope_service.findBy({ scope_id });
         return {
             success: true,
             scopes: Array.isArray(scopes) ? scopes : [],
@@ -56,7 +65,6 @@ export async function get_users_by_scope(adapter, scope_type, scope_id) {
                 filename: "user_scope_service.ts",
                 line_number: 0,
                 operation: "get_users_by_scope",
-                scope_type,
                 scope_id,
             },
         });
@@ -69,15 +77,14 @@ export async function get_users_by_scope(adapter, scope_type, scope_id) {
 /**
  * Assigns a scope to a user
  */
-export async function assign_user_scope(adapter, user_id, scope_type, scope_id, scope_seq) {
+export async function assign_user_scope(adapter, data) {
     try {
-        const user_scope_service = createCrudService(adapter, "hazo_user_scopes");
+        const user_scope_service = createCrudService(adapter, "hazo_user_scopes", USER_SCOPES_CRUD_OPTIONS);
         const now = new Date().toISOString();
         // Check if assignment already exists
         const existing = await user_scope_service.findBy({
-            user_id,
-            scope_type,
-            scope_id,
+            user_id: data.user_id,
+            scope_id: data.scope_id,
         });
         if (Array.isArray(existing) && existing.length > 0) {
             return {
@@ -86,19 +93,25 @@ export async function assign_user_scope(adapter, user_id, scope_type, scope_id, 
             };
         }
         // Verify the scope exists
-        const scope_result = await get_scope_by_id(adapter, scope_type, scope_id);
+        const scope_result = await get_scope_by_id(adapter, data.scope_id);
         if (!scope_result.success) {
             return {
                 success: false,
                 error: "Scope not found",
             };
         }
+        // Compute root_scope_id if not provided
+        let root_scope_id = data.root_scope_id || "";
+        if (!root_scope_id) {
+            const computed_root = await get_root_scope_id(adapter, data.scope_id);
+            root_scope_id = computed_root || data.scope_id; // Use self as root if computation fails
+        }
         // Insert new assignment
         const inserted = await user_scope_service.insert({
-            user_id,
-            scope_id,
-            scope_seq,
-            scope_type,
+            user_id: data.user_id,
+            scope_id: data.scope_id,
+            root_scope_id,
+            role_id: data.role_id,
             created_at: now,
             changed_at: now,
         });
@@ -123,9 +136,8 @@ export async function assign_user_scope(adapter, user_id, scope_type, scope_id, 
                 filename: "user_scope_service.ts",
                 line_number: 0,
                 operation: "assign_user_scope",
-                user_id,
-                scope_type,
-                scope_id,
+                user_id: data.user_id,
+                scope_id: data.scope_id,
             },
         });
         return {
@@ -137,13 +149,12 @@ export async function assign_user_scope(adapter, user_id, scope_type, scope_id, 
 /**
  * Removes a scope assignment from a user
  */
-export async function remove_user_scope(adapter, user_id, scope_type, scope_id) {
+export async function remove_user_scope(adapter, user_id, scope_id) {
     try {
-        const user_scope_service = createCrudService(adapter, "hazo_user_scopes");
+        const user_scope_service = createCrudService(adapter, "hazo_user_scopes", USER_SCOPES_CRUD_OPTIONS);
         // Find the assignment
         const existing = await user_scope_service.findBy({
             user_id,
-            scope_type,
             scope_id,
         });
         if (!Array.isArray(existing) || existing.length === 0) {
@@ -151,30 +162,30 @@ export async function remove_user_scope(adapter, user_id, scope_type, scope_id) 
                 success: true, // Already not assigned
             };
         }
-        // Delete using a filter-based approach since there's no single ID
-        // Note: hazo_user_scopes uses composite primary key (user_id, scope_id, scope_type)
-        // We need to find and delete by the combination
         const existing_scope = existing[0];
-        // Use raw delete with filters if available, otherwise try by the composite key pattern
-        // Most hazo_connect adapters support deleteBy or similar
+        // Try to delete - composite key might require special handling
         try {
-            // Try to delete by finding records with matching criteria
-            const all_user_scopes = await user_scope_service.findBy({ user_id });
-            if (Array.isArray(all_user_scopes)) {
-                for (const scope of all_user_scopes) {
-                    const s = scope;
-                    if (s.scope_type === scope_type && s.scope_id === scope_id) {
-                        // If the record has an id field, use it
-                        if (scope.id) {
-                            await user_scope_service.deleteById(scope.id);
+            // If the record has an id field, use it
+            if (existing[0].id) {
+                await user_scope_service.deleteById(existing[0].id);
+            }
+            else {
+                // For composite keys, we need to find and delete by all criteria
+                const all_user_scopes = await user_scope_service.findBy({ user_id });
+                if (Array.isArray(all_user_scopes)) {
+                    for (const scope of all_user_scopes) {
+                        const s = scope;
+                        if (s.scope_id === scope_id) {
+                            if (scope.id) {
+                                await user_scope_service.deleteById(scope.id);
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
             }
         }
         catch (_a) {
-            // Fallback: Some adapters might not support this pattern
             const logger = create_app_logger();
             logger.warn("user_scope_delete_fallback", {
                 filename: "user_scope_service.ts",
@@ -198,7 +209,6 @@ export async function remove_user_scope(adapter, user_id, scope_type, scope_id) 
                 line_number: 0,
                 operation: "remove_user_scope",
                 user_id,
-                scope_type,
                 scope_id,
             },
         });
@@ -221,20 +231,22 @@ export async function update_user_scopes(adapter, user_id, new_scopes) {
         }
         const current_scopes = current_result.scopes || [];
         // Determine scopes to add and remove
-        const current_keys = new Set(current_scopes.map((s) => `${s.scope_type}:${s.scope_id}`));
-        const new_keys = new Set(new_scopes.map((s) => `${s.scope_type}:${s.scope_id}`));
+        const current_keys = new Set(current_scopes.map((s) => s.scope_id));
+        const new_keys = new Set(new_scopes.map((s) => s.scope_id));
         // Remove scopes not in new set
         for (const scope of current_scopes) {
-            const key = `${scope.scope_type}:${scope.scope_id}`;
-            if (!new_keys.has(key)) {
-                await remove_user_scope(adapter, user_id, scope.scope_type, scope.scope_id);
+            if (!new_keys.has(scope.scope_id)) {
+                await remove_user_scope(adapter, user_id, scope.scope_id);
             }
         }
         // Add scopes not in current set
         for (const scope of new_scopes) {
-            const key = `${scope.scope_type}:${scope.scope_id}`;
-            if (!current_keys.has(key)) {
-                const result = await assign_user_scope(adapter, user_id, scope.scope_type, scope.scope_id, scope.scope_seq);
+            if (!current_keys.has(scope.scope_id)) {
+                const result = await assign_user_scope(adapter, {
+                    user_id,
+                    scope_id: scope.scope_id,
+                    role_id: scope.role_id,
+                });
                 if (!result.success) {
                     return result;
                 }
@@ -263,81 +275,95 @@ export async function update_user_scopes(adapter, user_id, new_scopes) {
     }
 }
 /**
+ * Checks if a user is a super admin (has super admin scope assigned)
+ */
+export async function is_user_super_admin(adapter, user_id) {
+    try {
+        const user_scopes_result = await get_user_scopes(adapter, user_id);
+        if (!user_scopes_result.success || !user_scopes_result.scopes) {
+            return false;
+        }
+        return user_scopes_result.scopes.some((scope) => is_super_admin_scope(scope.scope_id));
+    }
+    catch (_a) {
+        return false;
+    }
+}
+/**
+ * Checks if a user has any scope assigned
+ */
+export async function user_has_any_scope(adapter, user_id) {
+    try {
+        const user_scopes_result = await get_user_scopes(adapter, user_id);
+        return (user_scopes_result.success &&
+            Array.isArray(user_scopes_result.scopes) &&
+            user_scopes_result.scopes.length > 0);
+    }
+    catch (_a) {
+        return false;
+    }
+}
+/**
  * Checks if a user has access to a specific scope
  * Access is granted if:
- * 1. User has the exact scope assigned, OR
- * 2. User has access to an ancestor scope (L2 user can access L3, L4, etc.)
+ * 1. User is a super admin (has super admin scope)
+ * 2. User has the exact scope assigned
+ * 3. User has access to an ancestor scope (inherited access)
  *
  * @param adapter - HazoConnect adapter
  * @param user_id - User ID to check
- * @param target_scope_type - The scope level being accessed
- * @param target_scope_id - The scope ID being accessed (optional if target_scope_seq provided)
- * @param target_scope_seq - The scope seq being accessed (optional if target_scope_id provided)
+ * @param target_scope_id - The scope ID being accessed
  */
-export async function check_user_scope_access(adapter, user_id, target_scope_type, target_scope_id, target_scope_seq) {
+export async function check_user_scope_access(adapter, user_id, target_scope_id) {
+    var _a;
     try {
-        // Resolve scope ID if only seq provided
-        let resolved_scope_id = target_scope_id;
-        let resolved_scope_seq = target_scope_seq;
-        if (!resolved_scope_id && resolved_scope_seq) {
-            const scope_result = await get_scope_by_seq(adapter, target_scope_type, resolved_scope_seq);
-            if (!scope_result.success || !scope_result.scope) {
-                return { has_access: false };
-            }
-            resolved_scope_id = scope_result.scope.id;
-        }
-        else if (resolved_scope_id && !resolved_scope_seq) {
-            const scope_result = await get_scope_by_id(adapter, target_scope_type, resolved_scope_id);
-            if (!scope_result.success || !scope_result.scope) {
-                return { has_access: false };
-            }
-            resolved_scope_seq = scope_result.scope.seq;
-        }
-        if (!resolved_scope_id) {
-            return { has_access: false };
-        }
         // Get user's assigned scopes
         const user_scopes_result = await get_user_scopes(adapter, user_id);
         if (!user_scopes_result.success || !user_scopes_result.scopes) {
             return { has_access: false };
         }
         const user_scopes = user_scopes_result.scopes;
-        // Check 1: Does user have exact scope assigned?
+        // Check 1: Is user a super admin?
+        const has_super_admin = user_scopes.some((scope) => is_super_admin_scope(scope.scope_id));
+        if (has_super_admin) {
+            return {
+                has_access: true,
+                access_via: {
+                    scope_id: SUPER_ADMIN_SCOPE_ID,
+                    scope_name: "Super Admin",
+                },
+                user_scopes,
+                is_super_admin: true,
+            };
+        }
+        // Check 2: Does user have exact scope assigned?
         for (const user_scope of user_scopes) {
-            if (user_scope.scope_type === target_scope_type &&
-                user_scope.scope_id === resolved_scope_id) {
+            if (user_scope.scope_id === target_scope_id) {
+                const scope_result = await get_scope_by_id(adapter, target_scope_id);
                 return {
                     has_access: true,
                     access_via: {
-                        scope_type: user_scope.scope_type,
                         scope_id: user_scope.scope_id,
-                        scope_seq: user_scope.scope_seq,
+                        scope_name: scope_result.success
+                            ? (_a = scope_result.scope) === null || _a === void 0 ? void 0 : _a.name
+                            : undefined,
                     },
                     user_scopes,
                 };
             }
         }
-        // Check 2: Does user have access via an ancestor scope?
-        // Get all ancestors of the target scope
-        const ancestors_result = await get_scope_ancestors(adapter, target_scope_type, resolved_scope_id);
+        // Check 3: Does user have access via an ancestor scope?
+        const ancestors_result = await get_scope_ancestors(adapter, target_scope_id);
         if (ancestors_result.success && ancestors_result.scopes) {
-            const ancestors = ancestors_result.scopes;
-            // For each ancestor, check if user has it assigned
-            // Need to determine the level of each ancestor
-            let current_level = SCOPE_LEVEL_NUMBERS[target_scope_type];
-            for (const ancestor of ancestors) {
-                current_level--;
-                const ancestor_level = `hazo_scopes_l${current_level}`;
+            for (const ancestor of ancestors_result.scopes) {
                 for (const user_scope of user_scopes) {
-                    if (user_scope.scope_type === ancestor_level &&
-                        user_scope.scope_id === ancestor.id) {
+                    if (user_scope.scope_id === ancestor.id) {
                         // User has access via this ancestor
                         return {
                             has_access: true,
                             access_via: {
-                                scope_type: user_scope.scope_type,
-                                scope_id: user_scope.scope_id,
-                                scope_seq: user_scope.scope_seq,
+                                scope_id: ancestor.id,
+                                scope_name: ancestor.name,
                             },
                             user_scopes,
                         };
@@ -358,40 +384,37 @@ export async function check_user_scope_access(adapter, user_id, target_scope_typ
             line_number: 0,
             error: error instanceof Error ? error.message : "Unknown error",
             user_id,
-            target_scope_type,
             target_scope_id,
         });
         return { has_access: false };
     }
 }
 /**
- * Gets the effective scopes a user has access to
- * This includes directly assigned scopes and all their descendants
+ * Gets scopes a user has direct access to (not inherited)
  */
-export async function get_user_effective_scopes(adapter, user_id) {
+export async function get_user_direct_scopes(adapter, user_id) {
+    var _a, _b;
     try {
         const user_scopes_result = await get_user_scopes(adapter, user_id);
-        if (!user_scopes_result.success) {
+        if (!user_scopes_result.success || !user_scopes_result.scopes) {
             return {
                 success: false,
-                error: user_scopes_result.error,
+                error: user_scopes_result.error || "Failed to get user scopes",
             };
         }
-        const direct_scopes = user_scopes_result.scopes || [];
-        // Determine which levels user has inherited access to
-        // If user has L2 access, they inherit L3, L4, L5, L6, L7
-        const inherited_levels = new Set();
-        for (const scope of direct_scopes) {
-            const level_num = SCOPE_LEVEL_NUMBERS[scope.scope_type];
-            // Add all levels below this one
-            for (let i = level_num + 1; i <= 7; i++) {
-                inherited_levels.add(`hazo_scopes_l${i}`);
-            }
+        const scopes_with_details = [];
+        for (const user_scope of user_scopes_result.scopes) {
+            const scope_result = await get_scope_by_id(adapter, user_scope.scope_id);
+            scopes_with_details.push({
+                scope_id: user_scope.scope_id,
+                scope_name: scope_result.success ? (_a = scope_result.scope) === null || _a === void 0 ? void 0 : _a.name : undefined,
+                level: scope_result.success ? (_b = scope_result.scope) === null || _b === void 0 ? void 0 : _b.level : undefined,
+                role_id: user_scope.role_id,
+            });
         }
         return {
             success: true,
-            direct_scopes,
-            inherited_scope_types: Array.from(inherited_levels),
+            scopes: scopes_with_details,
         };
     }
     catch (error) {
@@ -403,7 +426,7 @@ export async function get_user_effective_scopes(adapter, user_id) {
             context: {
                 filename: "user_scope_service.ts",
                 line_number: 0,
-                operation: "get_user_effective_scopes",
+                operation: "get_user_direct_scopes",
                 user_id,
             },
         });
@@ -412,4 +435,15 @@ export async function get_user_effective_scopes(adapter, user_id) {
             error: error_message,
         };
     }
+}
+/**
+ * Assigns super admin scope to a user
+ */
+export async function assign_super_admin_scope(adapter, user_id, role_id) {
+    return assign_user_scope(adapter, {
+        user_id,
+        scope_id: SUPER_ADMIN_SCOPE_ID,
+        root_scope_id: SUPER_ADMIN_SCOPE_ID,
+        role_id,
+    });
 }

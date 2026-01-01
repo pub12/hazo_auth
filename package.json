@@ -1,7 +1,7 @@
 {
   "name": "hazo_auth",
-  "version": "4.6.3",
-  "description": "Zero-config authentication UI components for Next.js with RBAC, OAuth, multi-tenancy, and hierarchical scopes",
+  "version": "5.0.0",
+  "description": "Zero-config authentication UI components for Next.js with RBAC, OAuth, scope-based multi-tenancy, and invitations",
   "keywords": [
     "authentication",
     "nextjs",
@@ -73,9 +73,9 @@
       "types": "./dist/components/layouts/dev_lock/index.d.ts",
       "import": "./dist/components/layouts/dev_lock/index.js"
     },
-    "./components/layouts/org_management": {
-      "types": "./dist/components/layouts/org_management/index.d.ts",
-      "import": "./dist/components/layouts/org_management/index.js"
+    "./components/layouts/create_firm": {
+      "types": "./dist/components/layouts/create_firm/index.d.ts",
+      "import": "./dist/components/layouts/create_firm/index.js"
     },
     "./components/layouts/shared": {
       "types": "./dist/components/layouts/shared/index.d.ts",
@@ -153,9 +153,9 @@
       "types": "./dist/page_components/dev_lock.d.ts",
       "import": "./dist/page_components/dev_lock.js"
     },
-    "./page_components/org_management": {
-      "types": "./dist/page_components/org_management.d.ts",
-      "import": "./dist/page_components/org_management.js"
+    "./page_components/create_firm": {
+      "types": "./dist/page_components/create_firm.d.ts",
+      "import": "./dist/page_components/create_firm.js"
     },
     "./page_components/my_settings": {
       "types": "./dist/page_components/my_settings.d.ts",
@@ -164,6 +164,10 @@
   },
   "files": [
     "dist/**/*",
+    "!dist/app/**/*",
+    "!dist/components/layouts/app_user_data_test/**/*",
+    "!dist/components/layouts/profile_stamp_test/**/*",
+    "!dist/components/layouts/rbac_test/**/*",
     "bin/**/*",
     "cli-src/**/*",
     "public/profile_pictures/library/**/*",

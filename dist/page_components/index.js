@@ -7,4 +7,4 @@ export { ForgotPasswordPage } from "./forgot_password.js";
 export { ResetPasswordPage } from "./reset_password.js";
 export { VerifyEmailPage } from "./verify_email.js";
 export { MySettingsPage } from "./my_settings.js";
-export { OrgManagementPage } from "./org_management.js";
+export { CreateFirmPage } from "./create_firm.js";

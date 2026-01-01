@@ -5,6 +5,7 @@ import { createCrudService } from "hazo_connect/server";
 import { get_user_management_config } from "../lib/user_management_config.server.js";
 import { get_config_value } from "../lib/config/config_loader.server.js";
 import { create_app_logger } from "../lib/app_logger.js";
+import { SUPER_ADMIN_SCOPE_ID } from "../lib/services/scope_service.js";
 
 // section: types
 type InitSummary = {
@@ -22,6 +23,14 @@ type InitSummary = {
     existing: number;
   };
   user_role: {
+    inserted: boolean;
+    existing: boolean;
+  };
+  super_admin_scope: {
+    inserted: boolean;
+    existing: boolean;
+  };
+  user_scope: {
     inserted: boolean;
     existing: boolean;
   };
@@ -79,6 +88,26 @@ function print_summary(summary: InitSummary): void {
   }
   console.log();
 
+  // Super admin scope summary
+  console.log("Super Admin Scope:");
+  if (summary.super_admin_scope.inserted) {
+    console.log(`  ✓ Inserted: Super Admin scope (ID: ${SUPER_ADMIN_SCOPE_ID})`);
+  }
+  if (summary.super_admin_scope.existing) {
+    console.log(`  ⊙ Already existed: Super Admin scope (ID: ${SUPER_ADMIN_SCOPE_ID})`);
+  }
+  console.log();
+
+  // User scope summary
+  console.log("User-Scope Assignment:");
+  if (summary.user_scope.inserted) {
+    console.log(`  ✓ Inserted: User assigned to Super Admin scope`);
+  }
+  if (summary.user_scope.existing) {
+    console.log(`  ⊙ Already existed: User already in Super Admin scope`);
+  }
+  console.log();
+
   console.log("=".repeat(60));
 }
 
@@ -116,6 +145,14 @@ export async function handle_init_users(options: InitUsersOptions = {}): Promise
       inserted: false,
       existing: false,
     },
+    super_admin_scope: {
+      inserted: false,
+      existing: false,
+    },
+    user_scope: {
+      inserted: false,
+      existing: false,
+    },
   };
 
   try {
@@ -129,6 +166,12 @@ export async function handle_init_users(options: InitUsersOptions = {}): Promise
     const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions");
     const users_service = createCrudService(hazoConnect, "hazo_users");
     const user_roles_service = createCrudService(hazoConnect, "hazo_user_roles");
+    const scopes_service = createCrudService(hazoConnect, "hazo_scopes");
+    // hazo_user_scopes uses composite primary key (user_id, scope_id), no 'id' column
+    const user_scopes_service = createCrudService(hazoConnect, "hazo_user_scopes", {
+      primaryKeys: ["user_id", "scope_id"],
+      autoId: false,
+    });
 
     // 1. Get permissions from config
     const config = get_user_management_config();
@@ -307,7 +350,52 @@ export async function handle_init_users(options: InitUsersOptions = {}): Promise
 
     console.log();
 
-    // 8. Print summary
+    // 8. Ensure super admin scope exists
+    const existing_scopes = await scopes_service.findBy({ id: SUPER_ADMIN_SCOPE_ID });
+
+    if (Array.isArray(existing_scopes) && existing_scopes.length > 0) {
+      summary.super_admin_scope.existing = true;
+      console.log(`✓ Super Admin scope already exists (ID: ${SUPER_ADMIN_SCOPE_ID})`);
+    } else {
+      await scopes_service.insert({
+        id: SUPER_ADMIN_SCOPE_ID,
+        parent_id: null,
+        name: "Super Admin",
+        level: "system",
+        created_at: now,
+        changed_at: now,
+      });
+      summary.super_admin_scope.inserted = true;
+      console.log(`✓ Created Super Admin scope (ID: ${SUPER_ADMIN_SCOPE_ID})`);
+    }
+
+    console.log();
+
+    // 9. Assign user to super admin scope
+    const existing_user_scopes = await user_scopes_service.findBy({
+      user_id,
+      scope_id: SUPER_ADMIN_SCOPE_ID,
+    });
+
+    if (Array.isArray(existing_user_scopes) && existing_user_scopes.length > 0) {
+      summary.user_scope.existing = true;
+      console.log(`✓ User already assigned to Super Admin scope`);
+    } else {
+      await user_scopes_service.insert({
+        user_id,
+        scope_id: SUPER_ADMIN_SCOPE_ID,
+        root_scope_id: SUPER_ADMIN_SCOPE_ID,
+        role_id,
+        created_at: now,
+        changed_at: now,
+      });
+      summary.user_scope.inserted = true;
+      console.log(`✓ Assigned user to Super Admin scope`);
+    }
+
+    console.log();
+
+    // 10. Print summary
     print_summary(summary);
 
     logger.info("init_users_completed", {
@@ -345,7 +433,7 @@ export function show_init_users_help(): void {
   console.log(`
 hazo_auth init-users
 
-Initialize users, roles, and permissions from configuration.
+Initialize users, roles, permissions, and super admin scope from configuration.
 
 This command reads from hazo_auth_config.ini and:
   1. Creates permissions from [hazo_auth__user_management] application_permission_list_defaults
@@ -353,6 +441,8 @@ This command reads from hazo_auth_config.ini and:
   3. Assigns all permissions to the super user role
   4. Finds user by email (from --email parameter or config)
   5. Assigns the super user role to that user
+  6. Creates the Super Admin scope (${SUPER_ADMIN_SCOPE_ID})
+  7. Assigns the user to the Super Admin scope
 
 Options:
   --email=<email>    Email address of the user to assign super user role

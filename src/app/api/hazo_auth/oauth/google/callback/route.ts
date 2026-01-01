@@ -7,6 +7,8 @@ import { create_session_token } from "../../../../../../lib/services/session_tok
 import { get_filename, get_line_number } from "../../../../../../lib/utils/api_route_helpers";
 import { get_login_config } from "../../../../../../lib/login_config.server";
 import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../../../../../lib/cookies_config.server";
+import { get_hazo_connect_instance } from "../../../../../../lib/hazo_connect_instance.server";
+import { get_post_login_redirect } from "../../../../../../lib/services/post_verification_service";
 
 // section: types
 type NextAuthToken = {
@@ -79,12 +81,30 @@ export async function GET(request: NextRequest) {
       email,
     });
 
-    // Get redirect URL from config
+    // Get redirect URL based on user's scope/invitation status
     const loginConfig = get_login_config();
-    const redirectUrl = loginConfig.redirectRoute || "/";
+    const default_redirect = loginConfig.redirectRoute || "/";
+
+    // Check if user needs onboarding (no scope, no invitation = create firm)
+    const hazoConnect = get_hazo_connect_instance();
+    const { redirect_url: determined_redirect, needs_onboarding } = await get_post_login_redirect(
+      hazoConnect,
+      user_id,
+      email,
+      default_redirect,
+    );
+
+    logger.info("google_callback_post_login_redirect", {
+      filename: get_filename(),
+      line_number: get_line_number(),
+      user_id,
+      email,
+      redirect_url: determined_redirect,
+      needs_onboarding,
+    });
 
     // Create redirect response
-    const redirect_url = new URL(redirectUrl, request.url);
+    const redirect_url = new URL(determined_redirect, request.url);
     const response = NextResponse.redirect(redirect_url);
 
     // Set authentication cookies (same as login route, with configurable prefix and domain)

@@ -7,7 +7,231 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed - Scope Permission Clarification and Org Assignment Restriction
+## [5.0.0] - 2026-01-01
+
+### Changed - Major Architectural Overhaul: Scope-Based Multi-Tenancy
+
+**BREAKING CHANGE**: Complete redesign of the multi-tenancy and scope system. This is a major architectural change that removes the organization-based model in favor of a unified scope-based membership system.
+
+**Why this change**: The previous dual-system (organizations + 7 separate scope tables) created unnecessary complexity and tight coupling. The new unified scope model provides a simpler, more flexible architecture that can represent any hierarchical structure (companies, firms, departments, teams, etc.) without rigid table constraints.
+
+**Key Changes:**
+
+**1. Removed Organization Tables and Services:**
+- **REMOVED**: `hazo_org` table and all org-related foreign keys
+- **REMOVED**: `org_service.ts`, `org_cache.ts`, `multi_tenancy_config.server.ts`
+- **REMOVED**: `scope_labels_service.ts` (labels now part of scope `level` field)
+- **REMOVED**: `OrgManagementLayout`, `OrgHierarchyTab`, `ScopeLabelsTab` components
+- **REMOVED**: `/api/hazo_auth/org_management/orgs` API routes
+- **REMOVED**: `org_id`, `root_org_id` fields from `hazo_users` table
+
+**2. Unified Scope System:**
+- **NEW**: Single `hazo_scopes` table replaces 7 separate `hazo_scopes_l1` through `hazo_scopes_l7` tables
+- **Schema**: `hazo_scopes(id, name, level, parent_id, created_at, created_by, changed_at, changed_by)`
+- **level**: Descriptive text field (e.g., "Company", "Division", "Department") - replaces scope labels
+- **parent_id**: Self-referencing foreign key for hierarchy - enables unlimited depth
+- **Benefits**: Simpler queries, flexible hierarchy, no table-per-level complexity
+
+**3. Membership-Based Multi-Tenancy:**
+- Users assigned to scopes via `hazo_user_scopes` table (not org_id on user record)
+- **Super admin scope**: `00000000-0000-0000-0000-000000000000` (for system admins)
+- **Default system scope**: `00000000-0000-0000-0000-000000000001` (fallback scope)
+- Scopes can represent: firms, companies, organizations, departments, teams, projects, etc.
+
+**4. New Invitation System:**
+- **NEW**: `hazo_invitations` table for user onboarding
+- Fields: `id`, `email`, `scope_id`, `invited_by_user_id`, `expires_at`, `status`, `created_at`
+- Status: `pending`, `accepted`, `expired`, `cancelled`
+- Invitations link new users to existing scopes before account creation
+- Post-verification checks invitations and auto-assigns users to scopes
+
+**5. New "Create Firm" Flow:**
+- **NEW**: Post-verification routing for new users without scope assignments
+- Flow: verify email → check `hazo_user_scopes` → check `hazo_invitations` → create firm page
+- Users create their own firm (scope) if no invitation exists
+- Default firm image: `/hazo_auth/images/new_firm_default.jpg`
+- **NEW**: `CreateFirmLayout` component and page
+- **NEW**: `POST /api/hazo_auth/create_firm` API route
+
+**6. New init_permissions.ts CLI Command:**
+- **NEW**: `npx hazo_auth init-permissions` - Initialize permissions without creating super user
+- Separated permission initialization from user creation for flexibility
+- Creates all default permissions from `application_permission_list_defaults` config
+- Useful for production deployments where super user is created separately
+- Run `npm run init-users` (uses init_users.ts) to create permissions AND super user
+
+**7. Updated init_users.ts CLI:**
+- Creates super admin scope on initialization
+- Assigns super user to super admin scope
+- Removed org creation logic
+- Now calls init_permissions internally
+
+**8. Updated Configuration:**
+```ini
+[hazo_auth__scope_hierarchy]
+enable_hrbac = true
+super_admin_scope_id = 00000000-0000-0000-0000-000000000000
+default_system_scope_id = 00000000-0000-0000-0000-000000000001
+# REMOVED: default_org setting
+
+[hazo_auth__invitations]
+invitation_expiry_days = 7
+send_invitation_email = true
+
+[hazo_auth__create_firm]
+enable_create_firm = true
+default_firm_image_path = /hazo_auth/images/new_firm_default.jpg
+```
+
+**9. Updated User Management Layout:**
+- **REMOVED**: `multiTenancyEnabled` prop
+- **REMOVED**: Organization assignment UI elements
+- **REMOVED**: Org-related filtering and dialogs
+- Scope assignment now handled separately (not in User Management)
+
+**New Services:**
+- `src/lib/services/invitation_service.ts` - Invitation CRUD operations
+- `src/lib/services/firm_service.ts` - Create firm logic
+- `src/lib/services/post_verification_service.ts` - Post-verification routing
+
+**Modified Services:**
+- `src/lib/services/scope_service.ts` - Updated for unified scope table
+- `src/lib/services/user_scope_service.ts` - Simplified for membership model
+
+**New API Routes:**
+- `GET /api/hazo_auth/invitations` - List invitations
+- `POST /api/hazo_auth/invitations` - Create invitation
+- `PATCH /api/hazo_auth/invitations` - Update invitation
+- `DELETE /api/hazo_auth/invitations` - Delete invitation
+- `POST /api/hazo_auth/create_firm` - Create new firm
+
+**New Components:**
+- `CreateFirmLayout` (`src/components/layouts/create_firm/index.tsx`) - Create firm form
+- `CreateFirmPage` (`src/server_pages/create_firm.tsx`) - Zero-config page
+
+**Breaking Changes for Consuming Applications:**
+
+1. **Database Migration Required**:
+   - Drop `hazo_org` table
+   - Drop `hazo_scopes_l1` through `hazo_scopes_l7` tables
+   - Create new unified `hazo_scopes` table
+   - Create `hazo_invitations` table
+   - Remove `org_id`, `root_org_id` from `hazo_users`
+   - Migrate existing scope data to unified table
+   - Migrate existing user org assignments to `hazo_user_scopes`
+
+2. **Configuration Changes**:
+   - Remove `[hazo_auth__multi_tenancy]` section
+   - Remove `default_org` from `[hazo_auth__scope_hierarchy]`
+   - Add `[hazo_auth__invitations]` section
+   - Add `[hazo_auth__create_firm]` section
+
+3. **API Changes**:
+   - Remove all `/api/hazo_auth/org_management/*` routes
+   - Scope API now uses unified table (different response structure)
+   - User assignment to scopes now via invitation or create firm flows
+
+4. **Component Props**:
+   - `UserManagementLayout` no longer accepts `multiTenancyEnabled` prop
+   - Removed org-related props from all components
+
+5. **Type Changes**:
+   - `ScopeRecord` type updated (no more `org_id`, `root_org_id`)
+   - `HazoAuthUser` no longer includes org fields
+   - New `Invitation` type for invitation records
+
+**Migration Strategy:**
+
+For consuming applications using the old org-based multi-tenancy:
+
+1. **Backup database** - This is a destructive migration
+2. **Export org data** - Save org hierarchy before migration
+3. **Map orgs to scopes** - Decide how orgs map to new scope structure
+4. **Run migration scripts** - Apply database schema changes
+5. **Migrate data** - Convert org assignments to scope assignments
+6. **Update configuration** - Remove old config, add new sections
+7. **Update code** - Remove org-related API calls and components
+8. **Test thoroughly** - Verify all user access and scope assignments work
+
+**Why These Breaking Changes Are Worth It:**
+
+- **Simpler Architecture**: Single scope table vs 8 tables (1 org + 7 scope levels)
+- **More Flexible**: Unlimited hierarchy depth vs fixed 7 levels
+- **Better Performance**: Fewer joins, simpler queries
+- **Clearer Model**: Membership-based vs mixed org_id + scope assignments
+- **Easier to Understand**: One concept (scopes) vs two (orgs + scopes)
+- **Modern Patterns**: Invitation-based onboarding is industry standard
+
+**Backward Compatibility**: NONE - This is a breaking change requiring migration. Applications using org-based multi-tenancy must migrate to the new scope-based model.
+
+**Files Removed:**
+1. `src/lib/services/org_service.ts`
+2. `src/lib/auth/org_cache.ts`
+3. `src/lib/multi_tenancy_config.server.ts`
+4. `src/lib/services/scope_labels_service.ts`
+5. `src/components/layouts/org_management/` (entire directory)
+6. `src/components/layouts/user_management/components/org_hierarchy_tab.tsx`
+7. `src/components/layouts/user_management/components/scope_labels_tab.tsx`
+8. `src/app/api/hazo_auth/org_management/` (entire directory)
+
+**Files Created:**
+1. `src/lib/services/invitation_service.ts`
+2. `src/lib/services/firm_service.ts`
+3. `src/lib/services/post_verification_service.ts`
+4. `src/components/layouts/create_firm/index.tsx`
+5. `src/server_pages/create_firm.tsx`
+6. `src/app/api/hazo_auth/invitations/route.ts`
+7. `src/app/api/hazo_auth/create_firm/route.ts`
+8. `public/hazo_auth/images/new_firm_default.jpg`
+
+**Files Modified:**
+1. `src/lib/services/scope_service.ts` - Unified scope operations
+2. `src/lib/services/user_scope_service.ts` - Simplified for membership model
+3. `src/components/layouts/user_management/index.tsx` - Removed org UI
+4. `src/cli/init.ts` - Updated for scope-based model
+5. `hazo_auth_config.ini` - Removed org config, added invitation/create firm config
+
+**Version Impact**: This change will be released as **v5.0.0** due to breaking changes.
+
+**Quick Migration Checklist:**
+
+```bash
+# 1. BACKUP YOUR DATABASE (this is destructive!)
+# 2. Run migration script
+npm run migrate migrations/009_scope_consolidation.sql
+
+# 3. Update hazo_auth_config.ini
+#    - Remove [hazo_auth__multi_tenancy] section
+#    - Remove default_org from [hazo_auth__scope_hierarchy]
+#    - Add [hazo_auth__invitations] section
+#    - Add [hazo_auth__create_firm] section
+
+# 4. Remove org-related code from your app
+#    - Remove /api/hazo_auth/org_management/* routes
+#    - Remove OrgManagementLayout usage
+#    - Remove multiTenancyEnabled prop from UserManagementLayout
+#    - Remove org-related imports and API calls
+
+# 5. Add new routes (optional, for invitation/firm features)
+#    - /api/hazo_auth/invitations/route.ts
+#    - /api/hazo_auth/create_firm/route.ts
+#    - /hazo_auth/create_firm/page.tsx (if using create firm flow)
+
+# 6. Test with new scope-based API
+#    - Scope operations now use unified hazo_scopes table
+#    - User assignment via hazo_user_scopes (not org_id)
+#    - Test invitation flow if enabled
+#    - Test create firm flow if enabled
+
+# 7. Initialize permissions (new CLI command)
+npx hazo_auth init-permissions  # Or npm run init-users
+```
+
+See migration script comments for PostgreSQL vs SQLite differences.
+
+---
+
+### ~~Changed - Scope Permission Clarification and Org Assignment Restriction~~ [OBSOLETE - v5.0.0 removed org system]
 
 **Feature Enhancement**: Separated permission requirements for scope labels and improved organization assignment security.
 
@@ -828,7 +1052,7 @@ Or use CLI: `npx hazo_auth generate-routes`
 
 ---
 
-### Fixed - Missing Organization Management Server Route Exports
+### ~~Fixed - Missing Organization Management Server Route Exports~~ [OBSOLETE - v5.0.0 removed org system]
 
 **Issue**: The `OrgHierarchyTab` component in consuming apps would fail because the organization management API route handlers were not exported from `hazo_auth/server/routes`, causing a bug where consuming apps couldn't use the organization management features.
 
@@ -878,7 +1102,7 @@ npx hazo_auth generate-routes
 
 ---
 
-### Changed - HRBAC Scopes Connected to Organizations via Foreign Keys
+### ~~Changed - HRBAC Scopes Connected to Organizations via Foreign Keys~~ [OBSOLETE - v5.0.0 removed org system]
 
 **Major Architectural Change**: HRBAC scopes now use proper foreign key references to the `hazo_org` table instead of string-based organization identifiers.
 

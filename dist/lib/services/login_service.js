@@ -27,8 +27,8 @@ export async function authenticate_user(adapter, data) {
             };
         }
         const user = users[0];
-        // Check if user is active
-        if (user.is_active === false) {
+        // Check if user is active (status must be 'active')
+        if (user.status !== "active") {
             return {
                 success: false,
                 error: "Account is inactive. Please contact support.",

@@ -1,4 +1,6 @@
 // file_description: API route for testing RBAC/HRBAC access for any user
+// Uses unified hazo_scopes table with parent_id hierarchy
+
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
 import { hazo_get_auth } from "../../../../lib/auth/hazo_get_auth.server";
@@ -18,8 +20,7 @@ const REQUIRED_PERMISSION = "admin_test_access";
  * GET - Test RBAC/HRBAC access for a specific user
  * Query params:
  * - test_user_id: string (required) - The user ID to test
- * - scope_type: ScopeLevel (optional)
- * - scope_id: string (optional)
+ * - scope_id: string (optional) - The scope ID to test access against
  * - required_permissions: string[] (optional, can repeat)
  */
 export async function GET(request: NextRequest) {
@@ -50,7 +51,6 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const test_user_id = searchParams.get("test_user_id");
-    const scope_type = searchParams.get("scope_type") || undefined;
     const scope_id = searchParams.get("scope_id") || undefined;
     const required_permissions = searchParams
       .getAll("required_permissions")
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       id: string;
       email_address: string;
       name: string | null;
-      is_active: boolean;
+      status: string; // Database column: 'active', 'inactive', 'suspended'
     };
 
     // Get user's permissions via roles
@@ -132,32 +132,23 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Check scope access if HRBAC is enabled and scope params provided
+    // Check scope access if HRBAC is enabled and scope_id provided
     let scope_ok: boolean | undefined = undefined;
-    let scope_access_via: { scope_type: string; scope_id: string; scope_seq: string } | undefined =
+    let scope_access_via: { scope_id: string; scope_name?: string } | undefined =
       undefined;
 
-    if (is_hrbac_enabled() && scope_type && scope_id) {
+    if (is_hrbac_enabled() && scope_id) {
       const scope_result = await check_user_scope_access(
         adapter,
         test_user_id,
-        scope_type as
-          | "hazo_scopes_l1"
-          | "hazo_scopes_l2"
-          | "hazo_scopes_l3"
-          | "hazo_scopes_l4"
-          | "hazo_scopes_l5"
-          | "hazo_scopes_l6"
-          | "hazo_scopes_l7",
-        scope_id,
+        scope_id
       );
 
       scope_ok = scope_result.has_access;
       if (scope_result.access_via) {
         scope_access_via = {
-          scope_type: scope_result.access_via.scope_type,
           scope_id: scope_result.access_via.scope_id,
-          scope_seq: scope_result.access_via.scope_seq,
+          scope_name: scope_result.access_via.scope_name,
         };
       }
     }

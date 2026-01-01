@@ -2,7 +2,34 @@
 
 A reusable authentication UI component package powered by Next.js, TailwindCSS, and shadcn. It integrates `hazo_config` for configuration management and `hazo_connect` for data access, enabling future components to stay aligned with platform conventions.
 
-### What's New in v2.0 🚀
+### What's New in v5.0 🚀
+
+**BREAKING CHANGE: Scope-Based Multi-Tenancy** - Complete architectural redesign for simpler, more flexible multi-tenancy!
+
+- ✅ **Unified Scope System** - Single `hazo_scopes` table replaces 8 separate tables (1 org + 7 scope levels)
+- ✅ **Membership-Based** - Users assigned to scopes via `hazo_user_scopes` (not org_id on user record)
+- ✅ **Invitation System** - Built-in invitation flow for onboarding new users to existing scopes
+- ✅ **Create Firm Flow** - New users create their own firm (scope) after email verification
+- ✅ **Post-Verification Routing** - Smart routing after email verification: invitations → create firm → default redirect
+- ✅ **Unlimited Hierarchy** - Flexible parent-child relationships, no fixed depth limit
+- ✅ **Simpler Architecture** - Fewer tables, fewer joins, easier to understand
+- ✅ **New CLI Command** - `npx hazo_auth init-permissions` for flexible permission setup
+
+**Migrating from v4.x?** This is a breaking change. Run the migration:
+
+```bash
+# 1. Backup your database first!
+# 2. Run the scope consolidation migration
+npm run migrate migrations/009_scope_consolidation.sql
+
+# 3. Update configuration (remove org settings, add invitation/create firm settings)
+# 4. Update code (remove org-related API calls and components)
+# 5. Test thoroughly
+```
+
+See [CHANGE_LOG.md](./CHANGE_LOG.md) for detailed migration guide, rationale, and breaking changes.
+
+### What's New in v2.0
 
 **Zero-Config Server Components** - Authentication pages now work out-of-the-box with ZERO configuration required!
 
@@ -11,8 +38,6 @@ A reusable authentication UI component package powered by Next.js, TailwindCSS, 
 - ✅ **Flexible API Paths** - Customize endpoints globally via `HazoAuthProvider` context
 - ✅ **Embeddable Components** - MySettings and UserManagement adapt to any layout
 - ✅ **Sensible Defaults** - INI files are now optional, defaults built-in
-
-**Migrating from v1.x?** See [MIGRATION.md](./MIGRATION.md) for a complete upgrade guide.
 
 ### Also Includes (v1.6.6+)
 

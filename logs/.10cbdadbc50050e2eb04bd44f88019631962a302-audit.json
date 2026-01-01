@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/pubs/Local/01.code/00.lib/hazo_auth/logs/.10cbdadbc50050e2eb04bd44f88019631962a302-audit.json",
+    "files": [
+        {
+            "date": 1767266356963,
+            "name": "/Users/pubs/Local/01.code/00.lib/hazo_auth/logs/hazo-2026-01-01.log",
+            "hash": "34ca8f89e1fba7f7f3d1c2c8052f8e7f640a6d3980bb05c0a6fc83ce65157ae1"
+        }
+    ],
+    "hashType": "sha256"
+}

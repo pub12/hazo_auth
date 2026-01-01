@@ -20,6 +20,7 @@ export { GET as userManagementUsersGET, PATCH as userManagementUsersPATCH, POST 
 export { GET as userManagementPermissionsGET, POST as userManagementPermissionsPOST, PUT as userManagementPermissionsPUT, DELETE as userManagementPermissionsDELETE } from "./user_management_permissions.js";
 export { GET as userManagementRolesGET, POST as userManagementRolesPOST, PUT as userManagementRolesPUT } from "./user_management_roles.js";
 export { GET as userManagementUsersRolesGET, POST as userManagementUsersRolesPOST, PUT as userManagementUsersRolesPUT } from "./user_management_users_roles.js";
-export { GET as orgManagementOrgsGET, POST as orgManagementOrgsPOST, PATCH as orgManagementOrgsPATCH, DELETE as orgManagementOrgsDELETE } from "./org_management_orgs.js";
 export { GET as appUserDataGET, PATCH as appUserDataPATCH, PUT as appUserDataPUT, DELETE as appUserDataDELETE } from "./app_user_data.js";
+export { GET as invitationsGET, POST as invitationsPOST, PATCH as invitationsPATCH, DELETE as invitationsDELETE } from "./invitations.js";
+export { POST as createFirmPOST } from "./create_firm.js";
 //# sourceMappingURL=index.d.ts.map
