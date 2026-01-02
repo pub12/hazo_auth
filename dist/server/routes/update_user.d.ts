@@ -1,2 +1,9 @@
-export { PATCH } from "../../app/api/hazo_auth/update_user/route";
+import { NextRequest, NextResponse } from "next/server";
+export declare function PATCH(request: NextRequest): Promise<NextResponse<{
+    error: string;
+}> | NextResponse<{
+    success: boolean;
+    message: string;
+    email_changed: boolean | undefined;
+}>>;
 //# sourceMappingURL=update_user.d.ts.map

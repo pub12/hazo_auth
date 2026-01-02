@@ -1,1 +1,1 @@
-{"version":3,"file":"library_photos.d.ts","sourceRoot":"","sources":["../../../src/server/routes/library_photos.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,GAAG,EAAE,MAAM,8CAA8C,CAAC"}
+{"version":3,"file":"library_photos.d.ts","sourceRoot":"","sources":["../../../src/server/routes/library_photos.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,WAAW,EAAE,YAAY,EAAE,MAAM,aAAa,CAAC;AAUxD,eAAO,MAAM,OAAO,kBAAkB,CAAC;AAOvC,wBAAsB,GAAG,CAAC,OAAO,EAAE,WAAW;;;;;;;;;;;;;;;;;;IAmF7C"}

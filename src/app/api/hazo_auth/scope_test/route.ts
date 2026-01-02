@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
         permission_ok: true,
         scope_ok: false,
         error: error.message,
-        scope_id: error.scope_identifier,
+        scope_id: error.scope_id,
       });
     }
 

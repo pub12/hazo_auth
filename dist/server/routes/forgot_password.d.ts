@@ -1,2 +1,8 @@
-export { POST } from "../../app/api/hazo_auth/forgot_password/route";
+import { NextRequest, NextResponse } from "next/server";
+export declare function POST(request: NextRequest): Promise<NextResponse<{
+    error: string;
+}> | NextResponse<{
+    success: boolean;
+    message: string;
+}>>;
 //# sourceMappingURL=forgot_password.d.ts.map

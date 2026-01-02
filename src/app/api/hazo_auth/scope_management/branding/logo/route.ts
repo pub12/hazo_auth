@@ -15,6 +15,7 @@ import { update_branding } from "../../../../../../lib/services/branding_service
 import {
   get_scope_by_id,
   is_system_scope,
+  extract_branding,
   SUPER_ADMIN_SCOPE_ID,
 } from "../../../../../../lib/services/scope_service";
 import { get_user_scopes } from "../../../../../../lib/services/user_scope_service";
@@ -73,7 +74,7 @@ async function check_permission(request: NextRequest): Promise<AuthCheckResult> 
   // Get user's scope assignments
   const adapter = get_hazo_connect_instance();
   const user_scopes_result = await get_user_scopes(adapter, auth_result.user.id);
-  const user_scopes = user_scopes_result.success ? (user_scopes_result.user_scopes || []) : [];
+  const user_scopes = user_scopes_result.success ? (user_scopes_result.scopes || []) : [];
   const user_scope_ids = user_scopes.map((us) => us.scope_id);
   const user_root_scope_ids = [...new Set(user_scopes.map((us) => us.root_scope_id))];
 
@@ -257,7 +258,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Delete old logo file if it exists
-    const old_branding = scope_result.scope.branding;
+    const old_branding = extract_branding(scope_result.scope);
     if (old_branding?.logo_url && old_branding.logo_url !== logo_url) {
       try {
         const old_filename = old_branding.logo_url.split("/").pop();

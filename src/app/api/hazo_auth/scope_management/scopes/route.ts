@@ -69,7 +69,7 @@ async function check_permission(request: NextRequest): Promise<AuthCheckResult> 
   const adapter = get_hazo_connect_instance();
   const user_scopes_result = await get_user_scopes(adapter, auth_result.user.id);
   const user_scope_ids = user_scopes_result.success
-    ? (user_scopes_result.user_scopes?.map((us) => us.scope_id) || [])
+    ? (user_scopes_result.scopes?.map((us) => us.scope_id) || [])
     : [];
 
   // Check if user is assigned to super admin scope
