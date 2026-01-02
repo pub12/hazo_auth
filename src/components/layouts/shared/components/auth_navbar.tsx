@@ -45,7 +45,7 @@ export function AuthNavbar({
   show_home_link = true,
   background_color,
   text_color,
-  height = 48,
+  height = 40,
   className,
 }: AuthNavbarProps) {
   // Only show logo if logo_path is configured (non-empty)

@@ -98,6 +98,8 @@ export declare const DEFAULT_UI_SHELL: {
     readonly image_width: 400;
     readonly image_height: 400;
     readonly show_visual_panel: true;
+    /** Enable vertical centering of content (default: true) */
+    readonly vertical_center: true;
 };
 export declare const DEFAULT_PROFILE_PIC_MENU: {
     readonly show_single_button: false;
@@ -144,8 +146,8 @@ export declare const DEFAULT_NAVBAR: {
     readonly background_color: "";
     /** Navbar text color (empty = inherit) */
     readonly text_color: "";
-    /** Navbar height in pixels (default: 48px for slim appearance) */
-    readonly height: 48;
+    /** Navbar height in pixels (default: 40px for slim appearance) */
+    readonly height: 40;
 };
 export declare const DEFAULT_USER_TYPES: {
     /** Enable user types feature (default: false) */
@@ -286,6 +288,8 @@ export declare const HAZO_AUTH_DEFAULTS: {
         readonly image_width: 400;
         readonly image_height: 400;
         readonly show_visual_panel: true;
+        /** Enable vertical centering of content (default: true) */
+        readonly vertical_center: true;
     };
     readonly profilePicMenu: {
         readonly show_single_button: false;
@@ -360,8 +364,8 @@ export declare const HAZO_AUTH_DEFAULTS: {
         readonly background_color: "";
         /** Navbar text color (empty = inherit) */
         readonly text_color: "";
-        /** Navbar height in pixels (default: 48px for slim appearance) */
-        readonly height: 48;
+        /** Navbar height in pixels (default: 40px for slim appearance) */
+        readonly height: 40;
     };
     readonly userTypes: {
         /** Enable user types feature (default: false) */

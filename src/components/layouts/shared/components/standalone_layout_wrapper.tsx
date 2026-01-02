@@ -56,7 +56,8 @@ export function StandaloneLayoutWrapper({
       >
         <div
           className={cn(
-            "cls_standalone_layout_content mx-auto flex w-full max-w-5xl flex-col gap-8 p-6",
+            "cls_standalone_layout_content mx-auto flex w-full flex-col",
+            verticalCenter ? "max-w-5xl gap-2 p-4" : "max-w-5xl gap-6 p-6",
             contentClassName
           )}
         >

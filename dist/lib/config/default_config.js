@@ -117,6 +117,8 @@ export const DEFAULT_UI_SHELL = {
     image_width: 400,
     image_height: 400,
     show_visual_panel: true,
+    /** Enable vertical centering of content (default: true) */
+    vertical_center: true,
 };
 // section: profile_pic_menu
 export const DEFAULT_PROFILE_PIC_MENU = {
@@ -167,8 +169,8 @@ export const DEFAULT_NAVBAR = {
     background_color: "",
     /** Navbar text color (empty = inherit) */
     text_color: "",
-    /** Navbar height in pixels (default: 48px for slim appearance) */
-    height: 48,
+    /** Navbar height in pixels (default: 40px for slim appearance) */
+    height: 40,
 };
 // section: user_types
 export const DEFAULT_USER_TYPES = {

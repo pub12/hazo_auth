@@ -99,7 +99,11 @@ All configuration comes from `hazo_auth_config.ini` in the project root (where `
 
 - **UI Customization:** `[hazo_auth__login_layout]`, `[hazo_auth__register_layout]`, etc.
 - **UI Shell:** `[hazo_auth__ui_shell]` (layout_mode, vertical_center)
+  - `vertical_center`: Boolean only (`true` or `false`), controls vertical centering of auth pages
+  - `standalone_content_class`: Recommended `max-w-5xl` for two-column layouts (login, register)
 - **Navbar:** `[hazo_auth__navbar]` (enable_navbar, logo, company name, home link, styling)
+  - Default height: 40px (slim, modern appearance)
+  - `logo_path` and `company_name` default to empty strings - must be configured to show branding
 - **Auth Behavior:** `[hazo_auth__tokens]`, `[hazo_auth__password_requirements]`
 - **OAuth Settings:** `[hazo_auth__oauth]` (enable_google, enable_email_password, auto_link_unverified_accounts, button text)
 - **RBAC Setup:** `[hazo_auth__user_management]`, `[hazo_auth__initial_setup]`
@@ -366,14 +370,16 @@ Components follow a layered structure:
 ### Adding a New Authentication Feature
 
 1. Create service function in `src/lib/services/`
-2. Add API route in `src/app/api/hazo_auth/[feature]/route.ts`
-3. Export route handler from `src/server/routes/` (if needed)
+2. **Create route handler implementation in `src/server/routes/[feature].ts`** (actual logic with imports to `../../lib/*`)
+3. Add API route re-export in `src/app/api/hazo_auth/[feature]/route.ts` (imports from `hazo_auth/server/routes`)
 4. Create layout component in `src/components/layouts/[feature]/`
 5. Create page component in `src/page_components/[feature].tsx`
 6. Add configuration section to `hazo_auth_config.ini`
 7. Update `package.json` exports field
 8. Test with Storybook
 9. Run `npm run build:pkg`
+
+**Critical Architecture Note**: Route handler implementations MUST be in `src/server/routes/*.ts` with relative imports to lib services (`../../lib/*`). The `src/app/api/hazo_auth/*/route.ts` files are demo routes that re-export from server/routes. This ensures the published package works correctly since the `app/` directory is excluded from npm distribution.
 
 ### Testing Authentication Changes
 
@@ -458,7 +464,7 @@ Cache invalidation endpoint: `POST /api/hazo_auth/invalidate_cache`
 ```
 src/
 ├── app/                      # Next.js demo app
-│   ├── api/hazo_auth/        # Demo API routes
+│   ├── api/hazo_auth/        # Demo API routes (re-export from server/routes)
 │   └── hazo_auth/            # Demo pages
 ├── cli/                      # CLI commands (npx hazo_auth)
 ├── components/
@@ -479,13 +485,37 @@ src/
 │   ├── services/             # Business logic services
 │   └── config/               # Configuration loaders
 ├── server/
-│   ├── routes/               # Exportable route handlers
+│   ├── routes/               # Route handler implementations (shipped in package)
 │   ├── middleware.ts         # Middleware utilities
 │   └── index.ts              # Express server bootstrap
 ├── page_components/          # Zero-config page wrappers
 ├── index.ts                  # Main entry (server-side)
 └── client.ts                 # Client-safe entry
 ```
+
+### Server Routes Architecture (Important for Package Distribution)
+
+**Critical Pattern**: Route handlers are implemented in `src/server/routes/*.ts` and re-exported by demo routes in `src/app/api/hazo_auth/*/route.ts`. This architecture ensures the published package works correctly since `app/` is excluded from npm distribution.
+
+**Why This Matters**:
+- `src/app/` directory is excluded from published package (demo code only)
+- `src/server/routes/` is included in `dist/server/routes/` for consuming apps
+- Route handlers in `server/routes/` use relative imports to `../../lib/*` services
+- Demo routes import from package exports (e.g., `hazo_auth/server/routes/login`)
+
+**Example Pattern**:
+```typescript
+// src/server/routes/login.ts (SHIPPED in package)
+import { login_user_service } from "../../lib/services/login_service";
+export async function loginPOST(request: NextRequest) {
+  // Implementation here
+}
+
+// src/app/api/hazo_auth/login/route.ts (NOT shipped, demo only)
+export { loginPOST as POST } from "hazo_auth/server/routes/login";
+```
+
+This pattern prevents broken imports in published packages and allows consuming apps to import route handlers directly.
 
 ## Environment Variables
 
@@ -566,8 +596,8 @@ home_label = Home
 show_home_link = true
 background_color =
 text_color =
-# Slim navbar height (default: 48px)
-height = 48
+# Slim navbar height (default: 40px)
+height = 40
 ```
 
 **Zero-Config Usage:**
@@ -916,3 +946,9 @@ When permission checks fail (with `strict: true`), the error response includes d
 ### User details dialog fields cut off
 - Dialog content uses `max-h-[80vh] overflow-y-auto` for scrollable content
 - Scroll to see org assignment and fields below the fold
+
+### Authentication pages appear squashed or have excessive whitespace
+- Ensure `vertical_center` is set correctly in `[hazo_auth__ui_shell]` config (accepts `true` or `false`, not "auto")
+- Use `max-w-5xl` for `standalone_content_class` when using two-column layouts
+- Check that custom CSS is not overriding the layout wrapper's flexbox structure
+- Verify navbar height configuration (default: 40px) is appropriate for your design

@@ -7,6 +7,93 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.2] - 2026-01-02
+
+### Fixed - Server Routes Packaging Bug
+
+**Issue**: Published npm package contained broken import paths in `dist/server/routes/*.js` files that referenced non-existent demo app routes (`../../app/api/hazo_auth/*/route`), causing consuming applications to fail when importing route handlers.
+
+**Root Cause**: Route handler implementations were in `src/app/api/hazo_auth/*/route.ts` (demo app), and `src/server/routes/*.ts` files re-exported from these demo routes. When built and published, the `app/` directory was excluded from distribution, breaking the imports.
+
+**Fix Applied**:
+- Moved all route handler implementations INTO `src/server/routes/*.ts` files with correct relative imports to `../../lib/*`
+- Updated `src/app/api/hazo_auth/*/route.ts` files to re-export FROM server/routes instead (reversed dependency)
+- 26+ route files refactored including: login, register, logout, me, forgot_password, reset_password, change_password, verify_email, invitations, create_firm, user_management routes, scope_management routes, and more
+
+**Impact**: Consuming applications can now successfully import and use route handlers from `hazo_auth/server/routes/*` without broken import errors.
+
+**Files Modified**:
+- `src/server/routes/*.ts` - Now contain actual route handler implementations (26+ files)
+- `src/app/api/hazo_auth/*/route.ts` - Now re-export from server/routes (26+ files)
+
+**Public API**: UNCHANGED - Consuming apps still use the same import pattern:
+```typescript
+export { POST } from "hazo_auth/server/routes/login";
+```
+
+---
+
+### Fixed - Authentication Page Layout Issues
+
+**Issue**: Login, register, and other authentication pages appeared squashed, not full width, or had excessive whitespace. The vertical centering feature was not working correctly due to conflicting spacing and nested wrapper structure.
+
+**Root Causes**:
+1. **TwoColumnAuthLayout** had hardcoded margins (`mx-6 my-8 sm:mx-8 md:mx-auto md:my-12`) that conflicted with parent layout's vertical centering
+2. **StandaloneLayoutWrapper** used nested wrapper structure with redundant `min-h-screen` classes and inline CSS that conflicted with Tailwind
+3. Spacing was not conditional based on `verticalCenter` setting
+
+**Fixes Applied**:
+
+**1. TwoColumnAuthLayout (`src/components/layouts/shared/components/two_column_auth_layout.tsx`)**:
+- Removed hardcoded margin classes that interfered with parent spacing control
+- Parent wrapper now controls all spacing via props
+
+**2. StandaloneLayoutWrapper (`src/components/layouts/shared/components/standalone_layout_wrapper.tsx`)**:
+- Removed nested wrapper structure - now uses single wrapper with flexbox
+- Removed conflicting inline `minHeight: calc(100vh - navbarHeight)` style
+- Added conditional spacing based on `verticalCenter` prop:
+  - When `verticalCenter=true`: Uses `max-w-5xl gap-2 p-4` (minimal spacing for centered content)
+  - When `verticalCenter=false`: Uses `max-w-5xl gap-6 p-6` (more spacing for top-aligned content)
+- Uses pure flexbox for layout: `flex flex-col min-h-screen` with `flex-1` content area
+
+**3. Default Configuration (`src/lib/config/default_config.ts`)**:
+- Set `vertical_center: true` in `DEFAULT_UI_SHELL` for proper default behavior
+
+**Files Modified**:
+- `src/components/layouts/shared/components/two_column_auth_layout.tsx` - Removed hardcoded margins
+- `src/components/layouts/shared/components/standalone_layout_wrapper.tsx` - Simplified structure, added conditional spacing
+- `src/lib/config/default_config.ts` - Set `vertical_center: true` as default
+
+**Impact**: Authentication pages now render correctly with proper full-width layout and functional vertical centering. No more squashed or misaligned content.
+
+**Configuration Note**: The `vertical_center` setting only accepts boolean values (`true` or `false`), not "auto". Use `max-w-5xl` for `standalone_content_class` when using two-column layouts (login, register).
+
+---
+
+### Changed - Navbar Height Reduction
+
+**Enhancement**: Reduced default navbar height from 48px to 40px for a slimmer, more modern appearance.
+
+**Why this change**: A 40px navbar provides a more contemporary, streamlined look while maintaining excellent usability and touch target accessibility.
+
+**What Changed**:
+- Default navbar height: Reduced from 48px to 40px
+- Updated in `DEFAULT_NAVBAR` configuration defaults
+
+**Files Modified**:
+- `src/lib/config/default_config.ts` - Updated navbar default height to 40px
+- `src/components/layouts/shared/components/auth_navbar.tsx` - Uses new default
+
+**Configuration**:
+```ini
+[hazo_auth__navbar]
+height = 40    # Reduced from 48
+```
+
+**Backward Compatibility**: Existing configurations with custom heights are unaffected. Only new installations or configs without explicit height settings will use the new 40px default.
+
+---
+
 ## [5.1.1] - 2026-01-02
 
 ### Fixed - StandaloneLayoutWrapper Layout Bug
