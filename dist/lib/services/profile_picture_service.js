@@ -1,12 +1,12 @@
 import { createCrudService } from "hazo_connect/server";
 import gravatarUrl from "gravatar-url";
-import { get_profile_picture_config } from "../profile_picture_config.server";
-import { get_ui_sizes_config } from "../ui_sizes_config.server";
-import { get_file_types_config } from "../file_types_config.server";
-import { create_app_logger } from "../app_logger";
+import { get_profile_picture_config } from "../profile_picture_config.server.js";
+import { get_ui_sizes_config } from "../ui_sizes_config.server.js";
+import { get_file_types_config } from "../file_types_config.server.js";
+import { create_app_logger } from "../app_logger.js";
 import path from "path";
 import fs from "fs";
-import { map_ui_source_to_db } from "./profile_picture_source_mapper";
+import { map_ui_source_to_db } from "./profile_picture_source_mapper.js";
 // section: cache
 // Cache the resolved library path to avoid repeated filesystem checks
 let cached_library_path = null;

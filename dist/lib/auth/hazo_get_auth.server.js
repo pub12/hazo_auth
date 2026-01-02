@@ -1,17 +1,17 @@
-import { get_hazo_connect_instance } from "../hazo_connect_instance.server";
+import { get_hazo_connect_instance } from "../hazo_connect_instance.server.js";
 import { createCrudService } from "hazo_connect/server";
-import { create_app_logger } from "../app_logger";
-import { get_filename, get_line_number } from "../utils/api_route_helpers";
-import { PermissionError, ScopeAccessError } from "./auth_types";
-import { get_auth_cache } from "./auth_cache";
-import { get_scope_cache } from "./scope_cache";
-import { get_rate_limiter } from "./auth_rate_limiter";
-import { get_auth_utility_config } from "../auth_utility_config.server";
-import { validate_session_token } from "../services/session_token_service";
-import { is_hrbac_enabled, get_scope_hierarchy_config } from "../scope_hierarchy_config.server";
-import { check_user_scope_access, get_user_scopes, } from "../services/user_scope_service";
-import { get_cookie_name, BASE_COOKIE_NAMES } from "../cookies_config.server";
-import { get_app_permission_descriptions } from "../app_permissions_config.server";
+import { create_app_logger } from "../app_logger.js";
+import { get_filename, get_line_number } from "../utils/api_route_helpers.js";
+import { PermissionError, ScopeAccessError } from "./auth_types.js";
+import { get_auth_cache } from "./auth_cache.js";
+import { get_scope_cache } from "./scope_cache.js";
+import { get_rate_limiter } from "./auth_rate_limiter.js";
+import { get_auth_utility_config } from "../auth_utility_config.server.js";
+import { validate_session_token } from "../services/session_token_service.js";
+import { is_hrbac_enabled, get_scope_hierarchy_config } from "../scope_hierarchy_config.server.js";
+import { check_user_scope_access, get_user_scopes, } from "../services/user_scope_service.js";
+import { get_cookie_name, BASE_COOKIE_NAMES } from "../cookies_config.server.js";
+import { get_app_permission_descriptions } from "../app_permissions_config.server.js";
 // section: helpers
 /**
  * Parse JSON string to object, returning null on failure
@@ -57,10 +57,20 @@ function get_client_ip(request) {
  * @param user_id - User ID
  * @returns Object with user, permissions, and role_ids
  */
+/**
+ * CRUD service options for hazo_user_scopes table
+ * This table uses a composite primary key (user_id, scope_id) and no 'id' column
+ */
+const USER_SCOPES_CRUD_OPTIONS = {
+    primaryKeys: ["user_id", "scope_id"],
+    autoId: false,
+};
 async function fetch_user_data_from_db(user_id) {
     const hazoConnect = get_hazo_connect_instance();
     const users_service = createCrudService(hazoConnect, "hazo_users");
-    const user_roles_service = createCrudService(hazoConnect, "hazo_user_roles");
+    // v5.x: Use hazo_user_scopes instead of hazo_user_roles
+    // Roles are now assigned per-scope via hazo_user_scopes.role_id
+    const user_scopes_service = createCrudService(hazoConnect, "hazo_user_scopes", USER_SCOPES_CRUD_OPTIONS);
     const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions");
     const permissions_service = createCrudService(hazoConnect, "hazo_permissions");
     // Fetch user
@@ -82,30 +92,32 @@ async function fetch_user_data_from_db(user_id) {
         profile_picture_url: user_db.profile_picture_url || null,
         app_user_data: parse_app_user_data(user_db.app_user_data),
     };
-    // Fetch user roles
-    const user_roles = await user_roles_service.findBy({ user_id });
-    const role_ids = [];
-    if (Array.isArray(user_roles)) {
-        for (const ur of user_roles) {
-            const role_id = ur.role_id;
-            if (role_id !== undefined) {
-                role_ids.push(role_id);
+    // v5.x: Fetch user's roles from hazo_user_scopes (scope-based role assignments)
+    // Each scope assignment has a role_id (string UUID)
+    const user_scopes = await user_scopes_service.findBy({ user_id });
+    const role_ids_set = new Set();
+    if (Array.isArray(user_scopes)) {
+        for (const us of user_scopes) {
+            const role_id = us.role_id;
+            if (role_id) {
+                role_ids_set.add(role_id);
             }
         }
     }
+    const role_ids = Array.from(role_ids_set);
     // Fetch role permissions
     const permissions_set = new Set();
     if (role_ids.length > 0) {
         const role_permissions = await role_permissions_service.findBy({});
         if (Array.isArray(role_permissions)) {
-            // Filter role_permissions for user's roles
+            // Filter role_permissions for user's roles (role_id is string UUID in v5.x)
             const user_role_permissions = role_permissions.filter((rp) => role_ids.includes(rp.role_id));
-            // Get permission IDs
+            // Get permission IDs (can be string or number depending on database)
             const permission_ids = new Set();
             for (const rp of user_role_permissions) {
                 const perm_id = rp.permission_id;
                 if (perm_id !== undefined) {
-                    permission_ids.add(perm_id);
+                    permission_ids.add(String(perm_id));
                 }
             }
             // Fetch permission names
@@ -114,7 +126,7 @@ async function fetch_user_data_from_db(user_id) {
                 if (Array.isArray(permissions)) {
                     for (const perm of permissions) {
                         const perm_id = perm.id;
-                        if (perm_id !== undefined && permission_ids.has(perm_id)) {
+                        if (perm_id !== undefined && permission_ids.has(String(perm_id))) {
                             const perm_name = perm.permission_name;
                             if (perm_name) {
                                 permissions_set.add(perm_name);
@@ -299,7 +311,7 @@ export async function hazo_get_auth(request, options) {
     let cached_entry = cache.get(user_id);
     let user;
     let permissions;
-    let role_ids;
+    let role_ids; // v5.x: role_ids are now string UUIDs
     if (cached_entry) {
         // Cache hit
         user = cached_entry.user;

@@ -1,7 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // file_description: Visual divider between OAuth buttons and email/password form
 // section: imports
-import { cn } from "../../../../lib/utils";
+import { cn } from "../../../../lib/utils.js";
 // section: component
 /**
  * Visual divider component to separate OAuth buttons from email/password form

@@ -1,5 +1,5 @@
 import type { LayoutDataClient } from "../../shared/data/layout_data_client";
-import { type ForgotPasswordFieldId } from "../config/forgot_password_field_config";
+import { type ForgotPasswordFieldId } from "../config/forgot_password_field_config.js";
 export type ForgotPasswordFormValues = Record<ForgotPasswordFieldId, string>;
 export type ForgotPasswordFormErrors = Partial<Record<ForgotPasswordFieldId, string>> & {
     submit?: string;

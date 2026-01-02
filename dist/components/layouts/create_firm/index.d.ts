@@ -1,5 +1,5 @@
 import type { StaticImageData } from "next/image";
-import { type ButtonPaletteOverrides } from "../shared/config/layout_customization";
+import { type ButtonPaletteOverrides } from "../shared/config/layout_customization.js";
 export type CreateFirmLayoutProps = {
     /** Image source for the left panel */
     image_src: string | StaticImageData;

@@ -1,4 +1,4 @@
-import { resolveButtonPalette, resolveFieldDefinitions, resolveLabels, resolvePasswordRequirements, } from "../../shared/config/layout_customization";
+import { resolveButtonPalette, resolveFieldDefinitions, resolveLabels, resolvePasswordRequirements, } from "../../shared/config/layout_customization.js";
 // section: field_identifiers
 export const REGISTER_FIELD_IDS = {
     NAME: "name",

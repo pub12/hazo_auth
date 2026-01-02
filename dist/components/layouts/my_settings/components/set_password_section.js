@@ -4,11 +4,11 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
 import { useState, useCallback } from "react";
-import { Button } from "../../../ui/button";
-import { PasswordField } from "../../shared/components/password_field";
-import { FormFieldWrapper } from "../../shared/components/form_field_wrapper";
+import { Button } from "../../../ui/button.js";
+import { PasswordField } from "../../shared/components/password_field.js";
+import { FormFieldWrapper } from "../../shared/components/form_field_wrapper.js";
 import { toast } from "sonner";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: component
 /**
  * Set Password Section for My Settings

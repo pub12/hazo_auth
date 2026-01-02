@@ -4,13 +4,13 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Button } from "../../../ui/button";
-import { Input } from "../../../ui/input";
-import { Label } from "../../../ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "../../../ui/dialog";
+import { Button } from "../../../ui/button.js";
+import { Input } from "../../../ui/input.js";
+import { Label } from "../../../ui/label.js";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "../../../ui/dialog.js";
 import { Loader2, Upload, Trash2, CircleCheck, CircleX, Image as ImageIcon, Palette, } from "lucide-react";
 import { toast } from "sonner";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: helpers
 function isValidHexColor(color) {
     return /^#[0-9A-Fa-f]{6}$/.test(color);

@@ -1,9 +1,9 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // file_description: zero-config page component for create firm
 // section: imports
-import CreateFirmLayout from "../components/layouts/create_firm/index";
-import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
-import { get_config_value } from "../lib/config/config_loader.server";
+import CreateFirmLayout from "../components/layouts/create_firm/index.js";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell.js";
+import { get_config_value } from "../lib/config/config_loader.server.js";
 // section: config_loader
 function get_create_firm_config() {
     return {

@@ -1,7 +1,7 @@
 // file_description: server-only helper to read OAuth configuration from hazo_auth_config.ini
 // section: imports
-import { get_config_value, get_config_boolean } from "./config/config_loader.server";
-import { DEFAULT_OAUTH } from "./config/default_config";
+import { get_config_value, get_config_boolean } from "./config/config_loader.server.js";
+import { DEFAULT_OAUTH } from "./config/default_config.js";
 // section: constants
 const SECTION_NAME = "hazo_auth__oauth";
 // section: helpers

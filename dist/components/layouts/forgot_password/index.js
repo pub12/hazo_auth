@@ -3,15 +3,15 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
-import { Input } from "../../ui/input";
-import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
-import { FormHeader } from "../shared/components/form_header";
-import { FormActionButtons } from "../shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
-import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
-import { GoogleSignInButton } from "../shared/components/google_sign_in_button";
-import { FORGOT_PASSWORD_FIELD_IDS, createForgotPasswordFieldDefinitions, resolveForgotPasswordButtonPalette, resolveForgotPasswordLabels, } from "./config/forgot_password_field_config";
-import { use_forgot_password_form, } from "./hooks/use_forgot_password_form";
+import { Input } from "../../ui/input.js";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper.js";
+import { FormHeader } from "../shared/components/form_header.js";
+import { FormActionButtons } from "../shared/components/form_action_buttons.js";
+import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout.js";
+import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard.js";
+import { GoogleSignInButton } from "../shared/components/google_sign_in_button.js";
+import { FORGOT_PASSWORD_FIELD_IDS, createForgotPasswordFieldDefinitions, resolveForgotPasswordButtonPalette, resolveForgotPasswordLabels, } from "./config/forgot_password_field_config.js";
+import { use_forgot_password_form, } from "./hooks/use_forgot_password_form.js";
 import Link from "next/link";
 const ORDERED_FIELDS = [
     FORGOT_PASSWORD_FIELD_IDS.EMAIL,

@@ -1,7 +1,7 @@
 import { createCrudService } from "hazo_connect/server";
-import { create_app_logger } from "../app_logger";
-import { sanitize_error_for_user } from "../utils/error_sanitizer";
-import { get_scope_by_id, get_scope_ancestors, get_root_scope_id, SUPER_ADMIN_SCOPE_ID, is_super_admin_scope, } from "./scope_service";
+import { create_app_logger } from "../app_logger.js";
+import { sanitize_error_for_user } from "../utils/error_sanitizer.js";
+import { get_scope_by_id, get_scope_ancestors, get_root_scope_id, SUPER_ADMIN_SCOPE_ID, is_super_admin_scope, } from "./scope_service.js";
 // section: constants
 /**
  * CRUD service options for hazo_user_scopes table

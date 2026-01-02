@@ -6,11 +6,12 @@ import type { HazoAuthUser } from "./auth_types";
 
 /**
  * Cache entry structure
+ * v5.x: role_ids are now string UUIDs (from hazo_user_scopes)
  */
 type CacheEntry = {
   user: HazoAuthUser;
   permissions: string[];
-  role_ids: number[];
+  role_ids: string[];
   timestamp: number; // Unix timestamp in milliseconds
   cache_version: number; // Version number for smart invalidation
 };
@@ -24,7 +25,7 @@ class AuthCache {
   private max_size: number;
   private ttl_ms: number;
   private max_age_ms: number;
-  private role_version_map: Map<number, number>; // Track version per role for smart invalidation
+  private role_version_map: Map<string, number>; // Track version per role for smart invalidation (v5.x: string UUIDs)
 
   constructor(
     max_size: number,
@@ -81,13 +82,13 @@ class AuthCache {
    * @param user_id - User ID
    * @param user - User data
    * @param permissions - User permissions
-   * @param role_ids - User role IDs
+   * @param role_ids - User role IDs (v5.x: string UUIDs)
    */
   set(
     user_id: string,
     user: HazoAuthUser,
     permissions: string[],
-    role_ids: number[],
+    role_ids: string[],
   ): void {
     // Evict LRU entries if cache is full
     while (this.cache.size >= this.max_size) {
@@ -124,9 +125,9 @@ class AuthCache {
   /**
    * Invalidates cache for all users with specific roles
    * Uses cache version to determine if invalidation is needed
-   * @param role_ids - Array of role IDs to invalidate
+   * @param role_ids - Array of role IDs to invalidate (v5.x: string UUIDs)
    */
-  invalidate_by_roles(role_ids: number[]): void {
+  invalidate_by_roles(role_ids: string[]): void {
     // Increment version for affected roles
     for (const role_id of role_ids) {
       const current_version = this.role_version_map.get(role_id) || 0;
@@ -157,10 +158,10 @@ class AuthCache {
   /**
    * Gets the maximum cache version for a set of roles
    * Used to determine if cache entry is stale
-   * @param role_ids - Array of role IDs
+   * @param role_ids - Array of role IDs (v5.x: string UUIDs)
    * @returns Maximum version number
    */
-  private get_max_role_version(role_ids: number[]): number {
+  private get_max_role_version(role_ids: string[]): number {
     if (role_ids.length === 0) {
       return 0;
     }

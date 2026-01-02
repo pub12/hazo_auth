@@ -4,9 +4,9 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
 import { useState, useEffect } from "react";
-import { Switch } from "../../../ui/switch";
-import { Label } from "../../../ui/label";
-import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
+import { Switch } from "../../../ui/switch.js";
+import { Label } from "../../../ui/label.js";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar.js";
 import { Info } from "lucide-react";
 import gravatarUrl from "gravatar-url";
 // section: component

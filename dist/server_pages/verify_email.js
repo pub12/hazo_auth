@@ -1,10 +1,10 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // file_description: Zero-config VerifyEmailPage server component - drop in and use with no configuration required
 // section: imports
-import { get_email_verification_config } from "../lib/email_verification_config.server";
-import { VerifyEmailClientWrapper } from "./verify_email_client_wrapper";
-import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
-import { DEFAULT_EMAIL_VERIFICATION } from "../lib/config/default_config";
+import { get_email_verification_config } from "../lib/email_verification_config.server.js";
+import { VerifyEmailClientWrapper } from "./verify_email_client_wrapper.js";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell.js";
+import { DEFAULT_EMAIL_VERIFICATION } from "../lib/config/default_config.js";
 // section: component
 /**
  * Zero-config VerifyEmailPage server component

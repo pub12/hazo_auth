@@ -1,5 +1,5 @@
 import type { LayoutDataClient } from "../../shared/data/layout_data_client";
-import { type LoginFieldId } from "../config/login_field_config";
+import { type LoginFieldId } from "../config/login_field_config.js";
 export type LoginFormValues = Record<LoginFieldId, string>;
 export type LoginFormErrors = Partial<Record<LoginFieldId, string>>;
 export type PasswordVisibilityState = {

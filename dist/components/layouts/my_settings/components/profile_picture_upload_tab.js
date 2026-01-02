@@ -4,11 +4,11 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
 import { useState, useCallback, useEffect } from "react";
-import { Switch } from "../../../ui/switch";
-import { Label } from "../../../ui/label";
-import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
+import { Switch } from "../../../ui/switch.js";
+import { Label } from "../../../ui/label.js";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar.js";
 import { Upload, X, Loader2, Info } from "lucide-react";
-import { Button } from "../../../ui/button";
+import { Button } from "../../../ui/button.js";
 import imageCompression from "browser-image-compression";
 // section: component
 /**

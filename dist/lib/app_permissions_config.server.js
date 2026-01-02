@@ -1,7 +1,7 @@
 // file_description: server-only helper to read app permissions configuration from hazo_auth_config.ini
 // This allows consuming apps to declare their required permissions with descriptions for debugging
 // section: imports
-import { read_config_section } from "./config/config_loader.server";
+import { read_config_section } from "./config/config_loader.server.js";
 // section: helpers
 /**
  * Reads app permissions configuration from hazo_auth_config.ini file

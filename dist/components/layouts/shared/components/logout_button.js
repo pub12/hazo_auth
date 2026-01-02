@@ -5,11 +5,11 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "../../../ui/button";
+import { Button } from "../../../ui/button.js";
 import { LogOut } from "lucide-react";
 import { toast } from "sonner";
-import { trigger_auth_status_refresh } from "../hooks/use_auth_status";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { trigger_auth_status_refresh } from "../hooks/use_auth_status.js";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: component
 export function LogoutButton({ className, variant = "outline", size = "default", }) {
     const { apiBasePath } = useHazoAuthConfig();

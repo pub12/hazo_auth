@@ -3,7 +3,7 @@
 "use client";
 // section: imports
 import { useState, useEffect, useCallback } from "react";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: hook
 /**
  * React hook for fetching firm branding

@@ -1,12 +1,12 @@
 // file_description: server-only helper to read my settings layout configuration from hazo_auth_config.ini
 // section: imports
-import { get_config_value } from "./config/config_loader.server";
-import { get_user_fields_config } from "./user_fields_config.server";
-import { get_password_requirements_config } from "./password_requirements_config.server";
-import { get_profile_picture_config } from "./profile_picture_config.server";
-import { get_messages_config } from "./messages_config.server";
-import { get_ui_sizes_config } from "./ui_sizes_config.server";
-import { get_file_types_config } from "./file_types_config.server";
+import { get_config_value } from "./config/config_loader.server.js";
+import { get_user_fields_config } from "./user_fields_config.server.js";
+import { get_password_requirements_config } from "./password_requirements_config.server.js";
+import { get_profile_picture_config } from "./profile_picture_config.server.js";
+import { get_messages_config } from "./messages_config.server.js";
+import { get_ui_sizes_config } from "./ui_sizes_config.server.js";
+import { get_file_types_config } from "./file_types_config.server.js";
 // section: helpers
 /**
  * Reads my settings layout configuration from hazo_auth_config.ini file

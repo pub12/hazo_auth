@@ -1,9 +1,9 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // file_description: Zero-config RegisterPage server component - drop in and use with no configuration required
 // section: imports
-import { get_register_config } from "../lib/register_config.server";
-import { RegisterClientWrapper } from "./register_client_wrapper";
-import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
+import { get_register_config } from "../lib/register_config.server.js";
+import { RegisterClientWrapper } from "./register_client_wrapper.js";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell.js";
 // section: component
 /**
  * Zero-config RegisterPage server component

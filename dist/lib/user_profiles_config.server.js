@@ -1,6 +1,6 @@
 // file_description: server-only helper to read user profiles cache configuration from hazo_auth_config.ini
 // section: imports
-import { get_config_number, } from "./config/config_loader.server";
+import { get_config_number, } from "./config/config_loader.server.js";
 // section: helpers
 /**
  * Reads user profiles cache configuration from hazo_auth_config.ini file

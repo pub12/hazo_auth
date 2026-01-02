@@ -2,13 +2,13 @@
 // This is the standardized endpoint that always returns the same format including permissions
 // section: imports
 import { NextResponse } from "next/server";
-import { hazo_get_auth } from "../../../../lib/auth/hazo_get_auth.server";
-import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
+import { hazo_get_auth } from "../../../../lib/auth/hazo_get_auth.server.js";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server.js";
 import { createCrudService } from "hazo_connect/server";
-import { map_db_source_to_ui } from "../../../../lib/services/profile_picture_source_mapper";
-import { create_app_logger } from "../../../../lib/app_logger";
-import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
-import { is_user_types_enabled, get_user_type_by_key, } from "../../../../lib/user_types_config.server";
+import { map_db_source_to_ui } from "../../../../lib/services/profile_picture_source_mapper.js";
+import { create_app_logger } from "../../../../lib/app_logger.js";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers.js";
+import { is_user_types_enabled, get_user_type_by_key, } from "../../../../lib/user_types_config.server.js";
 // section: api_handler
 /**
  * GET /api/hazo_auth/me

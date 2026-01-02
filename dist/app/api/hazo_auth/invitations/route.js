@@ -1,12 +1,12 @@
 // file_description: API route for invitation management (create, list, revoke)
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
-import { create_app_logger } from "../../../../lib/app_logger";
-import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
-import { hazo_get_auth } from "../../../../lib/auth/hazo_get_auth.server";
-import { create_invitation, list_invitations_by_scope, list_all_invitations, revoke_invitation, get_invitation_by_id, } from "../../../../lib/services/invitation_service";
-import { is_user_super_admin, get_user_scopes, } from "../../../../lib/services/user_scope_service";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server.js";
+import { create_app_logger } from "../../../../lib/app_logger.js";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers.js";
+import { hazo_get_auth } from "../../../../lib/auth/hazo_get_auth.server.js";
+import { create_invitation, list_invitations_by_scope, list_all_invitations, revoke_invitation, get_invitation_by_id, } from "../../../../lib/services/invitation_service.js";
+import { is_user_super_admin, get_user_scopes, } from "../../../../lib/services/user_scope_service.js";
 // section: route_config
 export const dynamic = "force-dynamic";
 // section: api_handler

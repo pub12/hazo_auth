@@ -1,11 +1,11 @@
 // file_description: API route handler for permissions management operations (list, migrate, update, delete)
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server";
+import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server.js";
 import { createCrudService } from "hazo_connect/server";
-import { create_app_logger } from "../../lib/app_logger";
-import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers";
-import { get_user_management_config } from "../../lib/user_management_config.server";
+import { create_app_logger } from "../../lib/app_logger.js";
+import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers.js";
+import { get_user_management_config } from "../../lib/user_management_config.server.js";
 // section: route_config
 export const dynamic = 'force-dynamic';
 // section: api_handler

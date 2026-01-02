@@ -1,5 +1,5 @@
 // file_description: barrel export for all components (UI and layouts)
 // section: ui_exports
-export * from "./ui/index";
+export * from "./ui/index.js";
 // section: layout_exports
-export * from "./layouts/index";
+export * from "./layouts/index.js";

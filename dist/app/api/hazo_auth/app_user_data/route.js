@@ -1,11 +1,11 @@
 // file_description: API route for managing app_user_data (custom application-specific user data)
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
-import { create_app_logger } from "../../../../lib/app_logger";
-import { get_app_user_data, update_app_user_data, clear_app_user_data, } from "../../../../lib/services/app_user_data_service";
-import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
-import { require_auth } from "../../../../lib/auth/auth_utils.server";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server.js";
+import { create_app_logger } from "../../../../lib/app_logger.js";
+import { get_app_user_data, update_app_user_data, clear_app_user_data, } from "../../../../lib/services/app_user_data_service.js";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers.js";
+import { require_auth } from "../../../../lib/auth/auth_utils.server.js";
 // section: api_handlers
 /**
  * GET /api/hazo_auth/app_user_data

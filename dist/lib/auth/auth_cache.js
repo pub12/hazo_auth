@@ -46,7 +46,7 @@ class AuthCache {
      * @param user_id - User ID
      * @param user - User data
      * @param permissions - User permissions
-     * @param role_ids - User role IDs
+     * @param role_ids - User role IDs (v5.x: string UUIDs)
      */
     set(user_id, user, permissions, role_ids) {
         // Evict LRU entries if cache is full
@@ -80,7 +80,7 @@ class AuthCache {
     /**
      * Invalidates cache for all users with specific roles
      * Uses cache version to determine if invalidation is needed
-     * @param role_ids - Array of role IDs to invalidate
+     * @param role_ids - Array of role IDs to invalidate (v5.x: string UUIDs)
      */
     invalidate_by_roles(role_ids) {
         // Increment version for affected roles
@@ -109,7 +109,7 @@ class AuthCache {
     /**
      * Gets the maximum cache version for a set of roles
      * Used to determine if cache entry is stale
-     * @param role_ids - Array of role IDs
+     * @param role_ids - Array of role IDs (v5.x: string UUIDs)
      * @returns Maximum version number
      */
     get_max_role_version(role_ids) {

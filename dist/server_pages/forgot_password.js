@@ -1,10 +1,10 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // file_description: Zero-config ForgotPasswordPage server component - drop in and use with no configuration required
 // section: imports
-import { get_forgot_password_config } from "../lib/forgot_password_config.server";
-import { ForgotPasswordClientWrapper } from "./forgot_password_client_wrapper";
-import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
-import { DEFAULT_FORGOT_PASSWORD } from "../lib/config/default_config";
+import { get_forgot_password_config } from "../lib/forgot_password_config.server.js";
+import { ForgotPasswordClientWrapper } from "./forgot_password_client_wrapper.js";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell.js";
+import { DEFAULT_FORGOT_PASSWORD } from "../lib/config/default_config.js";
 // section: component
 /**
  * Zero-config ForgotPasswordPage server component

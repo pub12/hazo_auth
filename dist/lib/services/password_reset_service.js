@@ -1,8 +1,8 @@
 import { createCrudService } from "hazo_connect/server";
-import { create_token } from "./token_service";
+import { create_token } from "./token_service.js";
 import argon2 from "argon2";
-import { create_app_logger } from "../app_logger";
-import { send_template_email } from "./email_service";
+import { create_app_logger } from "../app_logger.js";
+import { send_template_email } from "./email_service.js";
 // section: helpers
 /**
  * Requests a password reset for a user by email

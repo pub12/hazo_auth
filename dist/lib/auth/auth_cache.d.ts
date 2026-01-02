@@ -1,11 +1,12 @@
 import type { HazoAuthUser } from "./auth_types";
 /**
  * Cache entry structure
+ * v5.x: role_ids are now string UUIDs (from hazo_user_scopes)
  */
 type CacheEntry = {
     user: HazoAuthUser;
     permissions: string[];
-    role_ids: number[];
+    role_ids: string[];
     timestamp: number;
     cache_version: number;
 };
@@ -33,9 +34,9 @@ declare class AuthCache {
      * @param user_id - User ID
      * @param user - User data
      * @param permissions - User permissions
-     * @param role_ids - User role IDs
+     * @param role_ids - User role IDs (v5.x: string UUIDs)
      */
-    set(user_id: string, user: HazoAuthUser, permissions: string[], role_ids: number[]): void;
+    set(user_id: string, user: HazoAuthUser, permissions: string[], role_ids: string[]): void;
     /**
      * Invalidates cache for a specific user
      * @param user_id - User ID to invalidate
@@ -44,9 +45,9 @@ declare class AuthCache {
     /**
      * Invalidates cache for all users with specific roles
      * Uses cache version to determine if invalidation is needed
-     * @param role_ids - Array of role IDs to invalidate
+     * @param role_ids - Array of role IDs to invalidate (v5.x: string UUIDs)
      */
-    invalidate_by_roles(role_ids: number[]): void;
+    invalidate_by_roles(role_ids: string[]): void;
     /**
      * Invalidates all cache entries
      */
@@ -54,7 +55,7 @@ declare class AuthCache {
     /**
      * Gets the maximum cache version for a set of roles
      * Used to determine if cache entry is stale
-     * @param role_ids - Array of role IDs
+     * @param role_ids - Array of role IDs (v5.x: string UUIDs)
      * @returns Maximum version number
      */
     private get_max_role_version;

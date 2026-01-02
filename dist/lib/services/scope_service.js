@@ -1,6 +1,6 @@
 import { createCrudService } from "hazo_connect/server";
-import { create_app_logger } from "../app_logger";
-import { sanitize_error_for_user } from "../utils/error_sanitizer";
+import { create_app_logger } from "../app_logger.js";
+import { sanitize_error_for_user } from "../utils/error_sanitizer.js";
 // section: constants
 /**
  * Super admin scope ID - special UUID for system-level administrators

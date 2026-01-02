@@ -1,5 +1,5 @@
 import type { HazoConnectAdapter } from "hazo_connect";
-import { type ProfilePictureSourceUI } from "./profile_picture_source_mapper";
+import { type ProfilePictureSourceUI } from "./profile_picture_source_mapper.js";
 export type ProfilePictureSource = ProfilePictureSourceUI;
 export type DefaultProfilePictureResult = {
     profile_picture_url: string;

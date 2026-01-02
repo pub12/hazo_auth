@@ -1,6 +1,6 @@
-import { get_scope_by_id, get_root_scope_id, update_scope, is_system_scope, extract_branding, has_branding, } from "./scope_service";
-import { create_app_logger } from "../app_logger";
-import { sanitize_error_for_user } from "../utils/error_sanitizer";
+import { get_scope_by_id, get_root_scope_id, update_scope, is_system_scope, extract_branding, has_branding, } from "./scope_service.js";
+import { create_app_logger } from "../app_logger.js";
+import { sanitize_error_for_user } from "../utils/error_sanitizer.js";
 // section: validation
 /**
  * Validates a hex color string

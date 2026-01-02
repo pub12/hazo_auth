@@ -2,8 +2,8 @@
 // Uses jose library for Edge-compatible JWT operations
 // section: imports
 import { SignJWT, jwtVerify } from "jose";
-import { create_app_logger } from "../app_logger";
-import { get_filename, get_line_number } from "../utils/api_route_helpers";
+import { create_app_logger } from "../app_logger.js";
+import { get_filename, get_line_number } from "../utils/api_route_helpers.js";
 // section: helpers
 /**
  * Gets JWT secret from environment variables

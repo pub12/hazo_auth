@@ -5,7 +5,7 @@
 "use client";
 import { jsx as _jsx } from "react/jsx-runtime";
 import { createContext, useContext, useMemo } from "react";
-import { DEFAULT_HAZO_AUTH_CONFIG } from "./hazo_auth_config";
+import { DEFAULT_HAZO_AUTH_CONFIG } from "./hazo_auth_config.js";
 // section: context_definition
 /**
  * React Context for hazo_auth configuration

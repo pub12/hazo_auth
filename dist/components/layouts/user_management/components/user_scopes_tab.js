@@ -5,17 +5,17 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "../../../ui/table";
-import { Button } from "../../../ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "../../../ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from "../../../ui/alert-dialog";
-import { Input } from "../../../ui/input";
-import { Label } from "../../../ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "../../../ui/avatar";
-import { TreeView } from "../../../ui/tree-view";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "../../../ui/table.js";
+import { Button } from "../../../ui/button.js";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "../../../ui/dialog.js";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from "../../../ui/alert-dialog.js";
+import { Input } from "../../../ui/input.js";
+import { Label } from "../../../ui/label.js";
+import { Avatar, AvatarFallback, AvatarImage } from "../../../ui/avatar.js";
+import { TreeView } from "../../../ui/tree-view.js";
 import { Loader2, Plus, Trash2, Search, CircleCheck, CircleX, ChevronRight, Building2, FolderTree, } from "lucide-react";
 import { toast } from "sonner";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // Convert ScopeTreeNode to TreeDataItem format for selection
 function convertToTreeData(nodes) {
     return nodes.map((node) => {

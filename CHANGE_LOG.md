@@ -7,6 +7,104 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.5] - 2026-01-02
+
+### Fixed - Critical Bug: hazo_user_roles → hazo_user_scopes Migration
+
+**Issue**: Several core files were still referencing the deprecated `hazo_user_roles` table instead of the v5.x `hazo_user_scopes` table, causing errors in consuming applications that had migrated to v5.x.
+
+**Root Cause**: When v5.0 changed from global role assignments (`hazo_user_roles`) to scope-based role assignments (`hazo_user_scopes`), some files were not updated to use the new table. Additionally, role IDs changed from `number` to `string` (UUIDs).
+
+**Critical Changes:**
+
+**1. hazo_get_auth.server.ts**
+- Changed from querying `hazo_user_roles` to `hazo_user_scopes`
+- Updated `role_ids` type from `number[]` to `string[]`
+- Added composite primary key options for `hazo_user_scopes` queries
+- Now aggregates unique role IDs across all scope assignments
+
+**2. auth_cache.ts**
+- Updated `role_ids` type from `number[]` to `string[]` throughout
+- Updated `role_version_map` to use string keys (UUIDs)
+- Updated `invalidate_by_roles()` signature to accept `string[]`
+
+**3. user_management_users_roles.ts (Complete Rewrite)**
+- Changed from `hazo_user_roles` to `hazo_user_scopes`
+- GET: Returns unique role_ids aggregated across all scope assignments
+- POST: Now accepts optional `scope_id` parameter (defaults to DEFAULT_SYSTEM_SCOPE_ID)
+- PUT: Updated for scope-based role management
+
+**4. user_management_roles.ts**
+- Updated `modified_role_ids` type from `number[]` to `string[]`
+- Updated permission ID handling to use strings (UUIDs)
+
+**5. init_users.ts**
+- Removed `hazo_user_roles` service initialization
+- Removed step 7 (global role assignment) - now handled via user_scope assignment
+- Updated summary type to remove `user_role` field
+- Updated help text to reflect v5.x scope-based architecture
+
+**6. rbac_test/route.ts**
+- Changed from `hazo_user_roles` to `hazo_user_scopes` for role lookup
+- Updated role_id type handling for UUID strings
+
+**7. debug_auth/route.ts**
+- Changed to show scope-based role assignments with scope names
+- Updated response structure to include scope information
+
+**Breaking Changes:**
+
+**Type Changes:**
+```typescript
+// Before (v4.x)
+type role_ids = number[];
+
+// After (v5.x)
+type role_ids = string[];  // UUIDs
+```
+
+**Table Schema:**
+```typescript
+// Before (v4.x) - DEPRECATED
+hazo_user_roles: {
+  user_id: string,
+  role_id: number,  // Integer primary key
+  created_at: timestamp,
+  changed_at: timestamp
+}
+
+// After (v5.x) - CURRENT
+hazo_user_scopes: {
+  user_id: string,
+  scope_id: string,       // NEW: Scope assignment
+  role_id: string,        // UUID, not number
+  created_at: timestamp,
+  changed_at: timestamp
+}
+```
+
+**Migration Impact:**
+
+Applications using v5.x that still had `hazo_user_roles` data will need to:
+1. Migrate role assignments from `hazo_user_roles` to `hazo_user_scopes`
+2. Update role IDs from integers to UUIDs
+3. Assign users to scopes (use DEFAULT_SYSTEM_SCOPE_ID for backwards compatibility)
+
+**Files Modified:**
+- `src/lib/auth/hazo_get_auth.server.ts`
+- `src/lib/auth/auth_cache.ts`
+- `src/server/routes/user_management_users_roles.ts`
+- `src/server/routes/user_management_roles.ts`
+- `src/cli/init_users.ts`
+- `src/app/api/hazo_auth/rbac_test/route.ts`
+- `src/app/api/hazo_auth/debug_auth/route.ts`
+
+**Backward Compatibility**: NONE - This is a bugfix that enforces the v5.x architecture. Applications must use `hazo_user_scopes` table with UUID role IDs.
+
+**Version Impact**: This is a bugfix release (v5.1.5) that corrects the incomplete migration from v5.0.
+
+---
+
 ## [5.1.2] - 2026-01-02
 
 ### Fixed - Server Routes Packaging Bug

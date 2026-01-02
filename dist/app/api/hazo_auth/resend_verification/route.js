@@ -1,10 +1,10 @@
 // file_description: API route for resending email verification using hazo_connect
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
-import { create_app_logger } from "../../../../lib/app_logger";
-import { resend_verification_email } from "../../../../lib/services/email_verification_service";
-import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server.js";
+import { create_app_logger } from "../../../../lib/app_logger.js";
+import { resend_verification_email } from "../../../../lib/services/email_verification_service.js";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers.js";
 // section: api_handler
 export async function POST(request) {
     const logger = create_app_logger();

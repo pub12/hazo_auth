@@ -1,10 +1,10 @@
 // file_description: API route for removing profile pictures
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
-import { create_app_logger } from "../../../../lib/app_logger";
-import { remove_user_profile_picture } from "../../../../lib/services/profile_picture_remove_service";
-import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server.js";
+import { create_app_logger } from "../../../../lib/app_logger.js";
+import { remove_user_profile_picture } from "../../../../lib/services/profile_picture_remove_service.js";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers.js";
 // section: api_handler
 export async function DELETE(request) {
     const logger = create_app_logger();

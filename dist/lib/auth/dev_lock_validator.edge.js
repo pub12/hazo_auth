@@ -1,4 +1,4 @@
-import { get_cookie_name_edge, BASE_COOKIE_NAMES } from "../cookies_config.edge";
+import { get_cookie_name_edge, BASE_COOKIE_NAMES } from "../cookies_config.edge.js";
 // section: constants
 const SEPARATOR = "|";
 // section: helpers

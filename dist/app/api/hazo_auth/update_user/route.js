@@ -1,12 +1,12 @@
 // file_description: API route for updating user profile information
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
-import { create_app_logger } from "../../../../lib/app_logger";
-import { update_user_profile } from "../../../../lib/services/user_update_service";
-import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
-import { require_auth } from "../../../../lib/auth/auth_utils.server";
-import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../../../lib/cookies_config.server";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server.js";
+import { create_app_logger } from "../../../../lib/app_logger.js";
+import { update_user_profile } from "../../../../lib/services/user_update_service.js";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers.js";
+import { require_auth } from "../../../../lib/auth/auth_utils.server.js";
+import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../../../lib/cookies_config.server.js";
 // section: api_handler
 export async function PATCH(request) {
     const logger = create_app_logger();

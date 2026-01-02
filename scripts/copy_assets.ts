@@ -25,9 +25,11 @@ function copyDir(src: string, dest: string) {
  * This transforms imports like:
  *   import { foo } from "./bar"
  *   import { foo } from "../baz/qux"
+ *   export * from "./bar"
  * To:
  *   import { foo } from "./bar.js"
  *   import { foo } from "../baz/qux.js"
+ *   export * from "./bar.js"
  *
  * Only transforms local relative imports (starting with ./ or ../)
  * Does not transform external package imports or imports that already have extensions
@@ -35,10 +37,14 @@ function copyDir(src: string, dest: string) {
 function addJsExtensionsToFile(filePath: string) {
   const content = fs.readFileSync(filePath, 'utf-8');
 
-  // Match import statements with relative paths that don't have extensions
-  // Handles: import { x } from "./path"  and  import x from "../path"
-  // Also handles: export { x } from "./path"
-  const importRegex = /((?:import|export)\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?["'])(\.\.?\/[^"']+?)(["'])/g;
+  // Match import/export statements with relative paths that don't have extensions
+  // This regex handles:
+  // - import { x } from "./path"
+  // - import x from "../path"
+  // - export { x } from "./path"
+  // - export * from "./path"
+  // - import * as x from "./path"
+  const importRegex = /((?:import|export)\s+(?:(?:\{[^}]*\}|\*(?:\s+as\s+\w+)?|\w+)\s+from\s+)?["'])(\.\.?\/[^"']+?)(["'])/g;
 
   const transformed = content.replace(importRegex, (match, prefix, importPath, suffix) => {
     // Skip if already has an extension
@@ -57,7 +63,7 @@ function addJsExtensionsToFile(filePath: string) {
 }
 
 /**
- * Recursively process all .ts files in a directory to add .js extensions to imports
+ * Recursively process all .ts/.tsx/.js files in a directory to add .js extensions to imports
  */
 function addJsExtensionsToDir(dir: string) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -68,7 +74,7 @@ function addJsExtensionsToDir(dir: string) {
 
     if (entry.isDirectory()) {
       filesProcessed += addJsExtensionsToDir(fullPath);
-    } else if (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) {
+    } else if (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx') || entry.name.endsWith('.js')) {
       if (addJsExtensionsToFile(fullPath)) {
         filesProcessed++;
       }
@@ -157,13 +163,21 @@ if (fs.existsSync(typesSrcDir)) {
     console.log('No server/types directory found to copy.');
 }
 
+// Post-process dist: Add .js extensions to local imports for Node.js ESM compatibility
+// This is required because Node.js ESM requires explicit file extensions in imports,
+// but TypeScript doesn't add them automatically. We need to add them to compiled .js files.
+console.log('Adding .js extensions to local imports in dist/ for Node.js ESM compatibility...');
+const distDir = path.join(process.cwd(), 'dist');
+const distFilesProcessed = addJsExtensionsToDir(distDir);
+console.log(`Processed ${distFilesProcessed} files in dist/ with import transformations.`);
+
 // Post-process cli-src: Add .js extensions to local imports for Node.js ESM compatibility
 // This is required because Node.js ESM requires explicit file extensions in imports,
 // but Next.js/Turbopack (used for the demo app) does not want them in TypeScript files.
 // By adding them after copying, we maintain compatibility with both systems.
 console.log('Adding .js extensions to local imports in cli-src for Node.js ESM compatibility...');
 const filesProcessed = addJsExtensionsToDir(cliSrcDestDir);
-console.log(`Processed ${filesProcessed} files with import transformations.`);
+console.log(`Processed ${filesProcessed} files in cli-src with import transformations.`);
 
 
 

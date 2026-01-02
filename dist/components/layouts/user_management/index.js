@@ -4,25 +4,25 @@
 import { jsxs as _jsxs, jsx as _jsx, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
 import { useState, useEffect, useCallback } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
-import { use_hazo_auth } from "../shared/hooks/use_hazo_auth";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "../../ui/table";
-import { Button } from "../../ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "../../ui/avatar";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from "../../ui/alert-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "../../ui/dialog";
-import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "../../ui/select";
-import { UserTypeBadge } from "../../ui/user-type-badge";
-import { RolesMatrix } from "./components/roles_matrix";
-import { ScopeHierarchyTab } from "./components/scope_hierarchy_tab";
-import { UserScopesTab } from "./components/user_scopes_tab";
-import { AppUserDataEditor } from "./components/app_user_data_editor";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs.js";
+import { use_hazo_auth } from "../shared/hooks/use_hazo_auth.js";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "../../ui/table.js";
+import { Button } from "../../ui/button.js";
+import { Avatar, AvatarImage, AvatarFallback } from "../../ui/avatar.js";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from "../../ui/alert-dialog.js";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "../../ui/dialog.js";
+import { Input } from "../../ui/input.js";
+import { Label } from "../../ui/label.js";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "../../ui/select.js";
+import { UserTypeBadge } from "../../ui/user-type-badge.js";
+import { RolesMatrix } from "./components/roles_matrix.js";
+import { ScopeHierarchyTab } from "./components/scope_hierarchy_tab.js";
+import { UserScopesTab } from "./components/user_scopes_tab.js";
+import { AppUserDataEditor } from "./components/app_user_data_editor.js";
 import { UserX, KeyRound, Edit, Trash2, Loader2, CircleCheck, CircleX, Plus, UserPlus, ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
-import { useHazoAuthConfig } from "../../../contexts/hazo_auth_provider";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip.js";
+import { useHazoAuthConfig } from "../../../contexts/hazo_auth_provider.js";
 // section: helper_components
 /**
  * Recursive JSON tree node component for displaying app_user_data.

@@ -121,7 +121,7 @@ Configuration is loaded via `hazo_config` package and cached at runtime.
 - `hazo_refresh_tokens` - Token storage (password reset, email verification)
 - `hazo_roles` - Role definitions
 - `hazo_permissions` - Permission definitions
-- `hazo_user_roles` - User-role junction table
+- `hazo_user_scopes` - User-scope-role assignments (replaces hazo_user_roles in v5.x)
 - `hazo_role_permissions` - Role-permission junction table
 
 **Scope-based multi-tenancy tables:**
@@ -144,6 +144,9 @@ The scope system provides a flexible, membership-based multi-tenancy model where
 - Single unified `hazo_scopes` table with hierarchical structure (replaces `hazo_org` + 7 `hazo_scopes_lX` tables)
 - Each scope has: `id`, `name`, `level` (descriptive label), `parent_id` (for hierarchy)
 - Users assigned to scopes via `hazo_user_scopes` table (membership model, not org_id foreign key)
+  - **CRITICAL (v5.1.5)**: `hazo_user_scopes` includes `role_id` field for scope-based role assignments
+  - Each scope assignment has a role (e.g., admin, member) - supports different roles in different scopes
+  - Role IDs are UUIDs (string type), not numeric IDs (changed from v4.x `hazo_user_roles`)
 - Super admin scope: `00000000-0000-0000-0000-000000000000` (for system administrators)
 - Default system scope: `00000000-0000-0000-0000-000000000001` (fallback for non-multi-tenancy mode)
 - Unlimited hierarchy depth via parent-child relationships
@@ -913,6 +916,48 @@ When permission checks fail (with `strict: true`), the error response includes d
 - `src/lib/app_permissions_config.server.ts` - Config loader
 - `src/app/api/hazo_auth/permissions/app/route.ts` - API endpoint
 
+## Critical Architecture Changes
+
+### v5.1.5 - hazo_user_roles → hazo_user_scopes Migration
+
+**IMPORTANT**: In v5.x, the RBAC model changed from global role assignments to scope-based role assignments. This was a critical bug fix in v5.1.5 where several files were still referencing the deprecated `hazo_user_roles` table.
+
+**What Changed:**
+- **v4.x and earlier**: Global roles via `hazo_user_roles` table, `role_id` was `number`
+- **v5.x**: Scope-based roles via `hazo_user_scopes` table, `role_id` is `string` (UUID)
+
+**Key Differences:**
+```typescript
+// v4.x (DEPRECATED)
+hazo_user_roles: { user_id, role_id: number }
+
+// v5.x (CURRENT)
+hazo_user_scopes: { user_id, scope_id, role_id: string }
+```
+
+**Files Fixed in v5.1.5:**
+1. `hazo_get_auth.server.ts` - Now fetches roles from `hazo_user_scopes`
+2. `auth_cache.ts` - Updated `role_ids` type from `number[]` to `string[]`
+3. `user_management_users_roles.ts` - Complete rewrite for scope-based roles
+4. `user_management_roles.ts` - Updated for UUID role IDs
+5. `init_users.ts` - Removed global role assignment, uses scopes instead
+6. `rbac_test/route.ts` - Updated for scope-based role lookup
+7. `debug_auth/route.ts` - Shows scope-based role assignments
+
+**Impact on Consuming Applications:**
+- If upgrading from v4.x to v5.x, you MUST migrate data from `hazo_user_roles` to `hazo_user_scopes`
+- Role IDs are now UUIDs (strings), not integers
+- Users can have different roles in different scopes
+
+**Type Changes:**
+```typescript
+// Cache and auth functions
+type role_ids = string[];  // Was: number[]
+
+// invalidate_by_roles signature
+function invalidate_by_roles(role_ids: string[]): void;  // Was: number[]
+```
+
 ## Common Issues
 
 ### "Module not found: Can't resolve 'fs'"
@@ -935,8 +980,9 @@ When permission checks fail (with `strict: true`), the error response includes d
 
 ### Permission checks always fail
 - Run `npm run init-users` to initialize permissions and roles
-- Verify user has roles assigned in `hazo_user_roles` table
+- Verify user has roles assigned in `hazo_user_scopes` table (v5.x+) with valid role_id
 - Check `[hazo_auth__user_management] application_permission_list_defaults`
+- Note: Role IDs are UUIDs (strings), not numeric IDs
 
 ### Radix UI Select showing empty "None" option
 - Radix UI Select does not support `value=""` (empty string)

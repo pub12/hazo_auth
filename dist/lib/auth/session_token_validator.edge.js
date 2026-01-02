@@ -2,7 +2,7 @@
 // Uses jose library which works in Edge Runtime
 // section: imports
 import { jwtVerify } from "jose";
-import { get_cookie_name_edge, BASE_COOKIE_NAMES } from "../cookies_config.edge";
+import { get_cookie_name_edge, BASE_COOKIE_NAMES } from "../cookies_config.edge.js";
 // section: helpers
 /**
  * Gets JWT secret from environment variables

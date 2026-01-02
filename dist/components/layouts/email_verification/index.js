@@ -3,16 +3,16 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
-import { Input } from "../../ui/input";
-import { Button } from "../../ui/button";
-import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
-import { FormHeader } from "../shared/components/form_header";
-import { FormActionButtons } from "../shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
-import { EMAIL_VERIFICATION_FIELD_IDS, createEmailVerificationFieldDefinitions, resolveEmailVerificationButtonPalette, resolveEmailVerificationLabels, EMAIL_VERIFICATION_SUCCESS_LABEL_DEFAULTS, EMAIL_VERIFICATION_ERROR_LABEL_DEFAULTS, } from "./config/email_verification_field_config";
-import { use_email_verification, } from "./hooks/use_email_verification";
+import { Input } from "../../ui/input.js";
+import { Button } from "../../ui/button.js";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper.js";
+import { FormHeader } from "../shared/components/form_header.js";
+import { FormActionButtons } from "../shared/components/form_action_buttons.js";
+import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout.js";
+import { EMAIL_VERIFICATION_FIELD_IDS, createEmailVerificationFieldDefinitions, resolveEmailVerificationButtonPalette, resolveEmailVerificationLabels, EMAIL_VERIFICATION_SUCCESS_LABEL_DEFAULTS, EMAIL_VERIFICATION_ERROR_LABEL_DEFAULTS, } from "./config/email_verification_field_config.js";
+import { use_email_verification, } from "./hooks/use_email_verification.js";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
+import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard.js";
 import Link from "next/link";
 const ORDERED_FIELDS = [
     EMAIL_VERIFICATION_FIELD_IDS.EMAIL,

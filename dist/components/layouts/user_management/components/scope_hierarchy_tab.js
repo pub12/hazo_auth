@@ -5,17 +5,17 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { TreeView } from "../../../ui/tree-view";
-import { Button } from "../../../ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "../../../ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from "../../../ui/alert-dialog";
-import { Input } from "../../../ui/input";
-import { Label } from "../../../ui/label";
+import { TreeView } from "../../../ui/tree-view.js";
+import { Button } from "../../../ui/button.js";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "../../../ui/dialog.js";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from "../../../ui/alert-dialog.js";
+import { Input } from "../../../ui/input.js";
+import { Label } from "../../../ui/label.js";
 import { Loader2, Plus, Edit, Trash2, CircleCheck, CircleX, Building2, FolderTree, RefreshCw, Palette, } from "lucide-react";
-import { BrandingEditor } from "../../scope_management/components/branding_editor";
+import { BrandingEditor } from "../../scope_management/components/branding_editor.js";
 import { toast } from "sonner";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
-import { use_hazo_auth } from "../../shared/hooks/use_hazo_auth";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
+import { use_hazo_auth } from "../../shared/hooks/use_hazo_auth.js";
 // section: helpers
 // Convert ScopeTreeNode to TreeDataItem format
 function convertToTreeData(nodes, onEdit, onDelete, onAddChild, onBranding) {

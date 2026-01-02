@@ -1,7 +1,7 @@
 // file_description: server-only helper to read dev lock configuration from hazo_auth_config.ini
 // section: imports
-import { get_config_value, get_config_boolean, get_config_number } from "./config/config_loader.server";
-import { DEFAULT_DEV_LOCK } from "./config/default_config";
+import { get_config_value, get_config_boolean, get_config_number } from "./config/config_loader.server.js";
+import { DEFAULT_DEV_LOCK } from "./config/default_config.js";
 // section: constants
 const SECTION_NAME = "hazo_auth__dev_lock";
 // section: helpers

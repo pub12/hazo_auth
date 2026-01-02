@@ -1,15 +1,15 @@
 import { createCrudService } from "hazo_connect/server";
 import argon2 from "argon2";
 import { randomUUID } from "crypto";
-import { create_token } from "./token_service";
-import { get_default_profile_picture } from "./profile_picture_service";
-import { get_profile_picture_config } from "../profile_picture_config.server";
-import { map_ui_source_to_db } from "./profile_picture_source_mapper";
-import { create_app_logger } from "../app_logger";
-import { send_template_email } from "./email_service";
-import { sanitize_error_for_user } from "../utils/error_sanitizer";
-import { get_line_number } from "../utils/api_route_helpers";
-import { is_user_types_enabled, get_default_user_type, } from "../user_types_config.server";
+import { create_token } from "./token_service.js";
+import { get_default_profile_picture } from "./profile_picture_service.js";
+import { get_profile_picture_config } from "../profile_picture_config.server.js";
+import { map_ui_source_to_db } from "./profile_picture_source_mapper.js";
+import { create_app_logger } from "../app_logger.js";
+import { send_template_email } from "./email_service.js";
+import { sanitize_error_for_user } from "../utils/error_sanitizer.js";
+import { get_line_number } from "../utils/api_route_helpers.js";
+import { is_user_types_enabled, get_default_user_type, } from "../user_types_config.server.js";
 // section: helpers
 /**
  * Registers a new user in the database using hazo_connect

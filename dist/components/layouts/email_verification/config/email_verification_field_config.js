@@ -1,4 +1,4 @@
-import { resolveButtonPalette, resolveFieldDefinitions, resolveLabels, } from "../../shared/config/layout_customization";
+import { resolveButtonPalette, resolveFieldDefinitions, resolveLabels, } from "../../shared/config/layout_customization.js";
 // section: field_identifiers
 export const EMAIL_VERIFICATION_FIELD_IDS = {
     EMAIL: "email_address",

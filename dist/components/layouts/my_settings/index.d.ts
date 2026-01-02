@@ -1,4 +1,4 @@
-import { type MySettingsLabelOverrides } from "./config/my_settings_field_config";
+import { type MySettingsLabelOverrides } from "./config/my_settings_field_config.js";
 import type { PasswordRequirementOptions, ButtonPaletteOverrides } from "../shared/config/layout_customization";
 export type MySettingsLayoutProps = {
     className?: string;

@@ -116,31 +116,40 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Fetch user roles with role names
-    const user_roles_service = createCrudService(hazoConnect, "hazo_user_roles");
+    // v5.x: Fetch user's scoped role assignments with role names
+    const user_scopes_service = createCrudService(hazoConnect, "hazo_user_scopes", {
+      primaryKeys: ["user_id", "scope_id"],
+      autoId: false,
+    });
     const roles_service = createCrudService(hazoConnect, "hazo_roles");
-    
-    const user_roles = await user_roles_service.findBy({ user_id });
-    const assigned_roles: Array<{ role_id: string | number; role_name: string }> = [];
-    
-    if (Array.isArray(user_roles)) {
-      for (const user_role of user_roles) {
-        const role_id = user_role.role_id as string | number | undefined;
-        if (role_id !== undefined) {
+    const scopes_service = createCrudService(hazoConnect, "hazo_scopes");
+
+    const user_scopes = await user_scopes_service.findBy({ user_id });
+    const assigned_roles: Array<{ role_id: string; role_name: string; scope_id: string; scope_name: string }> = [];
+
+    if (Array.isArray(user_scopes)) {
+      for (const user_scope of user_scopes) {
+        const role_id = user_scope.role_id as string | undefined;
+        const scope_id = user_scope.scope_id as string | undefined;
+        if (role_id && scope_id) {
           // Fetch role name
           const roles = await roles_service.findBy({ id: role_id });
-          if (Array.isArray(roles) && roles.length > 0) {
-            const role = roles[0];
-            assigned_roles.push({
-              role_id,
-              role_name: (role.role_name as string) || "Unknown",
-            });
-          } else {
-            assigned_roles.push({
-              role_id,
-              role_name: "Unknown (role not found)",
-            });
-          }
+          const role_name = Array.isArray(roles) && roles.length > 0
+            ? ((roles[0] as { role_name?: string }).role_name || "Unknown")
+            : "Unknown (role not found)";
+
+          // Fetch scope name
+          const scopes = await scopes_service.findBy({ id: scope_id });
+          const scope_name = Array.isArray(scopes) && scopes.length > 0
+            ? ((scopes[0] as { name?: string }).name || "Unknown")
+            : "Unknown (scope not found)";
+
+          assigned_roles.push({
+            role_id,
+            role_name,
+            scope_id,
+            scope_name,
+          });
         }
       }
     }

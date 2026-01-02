@@ -1,14 +1,14 @@
 // file_description: API route for uploading profile pictures
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
-import { create_app_logger } from "../../../../lib/app_logger";
-import { get_profile_picture_config } from "../../../../lib/profile_picture_config.server";
-import { get_file_types_config } from "../../../../lib/file_types_config.server";
-import { update_user_profile_picture } from "../../../../lib/services/profile_picture_service";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server.js";
+import { create_app_logger } from "../../../../lib/app_logger.js";
+import { get_profile_picture_config } from "../../../../lib/profile_picture_config.server.js";
+import { get_file_types_config } from "../../../../lib/file_types_config.server.js";
+import { update_user_profile_picture } from "../../../../lib/services/profile_picture_service.js";
 import { createCrudService } from "hazo_connect/server";
-import { map_db_source_to_ui } from "../../../../lib/services/profile_picture_source_mapper";
-import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
+import { map_db_source_to_ui } from "../../../../lib/services/profile_picture_source_mapper.js";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers.js";
 import fs from "fs";
 import path from "path";
 // section: api_handler

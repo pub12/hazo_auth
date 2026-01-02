@@ -4,15 +4,15 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from "../../../ui/dialog";
-import { Button } from "../../../ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../ui/tabs";
-import { ProfilePictureUploadTab } from "./profile_picture_upload_tab";
-import { ProfilePictureLibraryTab } from "./profile_picture_library_tab";
-import { ProfilePictureGravatarTab } from "./profile_picture_gravatar_tab";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from "../../../ui/dialog.js";
+import { Button } from "../../../ui/button.js";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../ui/tabs.js";
+import { ProfilePictureUploadTab } from "./profile_picture_upload_tab.js";
+import { ProfilePictureLibraryTab } from "./profile_picture_library_tab.js";
+import { ProfilePictureGravatarTab } from "./profile_picture_gravatar_tab.js";
 import { toast } from "sonner";
-import { cn } from "../../../../lib/utils";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { cn } from "../../../../lib/utils.js";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: component
 /**
  * Profile picture dialog component with tabs for Upload, Library, and Gravatar

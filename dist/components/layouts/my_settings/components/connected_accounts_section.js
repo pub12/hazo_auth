@@ -3,7 +3,7 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
-import { GoogleIcon } from "../../shared/components/google_icon";
+import { GoogleIcon } from "../../shared/components/google_icon.js";
 // section: component
 /**
  * Connected Accounts Section for My Settings

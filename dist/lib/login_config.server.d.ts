@@ -1,4 +1,4 @@
-import { type OAuthConfig } from "./oauth_config.server";
+import { type OAuthConfig } from "./oauth_config.server.js";
 export type LoginConfig = {
     redirectRoute?: string;
     successMessage: string;

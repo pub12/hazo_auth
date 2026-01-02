@@ -1,10 +1,10 @@
 // file_description: API route handler for validating password reset token
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server";
-import { validate_password_reset_token } from "../../lib/services/password_reset_service";
-import { create_app_logger } from "../../lib/app_logger";
-import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers";
+import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server.js";
+import { validate_password_reset_token } from "../../lib/services/password_reset_service.js";
+import { create_app_logger } from "../../lib/app_logger.js";
+import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers.js";
 // section: route_config
 export const dynamic = 'force-dynamic';
 // section: api_handler

@@ -1,5 +1,5 @@
 import type { LayoutDataClient } from "../../shared/data/layout_data_client";
-import { type EmailVerificationFieldId } from "../config/email_verification_field_config";
+import { type EmailVerificationFieldId } from "../config/email_verification_field_config.js";
 export type EmailVerificationFormValues = Record<EmailVerificationFieldId, string>;
 export type EmailVerificationFormErrors = Partial<Record<EmailVerificationFieldId, string>> & {
     submit?: string;

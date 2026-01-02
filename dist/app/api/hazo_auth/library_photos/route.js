@@ -1,9 +1,9 @@
 // file_description: API route for listing library photo categories and photos in categories with pagination support
 // section: imports
 import { NextResponse } from "next/server";
-import { get_library_categories, get_library_photos_paginated, get_library_source } from "../../../../lib/services/profile_picture_service";
-import { create_app_logger } from "../../../../lib/app_logger";
-import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
+import { get_library_categories, get_library_photos_paginated, get_library_source } from "../../../../lib/services/profile_picture_service.js";
+import { create_app_logger } from "../../../../lib/app_logger.js";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers.js";
 // section: route_config
 export const dynamic = 'force-dynamic';
 // section: constants

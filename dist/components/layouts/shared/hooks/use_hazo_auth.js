@@ -3,7 +3,7 @@
 "use client";
 // section: imports
 import { useState, useEffect, useCallback } from "react";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: constants
 const AUTH_STATUS_CHANGE_EVENT = "hazo_auth_status_change";
 // section: helpers

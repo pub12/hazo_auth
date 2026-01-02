@@ -3,9 +3,9 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
-import { Button } from "../../../ui/button";
-import { GoogleIcon } from "./google_icon";
-import { cn } from "../../../../lib/utils";
+import { Button } from "../../../ui/button.js";
+import { GoogleIcon } from "./google_icon.js";
+import { cn } from "../../../../lib/utils.js";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";

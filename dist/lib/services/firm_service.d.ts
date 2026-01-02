@@ -1,6 +1,6 @@
 import type { HazoConnectAdapter } from "hazo_connect";
-import { type ScopeRecord } from "./scope_service";
-import { type UserScope } from "./user_scope_service";
+import { type ScopeRecord } from "./scope_service.js";
+import { type UserScope } from "./user_scope_service.js";
 export type CreateFirmData = {
     firm_name: string;
     org_structure: string;

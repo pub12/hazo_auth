@@ -6,8 +6,8 @@ import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-run
 // section: imports
 import { useState, useCallback } from "react";
 import Image from "next/image";
-import { Input } from "../../ui/input";
-import { Button } from "../../ui/button";
+import { Input } from "../../ui/input.js";
+import { Button } from "../../ui/button.js";
 import { Lock, AlertCircle, Loader2 } from "lucide-react";
 // section: component
 export default function DevLockLayout({ background_color = "#000000", logo_path = "", logo_width = 120, logo_height = 120, application_name = "", limited_access_text = "Limited Access", password_placeholder = "Enter access password", submit_button_text = "Unlock", error_message = "Incorrect password", text_color = "#ffffff", accent_color = "#3b82f6", onUnlock, }) {

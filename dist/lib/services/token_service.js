@@ -1,8 +1,8 @@
 import { createCrudService } from "hazo_connect/server";
 import { randomBytes, randomUUID } from "crypto";
 import argon2 from "argon2";
-import { read_config_section } from "../config/config_loader.server";
-import { create_app_logger } from "../app_logger";
+import { read_config_section } from "../config/config_loader.server.js";
+import { create_app_logger } from "../app_logger.js";
 // section: helpers
 /**
  * Gets token expiry hours from hazo_auth_config.ini for a specific token type

@@ -9,18 +9,18 @@
 // import { hazo_get_auth, get_config_value } from "hazo_auth";
 // section: component_exports
 // All UI and layout components are client-safe
-export * from "./components/index";
+export * from "./components/index.js";
 // section: utility_exports
 // CSS utility functions
-export { cn, merge_class_names } from "./lib/utils";
+export { cn, merge_class_names } from "./lib/utils.js";
 // section: type_exports
 // Type definitions are always safe (erased at runtime)
-export * from "./lib/auth/auth_types";
+export * from "./lib/auth/auth_types.js";
 // section: client_hook_exports
 // Re-export from shared hooks (these are already "use client" components)
-export { use_auth_status, trigger_auth_status_refresh } from "./components/layouts/shared/hooks/use_auth_status";
-export { use_hazo_auth, trigger_hazo_auth_refresh } from "./components/layouts/shared/hooks/use_hazo_auth";
-export { use_firm_branding, use_current_user_branding } from "./components/layouts/shared/hooks/use_firm_branding";
+export { use_auth_status, trigger_auth_status_refresh } from "./components/layouts/shared/hooks/use_auth_status.js";
+export { use_hazo_auth, trigger_hazo_auth_refresh } from "./components/layouts/shared/hooks/use_hazo_auth.js";
+export { use_firm_branding, use_current_user_branding } from "./components/layouts/shared/hooks/use_firm_branding.js";
 // section: validation_exports
 // Client-side validation utilities
-export * from "./components/layouts/shared/utils/validation";
+export * from "./components/layouts/shared/utils/validation.js";

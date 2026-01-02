@@ -2,9 +2,9 @@
 // section: imports
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { REGISTER_FIELD_IDS } from "../config/register_field_config";
-import { validateEmail, validatePassword } from "../../shared/utils/validation";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { REGISTER_FIELD_IDS } from "../config/register_field_config.js";
+import { validateEmail, validatePassword } from "../../shared/utils/validation.js";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: constants
 const PASSWORD_FIELDS = [
     REGISTER_FIELD_IDS.PASSWORD,

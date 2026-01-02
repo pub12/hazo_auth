@@ -1,8 +1,8 @@
 import GoogleProvider from "next-auth/providers/google";
-import { get_oauth_config } from "../oauth_config.server";
-import { handle_google_oauth_login } from "../services/oauth_service";
-import { get_hazo_connect_instance } from "../hazo_connect_instance.server";
-import { create_app_logger } from "../app_logger";
+import { get_oauth_config } from "../oauth_config.server.js";
+import { handle_google_oauth_login } from "../services/oauth_service.js";
+import { get_hazo_connect_instance } from "../hazo_connect_instance.server.js";
+import { create_app_logger } from "../app_logger.js";
 // section: config
 /**
  * Gets NextAuth.js configuration with enabled OAuth providers

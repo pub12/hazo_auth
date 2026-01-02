@@ -1,8 +1,8 @@
 import { createCrudService } from "hazo_connect/server";
-import { create_app_logger } from "../app_logger";
-import { sanitize_error_for_user } from "../utils/error_sanitizer";
-import { user_has_any_scope } from "./user_scope_service";
-import { get_pending_invitation_by_email, accept_invitation, } from "./invitation_service";
+import { create_app_logger } from "../app_logger.js";
+import { sanitize_error_for_user } from "../utils/error_sanitizer.js";
+import { user_has_any_scope } from "./user_scope_service.js";
+import { get_pending_invitation_by_email, accept_invitation, } from "./invitation_service.js";
 // section: constants
 const DEFAULT_REDIRECT_URL = "/";
 const CREATE_FIRM_URL = "/hazo_auth/create_firm";

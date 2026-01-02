@@ -1,11 +1,11 @@
 // file_description: API route for user logout
 // section: imports
 import { NextResponse } from "next/server";
-import { create_app_logger } from "../../../../lib/app_logger";
-import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
-import { get_auth_cache } from "../../../../lib/auth/auth_cache";
-import { get_auth_utility_config } from "../../../../lib/auth_utility_config.server";
-import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../../../lib/cookies_config.server";
+import { create_app_logger } from "../../../../lib/app_logger.js";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers.js";
+import { get_auth_cache } from "../../../../lib/auth/auth_cache.js";
+import { get_auth_utility_config } from "../../../../lib/auth_utility_config.server.js";
+import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../../../lib/cookies_config.server.js";
 // section: api_handler
 export async function POST(request) {
     var _a, _b;

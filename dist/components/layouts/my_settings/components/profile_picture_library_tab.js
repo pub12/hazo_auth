@@ -4,13 +4,13 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
 import { useState, useEffect } from "react";
-import { Switch } from "../../../ui/switch";
-import { Label } from "../../../ui/label";
-import { Avatar, AvatarFallback } from "../../../ui/avatar";
-import { VerticalTabs, VerticalTabsList, VerticalTabsTrigger } from "../../../ui/vertical-tabs";
+import { Switch } from "../../../ui/switch.js";
+import { Label } from "../../../ui/label.js";
+import { Avatar, AvatarFallback } from "../../../ui/avatar.js";
+import { VerticalTabs, VerticalTabsList, VerticalTabsTrigger } from "../../../ui/vertical-tabs.js";
 import { Loader2 } from "lucide-react";
-import { HazoUITooltip } from "../../../ui/hazo_ui_tooltip";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { HazoUITooltip } from "../../../ui/hazo_ui_tooltip.js";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: component
 /**
  * Library tab component for profile picture dialog

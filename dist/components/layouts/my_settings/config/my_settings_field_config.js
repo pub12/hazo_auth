@@ -1,4 +1,4 @@
-import { resolveButtonPalette, } from "../../shared/config/layout_customization";
+import { resolveButtonPalette, } from "../../shared/config/layout_customization.js";
 // section: field_identifiers
 export const MY_SETTINGS_FIELD_IDS = {
     NAME: "name",

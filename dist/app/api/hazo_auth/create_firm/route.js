@@ -1,12 +1,12 @@
 // file_description: API route for creating a new firm (root scope) for authenticated users
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
-import { create_app_logger } from "../../../../lib/app_logger";
-import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
-import { hazo_get_auth } from "../../../../lib/auth/hazo_get_auth.server";
-import { create_firm } from "../../../../lib/services/firm_service";
-import { user_has_any_scope } from "../../../../lib/services/user_scope_service";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server.js";
+import { create_app_logger } from "../../../../lib/app_logger.js";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers.js";
+import { hazo_get_auth } from "../../../../lib/auth/hazo_get_auth.server.js";
+import { create_firm } from "../../../../lib/services/firm_service.js";
+import { user_has_any_scope } from "../../../../lib/services/user_scope_service.js";
 // section: route_config
 export const dynamic = "force-dynamic";
 // section: api_handler

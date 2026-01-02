@@ -82,16 +82,25 @@ export async function GET(request: NextRequest) {
       status: string; // Database column: 'ACTIVE', 'BLOCKED', 'PENDING'
     };
 
-    // Get user's permissions via roles
-    const user_roles_service = createCrudService(adapter, "hazo_user_roles");
-    const user_roles_result = await user_roles_service.findBy({ user_id: test_user_id });
+    // v5.x: Get user's permissions via hazo_user_scopes (scope-based role assignments)
+    const user_scopes_service = createCrudService(adapter, "hazo_user_scopes", {
+      primaryKeys: ["user_id", "scope_id"],
+      autoId: false,
+    });
+    const user_scopes_result = await user_scopes_service.findBy({ user_id: test_user_id });
 
     const user_permissions: string[] = [];
 
-    if (Array.isArray(user_roles_result) && user_roles_result.length > 0) {
-      const role_ids = (user_roles_result as { role_id: number }[]).map(
-        (r) => r.role_id
-      );
+    if (Array.isArray(user_scopes_result) && user_scopes_result.length > 0) {
+      // Collect unique role_ids from all scope assignments (role_id is string UUID in v5.x)
+      const role_ids_set = new Set<string>();
+      for (const scope of user_scopes_result) {
+        const role_id = (scope as { role_id?: string }).role_id;
+        if (role_id) {
+          role_ids_set.add(role_id);
+        }
+      }
+      const role_ids = Array.from(role_ids_set);
 
       // Get permissions for each role
       const role_perms_service = createCrudService(adapter, "hazo_role_permissions");
@@ -99,7 +108,7 @@ export async function GET(request: NextRequest) {
         const perms_result = await role_perms_service.findBy({ role_id });
 
         if (Array.isArray(perms_result)) {
-          const perm_ids = (perms_result as { permission_id: number }[]).map(
+          const perm_ids = (perms_result as { permission_id: string }[]).map(
             (p) => p.permission_id
           );
 

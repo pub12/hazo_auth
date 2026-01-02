@@ -1,11 +1,11 @@
 // file_description: API route handler for resetting user password using a reset token
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server";
-import { reset_password } from "../../lib/services/password_reset_service";
-import { create_app_logger } from "../../lib/app_logger";
-import { get_password_requirements_config } from "../../lib/password_requirements_config.server";
-import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers";
+import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server.js";
+import { reset_password } from "../../lib/services/password_reset_service.js";
+import { create_app_logger } from "../../lib/app_logger.js";
+import { get_password_requirements_config } from "../../lib/password_requirements_config.server.js";
+import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers.js";
 // section: api_handler
 export async function POST(request) {
     const logger = create_app_logger();

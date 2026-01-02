@@ -1,6 +1,6 @@
 // file_description: server-only helper to read user-facing messages from hazo_auth_config.ini
 // section: imports
-import { get_config_value } from "./config/config_loader.server";
+import { get_config_value } from "./config/config_loader.server.js";
 // section: helpers
 /**
  * Reads user-facing messages from hazo_auth_config.ini file

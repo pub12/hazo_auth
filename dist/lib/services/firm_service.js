@@ -1,8 +1,8 @@
 import { createCrudService } from "hazo_connect/server";
-import { create_app_logger } from "../app_logger";
-import { sanitize_error_for_user } from "../utils/error_sanitizer";
-import { create_scope } from "./scope_service";
-import { assign_user_scope } from "./user_scope_service";
+import { create_app_logger } from "../app_logger.js";
+import { sanitize_error_for_user } from "../utils/error_sanitizer.js";
+import { create_scope } from "./scope_service.js";
+import { assign_user_scope } from "./user_scope_service.js";
 // section: constants
 // Well-known UUID for the default "owner" role (used for firm creators)
 // Using a fixed UUID ensures consistency across databases and avoids creation failures

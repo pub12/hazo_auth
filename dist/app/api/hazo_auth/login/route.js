@@ -1,14 +1,14 @@
 // file_description: API route for user login authentication using hazo_connect
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server";
-import { create_app_logger } from "../../../../lib/app_logger";
-import { authenticate_user } from "../../../../lib/services/login_service";
+import { get_hazo_connect_instance } from "../../../../lib/hazo_connect_instance.server.js";
+import { create_app_logger } from "../../../../lib/app_logger.js";
+import { authenticate_user } from "../../../../lib/services/login_service.js";
 import { createCrudService } from "hazo_connect/server";
-import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers";
-import { get_login_config } from "../../../../lib/login_config.server";
-import { create_session_token } from "../../../../lib/services/session_token_service";
-import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../../../lib/cookies_config.server";
+import { get_filename, get_line_number } from "../../../../lib/utils/api_route_helpers.js";
+import { get_login_config } from "../../../../lib/login_config.server.js";
+import { create_session_token } from "../../../../lib/services/session_token_service.js";
+import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../../../lib/cookies_config.server.js";
 // section: api_handler
 export async function POST(request) {
     const logger = create_app_logger();

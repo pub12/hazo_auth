@@ -1,14 +1,14 @@
 // file_description: API route handler for user management operations (list users, deactivate, reset password)
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server";
+import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server.js";
 import { createCrudService } from "hazo_connect/server";
-import { create_app_logger } from "../../lib/app_logger";
-import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers";
-import { request_password_reset } from "../../lib/services/password_reset_service";
-import { get_auth_cache } from "../../lib/auth/auth_cache";
-import { get_auth_utility_config } from "../../lib/auth_utility_config.server";
-import { is_user_types_enabled, get_all_user_types, get_user_types_config, } from "../../lib/user_types_config.server";
+import { create_app_logger } from "../../lib/app_logger.js";
+import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers.js";
+import { request_password_reset } from "../../lib/services/password_reset_service.js";
+import { get_auth_cache } from "../../lib/auth/auth_cache.js";
+import { get_auth_utility_config } from "../../lib/auth_utility_config.server.js";
+import { is_user_types_enabled, get_all_user_types, get_user_types_config, } from "../../lib/user_types_config.server.js";
 // section: route_config
 export const dynamic = 'force-dynamic';
 // section: api_handler

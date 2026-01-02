@@ -4,10 +4,10 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from "../../../ui/dialog";
-import { Button } from "../../../ui/button";
-import { PasswordField } from "../../shared/components/password_field";
-import { FormFieldWrapper } from "../../shared/components/form_field_wrapper";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from "../../../ui/dialog.js";
+import { Button } from "../../../ui/button.js";
+import { PasswordField } from "../../shared/components/password_field.js";
+import { FormFieldWrapper } from "../../shared/components/form_field_wrapper.js";
 // section: component
 /**
  * Dialog component for changing password

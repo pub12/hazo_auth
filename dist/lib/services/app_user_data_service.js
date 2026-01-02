@@ -1,8 +1,8 @@
 import { createCrudService } from "hazo_connect/server";
-import { create_app_logger } from "../app_logger";
-import { sanitize_error_for_user } from "../utils/error_sanitizer";
-import { get_auth_cache } from "../auth/auth_cache";
-import { get_auth_utility_config } from "../auth_utility_config.server";
+import { create_app_logger } from "../app_logger.js";
+import { sanitize_error_for_user } from "../utils/error_sanitizer.js";
+import { get_auth_cache } from "../auth/auth_cache.js";
+import { get_auth_utility_config } from "../auth_utility_config.server.js";
 // section: helpers
 /**
  * Deep merge two objects. Arrays are replaced, not merged.

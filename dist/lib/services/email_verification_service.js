@@ -1,8 +1,8 @@
 import { createCrudService } from "hazo_connect/server";
 import argon2 from "argon2";
-import { create_token } from "./token_service";
-import { send_template_email } from "./email_service";
-import { create_app_logger } from "../app_logger";
+import { create_token } from "./token_service.js";
+import { send_template_email } from "./email_service.js";
+import { create_app_logger } from "../app_logger.js";
 // section: helpers
 /**
  * Verifies an email verification token

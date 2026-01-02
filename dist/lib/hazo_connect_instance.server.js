@@ -1,7 +1,7 @@
 import { getHazoConnectSingleton } from "hazo_connect/nextjs/setup";
-import { create_sqlite_hazo_connect_server, get_hazo_connect_config_options } from "./hazo_connect_setup.server";
+import { create_sqlite_hazo_connect_server, get_hazo_connect_config_options } from "./hazo_connect_setup.server.js";
 import { initializeAdminService, getSqliteAdminService } from "hazo_connect/server";
-import { create_app_logger } from "./app_logger";
+import { create_app_logger } from "./app_logger.js";
 // section: singleton_state
 let hazoConnectInstance = null;
 let isInitialized = false;

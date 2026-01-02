@@ -1,8 +1,8 @@
 import { createCrudService } from "hazo_connect/server";
-import { create_app_logger } from "../app_logger";
-import { sanitize_error_for_user } from "../utils/error_sanitizer";
-import { assign_user_scope } from "./user_scope_service";
-import { get_scope_by_id, get_root_scope_id } from "./scope_service";
+import { create_app_logger } from "../app_logger.js";
+import { sanitize_error_for_user } from "../utils/error_sanitizer.js";
+import { assign_user_scope } from "./user_scope_service.js";
+import { get_scope_by_id, get_root_scope_id } from "./scope_service.js";
 // section: constants
 const DEFAULT_EXPIRY_HOURS = 48;
 const MAX_PENDING_PER_EMAIL = 5;

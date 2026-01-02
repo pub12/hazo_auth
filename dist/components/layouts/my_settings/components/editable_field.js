@@ -4,9 +4,9 @@
 import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
 import { useState } from "react";
-import { Input } from "../../../ui/input";
-import { Label } from "../../../ui/label";
-import { Button } from "../../../ui/button";
+import { Input } from "../../../ui/input.js";
+import { Label } from "../../../ui/label.js";
+import { Button } from "../../../ui/button.js";
 import { Pencil, CheckCircle2, XCircle } from "lucide-react";
 // section: component
 /**

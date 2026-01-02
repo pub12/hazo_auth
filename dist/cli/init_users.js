@@ -44,15 +44,7 @@ function print_summary(summary) {
         console.log(`  ⊙ Already existed: ${summary.role_permissions.existing} assignment(s)`);
     }
     console.log();
-    // User role summary
-    console.log("User-Role Assignment:");
-    if (summary.user_role.inserted) {
-        console.log(`  ✓ Inserted: Super user role assigned to user`);
-    }
-    if (summary.user_role.existing) {
-        console.log(`  ⊙ Already existed: User already has super user role`);
-    }
-    console.log();
+    // v5.x: User-Role assignments are now handled via User-Scope assignments (see below)
     // Super admin scope summary
     console.log("Super Admin Scope:");
     if (summary.super_admin_scope.inserted) {
@@ -98,10 +90,7 @@ export async function handle_init_users(options = {}) {
             inserted: 0,
             existing: 0,
         },
-        user_role: {
-            inserted: false,
-            existing: false,
-        },
+        // v5.x: Removed user_role - roles are now assigned via hazo_user_scopes
         super_admin_scope: {
             inserted: false,
             existing: false,
@@ -120,7 +109,7 @@ export async function handle_init_users(options = {}) {
         const roles_service = createCrudService(hazoConnect, "hazo_roles");
         const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions");
         const users_service = createCrudService(hazoConnect, "hazo_users");
-        const user_roles_service = createCrudService(hazoConnect, "hazo_user_roles");
+        // v5.x: Removed hazo_user_roles - roles are now assigned via hazo_user_scopes
         const scopes_service = createCrudService(hazoConnect, "hazo_scopes");
         // hazo_user_scopes uses composite primary key (user_id, scope_id), no 'id' column
         const user_scopes_service = createCrudService(hazoConnect, "hazo_user_scopes", {
@@ -255,26 +244,7 @@ export async function handle_init_users(options = {}) {
         const user_id = user.id;
         console.log(`✓ Found user: ${super_user_email} (ID: ${user_id})`);
         console.log();
-        // 7. Assign role to user
-        const existing_user_roles = await user_roles_service.findBy({
-            user_id,
-            role_id,
-        });
-        if (Array.isArray(existing_user_roles) && existing_user_roles.length > 0) {
-            summary.user_role.existing = true;
-            console.log(`✓ User already has role assigned: ${user_id} -> ${role_name}`);
-        }
-        else {
-            await user_roles_service.insert({
-                user_id,
-                role_id,
-                created_at: now,
-                changed_at: now,
-            });
-            summary.user_role.inserted = true;
-            console.log(`✓ Assigned role to user: ${user_id} -> ${role_name}`);
-        }
-        console.log();
+        // v5.x: Step 7 removed - role assignment now happens via hazo_user_scopes (see step 9)
         // 8. Ensure super admin scope exists
         const existing_scopes = await scopes_service.findBy({ id: SUPER_ADMIN_SCOPE_ID });
         if (Array.isArray(existing_scopes) && existing_scopes.length > 0) {
@@ -357,9 +327,9 @@ This command reads from hazo_auth_config.ini and:
   2. Creates a 'default_super_user_role' role
   3. Assigns all permissions to the super user role
   4. Finds user by email (from --email parameter or config)
-  5. Assigns the super user role to that user
-  6. Creates the Super Admin scope (${SUPER_ADMIN_SCOPE_ID})
-  7. Assigns the user to the Super Admin scope
+  5. Creates the Super Admin scope (${SUPER_ADMIN_SCOPE_ID})
+  6. Assigns the user to the Super Admin scope with the super user role
+     (v5.x: Roles are assigned per-scope via hazo_user_scopes table)
 
 Options:
   --email=<email>    Email address of the user to assign super user role

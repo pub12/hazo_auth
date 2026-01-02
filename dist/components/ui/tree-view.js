@@ -15,7 +15,7 @@ import React from 'react';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { ChevronRight } from 'lucide-react';
 import { cva } from 'class-variance-authority';
-import { cn } from '../../lib/utils';
+import { cn } from '../../lib/utils.js';
 const treeVariants = cva('group hover:before:opacity-100 before:absolute before:rounded-lg before:left-0 px-2 before:w-full before:opacity-0 before:bg-accent/70 before:h-[2rem] before:-z-10');
 const selectedTreeVariants = cva('before:opacity-100 before:bg-accent/70 text-accent-foreground');
 const dragOverVariants = cva('before:opacity-100 before:bg-primary/20 text-primary-foreground');

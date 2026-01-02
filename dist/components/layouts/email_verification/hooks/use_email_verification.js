@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { EMAIL_VERIFICATION_FIELD_IDS } from "../config/email_verification_field_config";
-import { validateEmail } from "../../shared/utils/validation";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { EMAIL_VERIFICATION_FIELD_IDS } from "../config/email_verification_field_config.js";
+import { validateEmail } from "../../shared/utils/validation.js";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: helpers
 const buildInitialValues = (initialEmail) => ({
     [EMAIL_VERIFICATION_FIELD_IDS.EMAIL]: initialEmail || "",

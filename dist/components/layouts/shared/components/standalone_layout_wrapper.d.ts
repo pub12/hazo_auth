@@ -1,4 +1,4 @@
-import { type AuthNavbarProps } from "./auth_navbar";
+import { type AuthNavbarProps } from "./auth_navbar.js";
 export type StandaloneLayoutWrapperProps = {
     children: React.ReactNode;
     heading?: string;

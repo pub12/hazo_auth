@@ -18,9 +18,9 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports
 import { useEffect, useState } from "react";
-import email_verification_layout from "../components/layouts/email_verification";
-import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
-import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup";
+import email_verification_layout from "../components/layouts/email_verification.js";
+import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client.js";
+import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup.js";
 // section: constants
 const DEFAULT_IMAGE_SRC = "/globe.svg";
 const DEFAULT_IMAGE_ALT = "Illustration of a globe representing secure authentication workflows";

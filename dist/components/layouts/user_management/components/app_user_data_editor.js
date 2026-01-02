@@ -5,13 +5,13 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "../../../ui/button";
-import { Input } from "../../../ui/input";
-import { Label } from "../../../ui/label";
-import { Switch } from "../../../ui/switch";
+import { Button } from "../../../ui/button.js";
+import { Input } from "../../../ui/input.js";
+import { Label } from "../../../ui/label.js";
+import { Switch } from "../../../ui/switch.js";
 import { ChevronDown, ChevronRight, Edit, Loader2, Save, X } from "lucide-react";
 import { toast } from "sonner";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: helpers
 /**
  * Get nested value from object using dot-notation path

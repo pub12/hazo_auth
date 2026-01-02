@@ -3,9 +3,9 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports
 import { useEffect, useState } from "react";
-import ForgotPasswordLayout from "../components/layouts/forgot_password";
-import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
-import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup";
+import ForgotPasswordLayout from "../components/layouts/forgot_password.js";
+import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client.js";
+import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup.js";
 // section: component
 /**
  * Client wrapper for ForgotPasswordLayout

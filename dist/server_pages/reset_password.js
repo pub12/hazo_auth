@@ -1,9 +1,9 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // file_description: Zero-config ResetPasswordPage server component - drop in and use with no configuration required
 // section: imports
-import { get_reset_password_config } from "../lib/reset_password_config.server";
-import { ResetPasswordClientWrapper } from "./reset_password_client_wrapper";
-import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
+import { get_reset_password_config } from "../lib/reset_password_config.server.js";
+import { ResetPasswordClientWrapper } from "./reset_password_client_wrapper.js";
+import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell.js";
 // section: component
 /**
  * Zero-config ResetPasswordPage server component

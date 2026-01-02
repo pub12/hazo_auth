@@ -4,16 +4,16 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
 import { useState, useEffect } from "react";
-import { Button } from "../../../ui/button";
-import { Checkbox } from "../../../ui/checkbox";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "../../../ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "../../../ui/dialog";
-import { Input } from "../../../ui/input";
-import { Label } from "../../../ui/label";
+import { Button } from "../../../ui/button.js";
+import { Checkbox } from "../../../ui/checkbox.js";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "../../../ui/table.js";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "../../../ui/dialog.js";
+import { Input } from "../../../ui/input.js";
+import { Label } from "../../../ui/label.js";
 import { Plus, Loader2, CircleCheck, CircleX, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar.js";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: component
 /**
  * Roles matrix component - reusable internal component for roles-permissions management

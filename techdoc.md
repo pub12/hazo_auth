@@ -439,8 +439,10 @@ CREATE TABLE hazo_role_permissions (
 );
 ```
 
-**hazo_user_roles:**
+**hazo_user_roles (DEPRECATED in v5.0+):**
 ```sql
+-- DEPRECATED: This table was used in v4.x and earlier for global role assignments
+-- In v5.x+, use hazo_user_scopes which includes scope_id and role_id fields
 CREATE TABLE hazo_user_roles (
     user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
     role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
@@ -449,6 +451,8 @@ CREATE TABLE hazo_user_roles (
     PRIMARY KEY (user_id, role_id)
 );
 ```
+
+**IMPORTANT (v5.1.5)**: This table is deprecated. Use `hazo_user_scopes` for scope-based role assignments. See below.
 
 ### HRBAC Tables (Hierarchical Role-Based Access Control)
 
@@ -498,27 +502,28 @@ CREATE INDEX idx_hazo_scopes_l2_parent ON hazo_scopes_l2(parent_scope_id);
 - `parent_scope_id` - References parent level (NULL for L1, required for L2-L7)
 - Foreign keys with CASCADE DELETE ensure referential integrity (deleting org removes all scopes)
 
-**hazo_user_scopes:**
+**hazo_user_scopes (v5.0+):**
 ```sql
 CREATE TABLE hazo_user_scopes (
     user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
-    scope_id UUID NOT NULL,                  -- References scope in one of the scope tables
-    scope_seq TEXT NOT NULL,                 -- Denormalized seq for quick lookup
-    scope_type hazo_enum_scope_types NOT NULL, -- Which level (hazo_scopes_l1..l7)
+    scope_id UUID NOT NULL,                  -- References hazo_scopes(id) in v5.0+ unified table
+    role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,  -- ADDED in v5.1.5
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (user_id, scope_type, scope_id)
+    PRIMARY KEY (user_id, scope_id)
 );
 CREATE INDEX idx_hazo_user_scopes_user_id ON hazo_user_scopes(user_id);
 CREATE INDEX idx_hazo_user_scopes_scope_id ON hazo_user_scopes(scope_id);
-CREATE INDEX idx_hazo_user_scopes_scope_type ON hazo_user_scopes(scope_type);
+CREATE INDEX idx_hazo_user_scopes_role_id ON hazo_user_scopes(role_id);
 ```
 
-**Field Notes:**
-- Composite primary key: `(user_id, scope_type, scope_id)`
-- `scope_type` - Enum indicating which level (hazo_scopes_l1 through hazo_scopes_l7)
-- `scope_seq` - Denormalized for display purposes (avoids joins)
-- Users can be assigned to multiple scopes at different levels
+**Field Notes (v5.1.5):**
+- Composite primary key: `(user_id, scope_id)`
+- `scope_id` - References `hazo_scopes(id)` (unified scope table in v5.0+)
+- `role_id` - UUID reference to `hazo_roles(id)` - **CRITICAL**: Changed from numeric to UUID (string) in v5.x
+- Replaces `hazo_user_roles` from v4.x - now scope-based instead of global
+- Users can have different roles in different scopes
+- Each scope assignment includes a role (e.g., admin, member)
 
 **hazo_scope_labels:**
 ```sql
@@ -2116,6 +2121,165 @@ export async function proxy(request: NextRequest) {
 - Existing `hazo_auth_user_id` and `hazo_auth_user_email` cookies still work
 - `hazo_get_auth` falls back to simple cookies if JWT not present
 - Both authentication methods supported simultaneously
+
+---
+
+## Migration Guide: v4.x to v5.x (Role Assignment Changes)
+
+### Critical Change: hazo_user_roles → hazo_user_scopes
+
+**Background**: In v5.0, hazo_auth changed from global role assignments to scope-based role assignments. However, v5.1.5 discovered that several core files were still using the deprecated `hazo_user_roles` table, causing errors in production.
+
+### What Changed
+
+**v4.x Architecture (DEPRECATED):**
+- Users assigned roles globally via `hazo_user_roles` table
+- Role IDs were `number` (integer primary keys)
+- Single role assignment per user
+- Global permissions across the application
+
+**v5.x Architecture (CURRENT):**
+- Users assigned roles per scope via `hazo_user_scopes` table
+- Role IDs are `string` (UUIDs)
+- Multiple scope assignments, each with a role
+- Different roles in different scopes
+
+### Database Migration
+
+**Step 1: Create hazo_user_scopes table with role_id field**
+```sql
+-- PostgreSQL
+CREATE TABLE hazo_user_scopes (
+    user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
+    scope_id UUID NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, scope_id)
+);
+
+CREATE INDEX idx_hazo_user_scopes_user_id ON hazo_user_scopes(user_id);
+CREATE INDEX idx_hazo_user_scopes_scope_id ON hazo_user_scopes(scope_id);
+CREATE INDEX idx_hazo_user_scopes_role_id ON hazo_user_scopes(role_id);
+```
+
+**Step 2: Migrate data from hazo_user_roles to hazo_user_scopes**
+```sql
+-- PostgreSQL example
+-- Assuming DEFAULT_SYSTEM_SCOPE_ID = '00000000-0000-0000-0000-000000000001'
+INSERT INTO hazo_user_scopes (user_id, scope_id, role_id, created_at, changed_at)
+SELECT
+    user_id,
+    '00000000-0000-0000-0000-000000000001' AS scope_id,  -- Default system scope
+    role_id::text::uuid AS role_id,  -- Convert to UUID if needed
+    created_at,
+    changed_at
+FROM hazo_user_roles;
+```
+
+**Step 3: Verify migration**
+```sql
+-- Check all users have scope assignments
+SELECT u.id, u.email_address, COUNT(us.scope_id) as scope_count
+FROM hazo_users u
+LEFT JOIN hazo_user_scopes us ON u.id = us.user_id
+GROUP BY u.id, u.email_address
+ORDER BY scope_count ASC;
+
+-- Should return 0 rows (all users have at least one scope)
+SELECT * FROM hazo_users u
+WHERE NOT EXISTS (
+    SELECT 1 FROM hazo_user_scopes us WHERE us.user_id = u.id
+);
+```
+
+**Step 4: Drop hazo_user_roles table (after backup!)**
+```sql
+-- BACKUP FIRST!
+DROP TABLE hazo_user_roles;
+```
+
+### Code Changes
+
+**1. Type Updates**
+```typescript
+// Before (v4.x)
+type role_ids = number[];
+
+// After (v5.x)
+type role_ids = string[];  // UUIDs
+```
+
+**2. Cache Invalidation**
+```typescript
+// Before (v4.x)
+invalidate_by_roles([1, 2, 3]);
+
+// After (v5.x)
+invalidate_by_roles([
+  "123e4567-e89b-12d3-a456-426614174000",
+  "223e4567-e89b-12d3-a456-426614174001"
+]);
+```
+
+**3. User Role Assignment**
+```typescript
+// Before (v4.x) - Global assignment
+const user_roles_service = createCrudService(adapter, "hazo_user_roles");
+await user_roles_service.create({
+  user_id: userId,
+  role_id: 1  // numeric
+});
+
+// After (v5.x) - Scope-based assignment
+const user_scopes_service = createCrudService(adapter, "hazo_user_scopes");
+await user_scopes_service.create({
+  user_id: userId,
+  scope_id: "00000000-0000-0000-0000-000000000001",  // Default system scope
+  role_id: "123e4567-e89b-12d3-a456-426614174000"   // UUID
+});
+```
+
+### Files Modified in v5.1.5 Bugfix
+
+The following files were updated to use `hazo_user_scopes` instead of `hazo_user_roles`:
+
+1. **src/lib/auth/hazo_get_auth.server.ts** - Role fetching
+2. **src/lib/auth/auth_cache.ts** - Cache type definitions
+3. **src/server/routes/user_management_users_roles.ts** - User role management
+4. **src/server/routes/user_management_roles.ts** - Role management
+5. **src/cli/init_users.ts** - User initialization
+6. **src/app/api/hazo_auth/rbac_test/route.ts** - RBAC testing
+7. **src/app/api/hazo_auth/debug_auth/route.ts** - Debug endpoint
+
+### Testing After Migration
+
+```bash
+# 1. Verify users can authenticate
+# 2. Check permissions are loaded correctly
+curl http://localhost:3000/api/hazo_auth/debug_auth
+
+# 3. Test user management API
+curl http://localhost:3000/api/hazo_auth/user_management/users
+
+# 4. Run RBAC tests
+# Visit: http://localhost:3000/hazo_auth/rbac_test
+
+# 5. Check init-users works
+npm run init-users
+```
+
+### Rollback Plan (Emergency)
+
+If migration fails:
+
+```sql
+-- Restore hazo_user_roles from backup
+-- Downgrade to v4.x package version
+npm install hazo_auth@4.x.x
+
+-- Verify application works with old schema
+```
 
 ---
 

@@ -1,9 +1,9 @@
 import { createCrudService } from "hazo_connect/server";
 import { randomUUID } from "crypto";
-import { create_app_logger } from "../app_logger";
-import { sanitize_error_for_user } from "../utils/error_sanitizer";
-import { get_line_number } from "../utils/api_route_helpers";
-import { get_oauth_config } from "../oauth_config.server";
+import { create_app_logger } from "../app_logger.js";
+import { sanitize_error_for_user } from "../utils/error_sanitizer.js";
+import { get_line_number } from "../utils/api_route_helpers.js";
+import { get_oauth_config } from "../oauth_config.server.js";
 // section: helpers
 /**
  * Handles Google OAuth login/registration flow

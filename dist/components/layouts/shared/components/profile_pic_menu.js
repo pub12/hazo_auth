@@ -7,16 +7,16 @@ import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-run
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
-import { Button } from "../../../ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, } from "../../../ui/dropdown-menu";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, } from "../../../ui/dialog";
-import { RolesMatrix } from "../../user_management/components/roles_matrix";
-import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, } from "../../../ui/sidebar";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar.js";
+import { Button } from "../../../ui/button.js";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, } from "../../../ui/dropdown-menu.js";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, } from "../../../ui/dialog.js";
+import { RolesMatrix } from "../../user_management/components/roles_matrix.js";
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, } from "../../../ui/sidebar.js";
 import { Settings, LogOut, Shield } from "lucide-react";
 import { toast } from "sonner";
-import { use_auth_status, trigger_auth_status_refresh } from "../hooks/use_auth_status";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { use_auth_status, trigger_auth_status_refresh } from "../hooks/use_auth_status.js";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: component
 /**
  * Profile picture menu component

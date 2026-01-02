@@ -6,7 +6,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import Link from "next/link";
 import Image from "next/image";
 import { Home } from "lucide-react";
-import { cn } from "../../../../lib/utils";
+import { cn } from "../../../../lib/utils.js";
 // section: component
 export function AuthNavbar({ logo_path = "", logo_width = 28, logo_height = 28, company_name = "", home_path = "/", home_label = "Home", show_home_link = true, background_color, text_color, height = 40, className, }) {
     // Only show logo if logo_path is configured (non-empty)

@@ -1,7 +1,7 @@
 // file_description: server-only helper to read email verification layout configuration from hazo_auth_config.ini
 // section: imports
-import { get_already_logged_in_config } from "./already_logged_in_config.server";
-import { get_config_value } from "./config/config_loader.server";
+import { get_already_logged_in_config } from "./already_logged_in_config.server.js";
+import { get_config_value } from "./config/config_loader.server.js";
 // Default image path - consuming apps should either:
 // 1. Configure their own image_src in hazo_auth_config.ini
 // 2. Copy the default images from node_modules/hazo_auth/public/hazo_auth/images/ to their public folder

@@ -3,9 +3,9 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports
 import { useEffect, useState } from "react";
-import RegisterLayout from "../components/layouts/register";
-import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
-import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup";
+import RegisterLayout from "../components/layouts/register.js";
+import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client.js";
+import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup.js";
 // section: component
 /**
  * Client wrapper for RegisterLayout

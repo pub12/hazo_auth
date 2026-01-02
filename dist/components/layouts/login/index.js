@@ -4,18 +4,18 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
 import Link from "next/link";
-import { Input } from "../../ui/input";
-import { PasswordField } from "../shared/components/password_field";
-import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
-import { FormHeader } from "../shared/components/form_header";
-import { FormActionButtons } from "../shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
+import { Input } from "../../ui/input.js";
+import { PasswordField } from "../shared/components/password_field.js";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper.js";
+import { FormHeader } from "../shared/components/form_header.js";
+import { FormActionButtons } from "../shared/components/form_action_buttons.js";
+import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout.js";
 import { CheckCircle } from "lucide-react";
-import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
-import { GoogleSignInButton } from "../shared/components/google_sign_in_button";
-import { OAuthDivider } from "../shared/components/oauth_divider";
-import { LOGIN_FIELD_IDS, createLoginFieldDefinitions, resolveLoginButtonPalette, resolveLoginLabels, } from "./config/login_field_config";
-import { use_login_form, } from "./hooks/use_login_form";
+import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard.js";
+import { GoogleSignInButton } from "../shared/components/google_sign_in_button.js";
+import { OAuthDivider } from "../shared/components/oauth_divider.js";
+import { LOGIN_FIELD_IDS, createLoginFieldDefinitions, resolveLoginButtonPalette, resolveLoginLabels, } from "./config/login_field_config.js";
+import { use_login_form, } from "./hooks/use_login_form.js";
 const ORDERED_FIELDS = [
     LOGIN_FIELD_IDS.EMAIL,
     LOGIN_FIELD_IDS.PASSWORD,

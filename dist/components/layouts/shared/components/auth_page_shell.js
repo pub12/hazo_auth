@@ -1,7 +1,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
-import { SidebarLayoutWrapper } from "./sidebar_layout_wrapper";
-import { StandaloneLayoutWrapper } from "./standalone_layout_wrapper";
-import { get_ui_shell_config } from "../../../../lib/ui_shell_config.server";
+import { SidebarLayoutWrapper } from "./sidebar_layout_wrapper.js";
+import { StandaloneLayoutWrapper } from "./standalone_layout_wrapper.js";
+import { get_ui_shell_config } from "../../../../lib/ui_shell_config.server.js";
 // section: component
 export function AuthPageShell({ children, disableNavbar = false }) {
     const uiShellConfig = get_ui_shell_config();

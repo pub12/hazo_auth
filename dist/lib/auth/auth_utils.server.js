@@ -1,10 +1,10 @@
 // file_description: server-side authentication utilities for checking login status in API routes
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../hazo_connect_instance.server";
+import { get_hazo_connect_instance } from "../hazo_connect_instance.server.js";
 import { createCrudService } from "hazo_connect/server";
-import { map_db_source_to_ui } from "../services/profile_picture_source_mapper";
-import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../cookies_config.server";
+import { map_db_source_to_ui } from "../services/profile_picture_source_mapper.js";
+import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../cookies_config.server.js";
 // section: helpers
 /**
  * Clears authentication cookies from response (with configurable prefix and domain)

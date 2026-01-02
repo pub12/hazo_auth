@@ -2,6 +2,18 @@
 
 A reusable authentication UI component package powered by Next.js, TailwindCSS, and shadcn. It integrates `hazo_config` for configuration management and `hazo_connect` for data access, enabling future components to stay aligned with platform conventions.
 
+### What's New in v5.1.5 🐛
+
+**CRITICAL BUGFIX**: Fixed incomplete migration from v4.x to v5.x - several files were still referencing the deprecated `hazo_user_roles` table instead of `hazo_user_scopes`. This release completes the scope-based role assignment architecture introduced in v5.0.
+
+**Key Fixes:**
+- ✅ **hazo_get_auth** - Now correctly fetches roles from `hazo_user_scopes`
+- ✅ **Role IDs** - Changed from `number[]` to `string[]` (UUIDs) throughout codebase
+- ✅ **User Management** - Updated for scope-based role assignments
+- ✅ **Cache System** - Fixed type inconsistencies with UUID role IDs
+
+If you're on v5.x and experiencing permission/role issues, upgrade to v5.1.5 immediately.
+
 ### What's New in v5.0 🚀
 
 **BREAKING CHANGE: Scope-Based Multi-Tenancy** - Complete architectural redesign for simpler, more flexible multi-tenancy!

@@ -1,5 +1,5 @@
 import type { HazoConnectAdapter } from "hazo_connect";
-import { type FirmBranding, type ScopeRecord } from "./scope_service";
+import { type FirmBranding, type ScopeRecord } from "./scope_service.js";
 export type BrandingServiceResult = {
     success: boolean;
     branding?: FirmBranding | null;

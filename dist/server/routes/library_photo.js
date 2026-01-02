@@ -2,9 +2,9 @@
 // This route is used when library photos haven't been copied to the project's public folder
 // section: imports
 import { NextResponse } from "next/server";
-import { get_library_photo_path } from "../../lib/services/profile_picture_service";
-import { create_app_logger } from "../../lib/app_logger";
-import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers";
+import { get_library_photo_path } from "../../lib/services/profile_picture_service.js";
+import { create_app_logger } from "../../lib/app_logger.js";
+import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers.js";
 import fs from "fs";
 import path from "path";
 // section: route_config

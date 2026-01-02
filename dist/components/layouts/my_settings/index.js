@@ -3,19 +3,19 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
-import { Button } from "../../ui/button";
-import { EditableField } from "./components/editable_field";
-import { ProfilePictureDisplay } from "./components/profile_picture_display";
-import { ProfilePictureDialog } from "./components/profile_picture_dialog";
-import { ConnectedAccountsSection } from "./components/connected_accounts_section";
-import { SetPasswordSection } from "./components/set_password_section";
-import { UnauthorizedGuard } from "../shared/components/unauthorized_guard";
-import { use_my_settings } from "./hooks/use_my_settings";
-import { resolveMySettingsLabels, resolveMySettingsButtonPalette, } from "./config/my_settings_field_config";
-import { PasswordField } from "../shared/components/password_field";
-import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
+import { Button } from "../../ui/button.js";
+import { EditableField } from "./components/editable_field.js";
+import { ProfilePictureDisplay } from "./components/profile_picture_display.js";
+import { ProfilePictureDialog } from "./components/profile_picture_dialog.js";
+import { ConnectedAccountsSection } from "./components/connected_accounts_section.js";
+import { SetPasswordSection } from "./components/set_password_section.js";
+import { UnauthorizedGuard } from "../shared/components/unauthorized_guard.js";
+import { use_my_settings } from "./hooks/use_my_settings.js";
+import { resolveMySettingsLabels, resolveMySettingsButtonPalette, } from "./config/my_settings_field_config.js";
+import { PasswordField } from "../shared/components/password_field.js";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper.js";
 import { Pencil, Trash2 } from "lucide-react";
-import { cn } from "../../../lib/utils";
+import { cn } from "../../../lib/utils.js";
 // section: component
 /**
  * My Settings layout component with tabs for profile and security settings

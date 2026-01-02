@@ -2,8 +2,8 @@
 // section: imports
 import fs from "fs";
 import path from "path";
-import { create_app_logger } from "../app_logger";
-import { read_config_section } from "../config/config_loader.server";
+import { create_app_logger } from "../app_logger.js";
+import { read_config_section } from "../config/config_loader.server.js";
 // section: constants
 const DEFAULT_EMAIL_FROM = "noreply@hazo_auth.local";
 /**

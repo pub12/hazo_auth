@@ -1,6 +1,6 @@
 // file_description: server-only helper to read file type configuration from hazo_auth_config.ini
 // section: imports
-import { get_config_array } from "./config/config_loader.server";
+import { get_config_array } from "./config/config_loader.server.js";
 // section: helpers
 /**
  * Reads file type configuration from hazo_auth_config.ini file

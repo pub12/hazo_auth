@@ -4,8 +4,8 @@
 // section: imports
 import { createHazoConnect } from "hazo_connect/server";
 import path from "path";
-import { create_app_logger } from "./app_logger";
-import { read_config_section } from "./config/config_loader.server";
+import { create_app_logger } from "./app_logger.js";
+import { read_config_section } from "./config/config_loader.server.js";
 // section: helpers
 /**
  * Reads hazo_connect configuration from hazo_auth_config.ini file

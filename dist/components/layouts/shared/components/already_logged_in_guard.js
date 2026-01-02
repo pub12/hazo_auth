@@ -3,10 +3,10 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
-import { use_auth_status } from "../hooks/use_auth_status";
-import { LogoutButton } from "./logout_button";
-import { Button } from "../../../ui/button";
-import { TwoColumnAuthLayout } from "./two_column_auth_layout";
+import { use_auth_status } from "../hooks/use_auth_status.js";
+import { LogoutButton } from "./logout_button.js";
+import { Button } from "../../../ui/button.js";
+import { TwoColumnAuthLayout } from "./two_column_auth_layout.js";
 import { useRouter } from "next/navigation";
 import { Home } from "lucide-react";
 // section: component

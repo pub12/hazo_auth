@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { type HazoAuthConfig } from "./hazo_auth_config";
+import { type HazoAuthConfig } from "./hazo_auth_config.js";
 /**
  * Props for HazoAuthProvider component
  */

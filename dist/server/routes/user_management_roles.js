@@ -1,12 +1,12 @@
 // file_description: API route handler for roles management operations (list, create, update permissions)
 // section: imports
 import { NextResponse } from "next/server";
-import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server";
+import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server.js";
 import { createCrudService, getSqliteAdminService } from "hazo_connect/server";
-import { create_app_logger } from "../../lib/app_logger";
-import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers";
-import { get_auth_cache } from "../../lib/auth/auth_cache";
-import { get_auth_utility_config } from "../../lib/auth_utility_config.server";
+import { create_app_logger } from "../../lib/app_logger.js";
+import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers.js";
+import { get_auth_cache } from "../../lib/auth/auth_cache.js";
+import { get_auth_utility_config } from "../../lib/auth_utility_config.server.js";
 // section: route_config
 export const dynamic = 'force-dynamic';
 // section: api_handler
@@ -158,12 +158,13 @@ export async function PUT(request) {
         if (!Array.isArray(all_permissions)) {
             return NextResponse.json({ error: "Failed to fetch permissions" }, { status: 500 });
         }
+        // v5.x: permission_id can be string or number depending on database
         const permission_name_to_id = {};
         all_permissions.forEach((perm) => {
-            permission_name_to_id[perm.permission_name] = perm.id;
+            permission_name_to_id[perm.permission_name] = String(perm.id);
         });
         const now = new Date().toISOString();
-        const modified_role_ids = []; // Track all role IDs that were modified
+        const modified_role_ids = []; // v5.x: role IDs are now string UUIDs
         // Process each role
         for (const role_data of roles) {
             const { role_id, role_name, permissions } = role_data;
@@ -172,9 +173,9 @@ export async function PUT(request) {
             }
             let current_role_id;
             if (role_id) {
-                // Update existing role
-                current_role_id = role_id;
-                await roles_service.updateById(role_id, {
+                // Update existing role (v5.x: role_id is string UUID)
+                current_role_id = String(role_id);
+                await roles_service.updateById(current_role_id, {
                     role_name: role_name.trim(),
                     changed_at: now,
                 });
@@ -185,7 +186,7 @@ export async function PUT(request) {
                     role_name: role_name.trim(),
                 });
                 if (Array.isArray(existing_roles) && existing_roles.length > 0) {
-                    current_role_id = existing_roles[0].id;
+                    current_role_id = String(existing_roles[0].id);
                 }
                 else {
                     const new_role = await roles_service.insert({
@@ -195,10 +196,10 @@ export async function PUT(request) {
                     });
                     // Handle both single object and array responses from insert
                     if (Array.isArray(new_role) && new_role.length > 0) {
-                        current_role_id = new_role[0].id;
+                        current_role_id = String(new_role[0].id);
                     }
                     else if (!Array.isArray(new_role) && new_role.id !== undefined) {
-                        current_role_id = new_role.id;
+                        current_role_id = String(new_role.id);
                     }
                     else {
                         // If insert didn't return an id, try to find the role by name
@@ -206,7 +207,7 @@ export async function PUT(request) {
                             role_name: role_name.trim(),
                         });
                         if (Array.isArray(inserted_roles) && inserted_roles.length > 0) {
-                            current_role_id = inserted_roles[0].id;
+                            current_role_id = String(inserted_roles[0].id);
                         }
                     }
                 }
@@ -227,8 +228,9 @@ export async function PUT(request) {
             const current_mappings = await role_permissions_service.findBy({
                 role_id: current_role_id,
             });
+            // v5.x: permission_id can be string or number
             const current_permission_ids = Array.isArray(current_mappings)
-                ? current_mappings.map((m) => m.permission_id)
+                ? current_mappings.map((m) => String(m.permission_id))
                 : [];
             // Get target permission IDs
             const target_permission_ids = permissions

@@ -77,14 +77,29 @@ function get_client_ip(request: NextRequest): string {
  * @param user_id - User ID
  * @returns Object with user, permissions, and role_ids
  */
+/**
+ * CRUD service options for hazo_user_scopes table
+ * This table uses a composite primary key (user_id, scope_id) and no 'id' column
+ */
+const USER_SCOPES_CRUD_OPTIONS = {
+  primaryKeys: ["user_id", "scope_id"],
+  autoId: false as const,
+};
+
 async function fetch_user_data_from_db(user_id: string): Promise<{
   user: HazoAuthUser;
   permissions: string[];
-  role_ids: number[];
+  role_ids: string[];
 }> {
   const hazoConnect = get_hazo_connect_instance();
   const users_service = createCrudService(hazoConnect, "hazo_users");
-  const user_roles_service = createCrudService(hazoConnect, "hazo_user_roles");
+  // v5.x: Use hazo_user_scopes instead of hazo_user_roles
+  // Roles are now assigned per-scope via hazo_user_scopes.role_id
+  const user_scopes_service = createCrudService(
+    hazoConnect,
+    "hazo_user_scopes",
+    USER_SCOPES_CRUD_OPTIONS,
+  );
   const role_permissions_service = createCrudService(
     hazoConnect,
     "hazo_role_permissions",
@@ -118,34 +133,36 @@ async function fetch_user_data_from_db(user_id: string): Promise<{
     app_user_data: parse_app_user_data(user_db.app_user_data),
   };
 
-  // Fetch user roles
-  const user_roles = await user_roles_service.findBy({ user_id });
-  const role_ids: number[] = [];
-  if (Array.isArray(user_roles)) {
-    for (const ur of user_roles) {
-      const role_id = ur.role_id as number | undefined;
-      if (role_id !== undefined) {
-        role_ids.push(role_id);
+  // v5.x: Fetch user's roles from hazo_user_scopes (scope-based role assignments)
+  // Each scope assignment has a role_id (string UUID)
+  const user_scopes = await user_scopes_service.findBy({ user_id });
+  const role_ids_set = new Set<string>();
+  if (Array.isArray(user_scopes)) {
+    for (const us of user_scopes) {
+      const role_id = us.role_id as string | undefined;
+      if (role_id) {
+        role_ids_set.add(role_id);
       }
     }
   }
+  const role_ids = Array.from(role_ids_set);
 
   // Fetch role permissions
   const permissions_set = new Set<string>();
   if (role_ids.length > 0) {
     const role_permissions = await role_permissions_service.findBy({});
     if (Array.isArray(role_permissions)) {
-      // Filter role_permissions for user's roles
+      // Filter role_permissions for user's roles (role_id is string UUID in v5.x)
       const user_role_permissions = role_permissions.filter((rp) =>
-        role_ids.includes(rp.role_id as number),
+        role_ids.includes(rp.role_id as string),
       );
 
-      // Get permission IDs
-      const permission_ids = new Set<number>();
+      // Get permission IDs (can be string or number depending on database)
+      const permission_ids = new Set<string>();
       for (const rp of user_role_permissions) {
-        const perm_id = rp.permission_id as number | undefined;
+        const perm_id = rp.permission_id as string | number | undefined;
         if (perm_id !== undefined) {
-          permission_ids.add(perm_id);
+          permission_ids.add(String(perm_id));
         }
       }
 
@@ -154,8 +171,8 @@ async function fetch_user_data_from_db(user_id: string): Promise<{
         const permissions = await permissions_service.findBy({});
         if (Array.isArray(permissions)) {
           for (const perm of permissions) {
-            const perm_id = perm.id as number | undefined;
-            if (perm_id !== undefined && permission_ids.has(perm_id)) {
+            const perm_id = perm.id as string | number | undefined;
+            if (perm_id !== undefined && permission_ids.has(String(perm_id))) {
               const perm_name = perm.permission_name as string | undefined;
               if (perm_name) {
                 permissions_set.add(perm_name);
@@ -398,7 +415,7 @@ export async function hazo_get_auth(
   let cached_entry = cache.get(user_id);
   let user: HazoAuthUser;
   let permissions: string[];
-  let role_ids: number[];
+  let role_ids: string[]; // v5.x: role_ids are now string UUIDs
 
   if (cached_entry) {
     // Cache hit

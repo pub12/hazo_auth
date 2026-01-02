@@ -2,14 +2,14 @@
 // section: client_directive
 "use client";
 import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
-import { Input } from "../../ui/input";
-import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
-import { FormHeader } from "../shared/components/form_header";
-import { FormActionButtons } from "../shared/components/form_action_buttons";
-import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
+import { Input } from "../../ui/input.js";
+import { FormFieldWrapper } from "../shared/components/form_field_wrapper.js";
+import { FormHeader } from "../shared/components/form_header.js";
+import { FormActionButtons } from "../shared/components/form_action_buttons.js";
+import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout.js";
 import { CheckCircle, Building2 } from "lucide-react";
-import { use_create_firm_form, } from "./hooks/use_create_firm_form";
-import { useHazoAuthConfig } from "../../../contexts/hazo_auth_provider";
+import { use_create_firm_form, } from "./hooks/use_create_firm_form.js";
+import { useHazoAuthConfig } from "../../../contexts/hazo_auth_provider.js";
 // section: component
 export default function CreateFirmLayout({ image_src, image_alt = "Create your firm", image_background_color = "#f1f5f9", heading = "Create Your Firm", sub_heading = "Set up your organisation to get started", firm_name_label = "Firm Name", firm_name_placeholder = "Enter your firm name", org_structure_label = "Organisation Structure", org_structure_placeholder = "e.g., Headquarters, Head Office", default_org_structure = "Headquarters", submit_button_label = "Create Firm", success_message = "Your firm has been created successfully!", redirect_route = "/", apiBasePath, onSuccess, button_colors, logger, }) {
     const { apiBasePath: contextApiBasePath } = useHazoAuthConfig();

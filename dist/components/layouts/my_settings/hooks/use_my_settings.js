@@ -3,9 +3,9 @@
 "use client";
 // section: imports
 import { useState, useCallback } from "react";
-import { use_auth_status, trigger_auth_status_refresh } from "../../shared/hooks/use_auth_status";
+import { use_auth_status, trigger_auth_status_refresh } from "../../shared/hooks/use_auth_status.js";
 import { toast } from "sonner";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: helpers
 /**
  * Validates email format

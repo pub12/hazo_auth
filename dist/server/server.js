@@ -5,8 +5,8 @@ import helmet from "helmet";
 import cors from "cors";
 import cookie_parser from "cookie-parser";
 import compression from "compression";
-import { create_root_router } from "./routes/root_router";
-import { create_app_context } from "./config/config_loader";
+import { create_root_router } from "./routes/root_router.js";
+import { create_app_context } from "./config/config_loader.js";
 // section: app_factory
 export const create_server_app = () => {
     const server_app = express();

@@ -4,7 +4,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
 import { HelpCircle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip.js";
 // section: component
 /**
  * Reusable tooltip component with question mark icon

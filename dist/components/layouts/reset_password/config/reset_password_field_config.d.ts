@@ -1,5 +1,5 @@
 import type { LayoutFieldMap, LayoutFieldMapOverrides } from "../../shared/config/layout_customization";
-import { type ButtonPaletteDefaults, type ButtonPaletteOverrides, type LayoutLabelDefaults, type LayoutLabelOverrides, type PasswordRequirementOptions, type PasswordRequirementOverrides } from "../../shared/config/layout_customization";
+import { type ButtonPaletteDefaults, type ButtonPaletteOverrides, type LayoutLabelDefaults, type LayoutLabelOverrides, type PasswordRequirementOptions, type PasswordRequirementOverrides } from "../../shared/config/layout_customization.js";
 export declare const RESET_PASSWORD_FIELD_IDS: {
     readonly PASSWORD: "password";
     readonly CONFIRM_PASSWORD: "confirm_password";

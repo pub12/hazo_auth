@@ -1,7 +1,7 @@
 // file_description: server-only helper to read profile picture configuration from hazo_auth_config.ini
 // section: imports
-import { get_config_boolean, get_config_value, get_config_number } from "./config/config_loader.server";
-import { create_app_logger } from "./app_logger";
+import { get_config_boolean, get_config_value, get_config_number } from "./config/config_loader.server.js";
+import { create_app_logger } from "./app_logger.js";
 // section: helpers
 /**
  * Reads profile picture configuration from hazo_auth_config.ini file

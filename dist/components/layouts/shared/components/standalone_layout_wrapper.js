@@ -3,8 +3,8 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
-import { cn } from "../../../../lib/utils";
-import { AuthNavbar } from "./auth_navbar";
+import { cn } from "../../../../lib/utils.js";
+import { AuthNavbar } from "./auth_navbar.js";
 // section: component
 export function StandaloneLayoutWrapper({ children, heading = "hazo auth", description = "Drop-in authentication flows that inherit your existing theme.", wrapperClassName, contentClassName, showHeading = true, showDescription = true, navbar, verticalCenter = true, }) {
     const hasNavbar = navbar !== null && navbar !== undefined;

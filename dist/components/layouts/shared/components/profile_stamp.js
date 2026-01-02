@@ -3,9 +3,9 @@
 "use client";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
-import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar";
-import { HoverCard, HoverCardTrigger, HoverCardContent, } from "../../../ui/hover-card";
-import { use_auth_status } from "../hooks/use_auth_status";
+import { Avatar, AvatarImage, AvatarFallback } from "../../../ui/avatar.js";
+import { HoverCard, HoverCardTrigger, HoverCardContent, } from "../../../ui/hover-card.js";
+import { use_auth_status } from "../hooks/use_auth_status.js";
 // section: component
 /**
  * ProfileStamp component - displays a circular profile picture with a hover card

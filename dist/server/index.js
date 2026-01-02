@@ -2,7 +2,7 @@ var _a;
 // file_description: bootstrap entry point for the hazo_auth express server
 // section: imports
 import http from "http";
-import { create_server_app } from "./server";
+import { create_server_app } from "./server.js";
 import { createLogger } from "hazo_logs";
 // section: constants
 const default_port = Number((_a = process.env.PORT) !== null && _a !== void 0 ? _a : 4100);

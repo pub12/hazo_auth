@@ -4,10 +4,10 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 // section: imports
 import Link from "next/link";
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarInset, } from "../../../ui/sidebar";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarInset, } from "../../../ui/sidebar.js";
 import { LogIn, UserPlus, BookOpen, ExternalLink, Database, KeyRound, MailCheck, Key, User, ShieldCheck, CircleUserRound, FileJson, Building2, Palette } from "lucide-react";
-import { use_auth_status } from "../hooks/use_auth_status";
-import { ProfilePicMenu } from "./profile_pic_menu";
+import { use_auth_status } from "../hooks/use_auth_status.js";
+import { ProfilePicMenu } from "./profile_pic_menu.js";
 // section: component
 export function SidebarLayoutWrapper({ children }) {
     const authStatus = use_auth_status();

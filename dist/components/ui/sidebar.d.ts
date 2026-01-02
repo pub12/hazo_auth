@@ -1,6 +1,6 @@
 import * as React from "react";
 import { type VariantProps } from "class-variance-authority";
-import { TooltipContent } from "./tooltip";
+import { TooltipContent } from "./tooltip.js";
 type SidebarContextProps = {
     state: "expanded" | "collapsed";
     open: boolean;

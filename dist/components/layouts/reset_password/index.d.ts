@@ -1,6 +1,6 @@
 import type { StaticImageData } from "next/image";
-import { type ButtonPaletteOverrides, type LayoutFieldMapOverrides, type LayoutLabelOverrides, type PasswordRequirementOverrides } from "../shared/config/layout_customization";
-import { type LayoutDataClient } from "../shared/data/layout_data_client";
+import { type ButtonPaletteOverrides, type LayoutFieldMapOverrides, type LayoutLabelOverrides, type PasswordRequirementOverrides } from "../shared/config/layout_customization.js";
+import { type LayoutDataClient } from "../shared/data/layout_data_client.js";
 export type ResetPasswordLayoutProps<TClient = unknown> = {
     image_src: string | StaticImageData;
     image_alt: string;

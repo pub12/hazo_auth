@@ -1,5 +1,5 @@
 import type { LayoutFieldMap, LayoutFieldMapOverrides } from "../../shared/config/layout_customization";
-import { type ButtonPaletteDefaults, type ButtonPaletteOverrides, type LayoutLabelDefaults, type LayoutLabelOverrides } from "../../shared/config/layout_customization";
+import { type ButtonPaletteDefaults, type ButtonPaletteOverrides, type LayoutLabelDefaults, type LayoutLabelOverrides } from "../../shared/config/layout_customization.js";
 export declare const FORGOT_PASSWORD_FIELD_IDS: {
     readonly EMAIL: "email_address";
 };

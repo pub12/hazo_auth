@@ -1,6 +1,6 @@
 import type { LayoutDataClient } from "../../shared/data/layout_data_client";
 import type { PasswordRequirementOptions, PasswordRequirementOverrides } from "../../shared/config/layout_customization";
-import { type RegisterFieldId } from "../config/register_field_config";
+import { type RegisterFieldId } from "../config/register_field_config.js";
 export type RegisterFormValues = Record<RegisterFieldId, string>;
 export type RegisterFormErrors = Partial<Record<RegisterFieldId, string | string[]>> & {
     submit?: string;

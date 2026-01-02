@@ -1,7 +1,7 @@
 // file_description: Badge component for displaying user types with configurable colors
 "use client";
 import { jsx as _jsx } from "react/jsx-runtime";
-import { cn } from "../../lib/utils";
+import { cn } from "../../lib/utils.js";
 // section: constants
 const PRESET_COLOR_CLASSES = {
     blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",

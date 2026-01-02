@@ -1,4 +1,4 @@
-import { create_app_logger } from "../app_logger";
+import { create_app_logger } from "../app_logger.js";
 export type ErrorSanitizationOptions = {
     logToConsole?: boolean;
     logToLogger?: boolean;

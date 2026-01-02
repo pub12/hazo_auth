@@ -3,9 +3,9 @@
 import { useCallback, useMemo, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { RESET_PASSWORD_FIELD_IDS } from "../config/reset_password_field_config";
-import { validatePassword } from "../../shared/utils/validation";
-import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
+import { RESET_PASSWORD_FIELD_IDS } from "../config/reset_password_field_config.js";
+import { validatePassword } from "../../shared/utils/validation.js";
+import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: constants
 const PASSWORD_FIELDS = [
     RESET_PASSWORD_FIELD_IDS.PASSWORD,
