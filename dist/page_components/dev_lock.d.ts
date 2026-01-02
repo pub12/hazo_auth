@@ -1,4 +1,4 @@
-import type { DevLockLayoutProps } from "../components/layouts/dev_lock";
+import type { DevLockLayoutProps } from "../components/layouts/dev_lock/index";
 export type DevLockPageProps = DevLockLayoutProps;
 /**
  * Zero-config dev lock page component

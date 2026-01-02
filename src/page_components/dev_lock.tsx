@@ -3,8 +3,8 @@
 "use client";
 
 // section: imports
-import DevLockLayout from "../components/layouts/dev_lock";
-import type { DevLockLayoutProps } from "../components/layouts/dev_lock";
+import DevLockLayout from "../components/layouts/dev_lock/index";
+import type { DevLockLayoutProps } from "../components/layouts/dev_lock/index";
 
 // section: types
 export type DevLockPageProps = DevLockLayoutProps;

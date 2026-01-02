@@ -3,7 +3,7 @@
 "use client";
 import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports
-import DevLockLayout from "../components/layouts/dev_lock.js";
+import DevLockLayout from "../components/layouts/dev_lock/index.js";
 // section: component
 /**
  * Zero-config dev lock page component

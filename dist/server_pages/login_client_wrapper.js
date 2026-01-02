@@ -3,7 +3,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports
 import { useEffect, useState } from "react";
-import LoginLayout from "../components/layouts/login.js";
+import LoginLayout from "../components/layouts/login/index.js";
 import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client.js";
 import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup.js";
 // section: component

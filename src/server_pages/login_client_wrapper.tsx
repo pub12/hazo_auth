@@ -3,12 +3,12 @@
 
 // section: imports
 import { useEffect, useState } from "react";
-import LoginLayout from "../components/layouts/login";
+import LoginLayout from "../components/layouts/login/index";
 import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
 import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup";
 import type { LayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
 import type { LoginConfig } from "../lib/login_config.server";
-import type { OAuthLayoutConfig } from "../components/layouts/login";
+import type { OAuthLayoutConfig } from "../components/layouts/login/index";
 
 // section: types
 import type { StaticImageData } from "next/image";

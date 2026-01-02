@@ -3,7 +3,7 @@
 "use client";
 import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports
-import my_settings_layout from "../components/layouts/my_settings.js";
+import my_settings_layout from "../components/layouts/my_settings/index.js";
 // section: default_configuration
 const DEFAULT_USER_FIELDS = {
     show_name_field: true,

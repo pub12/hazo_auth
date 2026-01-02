@@ -2,7 +2,7 @@
 
 // section: imports
 import { get_my_settings_config } from "../lib/my_settings_config.server";
-import MySettingsLayout from "../components/layouts/my_settings";
+import MySettingsLayout from "../components/layouts/my_settings/index";
 import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";
 
 export type MySettingsPageProps = {

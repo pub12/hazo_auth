@@ -18,7 +18,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports
 import { useEffect, useState } from "react";
-import reset_password_layout from "../components/layouts/reset_password.js";
+import reset_password_layout from "../components/layouts/reset_password/index.js";
 import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client.js";
 import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup.js";
 // section: constants

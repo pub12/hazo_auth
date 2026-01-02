@@ -1,5 +1,5 @@
 import type { LoginConfig } from "../lib/login_config.server";
-import type { OAuthLayoutConfig } from "../components/layouts/login";
+import type { OAuthLayoutConfig } from "../components/layouts/login/index";
 import type { StaticImageData } from "next/image";
 export type LoginClientWrapperProps = Omit<LoginConfig, 'imageSrc' | 'imageAlt' | 'imageBackgroundColor' | 'oauth'> & {
     image_src: string | StaticImageData;

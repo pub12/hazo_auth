@@ -3,7 +3,7 @@
 
 // section: imports
 import { useEffect, useState } from "react";
-import EmailVerificationLayout from "../components/layouts/email_verification";
+import EmailVerificationLayout from "../components/layouts/email_verification/index";
 import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client";
 import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup";
 import type { LayoutDataClient } from "../components/layouts/shared/data/layout_data_client";

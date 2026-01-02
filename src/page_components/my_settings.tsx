@@ -3,7 +3,7 @@
 "use client";
 
 // section: imports
-import my_settings_layout from "../components/layouts/my_settings";
+import my_settings_layout from "../components/layouts/my_settings/index";
 import type { PasswordRequirementOptions } from "../components/layouts/shared/config/layout_customization";
 
 // section: default_configuration

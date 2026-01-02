@@ -18,7 +18,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // section: imports
 import { useEffect, useState } from "react";
-import register_layout from "../components/layouts/register.js";
+import register_layout from "../components/layouts/register/index.js";
 import { createLayoutDataClient } from "../components/layouts/shared/data/layout_data_client.js";
 import { create_sqlite_hazo_connect } from "../lib/hazo_connect_setup.js";
 // section: constants
