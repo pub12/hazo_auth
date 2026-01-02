@@ -549,20 +549,25 @@ import { ProfileStamp } from "hazo_auth/client";
 
 The navbar feature provides a configurable navigation bar for all authentication pages when using standalone layout mode. **The navbar now works automatically** - zero-config server page components include the navbar based on configuration without manual wrapping.
 
+**IMPORTANT:** By default, `logo_path` and `company_name` are empty strings, so no logo or company name will appear until configured by the consuming app.
+
 **Configuration:**
 ```ini
 [hazo_auth__navbar]
 enable_navbar = true
+# Logo - MUST be configured to appear (default: empty = no logo)
 logo_path = /logo.png
-logo_width = 32
-logo_height = 32
+logo_width = 28
+logo_height = 28
+# Company name - MUST be configured to appear (default: empty)
 company_name = My Company
 home_path = /
 home_label = Home
 show_home_link = true
 background_color =
 text_color =
-height = 64
+# Slim navbar height (default: 48px)
+height = 48
 ```
 
 **Zero-Config Usage:**

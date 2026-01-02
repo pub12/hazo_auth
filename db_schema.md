@@ -11,10 +11,40 @@ hazo_permissions    - Permission definitions (e.g., admin_user_management)
 hazo_user_roles     - User-role assignments (junction table)
 hazo_role_permissions - Role-permission assignments (junction table)
 hazo_refresh_tokens - Tokens for password reset, email verification, etc.
-hazo_scopes         - Unified scope hierarchy (firms, divisions, departments)
+hazo_scopes         - Unified scope hierarchy (firms, divisions, departments) with branding
 hazo_user_scopes    - User-scope assignments (membership-based multi-tenancy)
 hazo_invitations    - User invitations to join scopes
 ```
+
+## Enum Types (PostgreSQL)
+
+### hazo_enum_user_status
+User account status values.
+
+| Value | Description |
+|-------|-------------|
+| PENDING | Account created but not yet verified |
+| ACTIVE | Active user account |
+| BLOCKED | Account has been blocked |
+
+### hazo_enum_profile_source_enum
+Source of user's profile picture.
+
+| Value | Description |
+|-------|-------------|
+| gravatar | Profile picture from Gravatar |
+| custom | Custom uploaded profile picture |
+| predefined | Predefined library image |
+
+### hazo_enum_user_scope_status_type
+User's status within a scope.
+
+| Value | Description |
+|-------|-------------|
+| INVITED | User has been invited but hasn't joined |
+| ACTIVE | Active member of the scope |
+| SUSPENDED | Membership temporarily suspended |
+| DEPARTED | User has left the scope |
 
 ## Core Tables
 
@@ -24,24 +54,24 @@ User accounts with authentication and profile information.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
-| id | UUID/TEXT | NO | - | Primary key |
+| id | UUID | NO | - | Primary key |
 | email_address | TEXT | NO | - | Unique email address |
 | password_hash | TEXT | YES | - | Argon2 password hash (null for OAuth-only users) |
 | name | TEXT | YES | - | Display name |
-| email_verified | BOOLEAN/INT | YES | false/0 | Email verification status |
+| email_verified | BOOLEAN | YES | false | Email verification status |
 | login_attempts | INTEGER | YES | 0 | Failed login attempt counter |
-| last_logon | TIMESTAMP/TEXT | YES | - | Last successful login |
+| last_logon | TIMESTAMP WITH TIME ZONE | YES | - | Last successful login |
 | profile_picture_url | TEXT | YES | - | URL to profile picture |
-| profile_source | TEXT | YES | - | 'gravatar', 'custom', or 'predefined' |
+| profile_source | hazo_enum_profile_source_enum | YES | - | 'gravatar', 'custom', or 'predefined' |
 | mfa_secret | TEXT | YES | - | MFA secret key |
 | url_on_logon | TEXT | YES | - | Custom redirect URL after login |
+| phone_no | TEXT | YES | - | User's phone number |
 | google_id | TEXT | YES | - | Google OAuth ID (unique) |
 | auth_providers | TEXT | YES | 'email' | Comma-separated: 'email', 'google' |
-| user_type | TEXT | YES | - | Custom user type (configurable) |
-| app_user_data | JSON/TEXT | YES | - | Application-specific JSON data |
-| status | TEXT | YES | 'active' | 'active', 'inactive', 'suspended' |
-| created_at | TIMESTAMP/TEXT | NO | NOW() | Creation timestamp |
-| changed_at | TIMESTAMP/TEXT | NO | NOW() | Last modification timestamp |
+| app_user_data | JSON | YES | - | Application-specific JSON data |
+| status | hazo_enum_user_status | YES | 'ACTIVE' | User account status |
+| created_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Creation timestamp |
+| changed_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Last modification timestamp |
 
 ### hazo_roles
 
@@ -49,10 +79,10 @@ Role definitions for RBAC.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
-| id | UUID/TEXT | NO | - | Primary key |
+| id | UUID | NO | - | Primary key |
 | role_name | TEXT | NO | - | Unique role name (e.g., 'super_user', 'firm_admin') |
-| created_at | TIMESTAMP/TEXT | NO | NOW() | Creation timestamp |
-| changed_at | TIMESTAMP/TEXT | NO | NOW() | Last modification timestamp |
+| created_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Creation timestamp |
+| changed_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Last modification timestamp |
 
 ### hazo_permissions
 
@@ -60,11 +90,11 @@ Permission definitions for fine-grained access control.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
-| id | UUID/TEXT | NO | - | Primary key |
+| id | UUID | NO | - | Primary key |
 | permission_name | TEXT | NO | - | Unique permission name |
 | description | TEXT | YES | - | Human-readable description |
-| created_at | TIMESTAMP/TEXT | NO | NOW() | Creation timestamp |
-| changed_at | TIMESTAMP/TEXT | NO | NOW() | Last modification timestamp |
+| created_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Creation timestamp |
+| changed_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Last modification timestamp |
 
 ### hazo_user_roles
 
@@ -72,10 +102,10 @@ Junction table linking users to roles.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
-| user_id | UUID/TEXT | NO | - | FK to hazo_users.id |
-| role_id | UUID/TEXT | NO | - | FK to hazo_roles.id |
-| created_at | TIMESTAMP/TEXT | NO | NOW() | Creation timestamp |
-| changed_at | TIMESTAMP/TEXT | NO | NOW() | Last modification timestamp |
+| user_id | UUID | NO | - | FK to hazo_users.id |
+| role_id | UUID | NO | - | FK to hazo_roles.id |
+| created_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Creation timestamp |
+| changed_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Last modification timestamp |
 
 Primary Key: (user_id, role_id)
 
@@ -85,10 +115,10 @@ Junction table linking roles to permissions.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
-| role_id | UUID/TEXT | NO | - | FK to hazo_roles.id |
-| permission_id | UUID/TEXT | NO | - | FK to hazo_permissions.id |
-| created_at | TIMESTAMP/TEXT | NO | NOW() | Creation timestamp |
-| changed_at | TIMESTAMP/TEXT | NO | NOW() | Last modification timestamp |
+| role_id | UUID | NO | - | FK to hazo_roles.id |
+| permission_id | UUID | NO | - | FK to hazo_permissions.id |
+| created_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Creation timestamp |
+| changed_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Last modification timestamp |
 
 Primary Key: (role_id, permission_id)
 
@@ -98,35 +128,44 @@ Tokens for password reset, email verification, and session refresh.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
-| id | UUID/TEXT | NO | - | Primary key |
-| user_id | UUID/TEXT | NO | - | FK to hazo_users.id |
+| id | UUID | NO | - | Primary key |
+| user_id | UUID | NO | - | FK to hazo_users.id |
 | token_hash | TEXT | NO | - | Hashed token value |
 | token_type | TEXT | NO | 'refresh' | 'refresh', 'password_reset', 'email_verification' |
-| expires_at | TIMESTAMP/TEXT | NO | - | Token expiration time |
-| created_at | TIMESTAMP/TEXT | NO | NOW() | Creation timestamp |
+| expires_at | TIMESTAMP WITH TIME ZONE | NO | - | Token expiration time |
+| created_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Creation timestamp |
 
 ## Scope-Based Multi-Tenancy Tables
 
 ### hazo_scopes
 
-Unified scope hierarchy table. Replaces the legacy 7-level scope tables.
+Unified scope hierarchy table with firm branding support.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
-| id | UUID/TEXT | NO | - | Primary key |
-| parent_id | UUID/TEXT | YES | - | FK to hazo_scopes.id (self-reference for hierarchy) |
+| id | UUID | NO | - | Primary key |
+| parent_id | UUID | YES | - | FK to hazo_scopes.id (self-reference for hierarchy) |
 | name | TEXT | NO | - | Scope name (e.g., "Acme Corp", "Sydney Office") |
 | level | TEXT | NO | - | Descriptive level label (e.g., "HQ", "Division", "Department") |
-| created_at | TIMESTAMP/TEXT | NO | NOW() | Creation timestamp |
-| changed_at | TIMESTAMP/TEXT | NO | NOW() | Last modification timestamp |
+| logo_url | TEXT | YES | - | URL to firm logo (branding) |
+| primary_color | TEXT | YES | - | Primary brand color (hex, e.g., "#1a73e8") |
+| secondary_color | TEXT | YES | - | Secondary brand color (hex, e.g., "#4285f4") |
+| tagline | TEXT | YES | - | Firm tagline/slogan |
+| created_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Creation timestamp |
+| changed_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Last modification timestamp |
 
 **Special Scopes:**
 - `00000000-0000-0000-0000-000000000000` - Super Admin scope (system-wide access)
 - `00000000-0000-0000-0000-000000000001` - Default System scope (non-multi-tenancy mode)
 
+**Branding Inheritance:**
+- Only root scopes (parent_id = NULL) typically have branding set
+- Child scopes inherit branding from their root scope via application logic
+- Use `get_effective_branding()` to resolve inherited branding
+
 **Hierarchy Example:**
 ```
-Acme Corp (HQ, parent_id=NULL)
+Acme Corp (HQ, parent_id=NULL, logo_url=/logos/acme.png, primary_color=#1a73e8)
 ├── Sydney Office (Division, parent_id=Acme Corp)
 │   ├── Engineering (Department, parent_id=Sydney Office)
 │   └── Sales (Department, parent_id=Sydney Office)
@@ -140,13 +179,13 @@ User-scope assignments for membership-based multi-tenancy.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
-| user_id | UUID/TEXT | NO | - | FK to hazo_users.id |
-| scope_id | UUID/TEXT | NO | - | FK to hazo_scopes.id (direct assignment) |
-| root_scope_id | UUID/TEXT | NO | - | FK to hazo_scopes.id (root firm/organization) |
-| role_id | UUID/TEXT | NO | - | FK to hazo_roles.id (role within this scope) |
-| status | TEXT | YES | 'active' | 'active', 'inactive' |
-| created_at | TIMESTAMP/TEXT | NO | NOW() | Creation timestamp |
-| changed_at | TIMESTAMP/TEXT | NO | NOW() | Last modification timestamp |
+| user_id | UUID | NO | - | FK to hazo_users.id |
+| scope_id | UUID | NO | - | FK to hazo_scopes.id (direct assignment) |
+| root_scope_id | UUID | NO | - | FK to hazo_scopes.id (root firm/organization) |
+| role_id | UUID | NO | - | FK to hazo_roles.id (role within this scope) |
+| status | hazo_enum_user_scope_status_type | YES | 'ACTIVE' | Membership status |
+| created_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Creation timestamp |
+| changed_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Last modification timestamp |
 
 Primary Key: (user_id, scope_id)
 
@@ -161,18 +200,16 @@ Invitations for onboarding new users to existing scopes.
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
-| id | UUID/TEXT | NO | - | Primary key |
-| email_address | TEXT | NO | - | Invitee's email address |
-| token | TEXT | NO | - | Unique invitation token |
-| scope_id | UUID/TEXT | NO | - | FK to hazo_scopes.id (scope to join) |
-| root_scope_id | UUID/TEXT | NO | - | FK to hazo_scopes.id (root firm) |
-| role_id | UUID/TEXT | NO | - | FK to hazo_roles.id (role for invitee) |
-| invited_by | UUID/TEXT | YES | - | FK to hazo_users.id (inviter) |
-| status | TEXT | NO | 'pending' | 'pending', 'accepted', 'expired', 'revoked' |
-| expires_at | TIMESTAMP/TEXT | NO | - | Invitation expiration time |
-| accepted_at | TIMESTAMP/TEXT | YES | - | When invitation was accepted |
-| created_at | TIMESTAMP/TEXT | NO | NOW() | Creation timestamp |
-| changed_at | TIMESTAMP/TEXT | NO | NOW() | Last modification timestamp |
+| id | UUID | NO | - | Primary key |
+| email | VARCHAR(255) | NO | - | Invitee's email address |
+| token | VARCHAR(255) | NO | - | Unique invitation token |
+| scope_id | UUID | NO | - | FK to hazo_scopes.id (scope to join) |
+| root_scope_id | UUID | NO | - | FK to hazo_scopes.id (root firm) |
+| role_id | UUID | NO | - | FK to hazo_roles.id (role for invitee) |
+| invited_by | UUID | YES | - | FK to hazo_users.id (inviter) |
+| expires_at | TIMESTAMP WITH TIME ZONE | NO | - | Invitation expiration time |
+| is_used | BOOLEAN | YES | false | Whether invitation has been used |
+| created_at | TIMESTAMP WITH TIME ZONE | NO | NOW() | Creation timestamp |
 
 **Invitation Flow:**
 1. Admin creates invitation with email, scope, and role
@@ -204,11 +241,9 @@ Invitations for onboarding new users to existing scopes.
 - `idx_hazo_user_scopes_role` on (role_id)
 
 ### hazo_invitations
-- `idx_hazo_invitations_email` on (email_address)
+- `idx_hazo_invitations_email` on (email)
 - `idx_hazo_invitations_token` on (token)
 - `idx_hazo_invitations_scope` on (scope_id)
-- `idx_hazo_invitations_status` on (status)
-- `idx_hazo_invitations_expires` on (expires_at)
 
 ## Default Data
 
@@ -247,3 +282,4 @@ Invitations for onboarding new users to existing scopes.
 | 007_add_user_type_to_hazo_users.sql | Add user_type column |
 | 008_add_app_user_data_to_hazo_users.sql | Add app_user_data JSON column |
 | 009_scope_consolidation.sql | Consolidate to unified scopes, add invitations |
+| 010_add_branding_to_hazo_scopes.sql | Add firm branding columns (logo_url, colors, tagline) |

@@ -11,21 +11,26 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from "../../../ui/alert-dialog";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
-import { Loader2, Plus, Edit, Trash2, CircleCheck, CircleX, Building2, FolderTree, RefreshCw, } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, CircleCheck, CircleX, Building2, FolderTree, RefreshCw, Palette, } from "lucide-react";
+import { BrandingEditor } from "../../scope_management/components/branding_editor";
 import { toast } from "sonner";
 import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 import { use_hazo_auth } from "../../shared/hooks/use_hazo_auth";
 // section: helpers
 // Convert ScopeTreeNode to TreeDataItem format
-function convertToTreeData(nodes, onEdit, onDelete, onAddChild) {
+function convertToTreeData(nodes, onEdit, onDelete, onAddChild, onBranding) {
     return nodes.map((node) => {
         const hasChildren = node.children && node.children.length > 0;
+        const isRootScope = node.parent_id === null;
         const item = {
             id: node.id,
             name: `${node.name} (${node.level})`,
             icon: Building2,
             scopeData: node,
-            actions: (_jsxs("div", { className: "flex items-center gap-1", children: [_jsx(Button, { variant: "ghost", size: "sm", className: "h-6 w-6 p-0", onClick: (e) => {
+            actions: (_jsxs("div", { className: "flex items-center gap-1", children: [isRootScope && (_jsx(Button, { variant: "ghost", size: "sm", className: "h-6 w-6 p-0", onClick: (e) => {
+                            e.stopPropagation();
+                            onBranding(node);
+                        }, title: "Manage branding", children: _jsx(Palette, { className: "h-3 w-3" }) })), _jsx(Button, { variant: "ghost", size: "sm", className: "h-6 w-6 p-0", onClick: (e) => {
                             e.stopPropagation();
                             onAddChild(node);
                         }, title: "Add child scope", children: _jsx(Plus, { className: "h-3 w-3" }) }), _jsx(Button, { variant: "ghost", size: "sm", className: "h-6 w-6 p-0", onClick: (e) => {
@@ -37,7 +42,7 @@ function convertToTreeData(nodes, onEdit, onDelete, onAddChild) {
                         }, title: "Delete scope", children: _jsx(Trash2, { className: "h-3 w-3" }) })] })),
         };
         if (hasChildren) {
-            item.children = convertToTreeData(node.children, onEdit, onDelete, onAddChild);
+            item.children = convertToTreeData(node.children, onEdit, onDelete, onAddChild, onBranding);
         }
         return item;
     });
@@ -62,8 +67,10 @@ export function ScopeHierarchyTab({ className, }) {
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [brandingDialogOpen, setBrandingDialogOpen] = useState(false);
     const [selectedScope, setSelectedScope] = useState(null);
     const [addParentScope, setAddParentScope] = useState(null);
+    const [brandingScope, setBrandingScope] = useState(null);
     // Form state
     const [newName, setNewName] = useState("");
     const [newLevel, setNewLevel] = useState("");
@@ -123,6 +130,16 @@ export function ScopeHierarchyTab({ className, }) {
     const openDeleteDialog = (scope) => {
         setSelectedScope(scope);
         setDeleteDialogOpen(true);
+    };
+    // Handle branding
+    const openBrandingDialog = (scope) => {
+        setBrandingScope(scope);
+        setBrandingDialogOpen(true);
+    };
+    // Close branding dialog
+    const closeBrandingDialog = () => {
+        setBrandingDialogOpen(false);
+        setBrandingScope(null);
     };
     // Create scope
     const handleCreateScope = async () => {
@@ -242,7 +259,7 @@ export function ScopeHierarchyTab({ className, }) {
     };
     // Convert tree to TreeDataItem format
     const treeData = useMemo(() => {
-        return convertToTreeData(tree, openEditDialog, openDeleteDialog, handleAddChildScope);
+        return convertToTreeData(tree, openEditDialog, openDeleteDialog, handleAddChildScope, openBrandingDialog);
     }, [tree]);
     // Handle tree item selection
     const handleSelectChange = (item) => {
@@ -258,5 +275,5 @@ export function ScopeHierarchyTab({ className, }) {
                                     }, variant: "outline", children: [_jsx(CircleX, { className: "h-4 w-4 mr-2" }), "Cancel"] })] })] }) }), _jsx(AlertDialog, { open: deleteDialogOpen, onOpenChange: setDeleteDialogOpen, children: _jsxs(AlertDialogContent, { children: [_jsxs(AlertDialogHeader, { children: [_jsx(AlertDialogTitle, { children: "Delete Scope" }), _jsxs(AlertDialogDescription, { children: ["Are you sure you want to delete \"", selectedScope === null || selectedScope === void 0 ? void 0 : selectedScope.name, "\"? This action cannot be undone and will also delete all child scopes."] })] }), _jsxs(AlertDialogFooter, { children: [_jsx(AlertDialogAction, { onClick: handleDeleteScope, disabled: actionLoading, children: actionLoading ? (_jsxs(_Fragment, { children: [_jsx(Loader2, { className: "h-4 w-4 mr-2 animate-spin" }), "Deleting..."] })) : ("Delete") }), _jsx(AlertDialogCancel, { onClick: () => {
                                         setDeleteDialogOpen(false);
                                         setSelectedScope(null);
-                                    }, children: "Cancel" })] })] }) })] }));
+                                    }, children: "Cancel" })] })] }) }), brandingScope && (_jsx(BrandingEditor, { scopeId: brandingScope.id, scopeName: brandingScope.name, isOpen: brandingDialogOpen, onClose: closeBrandingDialog }))] }));
 }

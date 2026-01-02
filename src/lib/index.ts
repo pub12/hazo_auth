@@ -38,6 +38,8 @@ export { get_user_fields_config } from "./user_fields_config.server";
 export { get_file_types_config } from "./file_types_config.server";
 export { get_oauth_config, is_google_oauth_enabled, is_email_password_enabled } from "./oauth_config.server";
 export type { OAuthConfig } from "./oauth_config.server";
+export { get_branding_config, is_branding_enabled, is_allowed_logo_format, get_max_logo_size_bytes } from "./branding_config.server";
+export type { FirmBrandingConfig } from "./branding_config.server";
 
 // section: util_exports
 export { sanitize_error_for_user } from "./utils/error_sanitizer";

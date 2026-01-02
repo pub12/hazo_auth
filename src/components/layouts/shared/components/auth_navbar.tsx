@@ -37,15 +37,15 @@ export type AuthNavbarProps = {
 // section: component
 export function AuthNavbar({
   logo_path = "",
-  logo_width = 32,
-  logo_height = 32,
+  logo_width = 28,
+  logo_height = 28,
   company_name = "",
   home_path = "/",
   home_label = "Home",
   show_home_link = true,
   background_color,
   text_color,
-  height = 64,
+  height = 48,
   className,
 }: AuthNavbarProps) {
   // Only show logo if logo_path is configured (non-empty)

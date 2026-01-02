@@ -152,9 +152,9 @@ export const DEFAULT_NAVBAR = {
     /** Logo image path (empty = no logo shown, configure to show) */
     logo_path: "",
     /** Logo width in pixels */
-    logo_width: 32,
+    logo_width: 28,
     /** Logo height in pixels */
-    logo_height: 32,
+    logo_height: 28,
     /** Company/application name displayed next to logo */
     company_name: "",
     /** Home link path */
@@ -167,8 +167,8 @@ export const DEFAULT_NAVBAR = {
     background_color: "",
     /** Navbar text color (empty = inherit) */
     text_color: "",
-    /** Navbar height in pixels */
-    height: 64,
+    /** Navbar height in pixels (default: 48px for slim appearance) */
+    height: 48,
 };
 // section: user_types
 export const DEFAULT_USER_TYPES = {

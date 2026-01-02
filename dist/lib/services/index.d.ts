@@ -17,4 +17,5 @@ export * from "./post_verification_service";
 export * from "./scope_service";
 export * from "./user_scope_service";
 export * from "./oauth_service";
+export * from "./branding_service";
 //# sourceMappingURL=index.d.ts.map

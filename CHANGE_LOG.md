@@ -7,6 +7,103 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.1] - 2026-01-02
+
+### Fixed - StandaloneLayoutWrapper Layout Bug
+
+**Issue**: The `StandaloneLayoutWrapper` component had double `min-h-screen` classes (on both outer and inner wrappers) and used conflicting inline `minHeight` CSS that caused layout issues in consuming apps. The content wasn't properly centered.
+
+**Root Cause**: Nested wrapper structure with redundant `min-h-screen` classes and inline CSS (`minHeight: calc(100vh - navbarHeight)`) conflicting with Tailwind classes.
+
+**Fix Applied**:
+- Removed nested wrapper structure - now uses single wrapper with `min-h-screen` and flexbox
+- Removed inline `minHeight: calc(100vh - navbarHeight)` style
+- Uses pure flexbox for layout:
+  - Outer wrapper: `flex flex-col min-h-screen`
+  - Content area: `flex-1` to fill remaining space
+- Proper vertical centering when navbar is enabled
+
+**Files Modified**:
+- `src/components/layouts/shared/components/standalone_layout_wrapper.tsx` - Simplified wrapper structure, removed inline CSS
+
+**Impact**: Auth pages now render correctly in consuming apps without layout conflicts. Vertical centering works properly when navbar is enabled.
+
+---
+
+### Changed - Slimmer Navbar Design
+
+**Enhancement**: Reduced default navbar height and logo dimensions for a more modern, compact appearance.
+
+**Why this change**: The original 64px navbar height felt bulky on modern displays. A slimmer 48px design provides a more contemporary look while maintaining excellent usability.
+
+**What Changed**:
+- **Default navbar height**: Reduced from 64px to 48px (25% reduction)
+- **Default logo dimensions**: Reduced from 32x32 to 28x28 (to fit slimmer navbar)
+
+**Files Modified**:
+- `src/lib/config/default_config.ts` - Updated `DEFAULT_NAVBAR` defaults
+- `src/components/layouts/shared/components/auth_navbar.tsx` - Uses new defaults
+
+**Configuration**:
+```ini
+[hazo_auth__navbar]
+height = 48              # Reduced from 64
+logo_width = 28          # Reduced from 32
+logo_height = 28         # Reduced from 32
+```
+
+**Backward Compatibility**:
+- Existing configurations with custom heights/logo sizes are unaffected
+- Only new installations or configs without explicit height settings will use the new defaults
+- Custom overrides in config files continue to work as before
+
+---
+
+### Changed - Clarified Navbar Configuration Documentation
+
+**Documentation Enhancement**: Updated documentation to clearly indicate that `logo_path` and `company_name` default to empty strings and MUST be configured by consuming apps for the navbar to display branding.
+
+**Why this change**: Users were confused when the navbar appeared but showed no logo or company name, not realizing these fields default to empty strings and require explicit configuration.
+
+**What Changed**:
+
+1. **hazo_auth_config.example.ini**:
+   - Changed navbar section to show `logo_path` and `company_name` as uncommented examples
+   - Added clear comments indicating these are required for branding to appear
+   - Added note that navbar will render without branding if not configured
+
+2. **CLAUDE.md**:
+   - Updated navbar configuration section to highlight default empty strings
+   - Added "IMPORTANT" note that logo and company name must be configured
+   - Clarified that navbar can be enabled without branding (just the container)
+
+3. **SETUP_CHECKLIST.md**:
+   - Added Step 1.4 for navbar configuration in Quick Start
+   - Added troubleshooting section: "Navbar appears but shows no logo or company name"
+   - Included example configuration with placeholder values
+
+**Files Modified**:
+- `hazo_auth_config.example.ini` - Updated navbar section with clearer comments
+- `CLAUDE.md` - Added important notes about required configuration
+- `SETUP_CHECKLIST.md` - Added setup step and troubleshooting guidance
+
+**Example Configuration** (from updated example file):
+```ini
+[hazo_auth__navbar]
+enable_navbar = true
+logo_path = /logo.png                # REQUIRED: Path to your logo (navbar shows no logo if empty)
+company_name = My Company            # REQUIRED: Your company name (navbar shows no name if empty)
+logo_width = 28
+logo_height = 28
+home_path = /
+home_label = Home
+show_home_link = true
+```
+
+**Impact**: New users will have clearer guidance on configuring the navbar, reducing confusion about missing branding elements.
+
+---
+
 ## [5.0.0] - 2026-01-01
 
 ### Changed - Major Architectural Overhaul: Scope-Based Multi-Tenancy

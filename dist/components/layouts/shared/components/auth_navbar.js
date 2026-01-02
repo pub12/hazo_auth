@@ -8,7 +8,7 @@ import Image from "next/image";
 import { Home } from "lucide-react";
 import { cn } from "../../../../lib/utils";
 // section: component
-export function AuthNavbar({ logo_path = "", logo_width = 32, logo_height = 32, company_name = "", home_path = "/", home_label = "Home", show_home_link = true, background_color, text_color, height = 64, className, }) {
+export function AuthNavbar({ logo_path = "", logo_width = 28, logo_height = 28, company_name = "", home_path = "/", home_label = "Home", show_home_link = true, background_color, text_color, height = 48, className, }) {
     // Only show logo if logo_path is configured (non-empty)
     const showLogo = logo_path !== "";
     const navStyle = Object.assign(Object.assign({ height: `${height}px` }, (background_color && { backgroundColor: background_color })), (text_color && { color: text_color }));

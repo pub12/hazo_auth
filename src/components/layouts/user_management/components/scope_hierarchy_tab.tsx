@@ -37,7 +37,9 @@ import {
   Building2,
   FolderTree,
   RefreshCw,
+  Palette,
 } from "lucide-react";
+import { BrandingEditor } from "../../scope_management/components/branding_editor";
 import { toast } from "sonner";
 import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider";
 import { use_hazo_auth } from "../../shared/hooks/use_hazo_auth";
@@ -70,10 +72,12 @@ function convertToTreeData(
   nodes: ScopeTreeNode[],
   onEdit: (node: ScopeTreeNode) => void,
   onDelete: (node: ScopeTreeNode) => void,
-  onAddChild: (node: ScopeTreeNode) => void
+  onAddChild: (node: ScopeTreeNode) => void,
+  onBranding: (node: ScopeTreeNode) => void
 ): ExtendedTreeDataItem[] {
   return nodes.map((node) => {
     const hasChildren = node.children && node.children.length > 0;
+    const isRootScope = node.parent_id === null;
 
     const item: ExtendedTreeDataItem = {
       id: node.id,
@@ -82,6 +86,21 @@ function convertToTreeData(
       scopeData: node,
       actions: (
         <div className="flex items-center gap-1">
+          {/* Branding button - only for root scopes */}
+          {isRootScope && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onBranding(node);
+              }}
+              title="Manage branding"
+            >
+              <Palette className="h-3 w-3" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -127,7 +146,8 @@ function convertToTreeData(
         node.children!,
         onEdit,
         onDelete,
-        onAddChild
+        onAddChild,
+        onBranding
       );
     }
 
@@ -159,8 +179,10 @@ export function ScopeHierarchyTab({
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [brandingDialogOpen, setBrandingDialogOpen] = useState(false);
   const [selectedScope, setSelectedScope] = useState<ScopeTreeNode | null>(null);
   const [addParentScope, setAddParentScope] = useState<ScopeTreeNode | null>(null);
+  const [brandingScope, setBrandingScope] = useState<ScopeTreeNode | null>(null);
 
   // Form state
   const [newName, setNewName] = useState("");
@@ -227,6 +249,18 @@ export function ScopeHierarchyTab({
   const openDeleteDialog = (scope: ScopeTreeNode) => {
     setSelectedScope(scope);
     setDeleteDialogOpen(true);
+  };
+
+  // Handle branding
+  const openBrandingDialog = (scope: ScopeTreeNode) => {
+    setBrandingScope(scope);
+    setBrandingDialogOpen(true);
+  };
+
+  // Close branding dialog
+  const closeBrandingDialog = () => {
+    setBrandingDialogOpen(false);
+    setBrandingScope(null);
   };
 
   // Create scope
@@ -361,7 +395,8 @@ export function ScopeHierarchyTab({
       tree,
       openEditDialog,
       openDeleteDialog,
-      handleAddChildScope
+      handleAddChildScope,
+      openBrandingDialog
     );
   }, [tree]);
 
@@ -619,6 +654,16 @@ export function ScopeHierarchyTab({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Branding Editor Dialog */}
+      {brandingScope && (
+        <BrandingEditor
+          scopeId={brandingScope.id}
+          scopeName={brandingScope.name}
+          isOpen={brandingDialogOpen}
+          onClose={closeBrandingDialog}
+        />
+      )}
     </div>
   );
 }

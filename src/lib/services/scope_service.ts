@@ -21,11 +21,27 @@ export const DEFAULT_SYSTEM_SCOPE_ID = "00000000-0000-0000-0000-000000000001";
 
 // section: types
 
+/**
+ * Firm branding configuration stored as separate columns on hazo_scopes
+ * Only root scopes (firms) typically have branding set - child scopes inherit
+ */
+export type FirmBranding = {
+  logo_url?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  tagline?: string | null;
+};
+
 export type ScopeRecord = {
   id: string;
   name: string;
   level: string; // descriptive name like "HQ", "Division", "Department", "system", "default"
   parent_id: string | null;
+  // Branding fields (typically only on root scopes)
+  logo_url: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+  tagline: string | null;
   created_at: string;
   changed_at: string;
 };
@@ -41,12 +57,22 @@ export type CreateScopeData = {
   name: string;
   level: string;
   parent_id?: string | null;
+  // Branding fields (optional, typically only set on root scopes)
+  logo_url?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  tagline?: string | null;
 };
 
 export type UpdateScopeData = {
   name?: string;
   level?: string;
   parent_id?: string | null;
+  // Branding fields
+  logo_url?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  tagline?: string | null;
 };
 
 export type ScopeTreeNode = ScopeRecord & {
@@ -54,6 +80,44 @@ export type ScopeTreeNode = ScopeRecord & {
 };
 
 // section: helpers
+
+/**
+ * Normalizes a raw scope record from the database
+ */
+function normalize_scope_record(raw: Record<string, unknown>): ScopeRecord {
+  return {
+    id: raw.id as string,
+    name: raw.name as string,
+    level: raw.level as string,
+    parent_id: raw.parent_id as string | null,
+    logo_url: (raw.logo_url as string | null) || null,
+    primary_color: (raw.primary_color as string | null) || null,
+    secondary_color: (raw.secondary_color as string | null) || null,
+    tagline: (raw.tagline as string | null) || null,
+    created_at: raw.created_at as string,
+    changed_at: raw.changed_at as string,
+  };
+}
+
+/**
+ * Extracts branding fields from a ScopeRecord into a FirmBranding object
+ * Returns null if all branding fields are empty
+ */
+export function extract_branding(scope: ScopeRecord): FirmBranding | null {
+  const branding: FirmBranding = {};
+  if (scope.logo_url) branding.logo_url = scope.logo_url;
+  if (scope.primary_color) branding.primary_color = scope.primary_color;
+  if (scope.secondary_color) branding.secondary_color = scope.secondary_color;
+  if (scope.tagline) branding.tagline = scope.tagline;
+  return Object.keys(branding).length > 0 ? branding : null;
+}
+
+/**
+ * Checks if a scope has any branding set
+ */
+export function has_branding(scope: ScopeRecord): boolean {
+  return !!(scope.logo_url || scope.primary_color || scope.secondary_color || scope.tagline);
+}
 
 /**
  * Checks if the given scope_id is the super admin scope
@@ -104,7 +168,7 @@ export async function get_all_scopes(
 
     return {
       success: true,
-      scopes: scopes as ScopeRecord[],
+      scopes: scopes.map((s) => normalize_scope_record(s as Record<string, unknown>)),
     };
   } catch (error) {
     const logger = create_app_logger();
@@ -156,7 +220,7 @@ export async function get_scope_by_id(
 
     return {
       success: true,
-      scope: scopes[0] as ScopeRecord,
+      scope: normalize_scope_record(scopes[0] as Record<string, unknown>),
     };
   } catch (error) {
     const logger = create_app_logger();
@@ -199,7 +263,7 @@ export async function get_scope_by_name(
 
     return {
       success: true,
-      scope: scopes[0] as ScopeRecord,
+      scope: normalize_scope_record(scopes[0] as Record<string, unknown>),
     };
   } catch (error) {
     const logger = create_app_logger();
@@ -248,6 +312,10 @@ export async function create_scope(
       name: data.name,
       level: data.level,
       parent_id: data.parent_id || null,
+      logo_url: data.logo_url || null,
+      primary_color: data.primary_color || null,
+      secondary_color: data.secondary_color || null,
+      tagline: data.tagline || null,
       created_at: now,
       changed_at: now,
     };
@@ -263,7 +331,7 @@ export async function create_scope(
 
     return {
       success: true,
-      scope: inserted[0] as ScopeRecord,
+      scope: normalize_scope_record(inserted[0] as Record<string, unknown>),
     };
   } catch (error) {
     const logger = create_app_logger();
@@ -359,6 +427,20 @@ export async function update_scope(
       update_data.parent_id = data.parent_id;
     }
 
+    // Handle branding fields individually
+    if (data.logo_url !== undefined) {
+      update_data.logo_url = data.logo_url;
+    }
+    if (data.primary_color !== undefined) {
+      update_data.primary_color = data.primary_color;
+    }
+    if (data.secondary_color !== undefined) {
+      update_data.secondary_color = data.secondary_color;
+    }
+    if (data.tagline !== undefined) {
+      update_data.tagline = data.tagline;
+    }
+
     const updated = await scope_service.updateById(scope_id, update_data);
 
     if (!Array.isArray(updated) || updated.length === 0) {
@@ -370,7 +452,7 @@ export async function update_scope(
 
     return {
       success: true,
-      scope: updated[0] as ScopeRecord,
+      scope: normalize_scope_record(updated[0] as Record<string, unknown>),
     };
   } catch (error) {
     const logger = create_app_logger();
@@ -460,7 +542,9 @@ export async function get_scope_children(
 
     return {
       success: true,
-      scopes: Array.isArray(children) ? (children as ScopeRecord[]) : [],
+      scopes: Array.isArray(children)
+        ? children.map((c) => normalize_scope_record(c as Record<string, unknown>))
+        : [],
     };
   } catch (error) {
     const logger = create_app_logger();
@@ -719,6 +803,10 @@ export async function ensure_super_admin_scope(
       name: "Super Admin",
       level: "system",
       parent_id: null,
+      logo_url: null,
+      primary_color: null,
+      secondary_color: null,
+      tagline: null,
       created_at: now,
       changed_at: now,
     });
@@ -732,7 +820,7 @@ export async function ensure_super_admin_scope(
 
     return {
       success: true,
-      scope: inserted[0] as ScopeRecord,
+      scope: normalize_scope_record(inserted[0] as Record<string, unknown>),
     };
   } catch (error) {
     const logger = create_app_logger();
@@ -776,6 +864,10 @@ export async function ensure_default_system_scope(
       name: "System",
       level: "default",
       parent_id: null,
+      logo_url: null,
+      primary_color: null,
+      secondary_color: null,
+      tagline: null,
       created_at: now,
       changed_at: now,
     });
@@ -789,7 +881,7 @@ export async function ensure_default_system_scope(
 
     return {
       success: true,
-      scope: inserted[0] as ScopeRecord,
+      scope: normalize_scope_record(inserted[0] as Record<string, unknown>),
     };
   } catch (error) {
     const logger = create_app_logger();

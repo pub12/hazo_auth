@@ -18,9 +18,16 @@ npx hazo_auth generate-routes --pages
 
 # 4. Set up environment variables
 cp .env.local.example .env.local
-# Edit .env.local and add ZEPTOMAIL_API_KEY
+# Edit .env.local and add ZEPTOMAIL_API_KEY and JWT_SECRET
 
-# 5. Start dev server and test
+# 5. Configure navbar logo and company name (IMPORTANT)
+# Edit hazo_auth_config.ini and set:
+#   [hazo_auth__navbar]
+#   logo_path = /logo.png
+#   company_name = My Company
+# Note: Copy your logo to public/logo.png
+
+# 6. Start dev server and test
 npm run dev
 # Visit http://localhost:3000/hazo_auth/login
 ```
@@ -98,7 +105,48 @@ export default function RootLayout({ children }) {
 }
 ```
 
-### Step 1.4: Enable Dark Mode Support (Optional)
+### Step 1.4: Configure Navbar (Logo and Company Name)
+
+The navbar appears on all auth pages (login, register, etc.) when using standalone layout mode. **By default, the logo and company name are NOT displayed** - you must configure them.
+
+**Edit `hazo_auth_config.ini`:**
+```ini
+[hazo_auth__navbar]
+# Enable navbar (default: true)
+enable_navbar = true
+
+# Logo - place your logo in public folder and set the path
+logo_path = /logo.png
+
+# Logo size (default: 28x28 - fits slim 48px navbar)
+logo_width = 28
+logo_height = 28
+
+# Company name displayed next to logo
+company_name = My Company
+
+# Home link (right side of navbar)
+show_home_link = true
+home_path = /
+home_label = Home
+
+# Navbar height (default: 48px for slim appearance)
+height = 48
+```
+
+**Important:**
+- If `logo_path` is empty, no logo will be displayed
+- If `company_name` is empty, no company name will be displayed
+- The default navbar height is 48px (slim design)
+
+**Checklist:**
+- [ ] Logo file exists in `public/` folder (e.g., `public/logo.png`)
+- [ ] `logo_path` configured in `hazo_auth_config.ini`
+- [ ] `company_name` configured in `hazo_auth_config.ini`
+
+---
+
+### Step 1.5: Enable Dark Mode Support (Optional)
 
 hazo_auth components support dark mode via CSS custom properties. Add the CSS variables to your global styles:
 
@@ -1708,6 +1756,34 @@ sqlite3 data/hazo_auth.sqlite ".tables" | grep -E "hazo_scopes|hazo_user_scopes|
 2. Check cookies are being set (inspect browser devtools > Application > Cookies)
 3. Ensure API routes are on same domain (no CORS issues)
 
+### Issue: Navbar logo or company name not showing
+
+**Symptoms:** Navbar appears but logo and/or company name are missing.
+
+**Solutions:**
+1. **Configure logo and company name in `hazo_auth_config.ini`:**
+   ```ini
+   [hazo_auth__navbar]
+   logo_path = /logo.png
+   company_name = My Company
+   ```
+
+2. **Ensure logo file exists:**
+   - Place your logo in the `public/` folder
+   - The path should be relative to public (e.g., `/logo.png` for `public/logo.png`)
+
+3. **Verify config is being read:**
+   - Config file must be in project root (where `process.cwd()` points)
+   - Restart the dev server after changing config
+
+4. **Check if navbar is enabled:**
+   ```ini
+   [hazo_auth__navbar]
+   enable_navbar = true
+   ```
+
+**Note:** By default, `logo_path` and `company_name` are empty strings, so nothing displays until you configure them.
+
 ---
 
 ## Final Checklist
@@ -1715,7 +1791,8 @@ sqlite3 data/hazo_auth.sqlite ".tables" | grep -E "hazo_scopes|hazo_user_scopes|
 **Configuration:**
 - [ ] `hazo_auth_config.ini` configured
 - [ ] `hazo_notify_config.ini` configured
-- [ ] `.env.local` with all required variables
+- [ ] `.env.local` with all required variables (ZEPTOMAIL_API_KEY, JWT_SECRET)
+- [ ] Navbar configured with logo and company name (see Step 1.4)
 
 **Database:**
 - [ ] Database created and accessible
@@ -1728,6 +1805,7 @@ sqlite3 data/hazo_auth.sqlite ".tables" | grep -E "hazo_scopes|hazo_user_scopes|
 **Pages:**
 - [ ] All 6 auth pages created
 - [ ] Pages render without errors
+- [ ] Navbar displays with logo and company name
 
 **Features:**
 - [ ] Registration works

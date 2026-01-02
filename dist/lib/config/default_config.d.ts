@@ -129,9 +129,9 @@ export declare const DEFAULT_NAVBAR: {
     /** Logo image path (empty = no logo shown, configure to show) */
     readonly logo_path: "";
     /** Logo width in pixels */
-    readonly logo_width: 32;
+    readonly logo_width: 28;
     /** Logo height in pixels */
-    readonly logo_height: 32;
+    readonly logo_height: 28;
     /** Company/application name displayed next to logo */
     readonly company_name: "";
     /** Home link path */
@@ -144,8 +144,8 @@ export declare const DEFAULT_NAVBAR: {
     readonly background_color: "";
     /** Navbar text color (empty = inherit) */
     readonly text_color: "";
-    /** Navbar height in pixels */
-    readonly height: 64;
+    /** Navbar height in pixels (default: 48px for slim appearance) */
+    readonly height: 48;
 };
 export declare const DEFAULT_USER_TYPES: {
     /** Enable user types feature (default: false) */
@@ -345,9 +345,9 @@ export declare const HAZO_AUTH_DEFAULTS: {
         /** Logo image path (empty = no logo shown, configure to show) */
         readonly logo_path: "";
         /** Logo width in pixels */
-        readonly logo_width: 32;
+        readonly logo_width: 28;
         /** Logo height in pixels */
-        readonly logo_height: 32;
+        readonly logo_height: 28;
         /** Company/application name displayed next to logo */
         readonly company_name: "";
         /** Home link path */
@@ -360,8 +360,8 @@ export declare const HAZO_AUTH_DEFAULTS: {
         readonly background_color: "";
         /** Navbar text color (empty = inherit) */
         readonly text_color: "";
-        /** Navbar height in pixels */
-        readonly height: 64;
+        /** Navbar height in pixels (default: 48px for slim appearance) */
+        readonly height: 48;
     };
     readonly userTypes: {
         /** Enable user types feature (default: false) */

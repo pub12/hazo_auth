@@ -9,11 +9,25 @@ export declare const SUPER_ADMIN_SCOPE_ID = "00000000-0000-0000-0000-00000000000
  * All users are assigned to this scope when multi-tenancy is disabled
  */
 export declare const DEFAULT_SYSTEM_SCOPE_ID = "00000000-0000-0000-0000-000000000001";
+/**
+ * Firm branding configuration stored as separate columns on hazo_scopes
+ * Only root scopes (firms) typically have branding set - child scopes inherit
+ */
+export type FirmBranding = {
+    logo_url?: string | null;
+    primary_color?: string | null;
+    secondary_color?: string | null;
+    tagline?: string | null;
+};
 export type ScopeRecord = {
     id: string;
     name: string;
     level: string;
     parent_id: string | null;
+    logo_url: string | null;
+    primary_color: string | null;
+    secondary_color: string | null;
+    tagline: string | null;
     created_at: string;
     changed_at: string;
 };
@@ -27,15 +41,32 @@ export type CreateScopeData = {
     name: string;
     level: string;
     parent_id?: string | null;
+    logo_url?: string | null;
+    primary_color?: string | null;
+    secondary_color?: string | null;
+    tagline?: string | null;
 };
 export type UpdateScopeData = {
     name?: string;
     level?: string;
     parent_id?: string | null;
+    logo_url?: string | null;
+    primary_color?: string | null;
+    secondary_color?: string | null;
+    tagline?: string | null;
 };
 export type ScopeTreeNode = ScopeRecord & {
     children?: ScopeTreeNode[];
 };
+/**
+ * Extracts branding fields from a ScopeRecord into a FirmBranding object
+ * Returns null if all branding fields are empty
+ */
+export declare function extract_branding(scope: ScopeRecord): FirmBranding | null;
+/**
+ * Checks if a scope has any branding set
+ */
+export declare function has_branding(scope: ScopeRecord): boolean;
 /**
  * Checks if the given scope_id is the super admin scope
  */

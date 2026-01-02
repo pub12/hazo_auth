@@ -15,8 +15,8 @@ export declare function POST(request: NextRequest): Promise<NextResponse<{
     error: string;
 }> | NextResponse<{
     success: boolean;
-    scope: import("../../../../lib/services/scope_service").ScopeRecord | undefined;
-    user_scope: import("../../../../lib/services/user_scope_service").UserScope | undefined;
+    scope: import("../../../..").ScopeRecord | undefined;
+    user_scope: import("../../../..").UserScope | undefined;
     message: string;
 }>>;
 //# sourceMappingURL=route.d.ts.map

@@ -7,12 +7,9 @@ import { cn } from "../../../../lib/utils";
 import { AuthNavbar } from "./auth_navbar";
 // section: component
 export function StandaloneLayoutWrapper({ children, heading = "hazo auth", description = "Drop-in authentication flows that inherit your existing theme.", wrapperClassName, contentClassName, showHeading = true, showDescription = true, navbar, verticalCenter = true, }) {
-    var _a;
     const hasNavbar = navbar !== null && navbar !== undefined;
-    // Calculate navbar height for vertical centering offset
-    const navbarHeight = hasNavbar ? ((_a = navbar === null || navbar === void 0 ? void 0 : navbar.height) !== null && _a !== void 0 ? _a : 64) : 0;
     return (
-    // Outer wrapper: Consuming app's wrapperClassName applied here for theming/background
-    // This is isolated from the internal layout structure
-    _jsx("div", { className: cn("cls_standalone_layout_outer min-h-screen w-full bg-background", wrapperClassName), children: _jsxs("div", { className: "cls_standalone_layout_wrapper flex min-h-screen w-full flex-col", children: [hasNavbar && _jsx(AuthNavbar, Object.assign({}, navbar)), _jsx("div", { className: cn("cls_standalone_layout_content_area flex-1", verticalCenter && "flex items-center justify-center"), style: verticalCenter ? { minHeight: `calc(100vh - ${navbarHeight}px)` } : undefined, children: _jsxs("div", { className: cn("cls_standalone_layout_content mx-auto flex w-full max-w-5xl flex-col gap-8 p-6", contentClassName), children: [(showHeading || showDescription) && (_jsxs("div", { className: "cls_standalone_layout_header text-center", children: [showHeading && (_jsx("h1", { className: "cls_standalone_layout_title text-2xl font-semibold tracking-tight text-foreground", children: heading })), showDescription && (_jsx("p", { className: "cls_standalone_layout_description mt-2 text-sm text-muted-foreground", children: description }))] })), _jsx("div", { className: "cls_standalone_layout_body", children: children })] }) })] }) }));
+    // Single wrapper with min-h-screen and flexbox for proper layout
+    // wrapperClassName applied here for consuming app theming/background
+    _jsxs("div", { className: cn("cls_standalone_layout_outer cls_standalone_layout_wrapper flex min-h-screen w-full flex-col bg-background", wrapperClassName), children: [hasNavbar && _jsx(AuthNavbar, Object.assign({}, navbar)), _jsx("div", { className: cn("cls_standalone_layout_content_area flex-1", verticalCenter && "flex items-center justify-center"), children: _jsxs("div", { className: cn("cls_standalone_layout_content mx-auto flex w-full max-w-5xl flex-col gap-8 p-6", contentClassName), children: [(showHeading || showDescription) && (_jsxs("div", { className: "cls_standalone_layout_header text-center", children: [showHeading && (_jsx("h1", { className: "cls_standalone_layout_title text-2xl font-semibold tracking-tight text-foreground", children: heading })), showDescription && (_jsx("p", { className: "cls_standalone_layout_description mt-2 text-sm text-muted-foreground", children: description }))] })), _jsx("div", { className: "cls_standalone_layout_body", children: children })] }) })] }));
 }
