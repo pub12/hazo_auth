@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       id: string;
       email_address: string;
       name: string | null;
-      status: string; // Database column: 'active', 'inactive', 'suspended'
+      status: string; // Database column: 'ACTIVE', 'BLOCKED', 'PENDING'
     };
 
     // Get user's permissions via roles

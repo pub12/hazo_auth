@@ -53,8 +53,8 @@ export async function get_server_auth_user(): Promise<ServerAuthResult> {
 
     const user = users[0];
 
-    // Check if user is active (status must be 'active')
-    if (user.status !== "active") {
+    // Check if user is active (status must be 'ACTIVE')
+    if (user.status !== "ACTIVE") {
       return { authenticated: false };
     }
 
@@ -68,7 +68,7 @@ export async function get_server_auth_user(): Promise<ServerAuthResult> {
       email: user.email_address as string,
       name: (user.name as string | null | undefined) || undefined,
       email_verified: user.email_verified === true,
-      is_active: user.status === "active", // Derived from status column
+      is_active: user.status === "ACTIVE", // Derived from status column
       last_logon: (user.last_logon as string | null | undefined) || undefined,
       profile_picture_url: (user.profile_picture_url as string | null | undefined) || undefined,
       profile_source: profile_source_ui,

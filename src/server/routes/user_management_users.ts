@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
             name: user.name || null,
             email_address: user.email_address,
             email_verified: user.email_verified || false,
-            is_active: user.status === "active", // Derived from status column
+            is_active: user.status === "ACTIVE", // Derived from status column
             last_logon: user.last_logon || null,
             created_at: user.created_at || null,
             profile_picture_url: user.profile_picture_url || null,
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * PATCH - Update user (deactivate: set status to 'inactive', etc.)
+ * PATCH - Update user (deactivate: set status to 'BLOCKED', etc.)
  */
 export async function PATCH(request: NextRequest) {
   const logger = create_app_logger();
@@ -140,7 +140,7 @@ export async function PATCH(request: NextRequest) {
 
     // Handle is_active if provided (maps to status column)
     if (typeof is_active === "boolean") {
-      update_data.status = is_active ? "active" : "inactive";
+      update_data.status = is_active ? "ACTIVE" : "BLOCKED";
     }
 
     // Handle app_user_data if provided

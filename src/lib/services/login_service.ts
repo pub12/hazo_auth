@@ -53,8 +53,8 @@ export async function authenticate_user(
 
     const user = users[0];
 
-    // Check if user is active (status must be 'active')
-    if (user.status !== "active") {
+    // Check if user is active (status must be 'ACTIVE')
+    if (user.status !== "ACTIVE") {
       return {
         success: false,
         error: "Account is inactive. Please contact support.",

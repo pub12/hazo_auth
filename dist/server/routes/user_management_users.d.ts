@@ -29,7 +29,7 @@ export declare function GET(request: NextRequest): Promise<NextResponse<{
     }[];
 }>>;
 /**
- * PATCH - Update user (deactivate: set status to 'inactive', etc.)
+ * PATCH - Update user (deactivate: set status to 'BLOCKED', etc.)
  */
 export declare function PATCH(request: NextRequest): Promise<NextResponse<{
     error: string;

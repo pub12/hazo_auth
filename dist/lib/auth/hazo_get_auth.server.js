@@ -69,8 +69,8 @@ async function fetch_user_data_from_db(user_id) {
         throw new Error("User not found");
     }
     const user_db = users[0];
-    // Check if user is active (status must be 'active')
-    if (user_db.status !== "active") {
+    // Check if user is active (status must be 'ACTIVE')
+    if (user_db.status !== "ACTIVE") {
         throw new Error("User is inactive");
     }
     // Build user object
@@ -78,7 +78,7 @@ async function fetch_user_data_from_db(user_id) {
         id: user_db.id,
         name: user_db.name || null,
         email_address: user_db.email_address,
-        is_active: user_db.status === "active", // Derived from status column
+        is_active: user_db.status === "ACTIVE", // Derived from status column
         profile_picture_url: user_db.profile_picture_url || null,
         app_user_data: parse_app_user_data(user_db.app_user_data),
     };

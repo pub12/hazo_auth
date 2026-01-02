@@ -179,7 +179,7 @@ export async function handle_google_oauth_login(
       email_address: email,
       password_hash: "", // Empty string for Google-only users
       email_verified: email_verified, // Trust Google's verification
-      status: "active",
+      status: "ACTIVE",
       login_attempts: 0,
       google_id,
       auth_providers: "google",

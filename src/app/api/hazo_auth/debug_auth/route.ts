@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
         name: user_db.name,
         email_verified: user_db.email_verified,
         status: user_db.status, // Database column
-        is_active: user_db.status === "active", // Derived for compatibility
+        is_active: user_db.status === "ACTIVE", // Derived for compatibility
         login_attempts: user_db.login_attempts,
         last_logon: user_db.last_logon,
         profile_picture_url: user_db.profile_picture_url,
