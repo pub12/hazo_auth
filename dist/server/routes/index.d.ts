@@ -21,6 +21,7 @@ export { GET as userManagementPermissionsGET, POST as userManagementPermissionsP
 export { GET as userManagementRolesGET, POST as userManagementRolesPOST, PUT as userManagementRolesPUT } from "./user_management_roles.js";
 export { GET as userManagementUsersRolesGET, POST as userManagementUsersRolesPOST, PUT as userManagementUsersRolesPUT } from "./user_management_users_roles.js";
 export { GET as appUserDataGET, PATCH as appUserDataPATCH, PUT as appUserDataPUT, DELETE as appUserDataDELETE } from "./app_user_data.js";
+export { GET as appUserDataSchemaGET } from "./app_user_data_schema.js";
 export { GET as invitationsGET, POST as invitationsPOST, PATCH as invitationsPATCH, DELETE as invitationsDELETE } from "./invitations.js";
 export { POST as createFirmPOST } from "./create_firm.js";
 //# sourceMappingURL=index.d.ts.map

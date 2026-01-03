@@ -37,6 +37,7 @@ export { GET as userManagementUsersRolesGET, POST as userManagementUsersRolesPOS
 
 // App user data routes (custom application-specific user data)
 export { GET as appUserDataGET, PATCH as appUserDataPATCH, PUT as appUserDataPUT, DELETE as appUserDataDELETE } from "./app_user_data.js";
+export { GET as appUserDataSchemaGET } from "./app_user_data_schema.js";
 
 // Invitation routes (for inviting users to scopes)
 export { GET as invitationsGET, POST as invitationsPOST, PATCH as invitationsPATCH, DELETE as invitationsDELETE } from "./invitations.js";
