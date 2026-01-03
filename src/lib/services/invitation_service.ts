@@ -261,7 +261,7 @@ export async function accept_invitation(
     if (invitation.status !== "PENDING") {
       return {
         success: false,
-        error: `Invitation is ${invitation.status.toLowerCase()}, not pending`,
+        error: `Invitation is ${invitation.status}, not PENDING`,
       };
     }
 
@@ -361,7 +361,7 @@ export async function revoke_invitation(
     if (invitation_result.invitation.status !== "PENDING") {
       return {
         success: false,
-        error: `Cannot revoke invitation with status ${invitation_result.invitation.status.toLowerCase()}`,
+        error: `Cannot revoke invitation with status ${invitation_result.invitation.status}`,
       };
     }
 

@@ -29,6 +29,11 @@
             "date": 1767272696566,
             "name": "/Users/pubs/Local/01.code/00.lib/hazo_auth/logs/hazo-2026-01-02.log",
             "hash": "28bbe715e5c7bc8eab40bb5841b5dcb8d701aeef7b26f64f8c3564d3a0efe0a4"
+        },
+        {
+            "date": 1767451791712,
+            "name": "/Users/pubs/Local/01.code/00.lib/hazo_auth/logs/hazo-2026-01-04.log",
+            "hash": "3ea32de8559d13823279e3eb61ed11aaa8027c5e7a6402f22a72f856134d9d39"
         }
     ],
     "hashType": "sha256"

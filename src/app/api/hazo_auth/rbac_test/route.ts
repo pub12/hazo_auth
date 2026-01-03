@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
       id: string;
       email_address: string;
       name: string | null;
-      status: string; // Database column: 'ACTIVE', 'BLOCKED', 'PENDING'
+      status: string; // Database column: 'PENDING', 'ACTIVE', 'BLOCKED'
     };
 
     // v5.x: Get user's permissions via hazo_user_scopes (scope-based role assignments)
