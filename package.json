@@ -172,8 +172,7 @@
     "cli-src/**/*",
     "public/profile_pictures/library/**/*",
     "public/hazo_auth/images/**/*",
-    "hazo_auth_config.example.ini",
-    "hazo_notify_config.example.ini",
+    "config/**/*",
     "README.md",
     "SETUP_CHECKLIST.md",
     "LICENSE"

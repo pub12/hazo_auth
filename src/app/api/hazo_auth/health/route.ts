@@ -86,8 +86,8 @@ function read_ini_file(filepath: string): Record<string, Record<string, string>>
 
 function check_config(): { status: CheckStatus; message: string } {
   const project_root = process.cwd();
-  const hazo_config_path = path.join(project_root, "hazo_auth_config.ini");
-  const notify_config_path = path.join(project_root, "hazo_notify_config.ini");
+  const hazo_config_path = path.join(project_root, "config", "hazo_auth_config.ini");
+  const notify_config_path = path.join(project_root, "config", "hazo_notify_config.ini");
 
   const hazo_exists = file_exists(hazo_config_path);
   const notify_exists = file_exists(notify_config_path);
@@ -95,7 +95,7 @@ function check_config(): { status: CheckStatus; message: string } {
   if (hazo_exists && notify_exists) {
     return { status: "ok", message: "Both config files found" };
   } else if (hazo_exists || notify_exists) {
-    const missing = !hazo_exists ? "hazo_auth_config.ini" : "hazo_notify_config.ini";
+    const missing = !hazo_exists ? "config/hazo_auth_config.ini" : "config/hazo_notify_config.ini";
     return { status: "warning", message: `Missing: ${missing}` };
   } else {
     return { status: "error", message: "Config files not found" };
@@ -104,7 +104,7 @@ function check_config(): { status: CheckStatus; message: string } {
 
 function check_database(): { status: CheckStatus; message: string } {
   const project_root = process.cwd();
-  const hazo_config_path = path.join(project_root, "hazo_auth_config.ini");
+  const hazo_config_path = path.join(project_root, "config", "hazo_auth_config.ini");
   const hazo_config = read_ini_file(hazo_config_path);
 
   if (!hazo_config) {
@@ -152,7 +152,7 @@ function check_email(): { status: CheckStatus; message: string } {
   }
 
   const project_root = process.cwd();
-  const notify_config_path = path.join(project_root, "hazo_notify_config.ini");
+  const notify_config_path = path.join(project_root, "config", "hazo_notify_config.ini");
   const notify_config = read_ini_file(notify_config_path);
 
   if (notify_config) {
@@ -160,9 +160,9 @@ function check_email(): { status: CheckStatus; message: string } {
     const from_email = notify_config["emailer"]?.["from_email"];
 
     if (emailer_module && from_email) {
-      return { 
-        status: "warning", 
-        message: "Email configured but ZEPTOMAIL_API_KEY not set" 
+      return {
+        status: "warning",
+        message: "Email configured but ZEPTOMAIL_API_KEY not set"
       };
     }
   }
@@ -233,11 +233,11 @@ function generate_recommendations(
   const recommendations: string[] = [];
 
   if (config.status === "error") {
-    recommendations.push("Copy config files: cp node_modules/hazo_auth/hazo_auth_config.example.ini ./hazo_auth_config.ini");
+    recommendations.push("Run: npx hazo_auth init");
   }
 
   if (database.status === "error") {
-    recommendations.push("Configure database in hazo_auth_config.ini [hazo_connect] section");
+    recommendations.push("Configure database in config/hazo_auth_config.ini [hazo_connect] section");
   }
 
   if (email.status !== "ok") {

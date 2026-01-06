@@ -22,8 +22,8 @@ export type ValidationSummary = {
 
 // section: constants
 const REQUIRED_CONFIG_FILES = [
-  "hazo_auth_config.ini",
-  "hazo_notify_config.ini",
+  "config/hazo_auth_config.ini",
+  "config/hazo_notify_config.ini",
 ];
 
 const REQUIRED_ENV_VARS = [
@@ -141,7 +141,7 @@ function check_config_files(project_root: string): CheckResult[] {
     results.push({
       name: `Config file: ${config_file}`,
       status: exists ? "pass" : "fail",
-      message: exists ? "" : `File not found. Run: cp node_modules/hazo_auth/${config_file.replace(".ini", ".example.ini")} ./${config_file}`,
+      message: exists ? "" : `File not found. Run: npx hazo_auth init`,
     });
   }
 
@@ -150,8 +150,8 @@ function check_config_files(project_root: string): CheckResult[] {
 
 function check_config_values(project_root: string): CheckResult[] {
   const results: CheckResult[] = [];
-  
-  const hazo_config_path = path.join(project_root, "hazo_auth_config.ini");
+
+  const hazo_config_path = path.join(project_root, "config", "hazo_auth_config.ini");
   const hazo_config = read_ini_file(hazo_config_path);
 
   if (hazo_config) {
@@ -224,7 +224,7 @@ function check_config_values(project_root: string): CheckResult[] {
     }
   }
 
-  const notify_config_path = path.join(project_root, "hazo_notify_config.ini");
+  const notify_config_path = path.join(project_root, "config", "hazo_notify_config.ini");
   const notify_config = read_ini_file(notify_config_path);
 
   if (notify_config) {
@@ -414,15 +414,15 @@ function check_profile_pictures(project_root: string): CheckResult[] {
 
 function check_database(project_root: string): CheckResult[] {
   const results: CheckResult[] = [];
-  
-  const hazo_config_path = path.join(project_root, "hazo_auth_config.ini");
+
+  const hazo_config_path = path.join(project_root, "config", "hazo_auth_config.ini");
   const hazo_config = read_ini_file(hazo_config_path);
 
   if (!hazo_config) {
     results.push({
       name: "Database check",
       status: "fail",
-      message: "Could not read hazo_auth_config.ini",
+      message: "Could not read config/hazo_auth_config.ini",
     });
     return results;
   }

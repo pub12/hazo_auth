@@ -95,7 +95,7 @@ export { POST } from "hazo_auth/server/routes";
 
 ### Configuration System
 
-All configuration comes from `hazo_auth_config.ini` in the project root (where `process.cwd()` points):
+All configuration comes from `config/hazo_auth_config.ini` in the project root (where `process.cwd()` points):
 
 - **UI Customization:** `[hazo_auth__login_layout]`, `[hazo_auth__register_layout]`, etc.
 - **UI Shell:** `[hazo_auth__ui_shell]` (layout_mode, vertical_center)
@@ -377,7 +377,7 @@ Components follow a layered structure:
 3. Add API route re-export in `src/app/api/hazo_auth/[feature]/route.ts` (imports from `hazo_auth/server/routes`)
 4. Create layout component in `src/components/layouts/[feature]/`
 5. Create page component in `src/page_components/[feature].tsx`
-6. Add configuration section to `hazo_auth_config.ini`
+6. Add configuration section to `config/hazo_auth_config.ini`
 7. Update `package.json` exports field
 8. Test with Storybook
 9. Run `npm run build:pkg`
@@ -413,7 +413,7 @@ const users = await users_service.read({
 });
 ```
 
-The singleton instance (`get_hazo_connect_instance()`) is configured via `hazo_auth_config.ini`:
+The singleton instance (`get_hazo_connect_instance()`) is configured via `config/hazo_auth_config.ini`:
 - `[hazo_connect] type = sqlite` or `postgrest`
 - Environment variables for connection strings
 
@@ -658,7 +658,7 @@ application_name = My Application
 
 **Problem Solved**: When running two apps that both use hazo_auth on localhost (different ports), cookies would conflict because browser cookie isolation is based on domain, not port.
 
-**Configuration** (`hazo_auth_config.ini`):
+**Configuration** (`config/hazo_auth_config.ini`):
 ```ini
 [hazo_auth__cookies]
 # Cookie prefix for all hazo_auth cookies (e.g., "myapp_" → "myapp_hazo_auth_session")
