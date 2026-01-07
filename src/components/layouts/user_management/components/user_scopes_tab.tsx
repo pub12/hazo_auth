@@ -34,6 +34,13 @@ import {
 } from "../../../ui/alert-dialog";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "../../../ui/avatar";
 import { TreeView, type TreeDataItem } from "../../../ui/tree-view";
 import {
@@ -82,6 +89,12 @@ type ScopeRecord = {
   parent_id: string | null;
   created_at: string;
   changed_at: string;
+};
+
+type Role = {
+  id: string;
+  name: string;
+  description: string | null;
 };
 
 type ScopeTreeNode = ScopeRecord & {
@@ -140,6 +153,11 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
   const [selectedTreeItem, setSelectedTreeItem] =
     useState<ExtendedTreeDataItem>();
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Roles state
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
+  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
 
   // Delete scope dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -226,11 +244,35 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
     }
   }, [apiBasePath]);
 
+  // Load roles for add dialog
+  const loadRoles = useCallback(async () => {
+    setRolesLoading(true);
+    try {
+      const response = await fetch(`${apiBasePath}/user_management/roles`);
+      const data = await response.json();
+
+      if (data.success) {
+        setRoles(data.roles || []);
+        // Auto-select first role if available and none selected
+        if (!selectedRoleId && data.roles?.length > 0) {
+          setSelectedRoleId(data.roles[0].id);
+        }
+      } else {
+        setRoles([]);
+      }
+    } catch (error) {
+      setRoles([]);
+    } finally {
+      setRolesLoading(false);
+    }
+  }, [apiBasePath, selectedRoleId]);
+
   useEffect(() => {
     if (addDialogOpen) {
       void loadScopeTree();
+      void loadRoles();
     }
-  }, [addDialogOpen, loadScopeTree]);
+  }, [addDialogOpen, loadScopeTree, loadRoles]);
 
   // Filter users by search
   const filteredUsers = users.filter((user) => {
@@ -270,6 +312,11 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
       return;
     }
 
+    if (!selectedRoleId) {
+      toast.error("Please select a role");
+      return;
+    }
+
     const scope = selectedTreeItem.scopeData;
 
     setActionLoading(true);
@@ -282,6 +329,7 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
           body: JSON.stringify({
             user_id: selectedUser.id,
             scope_id: scope.id,
+            role_id: selectedRoleId,
           }),
         }
       );
@@ -292,6 +340,7 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
         toast.success("Scope assigned successfully");
         setAddDialogOpen(false);
         setSelectedTreeItem(undefined);
+        setSelectedRoleId("");
         await loadUserScopes();
       } else {
         toast.error(data.error || "Failed to assign scope");
@@ -554,11 +603,44 @@ export function UserScopesTab({ className }: UserScopesTabProps) {
                 </p>
               </div>
             )}
+
+            {/* Role Selection */}
+            <div className="flex flex-col gap-2">
+              <Label>Assign Role</Label>
+              {rolesLoading ? (
+                <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading roles...
+                </div>
+              ) : roles.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No roles available. Create roles in the Roles tab first.
+                </p>
+              ) : (
+                <Select value={selectedRoleId} onValueChange={setSelectedRoleId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.name}
+                        {role.description && (
+                          <span className="text-muted-foreground ml-2">
+                            - {role.description}
+                          </span>
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button
               onClick={handleAddScope}
-              disabled={actionLoading || !selectedTreeItem?.scopeData}
+              disabled={actionLoading || !selectedTreeItem?.scopeData || !selectedRoleId}
               variant="default"
             >
               {actionLoading ? (

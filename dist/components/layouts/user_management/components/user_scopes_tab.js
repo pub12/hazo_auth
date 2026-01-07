@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from "../../../ui/alert-dialog.js";
 import { Input } from "../../../ui/input.js";
 import { Label } from "../../../ui/label.js";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "../../../ui/select.js";
 import { Avatar, AvatarFallback, AvatarImage } from "../../../ui/avatar.js";
 import { TreeView } from "../../../ui/tree-view.js";
 import { Loader2, Plus, Trash2, Search, CircleCheck, CircleX, ChevronRight, Building2, FolderTree, } from "lucide-react";
@@ -56,6 +57,10 @@ export function UserScopesTab({ className }) {
     const [treeLoading, setTreeLoading] = useState(false);
     const [selectedTreeItem, setSelectedTreeItem] = useState();
     const [actionLoading, setActionLoading] = useState(false);
+    // Roles state
+    const [roles, setRoles] = useState([]);
+    const [rolesLoading, setRolesLoading] = useState(false);
+    const [selectedRoleId, setSelectedRoleId] = useState("");
     // Delete scope dialog state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [scopeToDelete, setScopeToDelete] = useState(null);
@@ -136,11 +141,37 @@ export function UserScopesTab({ className }) {
             setTreeLoading(false);
         }
     }, [apiBasePath]);
+    // Load roles for add dialog
+    const loadRoles = useCallback(async () => {
+        var _a;
+        setRolesLoading(true);
+        try {
+            const response = await fetch(`${apiBasePath}/user_management/roles`);
+            const data = await response.json();
+            if (data.success) {
+                setRoles(data.roles || []);
+                // Auto-select first role if available and none selected
+                if (!selectedRoleId && ((_a = data.roles) === null || _a === void 0 ? void 0 : _a.length) > 0) {
+                    setSelectedRoleId(data.roles[0].id);
+                }
+            }
+            else {
+                setRoles([]);
+            }
+        }
+        catch (error) {
+            setRoles([]);
+        }
+        finally {
+            setRolesLoading(false);
+        }
+    }, [apiBasePath, selectedRoleId]);
     useEffect(() => {
         if (addDialogOpen) {
             void loadScopeTree();
+            void loadRoles();
         }
-    }, [addDialogOpen, loadScopeTree]);
+    }, [addDialogOpen, loadScopeTree, loadRoles]);
     // Filter users by search
     const filteredUsers = users.filter((user) => {
         var _a;
@@ -174,6 +205,10 @@ export function UserScopesTab({ className }) {
             toast.error("Please select a scope from the tree");
             return;
         }
+        if (!selectedRoleId) {
+            toast.error("Please select a role");
+            return;
+        }
         const scope = selectedTreeItem.scopeData;
         setActionLoading(true);
         try {
@@ -183,6 +218,7 @@ export function UserScopesTab({ className }) {
                 body: JSON.stringify({
                     user_id: selectedUser.id,
                     scope_id: scope.id,
+                    role_id: selectedRoleId,
                 }),
             });
             const data = await response.json();
@@ -190,6 +226,7 @@ export function UserScopesTab({ className }) {
                 toast.success("Scope assigned successfully");
                 setAddDialogOpen(false);
                 setSelectedTreeItem(undefined);
+                setSelectedRoleId("");
                 await loadUserScopes();
             }
             else {
@@ -245,7 +282,7 @@ export function UserScopesTab({ className }) {
                                     }, variant: "outline", size: "sm", children: [_jsx(Plus, { className: "h-4 w-4 mr-2" }), "Assign First Scope"] })] })) : (_jsxs(Table, { className: "w-full", children: [_jsx(TableHeader, { children: _jsxs(TableRow, { children: [_jsx(TableHead, { children: "Scope Name" }), _jsx(TableHead, { children: "Level" }), _jsx(TableHead, { children: "Scope ID" }), _jsx(TableHead, { children: "Assigned" }), _jsx(TableHead, { className: "text-right w-[80px]", children: "Actions" })] }) }), _jsx(TableBody, { children: userScopes.map((scope) => (_jsxs(TableRow, { children: [_jsx(TableCell, { className: "font-medium", children: scope.scope_name || "Unknown" }), _jsx(TableCell, { className: "text-sm", children: scope.level || "-" }), _jsxs(TableCell, { className: "font-mono text-xs text-muted-foreground", children: [scope.scope_id.substring(0, 8), "..."] }), _jsx(TableCell, { className: "text-sm text-muted-foreground", children: new Date(scope.created_at).toLocaleDateString() }), _jsx(TableCell, { className: "text-right", children: _jsx(Button, { onClick: () => {
                                                         setScopeToDelete(scope);
                                                         setDeleteDialogOpen(true);
-                                                    }, variant: "outline", size: "sm", className: "text-destructive", children: _jsx(Trash2, { className: "h-4 w-4" }) }) })] }, scope.scope_id))) })] })) })] }), _jsx(Dialog, { open: addDialogOpen, onOpenChange: setAddDialogOpen, children: _jsxs(DialogContent, { className: "cls_user_scopes_add_dialog sm:max-w-[500px]", children: [_jsxs(DialogHeader, { children: [_jsx(DialogTitle, { children: "Add Scope Assignment" }), _jsxs(DialogDescription, { children: ["Select a scope from the tree to assign to", " ", (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.name) || (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address), "."] })] }), _jsxs("div", { className: "flex flex-col gap-4 py-4", children: [_jsxs("div", { className: "flex flex-col gap-2", children: [_jsx(Label, { children: "Select Scope" }), treeLoading ? (_jsx("div", { className: "flex items-center justify-center p-8 border rounded-lg", children: _jsx(Loader2, { className: "h-6 w-6 animate-spin text-slate-400" }) })) : scopeTree.length === 0 ? (_jsxs("div", { className: "flex flex-col items-center justify-center p-6 border rounded-lg border-dashed", children: [_jsx(FolderTree, { className: "h-8 w-8 text-muted-foreground mb-2" }), _jsx("p", { className: "text-sm text-muted-foreground text-center", children: "No scopes available. Create scopes in the Scope Hierarchy tab first." })] })) : (_jsx("div", { className: "border rounded-lg max-h-[300px] overflow-auto", children: _jsx(TreeView, { data: treeData, expandAll: true, defaultNodeIcon: Building2, defaultLeafIcon: Building2, onSelectChange: handleTreeSelectChange, initialSelectedItemId: selectedTreeItem === null || selectedTreeItem === void 0 ? void 0 : selectedTreeItem.id, className: "w-full" }) }))] }), (selectedTreeItem === null || selectedTreeItem === void 0 ? void 0 : selectedTreeItem.scopeData) && (_jsxs("div", { className: "p-3 border rounded-lg bg-muted/50", children: [_jsxs("p", { className: "text-sm", children: [_jsx("span", { className: "font-medium", children: "Selected:" }), " ", selectedTreeItem.scopeData.name] }), _jsxs("p", { className: "text-xs text-muted-foreground", children: [selectedTreeItem.scopeData.level, " - ID: ", selectedTreeItem.scopeData.id.substring(0, 8), "..."] })] }))] }), _jsxs(DialogFooter, { children: [_jsx(Button, { onClick: handleAddScope, disabled: actionLoading || !(selectedTreeItem === null || selectedTreeItem === void 0 ? void 0 : selectedTreeItem.scopeData), variant: "default", children: actionLoading ? (_jsxs(_Fragment, { children: [_jsx(Loader2, { className: "h-4 w-4 mr-2 animate-spin" }), "Assigning..."] })) : (_jsxs(_Fragment, { children: [_jsx(CircleCheck, { className: "h-4 w-4 mr-2" }), "Assign Scope"] })) }), _jsxs(Button, { onClick: () => setAddDialogOpen(false), variant: "outline", children: [_jsx(CircleX, { className: "h-4 w-4 mr-2" }), "Cancel"] })] })] }) }), _jsx(AlertDialog, { open: deleteDialogOpen, onOpenChange: setDeleteDialogOpen, children: _jsxs(AlertDialogContent, { children: [_jsxs(AlertDialogHeader, { children: [_jsx(AlertDialogTitle, { children: "Remove Scope Assignment" }), _jsxs(AlertDialogDescription, { children: ["Are you sure you want to remove the scope \"", (scopeToDelete === null || scopeToDelete === void 0 ? void 0 : scopeToDelete.scope_name) || (scopeToDelete === null || scopeToDelete === void 0 ? void 0 : scopeToDelete.scope_id.substring(0, 8)), "\" from", " ", (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.name) || (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address), "? This will also revoke access to any child scopes."] })] }), _jsxs(AlertDialogFooter, { children: [_jsx(AlertDialogAction, { onClick: handleRemoveScope, disabled: actionLoading, children: actionLoading ? (_jsxs(_Fragment, { children: [_jsx(Loader2, { className: "h-4 w-4 mr-2 animate-spin" }), "Removing..."] })) : ("Remove") }), _jsx(AlertDialogCancel, { onClick: () => {
+                                                    }, variant: "outline", size: "sm", className: "text-destructive", children: _jsx(Trash2, { className: "h-4 w-4" }) }) })] }, scope.scope_id))) })] })) })] }), _jsx(Dialog, { open: addDialogOpen, onOpenChange: setAddDialogOpen, children: _jsxs(DialogContent, { className: "cls_user_scopes_add_dialog sm:max-w-[500px]", children: [_jsxs(DialogHeader, { children: [_jsx(DialogTitle, { children: "Add Scope Assignment" }), _jsxs(DialogDescription, { children: ["Select a scope from the tree to assign to", " ", (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.name) || (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address), "."] })] }), _jsxs("div", { className: "flex flex-col gap-4 py-4", children: [_jsxs("div", { className: "flex flex-col gap-2", children: [_jsx(Label, { children: "Select Scope" }), treeLoading ? (_jsx("div", { className: "flex items-center justify-center p-8 border rounded-lg", children: _jsx(Loader2, { className: "h-6 w-6 animate-spin text-slate-400" }) })) : scopeTree.length === 0 ? (_jsxs("div", { className: "flex flex-col items-center justify-center p-6 border rounded-lg border-dashed", children: [_jsx(FolderTree, { className: "h-8 w-8 text-muted-foreground mb-2" }), _jsx("p", { className: "text-sm text-muted-foreground text-center", children: "No scopes available. Create scopes in the Scope Hierarchy tab first." })] })) : (_jsx("div", { className: "border rounded-lg max-h-[300px] overflow-auto", children: _jsx(TreeView, { data: treeData, expandAll: true, defaultNodeIcon: Building2, defaultLeafIcon: Building2, onSelectChange: handleTreeSelectChange, initialSelectedItemId: selectedTreeItem === null || selectedTreeItem === void 0 ? void 0 : selectedTreeItem.id, className: "w-full" }) }))] }), (selectedTreeItem === null || selectedTreeItem === void 0 ? void 0 : selectedTreeItem.scopeData) && (_jsxs("div", { className: "p-3 border rounded-lg bg-muted/50", children: [_jsxs("p", { className: "text-sm", children: [_jsx("span", { className: "font-medium", children: "Selected:" }), " ", selectedTreeItem.scopeData.name] }), _jsxs("p", { className: "text-xs text-muted-foreground", children: [selectedTreeItem.scopeData.level, " - ID: ", selectedTreeItem.scopeData.id.substring(0, 8), "..."] })] })), _jsxs("div", { className: "flex flex-col gap-2", children: [_jsx(Label, { children: "Assign Role" }), rolesLoading ? (_jsxs("div", { className: "flex items-center gap-2 p-2 text-sm text-muted-foreground", children: [_jsx(Loader2, { className: "h-4 w-4 animate-spin" }), "Loading roles..."] })) : roles.length === 0 ? (_jsx("p", { className: "text-sm text-muted-foreground", children: "No roles available. Create roles in the Roles tab first." })) : (_jsxs(Select, { value: selectedRoleId, onValueChange: setSelectedRoleId, children: [_jsx(SelectTrigger, { className: "w-full", children: _jsx(SelectValue, { placeholder: "Select a role" }) }), _jsx(SelectContent, { children: roles.map((role) => (_jsxs(SelectItem, { value: role.id, children: [role.name, role.description && (_jsxs("span", { className: "text-muted-foreground ml-2", children: ["- ", role.description] }))] }, role.id))) })] }))] })] }), _jsxs(DialogFooter, { children: [_jsx(Button, { onClick: handleAddScope, disabled: actionLoading || !(selectedTreeItem === null || selectedTreeItem === void 0 ? void 0 : selectedTreeItem.scopeData) || !selectedRoleId, variant: "default", children: actionLoading ? (_jsxs(_Fragment, { children: [_jsx(Loader2, { className: "h-4 w-4 mr-2 animate-spin" }), "Assigning..."] })) : (_jsxs(_Fragment, { children: [_jsx(CircleCheck, { className: "h-4 w-4 mr-2" }), "Assign Scope"] })) }), _jsxs(Button, { onClick: () => setAddDialogOpen(false), variant: "outline", children: [_jsx(CircleX, { className: "h-4 w-4 mr-2" }), "Cancel"] })] })] }) }), _jsx(AlertDialog, { open: deleteDialogOpen, onOpenChange: setDeleteDialogOpen, children: _jsxs(AlertDialogContent, { children: [_jsxs(AlertDialogHeader, { children: [_jsx(AlertDialogTitle, { children: "Remove Scope Assignment" }), _jsxs(AlertDialogDescription, { children: ["Are you sure you want to remove the scope \"", (scopeToDelete === null || scopeToDelete === void 0 ? void 0 : scopeToDelete.scope_name) || (scopeToDelete === null || scopeToDelete === void 0 ? void 0 : scopeToDelete.scope_id.substring(0, 8)), "\" from", " ", (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.name) || (selectedUser === null || selectedUser === void 0 ? void 0 : selectedUser.email_address), "? This will also revoke access to any child scopes."] })] }), _jsxs(AlertDialogFooter, { children: [_jsx(AlertDialogAction, { onClick: handleRemoveScope, disabled: actionLoading, children: actionLoading ? (_jsxs(_Fragment, { children: [_jsx(Loader2, { className: "h-4 w-4 mr-2 animate-spin" }), "Removing..."] })) : ("Remove") }), _jsx(AlertDialogCancel, { onClick: () => {
                                         setDeleteDialogOpen(false);
                                         setScopeToDelete(null);
                                     }, children: "Cancel" })] })] }) })] }));
