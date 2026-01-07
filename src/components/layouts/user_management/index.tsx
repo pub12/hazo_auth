@@ -1555,6 +1555,19 @@ export function UserManagementLayout({ className, hrbacEnabled = false, userType
                           )
                         );
                       }}
+                      onClear={() => {
+                        // Clear app_user_data in both selectedUser and users list
+                        setSelectedUser((prev) =>
+                          prev ? { ...prev, app_user_data: null } : null
+                        );
+                        setUsers((prevUsers) =>
+                          prevUsers.map((u) =>
+                            u.id === selectedUser.id
+                              ? { ...u, app_user_data: null }
+                              : u
+                          )
+                        );
+                      }}
                     />
                   </div>
                 </div>

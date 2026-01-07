@@ -183,7 +183,7 @@ export async function accept_invitation(adapter, invitation_id, user_id) {
         if (invitation.status !== "PENDING") {
             return {
                 success: false,
-                error: `Invitation is ${invitation.status.toLowerCase()}, not pending`,
+                error: `Invitation is ${invitation.status}, not PENDING`,
             };
         }
         // Check expiration
@@ -266,7 +266,7 @@ export async function revoke_invitation(adapter, invitation_id) {
         if (invitation_result.invitation.status !== "PENDING") {
             return {
                 success: false,
-                error: `Cannot revoke invitation with status ${invitation_result.invitation.status.toLowerCase()}`,
+                error: `Cannot revoke invitation with status ${invitation_result.invitation.status}`,
             };
         }
         // Mark as revoked

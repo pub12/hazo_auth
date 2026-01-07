@@ -2,14 +2,15 @@
 // Renders form fields based on JSON schema from config
 // section: client_directive
 "use client";
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 // section: imports
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "../../../ui/button.js";
 import { Input } from "../../../ui/input.js";
 import { Label } from "../../../ui/label.js";
 import { Switch } from "../../../ui/switch.js";
-import { ChevronDown, ChevronRight, Edit, Loader2, Save, X } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, } from "../../../ui/alert-dialog.js";
+import { ChevronDown, ChevronRight, Edit, Loader2, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useHazoAuthConfig } from "../../../../contexts/hazo_auth_provider.js";
 // section: helpers
@@ -49,13 +50,15 @@ function setNestedValue(obj, path, value) {
     return result;
 }
 // section: component
-export function AppUserDataEditor({ userId, currentData, onSave, readOnly = false, }) {
+export function AppUserDataEditor({ userId, currentData, onSave, onClear, readOnly = false, }) {
     const { apiBasePath } = useHazoAuthConfig();
     const [schemaResponse, setSchemaResponse] = useState(null);
     const [schemaLoading, setSchemaLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({});
     const [saving, setSaving] = useState(false);
+    const [clearing, setClearing] = useState(false);
+    const [showClearConfirmation, setShowClearConfirmation] = useState(false);
     const [expandedSections, setExpandedSections] = useState(new Set());
     // Load schema on mount
     useEffect(() => {
@@ -121,6 +124,36 @@ export function AppUserDataEditor({ userId, currentData, onSave, readOnly = fals
             setSaving(false);
         }
     }, [apiBasePath, userId, editData, onSave]);
+    // Clear app_user_data - uses user_management/users PATCH endpoint with null
+    const handleClear = useCallback(async () => {
+        setClearing(true);
+        try {
+            const response = await fetch(`${apiBasePath}/user_management/users`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    user_id: userId,
+                    app_user_data: null,
+                }),
+            });
+            const data = await response.json();
+            if (data.success) {
+                toast.success("App user data cleared");
+                setShowClearConfirmation(false);
+                onClear === null || onClear === void 0 ? void 0 : onClear();
+            }
+            else {
+                toast.error(data.error || "Failed to clear");
+            }
+        }
+        catch (error) {
+            toast.error("Failed to clear app user data");
+            console.error("Clear error:", error);
+        }
+        finally {
+            setClearing(false);
+        }
+    }, [apiBasePath, userId, onClear]);
     // Update field value
     const updateField = useCallback((path, value) => {
         setEditData((prev) => setNestedValue(prev, path, value));
@@ -200,5 +233,5 @@ export function AppUserDataEditor({ userId, currentData, onSave, readOnly = fals
         return (_jsx("div", { className: "text-sm", children: currentData && Object.keys(currentData).length > 0 ? (_jsx("pre", { className: "border rounded-lg p-2 bg-slate-50 overflow-x-auto text-xs", children: JSON.stringify(currentData, null, 2) })) : (_jsx("span", { className: "text-muted-foreground", children: "No app user data" })) }));
     }
     // Render schema-based editor
-    return (_jsxs("div", { className: "flex flex-col gap-4", children: [_jsxs("div", { className: "flex items-center justify-between", children: [_jsx("h3", { className: "text-sm font-semibold uppercase tracking-wide text-muted-foreground", children: "App User Data" }), !readOnly && !isEditing && (_jsxs(Button, { variant: "outline", size: "sm", onClick: handleEdit, className: "h-8", children: [_jsx(Edit, { className: "h-3.5 w-3.5 mr-1.5" }), "Edit"] }))] }), _jsx("div", { className: "flex flex-col gap-3", children: Object.entries(schemaResponse.schema.properties).map(([sectionKey, sectionSchema]) => renderSection(sectionKey, sectionSchema)) }), isEditing && (_jsxs("div", { className: "flex justify-end gap-2 pt-3 border-t", children: [_jsxs(Button, { variant: "outline", size: "sm", onClick: handleCancel, disabled: saving, className: "h-9", children: [_jsx(X, { className: "h-4 w-4 mr-1.5" }), "Cancel"] }), _jsxs(Button, { size: "sm", onClick: handleSave, disabled: saving, className: "h-9", children: [saving ? (_jsx(Loader2, { className: "h-4 w-4 mr-1.5 animate-spin" })) : (_jsx(Save, { className: "h-4 w-4 mr-1.5" })), "Save"] })] }))] }));
+    return (_jsxs("div", { className: "flex flex-col gap-4", children: [_jsxs("div", { className: "flex items-center justify-between", children: [_jsx("h3", { className: "text-sm font-semibold uppercase tracking-wide text-muted-foreground", children: "App User Data" }), !readOnly && !isEditing && (_jsxs("div", { className: "flex gap-2", children: [_jsxs(Button, { variant: "outline", size: "sm", onClick: handleEdit, className: "h-8", children: [_jsx(Edit, { className: "h-3.5 w-3.5 mr-1.5" }), "Edit"] }), currentData && Object.keys(currentData).length > 0 && (_jsxs(Button, { variant: "outline", size: "sm", onClick: () => setShowClearConfirmation(true), className: "h-8 text-destructive hover:text-destructive hover:bg-destructive/10", children: [_jsx(Trash2, { className: "h-3.5 w-3.5 mr-1.5" }), "Clear"] }))] }))] }), _jsx("div", { className: "flex flex-col gap-3", children: Object.entries(schemaResponse.schema.properties).map(([sectionKey, sectionSchema]) => renderSection(sectionKey, sectionSchema)) }), isEditing && (_jsxs("div", { className: "flex justify-end gap-2 pt-3 border-t", children: [_jsxs(Button, { variant: "outline", size: "sm", onClick: handleCancel, disabled: saving, className: "h-9", children: [_jsx(X, { className: "h-4 w-4 mr-1.5" }), "Cancel"] }), _jsxs(Button, { size: "sm", onClick: handleSave, disabled: saving, className: "h-9", children: [saving ? (_jsx(Loader2, { className: "h-4 w-4 mr-1.5 animate-spin" })) : (_jsx(Save, { className: "h-4 w-4 mr-1.5" })), "Save"] })] })), _jsx(AlertDialog, { open: showClearConfirmation, onOpenChange: setShowClearConfirmation, children: _jsxs(AlertDialogContent, { children: [_jsxs(AlertDialogHeader, { children: [_jsx(AlertDialogTitle, { children: "Clear App User Data?" }), _jsx(AlertDialogDescription, { children: "This will permanently delete all app user data for this user. This action cannot be undone." })] }), _jsxs(AlertDialogFooter, { children: [_jsx(AlertDialogCancel, { disabled: clearing, children: "Cancel" }), _jsx(AlertDialogAction, { onClick: handleClear, disabled: clearing, className: "bg-destructive text-destructive-foreground hover:bg-destructive/90", children: clearing ? (_jsxs(_Fragment, { children: [_jsx(Loader2, { className: "h-4 w-4 mr-1.5 animate-spin" }), "Clearing..."] })) : ("Clear Data") })] })] }) })] }));
 }

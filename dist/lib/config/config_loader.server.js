@@ -5,7 +5,7 @@ import path from "path";
 import fs from "fs";
 import { create_app_logger } from "../app_logger.js";
 // section: constants
-const DEFAULT_CONFIG_FILE = "hazo_auth_config.ini";
+const DEFAULT_CONFIG_FILE = "config/hazo_auth_config.ini";
 // section: helpers
 /**
  * Gets the default config file path

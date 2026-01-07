@@ -4,8 +4,8 @@ import * as fs from "fs";
 import * as path from "path";
 // section: constants
 const REQUIRED_CONFIG_FILES = [
-    "hazo_auth_config.ini",
-    "hazo_notify_config.ini",
+    "config/hazo_auth_config.ini",
+    "config/hazo_notify_config.ini",
 ];
 const REQUIRED_ENV_VARS = [
     { name: "JWT_SECRET", required: true, description: "JWT signing secret" },
@@ -110,7 +110,7 @@ function check_config_files(project_root) {
         results.push({
             name: `Config file: ${config_file}`,
             status: exists ? "pass" : "fail",
-            message: exists ? "" : `File not found. Run: cp node_modules/hazo_auth/${config_file.replace(".ini", ".example.ini")} ./${config_file}`,
+            message: exists ? "" : `File not found. Run: npx hazo_auth init`,
         });
     }
     return results;
@@ -118,7 +118,7 @@ function check_config_files(project_root) {
 function check_config_values(project_root) {
     var _a, _b, _c, _d, _e, _f;
     const results = [];
-    const hazo_config_path = path.join(project_root, "hazo_auth_config.ini");
+    const hazo_config_path = path.join(project_root, "config", "hazo_auth_config.ini");
     const hazo_config = read_ini_file(hazo_config_path);
     if (hazo_config) {
         const db_type = (_a = hazo_config["hazo_connect"]) === null || _a === void 0 ? void 0 : _a["type"];
@@ -193,7 +193,7 @@ function check_config_values(project_root) {
             });
         }
     }
-    const notify_config_path = path.join(project_root, "hazo_notify_config.ini");
+    const notify_config_path = path.join(project_root, "config", "hazo_notify_config.ini");
     const notify_config = read_ini_file(notify_config_path);
     if (notify_config) {
         const from_email = (_e = notify_config["emailer"]) === null || _e === void 0 ? void 0 : _e["from_email"];
@@ -368,13 +368,13 @@ function check_profile_pictures(project_root) {
 function check_database(project_root) {
     var _a, _b, _c;
     const results = [];
-    const hazo_config_path = path.join(project_root, "hazo_auth_config.ini");
+    const hazo_config_path = path.join(project_root, "config", "hazo_auth_config.ini");
     const hazo_config = read_ini_file(hazo_config_path);
     if (!hazo_config) {
         results.push({
             name: "Database check",
             status: "fail",
-            message: "Could not read hazo_auth_config.ini",
+            message: "Could not read config/hazo_auth_config.ini",
         });
         return results;
     }

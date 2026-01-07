@@ -12,10 +12,11 @@ const REQUIRED_DIRECTORIES = [
     "public/profile_pictures/library",
     "public/profile_pictures/uploads",
     "data",
+    "config",
 ];
 const CONFIG_FILES = [
-    { source: "hazo_auth_config.example.ini", target: "hazo_auth_config.ini" },
-    { source: "hazo_notify_config.example.ini", target: "hazo_notify_config.ini" },
+    { source: "config/hazo_auth_config.example.ini", target: "config/hazo_auth_config.ini" },
+    { source: "config/hazo_notify_config.example.ini", target: "config/hazo_notify_config.ini" },
 ];
 // section: helpers
 function get_project_root() {
@@ -198,7 +199,7 @@ export function handle_init() {
     }
     console.log("\n\x1b[32m🦊 Initialization complete!\x1b[0m");
     console.log("\nNext steps:");
-    console.log("  1. Edit \x1b[36mhazo_auth_config.ini\x1b[0m with your settings");
+    console.log("  1. Edit \x1b[36mconfig/hazo_auth_config.ini\x1b[0m with your settings");
     console.log("  2. Copy \x1b[36m.env.local.example\x1b[0m to \x1b[36m.env.local\x1b[0m and add your API keys");
     console.log("  3. Run \x1b[36mnpx hazo_auth generate-routes --pages\x1b[0m to generate routes and pages");
     console.log("  4. Run \x1b[36mnpx hazo_auth validate\x1b[0m to check your setup");
