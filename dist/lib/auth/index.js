@@ -4,6 +4,9 @@ export * from "./auth_types.js";
 // section: server_exports
 export { hazo_get_auth } from "./hazo_get_auth.server.js";
 export { get_authenticated_user, require_auth, is_authenticated, } from "./auth_utils.server.js";
+// section: tenant_auth_exports
+export { hazo_get_tenant_auth, require_tenant_auth, extract_scope_id_from_request, } from "./hazo_get_tenant_auth.server.js";
+export { HazoAuthError, AuthenticationRequiredError, TenantRequiredError, TenantAccessDeniedError, } from "./auth_types.js";
 // section: client_exports
 export { get_server_auth_user } from "./server_auth.js";
 // section: cache_exports

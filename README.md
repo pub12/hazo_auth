@@ -1296,7 +1296,13 @@ export default function Page() {
 
 ## Authentication Service
 
-The `hazo_auth` package provides a comprehensive authentication and authorization system with role-based access control (RBAC). The main authentication utility is `hazo_get_auth`, which provides user details, permissions, and permission checking with built-in caching and rate limiting.
+The `hazo_auth` package provides a comprehensive authentication and authorization system with role-based access control (RBAC). The main authentication utilities are:
+
+- **`hazo_get_auth`** - Standard authentication with user details, permissions, and caching
+- **`hazo_get_tenant_auth`** - Tenant-aware authentication that extracts scope context from request headers or cookies
+- **`require_tenant_auth`** - Strict tenant authentication with typed error handling
+
+These utilities provide user details, permissions, and permission checking with built-in caching and rate limiting.
 
 ### Client-Side API Endpoint (Recommended)
 
@@ -1461,7 +1467,205 @@ export async function proxy(request: NextRequest) {
 
 ### Server-Side Functions
 
-#### `hazo_get_auth` (Recommended)
+#### `hazo_get_tenant_auth` (Recommended for Multi-Tenant Apps)
+
+**New:** Tenant-aware authentication function that extracts scope context from request headers or cookies and returns enriched result with organization information.
+
+**Location:** `src/lib/auth/hazo_get_tenant_auth.server.ts`
+
+**Scope Context Extraction:**
+- **Header (priority):** `X-Hazo-Scope-Id` (configurable via `scope_header_name`)
+- **Cookie (fallback):** `hazo_auth_scope_id` (with prefix if configured)
+
+**Function Signature:**
+```typescript
+import { hazo_get_tenant_auth } from "hazo_auth";
+import type { TenantAuthResult, TenantAuthOptions } from "hazo_auth";
+
+async function hazo_get_tenant_auth(
+  request: NextRequest,
+  options?: TenantAuthOptions
+): Promise<TenantAuthResult>
+```
+
+**Options:**
+- `required_permissions?: string[]` - Array of permission names to check
+- `strict?: boolean` - If `true`, throws errors when checks fail (default: `false`)
+- `scope_header_name?: string` - Custom header name for scope ID (default: `"X-Hazo-Scope-Id"`)
+- `scope_cookie_name?: string` - Custom cookie name for scope ID (default: `"hazo_auth_scope_id"`)
+
+**Return Type:**
+```typescript
+type TenantAuthResult =
+  | {
+      authenticated: true;
+      user: HazoAuthUser;
+      permissions: string[];
+      permission_ok: boolean;
+      missing_permissions?: string[];
+      organization: TenantOrganization | null;  // NEW: Tenant context
+      user_scopes: ScopeDetails[];              // NEW: All user's scopes for switching
+      scope_ok: boolean;
+    }
+  | {
+      authenticated: false;
+      user: null;
+      permissions: [];
+      permission_ok: false;
+      organization: null;
+      user_scopes: [];
+      scope_ok: false;
+    };
+
+type TenantOrganization = {
+  id: string;
+  name: string;
+  slug: string | null;          // URL-friendly identifier
+  level: string;                // "Company", "Division", etc.
+  role_id: string;              // User's role in this scope
+  is_super_admin: boolean;
+  branding?: {
+    logo_url: string | null;
+    primary_color: string | null;
+    secondary_color: string | null;
+    tagline: string | null;
+  };
+};
+
+type ScopeDetails = {
+  id: string;
+  name: string;
+  slug: string | null;
+  level: string;
+  parent_id: string | null;
+  role_id: string;
+  logo_url: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+  tagline: string | null;
+};
+```
+
+**Basic Usage Example:**
+```typescript
+// app/api/dashboard/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { hazo_get_tenant_auth } from "hazo_auth";
+
+export async function GET(request: NextRequest) {
+  const auth = await hazo_get_tenant_auth(request);
+
+  if (!auth.authenticated) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
+  if (!auth.organization) {
+    return NextResponse.json(
+      {
+        error: "No organization context",
+        available_scopes: auth.user_scopes.map(s => ({ id: s.id, name: s.name }))
+      },
+      { status: 403 }
+    );
+  }
+
+  // Access tenant-specific data
+  const data = await getTenantData(auth.organization.id);
+
+  return NextResponse.json({
+    organization: auth.organization,
+    data,
+    // Include available scopes for UI scope switcher
+    available_scopes: auth.user_scopes,
+  });
+}
+```
+
+**Strict Mode with Error Handling:**
+```typescript
+import { require_tenant_auth, HazoAuthError } from "hazo_auth";
+
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await require_tenant_auth(request, {
+      required_permissions: ["view_reports"],
+    });
+
+    // auth.organization is guaranteed non-null here
+    const reports = await getReports(auth.organization.id);
+    return NextResponse.json({ reports });
+  } catch (error) {
+    if (error instanceof HazoAuthError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: error.code,
+          // For TenantAccessDeniedError, includes available_scopes
+          available_scopes: error.available_scopes
+        },
+        { status: error.status_code }
+      );
+    }
+    throw error;
+  }
+}
+```
+
+**Frontend Integration:**
+```typescript
+// Client sets scope via header or cookie
+const response = await fetch("/api/dashboard", {
+  headers: {
+    "X-Hazo-Scope-Id": selectedScopeId,
+  },
+});
+
+// Or via cookie (set once during scope selection)
+document.cookie = `hazo_auth_scope_id=${selectedScopeId}; path=/`;
+```
+
+**Error Types:**
+```typescript
+import {
+  AuthenticationRequiredError,   // 401 - User not authenticated
+  TenantRequiredError,            // 403 - No tenant context provided
+  TenantAccessDeniedError,        // 403 - User lacks access to tenant
+} from "hazo_auth";
+```
+
+#### `require_tenant_auth` (Strict Tenant Auth)
+
+Helper function that wraps `hazo_get_tenant_auth` and throws typed errors for common failure cases.
+
+**Throws:**
+- `AuthenticationRequiredError` (401) - User not authenticated
+- `TenantRequiredError` (403) - No tenant context in request
+- `TenantAccessDeniedError` (403) - User lacks access to requested tenant
+
+**Returns:** `RequiredTenantAuthResult` with guaranteed non-null `organization`
+
+**Example:**
+```typescript
+export async function GET(request: NextRequest) {
+  try {
+    // organization is guaranteed to exist
+    const { organization, user, permissions } = await require_tenant_auth(request);
+
+    const data = await getData(organization.id);
+    return NextResponse.json(data);
+  } catch (error) {
+    if (error instanceof HazoAuthError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: error.status_code }
+      );
+    }
+    throw error;
+  }
+}
+```
+
+#### `hazo_get_auth` (Standard Auth)
 
 The primary authentication utility for server-side use in API routes. Returns user details, permissions, and optionally checks required permissions.
 

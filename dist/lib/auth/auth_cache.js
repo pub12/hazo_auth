@@ -47,8 +47,9 @@ class AuthCache {
      * @param user - User data
      * @param permissions - User permissions
      * @param role_ids - User role IDs (v5.x: string UUIDs)
+     * @param scopes - User scope details with full information (v5.2+)
      */
-    set(user_id, user, permissions, role_ids) {
+    set(user_id, user, permissions, role_ids, scopes = []) {
         // Evict LRU entries if cache is full
         while (this.cache.size >= this.max_size) {
             const first_key = this.cache.keys().next().value;
@@ -65,6 +66,7 @@ class AuthCache {
             user,
             permissions,
             role_ids,
+            scopes,
             timestamp: Date.now(),
             cache_version,
         };
@@ -105,6 +107,23 @@ class AuthCache {
      */
     invalidate_all() {
         this.cache.clear();
+    }
+    /**
+     * Invalidates cache entries for users who have access to specific scopes
+     * Used when scope details change (name, branding, etc.)
+     * @param scope_ids - Array of scope IDs to invalidate
+     */
+    invalidate_by_scope_ids(scope_ids) {
+        const entries_to_remove = [];
+        for (const [user_id, entry] of this.cache.entries()) {
+            const has_scope = entry.scopes.some((s) => scope_ids.includes(s.id));
+            if (has_scope) {
+                entries_to_remove.push(user_id);
+            }
+        }
+        for (const user_id of entries_to_remove) {
+            this.cache.delete(user_id);
+        }
     }
     /**
      * Gets the maximum cache version for a set of roles

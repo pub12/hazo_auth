@@ -1,12 +1,14 @@
-import type { HazoAuthUser } from "./auth_types";
+import type { HazoAuthUser, ScopeDetails } from "./auth_types";
 /**
  * Cache entry structure
  * v5.x: role_ids are now string UUIDs (from hazo_user_scopes)
+ * v5.2: Added scopes with full details for multi-tenancy support
  */
 type CacheEntry = {
     user: HazoAuthUser;
     permissions: string[];
     role_ids: string[];
+    scopes: ScopeDetails[];
     timestamp: number;
     cache_version: number;
 };
@@ -35,8 +37,9 @@ declare class AuthCache {
      * @param user - User data
      * @param permissions - User permissions
      * @param role_ids - User role IDs (v5.x: string UUIDs)
+     * @param scopes - User scope details with full information (v5.2+)
      */
-    set(user_id: string, user: HazoAuthUser, permissions: string[], role_ids: string[]): void;
+    set(user_id: string, user: HazoAuthUser, permissions: string[], role_ids: string[], scopes?: ScopeDetails[]): void;
     /**
      * Invalidates cache for a specific user
      * @param user_id - User ID to invalidate
@@ -52,6 +55,12 @@ declare class AuthCache {
      * Invalidates all cache entries
      */
     invalidate_all(): void;
+    /**
+     * Invalidates cache entries for users who have access to specific scopes
+     * Used when scope details change (name, branding, etc.)
+     * @param scope_ids - Array of scope IDs to invalidate
+     */
+    invalidate_by_scope_ids(scope_ids: string[]): void;
     /**
      * Gets the maximum cache version for a set of roles
      * Used to determine if cache entry is stale

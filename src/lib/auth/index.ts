@@ -11,6 +11,26 @@ export {
 } from "./auth_utils.server";
 export type { AuthResult, AuthUser } from "./auth_utils.server";
 
+// section: tenant_auth_exports
+export {
+  hazo_get_tenant_auth,
+  require_tenant_auth,
+  extract_scope_id_from_request,
+} from "./hazo_get_tenant_auth.server";
+export type {
+  ScopeDetails,
+  TenantOrganization,
+  TenantAuthOptions,
+  TenantAuthResult,
+  RequiredTenantAuthResult,
+} from "./auth_types";
+export {
+  HazoAuthError,
+  AuthenticationRequiredError,
+  TenantRequiredError,
+  TenantAccessDeniedError,
+} from "./auth_types";
+
 // section: client_exports
 export { get_server_auth_user } from "./server_auth";
 export type { ServerAuthResult } from "./server_auth";

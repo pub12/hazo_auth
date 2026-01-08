@@ -100,3 +100,145 @@ export class ScopeAccessError extends Error {
     this.name = "ScopeAccessError";
   }
 }
+
+// section: scope_details_types
+
+/**
+ * Full scope details with branding information
+ * Used in cache and tenant auth results for multi-tenancy support
+ */
+export type ScopeDetails = {
+  id: string;
+  name: string;
+  slug: string | null;
+  level: string;
+  parent_id: string | null;
+  role_id: string;
+  // Branding fields (from hazo_scopes table)
+  logo_url: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+  tagline: string | null;
+};
+
+/**
+ * Tenant/organization information returned in tenant auth results
+ * Simplified view of scope for API responses
+ */
+export type TenantOrganization = {
+  id: string;
+  name: string;
+  slug: string | null;
+  level: string;
+  role_id: string;
+  is_super_admin: boolean;
+  branding?: {
+    logo_url: string | null;
+    primary_color: string | null;
+    secondary_color: string | null;
+    tagline: string | null;
+  };
+};
+
+/**
+ * Options for hazo_get_tenant_auth function
+ * Extends HazoAuthOptions with tenant-specific configuration
+ */
+export type TenantAuthOptions = HazoAuthOptions & {
+  /**
+   * Header name to check for scope ID (default: "X-Hazo-Scope-Id")
+   */
+  scope_header_name?: string;
+  /**
+   * Cookie name to check for scope ID (uses cookie prefix if not specified)
+   */
+  scope_cookie_name?: string;
+};
+
+/**
+ * Result type for hazo_get_tenant_auth function
+ * Extends HazoAuthResult with tenant-specific information
+ */
+export type TenantAuthResult =
+  | {
+      authenticated: true;
+      user: HazoAuthUser;
+      permissions: string[];
+      permission_ok: boolean;
+      missing_permissions?: string[];
+      organization: TenantOrganization | null;
+      user_scopes: ScopeDetails[];
+      scope_ok?: boolean;
+      scope_access_via?: ScopeAccessInfo;
+    }
+  | {
+      authenticated: false;
+      user: null;
+      permissions: [];
+      permission_ok: false;
+      organization: null;
+      user_scopes: [];
+      scope_ok?: false;
+    };
+
+/**
+ * Guaranteed authenticated result with non-null organization
+ * Returned by require_tenant_auth when validation passes
+ */
+export type RequiredTenantAuthResult = TenantAuthResult & {
+  authenticated: true;
+  organization: TenantOrganization;
+};
+
+// section: tenant_error_classes
+
+/**
+ * Base error class for all hazo_auth errors
+ * Provides error code and HTTP status code for API responses
+ */
+export class HazoAuthError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string,
+    public readonly status_code: number,
+  ) {
+    super(message);
+    this.name = "HazoAuthError";
+  }
+}
+
+/**
+ * Error thrown when authentication is required but user is not authenticated
+ */
+export class AuthenticationRequiredError extends HazoAuthError {
+  constructor(message: string = "Authentication required") {
+    super(message, "AUTHENTICATION_REQUIRED", 401);
+    this.name = "AuthenticationRequiredError";
+  }
+}
+
+/**
+ * Error thrown when a tenant/scope context is required but not provided
+ */
+export class TenantRequiredError extends HazoAuthError {
+  constructor(
+    message: string = "Tenant context required",
+    public readonly user_scopes: ScopeDetails[] = [],
+  ) {
+    super(message, "TENANT_REQUIRED", 403);
+    this.name = "TenantRequiredError";
+  }
+}
+
+/**
+ * Error thrown when user lacks access to the requested tenant/scope
+ */
+export class TenantAccessDeniedError extends HazoAuthError {
+  constructor(
+    public readonly scope_id: string,
+    public readonly user_scopes: ScopeDetails[] = [],
+  ) {
+    super(`Access denied to scope: ${scope_id}`, "TENANT_ACCESS_DENIED", 403);
+    this.name = "TenantAccessDeniedError";
+  }
+}

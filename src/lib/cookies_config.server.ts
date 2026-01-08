@@ -25,6 +25,7 @@ export const BASE_COOKIE_NAMES = {
   USER_EMAIL: "hazo_auth_user_email",
   SESSION: "hazo_auth_session",
   DEV_LOCK: "hazo_auth_dev_lock",
+  SCOPE_ID: "hazo_auth_scope_id", // v5.2: Tenant context cookie for multi-tenancy
 } as const;
 
 // section: main_function

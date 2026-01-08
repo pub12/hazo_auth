@@ -9,6 +9,7 @@ export declare const BASE_COOKIE_NAMES: {
     readonly USER_EMAIL: "hazo_auth_user_email";
     readonly SESSION: "hazo_auth_session";
     readonly DEV_LOCK: "hazo_auth_dev_lock";
+    readonly SCOPE_ID: "hazo_auth_scope_id";
 };
 /**
  * Reads cookie configuration from hazo_auth_config.ini file

@@ -28,3 +28,46 @@ export class ScopeAccessError extends Error {
         this.name = "ScopeAccessError";
     }
 }
+// section: tenant_error_classes
+/**
+ * Base error class for all hazo_auth errors
+ * Provides error code and HTTP status code for API responses
+ */
+export class HazoAuthError extends Error {
+    constructor(message, code, status_code) {
+        super(message);
+        this.code = code;
+        this.status_code = status_code;
+        this.name = "HazoAuthError";
+    }
+}
+/**
+ * Error thrown when authentication is required but user is not authenticated
+ */
+export class AuthenticationRequiredError extends HazoAuthError {
+    constructor(message = "Authentication required") {
+        super(message, "AUTHENTICATION_REQUIRED", 401);
+        this.name = "AuthenticationRequiredError";
+    }
+}
+/**
+ * Error thrown when a tenant/scope context is required but not provided
+ */
+export class TenantRequiredError extends HazoAuthError {
+    constructor(message = "Tenant context required", user_scopes = []) {
+        super(message, "TENANT_REQUIRED", 403);
+        this.user_scopes = user_scopes;
+        this.name = "TenantRequiredError";
+    }
+}
+/**
+ * Error thrown when user lacks access to the requested tenant/scope
+ */
+export class TenantAccessDeniedError extends HazoAuthError {
+    constructor(scope_id, user_scopes = []) {
+        super(`Access denied to scope: ${scope_id}`, "TENANT_ACCESS_DENIED", 403);
+        this.scope_id = scope_id;
+        this.user_scopes = user_scopes;
+        this.name = "TenantAccessDeniedError";
+    }
+}

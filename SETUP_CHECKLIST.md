@@ -1658,7 +1658,34 @@ WHERE table_name LIKE 'hazo_scopes_%'
 sqlite3 data/hazo_auth.sqlite ".tables" | grep -E "hazo_scopes|hazo_user_scopes|hazo_scope_labels"
 ```
 
-### Step 7.5: Test HRBAC
+### Step 7.5: Add Slug Column to hazo_scopes (Optional - for Tenant Auth)
+
+If you plan to use tenant-aware authentication with URL-friendly identifiers, add the `slug` column to the `hazo_scopes` table:
+
+```bash
+npm run migrate migrations/012_add_slug_to_hazo_scopes.sql
+```
+
+**Manual Migration (if needed):**
+
+**PostgreSQL:**
+```sql
+ALTER TABLE hazo_scopes ADD COLUMN slug TEXT;
+CREATE INDEX IF NOT EXISTS idx_hazo_scopes_slug ON hazo_scopes(slug);
+```
+
+**SQLite:**
+```sql
+ALTER TABLE hazo_scopes ADD COLUMN slug TEXT;
+CREATE INDEX IF NOT EXISTS idx_hazo_scopes_slug ON hazo_scopes(slug);
+```
+
+**What is slug?**
+- URL-friendly identifier for scopes (e.g., "acme-corp", "sales-division")
+- Enables tenant context via URL paths (e.g., `/org/:slug/dashboard`)
+- Not enforced as unique to allow flexibility
+
+### Step 7.6: Test HRBAC
 
 1. Start your dev server: `npm run dev`
 2. Log in with a user that has `admin_scope_hierarchy_management` permission
@@ -1675,8 +1702,182 @@ sqlite3 data/hazo_auth.sqlite ".tables" | grep -E "hazo_scopes|hazo_user_scopes|
   - [ ] `hazo_scope_labels` (custom labels per org)
 - [ ] Scope ID generator function created (PostgreSQL)
 - [ ] Grants applied (PostgreSQL)
+- [ ] `slug` column added to hazo_scopes (optional, for tenant auth)
 - [ ] HRBAC tabs visible in User Management
 - [ ] Scope test page works
+
+---
+
+## Phase 8: Tenant-Aware Authentication Setup (Optional)
+
+Tenant-aware authentication adds scope context to authentication results, enabling multi-tenant applications where users can access multiple organizations/scopes.
+
+**Skip this phase if:**
+- Your app doesn't need multi-tenancy
+- Users don't switch between different scopes/organizations
+
+### Step 8.1: Ensure Slug Column Exists
+
+The tenant auth feature uses the `slug` column for URL-friendly scope identifiers. If you didn't complete Step 7.5, do so now:
+
+```bash
+npm run migrate migrations/012_add_slug_to_hazo_scopes.sql
+```
+
+### Step 8.2: Use Tenant Auth in API Routes
+
+Replace `hazo_get_auth` with `hazo_get_tenant_auth` in your API routes:
+
+**Before (standard auth):**
+```typescript
+import { hazo_get_auth } from "hazo_auth";
+
+export async function GET(request: NextRequest) {
+  const auth = await hazo_get_auth(request);
+  // No tenant context
+}
+```
+
+**After (tenant auth):**
+```typescript
+import { hazo_get_tenant_auth } from "hazo_auth";
+
+export async function GET(request: NextRequest) {
+  const auth = await hazo_get_tenant_auth(request);
+
+  if (auth.authenticated && auth.organization) {
+    // auth.organization contains tenant details
+    // auth.user_scopes contains all scopes user can access (for UI switcher)
+    const data = await getTenantData(auth.organization.id);
+  }
+}
+```
+
+**Or use strict mode with error handling:**
+```typescript
+import { require_tenant_auth, HazoAuthError } from "hazo_auth";
+
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await require_tenant_auth(request);
+    // auth.organization is guaranteed non-null
+    return NextResponse.json(await getData(auth.organization.id));
+  } catch (error) {
+    if (error instanceof HazoAuthError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: error.status_code }
+      );
+    }
+    throw error;
+  }
+}
+```
+
+### Step 8.3: Set Scope Context from Frontend
+
+The frontend needs to send the current scope ID via header or cookie.
+
+**Option A: Header (recommended - per-request):**
+```typescript
+const response = await fetch("/api/dashboard", {
+  headers: {
+    "X-Hazo-Scope-Id": selectedScopeId,
+  },
+});
+```
+
+**Option B: Cookie (persistent - set once):**
+```typescript
+// Set cookie when user selects a scope
+document.cookie = `hazo_auth_scope_id=${selectedScopeId}; path=/`;
+
+// Then all requests include the scope automatically
+const response = await fetch("/api/dashboard");
+```
+
+**Custom Configuration (optional):**
+```typescript
+// Use custom header or cookie names
+const auth = await hazo_get_tenant_auth(request, {
+  scope_header_name: "X-Tenant-Id",         // Custom header
+  scope_cookie_name: "my_app_tenant_id",    // Custom cookie
+});
+```
+
+### Step 8.4: Build Scope Switcher UI (Optional)
+
+Use the `user_scopes` array to build a scope switcher dropdown:
+
+```typescript
+const auth = await hazo_get_tenant_auth(request);
+
+// Return available scopes to frontend
+return NextResponse.json({
+  current_scope: auth.organization,
+  available_scopes: auth.user_scopes.map(s => ({
+    id: s.id,
+    name: s.name,
+    slug: s.slug,
+    level: s.level,
+    branding: {
+      logo_url: s.logo_url,
+      primary_color: s.primary_color,
+    },
+  })),
+});
+```
+
+**Frontend Scope Switcher:**
+```tsx
+function ScopeSwitcher({ scopes, currentScopeId }) {
+  const handleScopeChange = (scopeId: string) => {
+    // Option 1: Set cookie
+    document.cookie = `hazo_auth_scope_id=${scopeId}; path=/`;
+    window.location.reload();
+
+    // Option 2: Update state and send header on all requests
+    setCurrentScope(scopeId);
+  };
+
+  return (
+    <select value={currentScopeId} onChange={e => handleScopeChange(e.target.value)}>
+      {scopes.map(scope => (
+        <option key={scope.id} value={scope.id}>
+          {scope.name} ({scope.level})
+        </option>
+      ))}
+    </select>
+  );
+}
+```
+
+### Step 8.5: Test Tenant Auth
+
+**Test with cURL:**
+```bash
+# No scope context - should return error or empty organization
+curl -H "Cookie: hazo_auth_session=YOUR_TOKEN" \
+  http://localhost:3000/api/dashboard | jq
+
+# With scope context via header
+curl -H "Cookie: hazo_auth_session=YOUR_TOKEN" \
+  -H "X-Hazo-Scope-Id: SCOPE_UUID" \
+  http://localhost:3000/api/dashboard | jq
+
+# With scope context via cookie
+curl -H "Cookie: hazo_auth_session=YOUR_TOKEN; hazo_auth_scope_id=SCOPE_UUID" \
+  http://localhost:3000/api/dashboard | jq
+```
+
+**Tenant Auth Checklist:**
+- [ ] `slug` column added to `hazo_scopes`
+- [ ] API routes updated to use `hazo_get_tenant_auth` or `require_tenant_auth`
+- [ ] Frontend sends scope context via header or cookie
+- [ ] Tenant auth returns organization details when scope is valid
+- [ ] Tenant auth returns user_scopes for building scope switcher
+- [ ] Error handling in place for missing/invalid scope context
+- [ ] Scope switcher UI built (optional but recommended)
 
 ---
 

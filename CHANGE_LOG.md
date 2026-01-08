@@ -7,6 +7,195 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Tenant-Aware Authentication Functions
+
+**New Feature**: Multi-tenant authentication with scope context extraction from request headers or cookies.
+
+**Why this feature**: Multi-tenant applications need to know which tenant/organization the user is accessing on each request. The new tenant-aware auth functions extract this context automatically and validate access, eliminating boilerplate code in consuming applications.
+
+**Key Features:**
+
+**1. `hazo_get_tenant_auth()` Function:**
+- Extracts scope ID from request headers (`X-Hazo-Scope-Id`) or cookies (`hazo_auth_scope_id`)
+- Validates user's access to the requested scope
+- Returns enriched result with `organization` object containing tenant details
+- Returns `user_scopes` array with all scopes user can access (for UI scope switcher)
+- Includes branding information (logo, colors, tagline) from scope record
+
+**2. `require_tenant_auth()` Helper:**
+- Strict mode wrapper that throws typed errors for common failure cases
+- `AuthenticationRequiredError` (401) - User not authenticated
+- `TenantRequiredError` (403) - No tenant context in request
+- `TenantAccessDeniedError` (403) - User lacks access to requested tenant
+- Returns `RequiredTenantAuthResult` with guaranteed non-null `organization`
+
+**3. Extended Auth Cache:**
+- Cache now includes all user's scope details with branding info
+- `ScopeDetails` type includes: id, name, slug, level, parent_id, role_id, logo_url, primary_color, secondary_color, tagline
+- Enables fast scope validation without database queries
+
+**4. New Error Classes:**
+- `HazoAuthError` - Base error class with status_code and code fields
+- `AuthenticationRequiredError` - 401 error for missing authentication
+- `TenantRequiredError` - 403 error for missing tenant context
+- `TenantAccessDeniedError` - 403 error for invalid tenant access (includes available_scopes)
+
+**New Types:**
+
+```typescript
+// Tenant authentication result
+type TenantAuthResult = {
+  authenticated: boolean;
+  user: HazoAuthUser | null;
+  permissions: string[];
+  permission_ok: boolean;
+  missing_permissions?: string[];
+  organization: TenantOrganization | null;  // NEW: Current tenant
+  user_scopes: ScopeDetails[];              // NEW: All user's scopes
+  scope_ok: boolean;
+};
+
+// Tenant organization details
+type TenantOrganization = {
+  id: string;
+  name: string;
+  slug: string | null;          // URL-friendly identifier
+  level: string;                // "Company", "Division", etc.
+  role_id: string;              // User's role in this scope
+  is_super_admin: boolean;
+  branding?: {
+    logo_url: string | null;
+    primary_color: string | null;
+    secondary_color: string | null;
+    tagline: string | null;
+  };
+};
+
+// Full scope details (cached)
+type ScopeDetails = {
+  id: string;
+  name: string;
+  slug: string | null;
+  level: string;
+  parent_id: string | null;
+  role_id: string;
+  logo_url: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+  tagline: string | null;
+};
+
+// Tenant auth options
+type TenantAuthOptions = {
+  required_permissions?: string[];
+  strict?: boolean;
+  scope_header_name?: string;     // Default: "X-Hazo-Scope-Id"
+  scope_cookie_name?: string;     // Default: "hazo_auth_scope_id"
+  scope_id?: string;              // Explicit override
+};
+
+// Strict mode result (non-null organization)
+type RequiredTenantAuthResult = TenantAuthResult & {
+  authenticated: true;
+  organization: TenantOrganization;
+};
+```
+
+**Usage Examples:**
+
+**Basic tenant auth:**
+```typescript
+import { hazo_get_tenant_auth } from "hazo_auth";
+
+export async function GET(request: NextRequest) {
+  const auth = await hazo_get_tenant_auth(request);
+  if (auth.authenticated && auth.organization) {
+    // auth.organization.id, auth.organization.name available
+    // auth.user_scopes contains all user's scopes for switching UI
+    const data = await getTenantData(auth.organization.id);
+  }
+}
+```
+
+**Strict mode with error handling:**
+```typescript
+import { require_tenant_auth, HazoAuthError } from "hazo_auth";
+
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await require_tenant_auth(request);
+    // auth.organization is guaranteed non-null here
+    return NextResponse.json(await getData(auth.organization.id));
+  } catch (error) {
+    if (error instanceof HazoAuthError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: error.status_code }
+      );
+    }
+    throw error;
+  }
+}
+```
+
+**Frontend integration:**
+```typescript
+// Set scope via header (recommended - per-request)
+const response = await fetch("/api/dashboard", {
+  headers: { "X-Hazo-Scope-Id": selectedScopeId },
+});
+
+// Or via cookie (persistent - set once)
+document.cookie = `hazo_auth_scope_id=${selectedScopeId}; path=/`;
+```
+
+**Scope Context Extraction:**
+- **Priority 1**: Header (`X-Hazo-Scope-Id` by default)
+- **Priority 2**: Cookie (`hazo_auth_scope_id` with prefix if configured)
+- Both header and cookie names are customizable via `TenantAuthOptions`
+
+**Migration Required:**
+
+1. **Database Migration**: Add `slug` column to `hazo_scopes` table
+   ```bash
+   npm run migrate migrations/012_add_slug_to_hazo_scopes.sql
+   ```
+
+2. **Update API Routes** (optional - for tenant-aware apps):
+   ```typescript
+   // Before
+   const auth = await hazo_get_auth(request);
+
+   // After
+   const auth = await hazo_get_tenant_auth(request);
+   ```
+
+**Files Added:**
+- `src/lib/auth/hazo_get_tenant_auth.server.ts` - Tenant auth functions
+- `migrations/012_add_slug_to_hazo_scopes.sql` - Add slug column
+
+**Files Modified:**
+- `src/lib/auth/auth_types.ts` - Added new types and error classes
+- `src/lib/auth/auth_cache.ts` - Extended to cache scope details with branding
+- `src/lib/auth/hazo_get_auth.server.ts` - Now populates scope details in cache
+
+**Backward Compatibility:**
+- FULL - Existing `hazo_get_auth()` usage continues to work unchanged
+- New functions are opt-in for multi-tenant applications
+- Migration is optional unless using tenant auth features
+
+**Use Cases:**
+- Multi-tenant SaaS applications
+- Users with access to multiple organizations/companies
+- Scope/organization switcher UI
+- Tenant-aware data isolation
+- Branded experiences per tenant
+
+**Why Not Breaking:**
+This is additive functionality that doesn't modify existing APIs. Apps can continue using `hazo_get_auth()` and adopt tenant auth when needed.
+
+---
+
 ## [5.1.5] - 2026-01-02
 
 ### Fixed - Critical Bug: hazo_user_roles → hazo_user_scopes Migration

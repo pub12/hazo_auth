@@ -10,6 +10,7 @@ import type {
   HazoAuthUser,
   HazoAuthOptions,
   ScopeAccessInfo,
+  ScopeDetails,
 } from "./auth_types";
 import { PermissionError, ScopeAccessError } from "./auth_types";
 import { get_auth_cache } from "./auth_cache";
@@ -73,11 +74,6 @@ function get_client_ip(request: NextRequest): string {
 }
 
 /**
- * Fetches user data and permissions from database
- * @param user_id - User ID
- * @returns Object with user, permissions, and role_ids
- */
-/**
  * CRUD service options for hazo_user_scopes table
  * This table uses a composite primary key (user_id, scope_id) and no 'id' column
  */
@@ -86,10 +82,63 @@ const USER_SCOPES_CRUD_OPTIONS = {
   autoId: false as const,
 };
 
+/**
+ * Fetches full scope details for user's scope assignments
+ * Joins hazo_user_scopes with hazo_scopes to get name, slug, branding
+ * @param user_id - User ID
+ * @returns Array of scope details with branding information
+ */
+async function fetch_user_scope_details(user_id: string): Promise<ScopeDetails[]> {
+  const hazoConnect = get_hazo_connect_instance();
+  const user_scopes_service = createCrudService(
+    hazoConnect,
+    "hazo_user_scopes",
+    USER_SCOPES_CRUD_OPTIONS,
+  );
+  const scopes_service = createCrudService(hazoConnect, "hazo_scopes");
+
+  const user_scope_assignments = await user_scopes_service.findBy({ user_id });
+  if (!Array.isArray(user_scope_assignments) || user_scope_assignments.length === 0) {
+    return [];
+  }
+
+  const scope_details: ScopeDetails[] = [];
+  for (const assignment of user_scope_assignments) {
+    const scope_id = assignment.scope_id as string;
+    const role_id = assignment.role_id as string;
+
+    const scopes = await scopes_service.findBy({ id: scope_id });
+    if (Array.isArray(scopes) && scopes.length > 0) {
+      const scope = scopes[0];
+      scope_details.push({
+        id: scope_id,
+        name: scope.name as string,
+        slug: (scope.slug as string) || null,
+        level: scope.level as string,
+        parent_id: scope.parent_id as string | null,
+        role_id,
+        logo_url: (scope.logo_url as string) || null,
+        primary_color: (scope.primary_color as string) || null,
+        secondary_color: (scope.secondary_color as string) || null,
+        tagline: (scope.tagline as string) || null,
+      });
+    }
+  }
+
+  return scope_details;
+}
+
+/**
+ * Fetches user data and permissions from database
+ * @param user_id - User ID
+ * @returns Object with user, permissions, role_ids, and scopes
+ */
+
 async function fetch_user_data_from_db(user_id: string): Promise<{
   user: HazoAuthUser;
   permissions: string[];
   role_ids: string[];
+  scopes: ScopeDetails[];
 }> {
   const hazoConnect = get_hazo_connect_instance();
   const users_service = createCrudService(hazoConnect, "hazo_users");
@@ -186,7 +235,10 @@ async function fetch_user_data_from_db(user_id: string): Promise<{
 
   const permissions = Array.from(permissions_set);
 
-  return { user, permissions, role_ids };
+  // v5.2: Fetch full scope details for caching
+  const scopes = await fetch_user_scope_details(user_id);
+
+  return { user, permissions, role_ids, scopes };
 }
 
 /**
@@ -430,8 +482,8 @@ export async function hazo_get_auth(
       permissions = user_data.permissions;
       role_ids = user_data.role_ids;
 
-      // Update cache
-      cache.set(user_id, user, permissions, role_ids);
+      // Update cache (v5.2: includes scope details for tenant auth)
+      cache.set(user_id, user, permissions, role_ids, user_data.scopes);
     } catch (error) {
       const error_message =
         error instanceof Error ? error.message : "Unknown error";
