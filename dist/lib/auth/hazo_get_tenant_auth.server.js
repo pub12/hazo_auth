@@ -96,6 +96,7 @@ export async function hazo_get_tenant_auth(request, options = {}) {
             permissions: [],
             permission_ok: false,
             organization: null,
+            organization_id: null,
             user_scopes: [],
             scope_ok: false,
         };
@@ -145,6 +146,7 @@ export async function hazo_get_tenant_auth(request, options = {}) {
         permission_ok: auth_result.permission_ok,
         missing_permissions: auth_result.missing_permissions,
         organization,
+        organization_id: (organization === null || organization === void 0 ? void 0 : organization.id) || null,
         user_scopes,
         scope_ok: auth_result.scope_ok,
         scope_access_via: auth_result.scope_access_via,

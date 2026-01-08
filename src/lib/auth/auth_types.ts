@@ -167,6 +167,8 @@ export type TenantAuthResult =
       permission_ok: boolean;
       missing_permissions?: string[];
       organization: TenantOrganization | null;
+      /** Shorthand for organization?.id - commonly used for DB query filters */
+      organization_id: string | null;
       user_scopes: ScopeDetails[];
       scope_ok?: boolean;
       scope_access_via?: ScopeAccessInfo;
@@ -177,6 +179,8 @@ export type TenantAuthResult =
       permissions: [];
       permission_ok: false;
       organization: null;
+      /** Shorthand for organization?.id - commonly used for DB query filters */
+      organization_id: null;
       user_scopes: [];
       scope_ok?: false;
     };
