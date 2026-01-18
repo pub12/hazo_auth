@@ -250,16 +250,8 @@ CREATE TYPE hazo_enum_profile_source_enum AS ENUM (
     'predefined'
 );
 
--- Scope types for HRBAC
-CREATE TYPE hazo_enum_scope_types AS ENUM (
-    'hazo_scopes_l1',
-    'hazo_scopes_l2',
-    'hazo_scopes_l3',
-    'hazo_scopes_l4',
-    'hazo_scopes_l5',
-    'hazo_scopes_l6',
-    'hazo_scopes_l7'
-);
+-- Note: hazo_enum_scope_types was removed in v5.0
+-- The unified hazo_scopes table uses a TEXT "level" column instead
 
 -- Notification chain status (for hazo_notify integration)
 CREATE TYPE hazo_enum_notify_chain_status AS ENUM (
@@ -456,93 +448,99 @@ CREATE TABLE hazo_user_roles (
 
 ### HRBAC Tables (Hierarchical Role-Based Access Control)
 
-**Optional feature** - enables 7-level scope hierarchy for organizational access control.
+**v5.0+ Unified Scope Model** - Uses a single `hazo_scopes` table with unlimited hierarchy depth.
 
-**hazo_scopes_l1 through hazo_scopes_l7:**
+**hazo_scopes (v5.0+):**
 ```sql
--- Level 1 (root level - no parent)
-CREATE TABLE hazo_scopes_l1 (
+CREATE TABLE hazo_scopes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    seq TEXT NOT NULL,                       -- Auto-generated friendly ID (e.g., L1_001)
-    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,       -- Organization FK
-    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,  -- Root org FK
-    name TEXT NOT NULL,                      -- Scope name (e.g., "Acme Corp")
+    parent_id UUID REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,                      -- Scope name (e.g., "Acme Corp", "Sydney Office")
+    level TEXT NOT NULL,                     -- Descriptive level (e.g., "HQ", "Division", "Department")
+    logo_url TEXT,                           -- Firm branding: logo URL
+    primary_color TEXT,                      -- Firm branding: primary color hex (e.g., "#1a73e8")
+    secondary_color TEXT,                    -- Firm branding: secondary color hex
+    tagline TEXT,                            -- Firm branding: tagline/slogan
+    slug TEXT,                               -- URL-friendly identifier for tenant auth
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scopes_l1_org_id ON hazo_scopes_l1(org_id);
-CREATE INDEX idx_hazo_scopes_l1_root_org_id ON hazo_scopes_l1(root_org_id);
-CREATE INDEX idx_hazo_scopes_l1_seq ON hazo_scopes_l1(seq);
+CREATE INDEX idx_hazo_scopes_parent ON hazo_scopes(parent_id);
+CREATE INDEX idx_hazo_scopes_level ON hazo_scopes(level);
+CREATE INDEX idx_hazo_scopes_slug ON hazo_scopes(slug);
+```
 
--- Level 2 (parent: L1)
-CREATE TABLE hazo_scopes_l2 (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    seq TEXT NOT NULL,
-    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    parent_scope_id UUID REFERENCES hazo_scopes_l1(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_hazo_scopes_l2_org_id ON hazo_scopes_l2(org_id);
-CREATE INDEX idx_hazo_scopes_l2_root_org_id ON hazo_scopes_l2(root_org_id);
-CREATE INDEX idx_hazo_scopes_l2_seq ON hazo_scopes_l2(seq);
-CREATE INDEX idx_hazo_scopes_l2_parent ON hazo_scopes_l2(parent_scope_id);
+**System Scopes:**
+- `00000000-0000-0000-0000-000000000000` - Super Admin scope (system-wide access)
+- `00000000-0000-0000-0000-000000000001` - Default System scope (non-multi-tenancy mode)
 
--- Levels 3-7 follow the same pattern, each referencing the previous level
+**Hierarchy Example:**
+```
+Acme Corp (level="HQ", parent_id=NULL)
+├── Sydney Office (level="Division", parent_id=Acme Corp)
+│   ├── Engineering (level="Department")
+│   └── Sales (level="Department")
+└── Melbourne Office (level="Division")
 ```
 
 **Field Notes:**
 - `id` - UUID primary key (TEXT in SQLite)
-- `seq` - Auto-generated human-readable ID (e.g., L2_015) via database function
-- `org_id` - UUID foreign key referencing `hazo_org(id)` (replaces string `org` field)
-- `root_org_id` - UUID foreign key to root organization for quick tree lookups
+- `parent_id` - Self-reference for unlimited hierarchy depth (NULL for root scopes)
 - `name` - Display name for the scope
-- `parent_scope_id` - References parent level (NULL for L1, required for L2-L7)
-- Foreign keys with CASCADE DELETE ensure referential integrity (deleting org removes all scopes)
+- `level` - Descriptive label (not a fixed L1-L7 structure)
+- Branding fields (logo_url, colors, tagline) typically only set on root scopes
+- Child scopes inherit branding from root scope via application logic
 
 **hazo_user_scopes (v5.0+):**
 ```sql
 CREATE TABLE hazo_user_scopes (
     user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
-    scope_id UUID NOT NULL,                  -- References hazo_scopes(id) in v5.0+ unified table
-    role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,  -- ADDED in v5.1.5
+    scope_id UUID NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    root_scope_id UUID NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'ACTIVE' CHECK (status IN ('INVITED', 'ACTIVE', 'SUSPENDED', 'DEPARTED')),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     PRIMARY KEY (user_id, scope_id)
 );
-CREATE INDEX idx_hazo_user_scopes_user_id ON hazo_user_scopes(user_id);
-CREATE INDEX idx_hazo_user_scopes_scope_id ON hazo_user_scopes(scope_id);
-CREATE INDEX idx_hazo_user_scopes_role_id ON hazo_user_scopes(role_id);
+CREATE INDEX idx_hazo_user_scopes_scope ON hazo_user_scopes(scope_id);
+CREATE INDEX idx_hazo_user_scopes_root ON hazo_user_scopes(root_scope_id);
+CREATE INDEX idx_hazo_user_scopes_role ON hazo_user_scopes(role_id);
 ```
 
 **Field Notes (v5.1.5):**
 - Composite primary key: `(user_id, scope_id)`
-- `scope_id` - References `hazo_scopes(id)` (unified scope table in v5.0+)
+- `scope_id` - References `hazo_scopes(id)` (direct scope assignment)
+- `root_scope_id` - References the root firm/organization for quick access
 - `role_id` - UUID reference to `hazo_roles(id)` - **CRITICAL**: Changed from numeric to UUID (string) in v5.x
+- `status` - Membership status (INVITED, ACTIVE, SUSPENDED, DEPARTED)
 - Replaces `hazo_user_roles` from v4.x - now scope-based instead of global
 - Users can have different roles in different scopes
 - Each scope assignment includes a role (e.g., admin, member)
 
-**hazo_scope_labels:**
+**hazo_invitations (v5.0+):**
 ```sql
-CREATE TABLE hazo_scope_labels (
+CREATE TABLE hazo_invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    scope_type hazo_enum_scope_types NOT NULL,
-    label TEXT NOT NULL,                     -- Custom label (e.g., "Division" instead of "Level 2")
+    email_address TEXT NOT NULL,
+    scope_id UUID NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED')),
+    invited_by UUID REFERENCES hazo_users(id) ON DELETE SET NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    accepted_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    UNIQUE(org_id, scope_type)
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scope_labels_org_id ON hazo_scope_labels(org_id);
+CREATE INDEX idx_hazo_invitations_email ON hazo_invitations(email_address);
+CREATE INDEX idx_hazo_invitations_scope ON hazo_invitations(scope_id);
+CREATE INDEX idx_hazo_invitations_status ON hazo_invitations(status);
 ```
 
 **Field Notes:**
-- Allows organizations to customize labels for each scope level
-- Example: "Company" (L1), "Division" (L2), "Department" (L3)
-- UNIQUE constraint ensures one label per organization per level
+- Enables invitation-based onboarding of new users to scopes
+- Invitations are checked after email verification
+- If found, user is automatically assigned to the scope with the specified role
 
 ### Database Migrations
 
@@ -553,11 +551,15 @@ Migration files are located in `migrations/`:
 | `001_create_tables.sql` | Initial schema creation |
 | `002_add_name_to_hazo_users.sql` | Add name field to users |
 | `003_add_url_on_logon_to_hazo_users.sql` | Add url_on_logon field for custom redirects |
-| `004_add_parent_scope_to_scope_tables.sql` | Add parent_scope_id to L2-L7 scope tables (HRBAC) |
+| `004_add_parent_scope_to_scope_tables.sql` | *Deprecated* - replaced by 009 |
 | `005_add_oauth_fields_to_hazo_users.sql` | Add google_id and auth_providers fields for OAuth (v4.2.0+) |
-| `006_multi_tenancy_org_support.sql` | Add indexes for hazo_org and hazo_users org fields (multi-tenancy) |
+| `006_multi_tenancy_org_support.sql` | *Deprecated* - replaced by 009 |
 | `007_add_user_type_to_hazo_users.sql` | Add user_type field for optional user categorization |
 | `008_add_app_user_data_to_hazo_users.sql` | Add app_user_data field for custom JSON metadata |
+| `009_scope_consolidation.sql` | **v5.0+** Creates unified hazo_scopes, hazo_user_scopes, hazo_invitations |
+| `010_add_branding_to_hazo_scopes.sql` | Add firm branding columns (logo_url, colors, tagline) |
+| `011_fix_status_case_to_uppercase.sql` | Normalize status values to uppercase |
+| `012_add_slug_to_hazo_scopes.sql` | Add slug column for tenant-aware auth |
 
 **Apply migrations:**
 ```bash
@@ -1943,10 +1945,9 @@ The `/api/hazo_auth/me` endpoint is the **standardized endpoint** that ensures c
 ```typescript
 POST /api/hazo_auth/scope_management/scopes
 {
-  "level": "hazo_scopes_l2",
-  "org": "acme_corp",
   "name": "Engineering Division",
-  "parent_scope_id": "uuid-of-l1-scope"
+  "level": "Division",
+  "parent_id": "uuid-of-parent-scope"  // null for root scopes
 }
 ```
 
@@ -1955,9 +1956,9 @@ POST /api/hazo_auth/scope_management/scopes
 POST /api/hazo_auth/user_management/users/scopes
 {
   "user_id": "uuid-of-user",
-  "scope_type": "hazo_scopes_l2",
   "scope_id": "uuid-of-scope",
-  "scope_seq": "L2_005"
+  "root_scope_id": "uuid-of-root-scope",
+  "role_id": "uuid-of-role"
 }
 ```
 
@@ -1967,7 +1968,6 @@ POST /api/hazo_auth/rbac_test
 {
   "test_user_id": "uuid-of-user-to-test",
   "required_permissions": ["view_reports"],
-  "scope_type": "hazo_scopes_l3",
   "scope_id": "uuid-of-scope"
 }
 
@@ -1977,9 +1977,8 @@ Response:
   "permission_ok": true,
   "scope_ok": true,
   "scope_access_via": {
-    "scope_type": "hazo_scopes_l2",
     "scope_id": "parent-scope-uuid",
-    "scope_seq": "L2_005"
+    "scope_name": "Sydney Office"
   },
   "user_scopes": [...]
 }

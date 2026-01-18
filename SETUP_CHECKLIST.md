@@ -304,16 +304,20 @@ cat << 'EOF' | sqlite3 data/hazo_auth.sqlite
 CREATE TABLE IF NOT EXISTS hazo_users (
     id TEXT PRIMARY KEY,
     email_address TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,
     name TEXT,
     email_verified INTEGER NOT NULL DEFAULT 0,
-    is_active INTEGER NOT NULL DEFAULT 1,
+    status TEXT DEFAULT 'ACTIVE' CHECK(status IN ('PENDING', 'ACTIVE', 'BLOCKED')),
     login_attempts INTEGER NOT NULL DEFAULT 0,
     last_logon TEXT,
     profile_picture_url TEXT,
-    profile_source TEXT,
+    profile_source TEXT CHECK(profile_source IN ('gravatar', 'custom', 'predefined')),
     mfa_secret TEXT,
     url_on_logon TEXT,
+    google_id TEXT UNIQUE,
+    auth_providers TEXT DEFAULT 'email',
+    user_type TEXT,
+    app_user_data TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     changed_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -426,7 +430,7 @@ CREATE TABLE hazo_users (
     password_hash TEXT,                                 -- NULL for OAuth-only users
     name TEXT,
     email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    status TEXT NOT NULL DEFAULT 'ACTIVE',              -- 'PENDING', 'ACTIVE', or 'BLOCKED'
     login_attempts INTEGER NOT NULL DEFAULT 0,
     last_logon TIMESTAMP WITH TIME ZONE,
     profile_picture_url TEXT,
@@ -434,6 +438,7 @@ CREATE TABLE hazo_users (
     mfa_secret TEXT,
     url_on_logon TEXT,
     user_type TEXT,                                     -- Optional user categorization
+    app_user_data TEXT,                                 -- Custom JSON data for consuming apps
     google_id TEXT UNIQUE,                              -- Google OAuth ID
     auth_providers TEXT DEFAULT 'email',                -- 'email', 'google', or 'email,google'
     org_id UUID REFERENCES hazo_org(id) ON DELETE SET NULL,
@@ -442,6 +447,7 @@ CREATE TABLE hazo_users (
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_hazo_users_email ON hazo_users(email_address);
+CREATE INDEX idx_hazo_users_status ON hazo_users(status);
 CREATE INDEX idx_hazo_users_user_type ON hazo_users(user_type);
 CREATE UNIQUE INDEX idx_hazo_users_google_id ON hazo_users(google_id);
 CREATE INDEX idx_hazo_users_org_id ON hazo_users(org_id);
@@ -581,7 +587,7 @@ GRANT USAGE ON TYPE hazo_enum_profile_source_enum TO anon, authenticated;
   - [ ] `hazo_enum_chat_type`
 - [ ] All core tables exist:
   - [ ] `hazo_org` (multi-tenancy - must be created before hazo_users)
-  - [ ] `hazo_users` (with google_id, auth_providers, org_id, root_org_id, user_type fields)
+  - [ ] `hazo_users` (with status, google_id, auth_providers, app_user_data, org_id, root_org_id, user_type fields)
   - [ ] `hazo_refresh_tokens`
   - [ ] `hazo_permissions`
   - [ ] `hazo_roles`
@@ -1322,14 +1328,9 @@ enable_hrbac = true
 scope_cache_ttl_minutes = 15
 scope_cache_max_entries = 5000
 
-# Optional: customize default labels for each scope level
-default_label_l1 = Company
-default_label_l2 = Division
-default_label_l3 = Department
-default_label_l4 = Team
-default_label_l5 = Project
-default_label_l6 = Sub-project
-default_label_l7 = Task
+# Note: In v5.0+, scope levels are stored as the "level" column in hazo_scopes
+# Examples: "HQ", "Division", "Department", "Team", etc.
+# The level field is a descriptive string, not a fixed L1-L7 hierarchy
 ```
 
 ### Step 7.2: Add HRBAC Permissions
@@ -1343,185 +1344,89 @@ application_permission_list_defaults = admin_user_management,admin_role_manageme
 
 ### Step 7.3: Create HRBAC Database Tables
 
+**Recommended:** Run the scope consolidation migration which creates all required tables:
+
+```bash
+npm run migrate migrations/009_scope_consolidation.sql
+```
+
+If you prefer manual setup, use the scripts below:
+
 #### PostgreSQL
 
 ```sql
 -- =============================================
 -- HRBAC Database Setup Script (PostgreSQL)
+-- v5.0+ Unified Scope Model
 -- =============================================
 
--- 1. Create scope types enum
-CREATE TYPE hazo_enum_scope_types AS ENUM (
-    'hazo_scopes_l1',
-    'hazo_scopes_l2',
-    'hazo_scopes_l3',
-    'hazo_scopes_l4',
-    'hazo_scopes_l5',
-    'hazo_scopes_l6',
-    'hazo_scopes_l7'
-);
-
--- 2. Create sequence generator function for scope IDs
-CREATE OR REPLACE FUNCTION hazo_scope_id_generator(table_name TEXT)
-RETURNS TEXT AS $$
-DECLARE
-    prefix TEXT;
-    next_num INTEGER;
-    result TEXT;
-BEGIN
-    -- Extract level number from table name (e.g., 'hazo_scopes_l3' -> '3')
-    prefix := 'L' || SUBSTRING(table_name FROM 'hazo_scopes_l([0-9]+)');
-
-    -- Get the next sequence number
-    EXECUTE format(
-        'SELECT COALESCE(MAX(CAST(SUBSTRING(seq FROM ''L[0-9]+_([0-9]+)'') AS INTEGER)), 0) + 1 FROM %I',
-        table_name
-    ) INTO next_num;
-
-    -- Format as L{level}_{padded_number}
-    result := prefix || '_' || LPAD(next_num::TEXT, 3, '0');
-
-    RETURN result;
-END;
-$$ LANGUAGE plpgsql;
-
--- 3. Create scope tables (L1 through L7)
-
--- Level 1 (top level - no parent)
-CREATE TABLE hazo_scopes_l1 (
+-- 1. Create unified hazo_scopes table (with branding columns)
+CREATE TABLE IF NOT EXISTS hazo_scopes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l1'),
-    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
+    parent_id UUID REFERENCES hazo_scopes(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
+    level TEXT NOT NULL,
+    logo_url TEXT,
+    primary_color TEXT,
+    secondary_color TEXT,
+    tagline TEXT,
+    slug TEXT,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scopes_l1_org_id ON hazo_scopes_l1(org_id);
-CREATE INDEX idx_hazo_scopes_l1_root_org_id ON hazo_scopes_l1(root_org_id);
-CREATE INDEX idx_hazo_scopes_l1_seq ON hazo_scopes_l1(seq);
 
--- Level 2 (parent: L1)
-CREATE TABLE hazo_scopes_l2 (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l2'),
-    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    parent_scope_id UUID REFERENCES hazo_scopes_l1(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_hazo_scopes_l2_org_id ON hazo_scopes_l2(org_id);
-CREATE INDEX idx_hazo_scopes_l2_root_org_id ON hazo_scopes_l2(root_org_id);
-CREATE INDEX idx_hazo_scopes_l2_seq ON hazo_scopes_l2(seq);
-CREATE INDEX idx_hazo_scopes_l2_parent ON hazo_scopes_l2(parent_scope_id);
+-- 2. Create indexes for hierarchy traversal
+CREATE INDEX IF NOT EXISTS idx_hazo_scopes_parent ON hazo_scopes(parent_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_scopes_level ON hazo_scopes(level);
+CREATE INDEX IF NOT EXISTS idx_hazo_scopes_slug ON hazo_scopes(slug);
 
--- Level 3 (parent: L2)
-CREATE TABLE hazo_scopes_l3 (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l3'),
-    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    parent_scope_id UUID REFERENCES hazo_scopes_l2(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_hazo_scopes_l3_org_id ON hazo_scopes_l3(org_id);
-CREATE INDEX idx_hazo_scopes_l3_root_org_id ON hazo_scopes_l3(root_org_id);
-CREATE INDEX idx_hazo_scopes_l3_seq ON hazo_scopes_l3(seq);
-CREATE INDEX idx_hazo_scopes_l3_parent ON hazo_scopes_l3(parent_scope_id);
+-- 3. Create system scopes
+INSERT INTO hazo_scopes (id, parent_id, name, level, created_at, changed_at)
+VALUES ('00000000-0000-0000-0000-000000000000', NULL, 'Super Admin', 'system', NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
 
--- Level 4 (parent: L3)
-CREATE TABLE hazo_scopes_l4 (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l4'),
-    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    parent_scope_id UUID REFERENCES hazo_scopes_l3(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_hazo_scopes_l4_org_id ON hazo_scopes_l4(org_id);
-CREATE INDEX idx_hazo_scopes_l4_root_org_id ON hazo_scopes_l4(root_org_id);
-CREATE INDEX idx_hazo_scopes_l4_seq ON hazo_scopes_l4(seq);
-CREATE INDEX idx_hazo_scopes_l4_parent ON hazo_scopes_l4(parent_scope_id);
+INSERT INTO hazo_scopes (id, parent_id, name, level, created_at, changed_at)
+VALUES ('00000000-0000-0000-0000-000000000001', NULL, 'System', 'default', NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
 
--- Level 5 (parent: L4)
-CREATE TABLE hazo_scopes_l5 (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l5'),
-    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    parent_scope_id UUID REFERENCES hazo_scopes_l4(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_hazo_scopes_l5_org_id ON hazo_scopes_l5(org_id);
-CREATE INDEX idx_hazo_scopes_l5_root_org_id ON hazo_scopes_l5(root_org_id);
-CREATE INDEX idx_hazo_scopes_l5_seq ON hazo_scopes_l5(seq);
-CREATE INDEX idx_hazo_scopes_l5_parent ON hazo_scopes_l5(parent_scope_id);
-
--- Level 6 (parent: L5)
-CREATE TABLE hazo_scopes_l6 (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l6'),
-    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    parent_scope_id UUID REFERENCES hazo_scopes_l5(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_hazo_scopes_l6_org_id ON hazo_scopes_l6(org_id);
-CREATE INDEX idx_hazo_scopes_l6_root_org_id ON hazo_scopes_l6(root_org_id);
-CREATE INDEX idx_hazo_scopes_l6_seq ON hazo_scopes_l6(seq);
-CREATE INDEX idx_hazo_scopes_l6_parent ON hazo_scopes_l6(parent_scope_id);
-
--- Level 7 (parent: L6)
-CREATE TABLE hazo_scopes_l7 (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    seq TEXT NOT NULL DEFAULT hazo_scope_id_generator('hazo_scopes_l7'),
-    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    root_org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    parent_scope_id UUID REFERENCES hazo_scopes_l6(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_hazo_scopes_l7_org_id ON hazo_scopes_l7(org_id);
-CREATE INDEX idx_hazo_scopes_l7_root_org_id ON hazo_scopes_l7(root_org_id);
-CREATE INDEX idx_hazo_scopes_l7_seq ON hazo_scopes_l7(seq);
-CREATE INDEX idx_hazo_scopes_l7_parent ON hazo_scopes_l7(parent_scope_id);
-
--- 4. Create user scopes junction table
-CREATE TABLE hazo_user_scopes (
+-- 4. Create user scopes junction table (membership-based multi-tenancy)
+CREATE TABLE IF NOT EXISTS hazo_user_scopes (
     user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
-    scope_id UUID NOT NULL,
-    scope_seq TEXT NOT NULL,
-    scope_type hazo_enum_scope_types NOT NULL,
+    scope_id UUID NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    root_scope_id UUID NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'ACTIVE' CHECK (status IN ('INVITED', 'ACTIVE', 'SUSPENDED', 'DEPARTED')),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (user_id, scope_type, scope_id)
+    PRIMARY KEY (user_id, scope_id)
 );
-CREATE INDEX idx_hazo_user_scopes_user_id ON hazo_user_scopes(user_id);
-CREATE INDEX idx_hazo_user_scopes_scope_id ON hazo_user_scopes(scope_id);
-CREATE INDEX idx_hazo_user_scopes_scope_type ON hazo_user_scopes(scope_type);
 
--- 5. Create scope labels table
-CREATE TABLE hazo_scope_labels (
+CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_scope ON hazo_user_scopes(scope_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_root ON hazo_user_scopes(root_scope_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_role ON hazo_user_scopes(role_id);
+
+-- 5. Create invitations table (for onboarding new users)
+CREATE TABLE IF NOT EXISTS hazo_invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org_id UUID NOT NULL REFERENCES hazo_org(id) ON DELETE CASCADE,
-    scope_type hazo_enum_scope_types NOT NULL,
-    label TEXT NOT NULL,
+    email_address TEXT NOT NULL,
+    scope_id UUID NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED')),
+    invited_by UUID REFERENCES hazo_users(id) ON DELETE SET NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    accepted_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    UNIQUE(org_id, scope_type)
+    changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_hazo_scope_labels_org_id ON hazo_scope_labels(org_id);
+
+CREATE INDEX IF NOT EXISTS idx_hazo_invitations_email ON hazo_invitations(email_address);
+CREATE INDEX IF NOT EXISTS idx_hazo_invitations_scope ON hazo_invitations(scope_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_invitations_status ON hazo_invitations(status);
+
+-- 6. Create firm_admin role (for firm creators)
+INSERT INTO hazo_roles (id, role_name, created_at, changed_at)
+VALUES (gen_random_uuid(), 'firm_admin', NOW(), NOW())
+ON CONFLICT DO NOTHING;
 ```
 
 #### PostgreSQL Grant Scripts
@@ -1530,30 +1435,14 @@ After creating the tables, grant appropriate permissions:
 
 ```sql
 -- Grant to your admin user (replace 'your_admin_user' with actual username)
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l1 TO your_admin_user;
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l2 TO your_admin_user;
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l3 TO your_admin_user;
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l4 TO your_admin_user;
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l5 TO your_admin_user;
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l6 TO your_admin_user;
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l7 TO your_admin_user;
+GRANT ALL PRIVILEGES ON TABLE hazo_scopes TO your_admin_user;
 GRANT ALL PRIVILEGES ON TABLE hazo_user_scopes TO your_admin_user;
-GRANT ALL PRIVILEGES ON TABLE hazo_scope_labels TO your_admin_user;
-GRANT USAGE ON TYPE hazo_enum_scope_types TO your_admin_user;
-GRANT EXECUTE ON FUNCTION hazo_scope_id_generator(TEXT) TO your_admin_user;
+GRANT ALL PRIVILEGES ON TABLE hazo_invitations TO your_admin_user;
 
 -- For PostgREST authenticated role
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l1 TO authenticated;
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l2 TO authenticated;
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l3 TO authenticated;
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l4 TO authenticated;
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l5 TO authenticated;
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l6 TO authenticated;
-GRANT ALL PRIVILEGES ON TABLE hazo_scopes_l7 TO authenticated;
+GRANT ALL PRIVILEGES ON TABLE hazo_scopes TO authenticated;
 GRANT ALL PRIVILEGES ON TABLE hazo_user_scopes TO authenticated;
-GRANT ALL PRIVILEGES ON TABLE hazo_scope_labels TO authenticated;
-GRANT USAGE ON TYPE hazo_enum_scope_types TO authenticated;
-GRANT EXECUTE ON FUNCTION hazo_scope_id_generator(TEXT) TO authenticated;
+GRANT ALL PRIVILEGES ON TABLE hazo_invitations TO authenticated;
 ```
 
 #### SQLite
@@ -1561,100 +1450,69 @@ GRANT EXECUTE ON FUNCTION hazo_scope_id_generator(TEXT) TO authenticated;
 ```sql
 -- =============================================
 -- HRBAC Database Setup Script (SQLite)
+-- v5.0+ Unified Scope Model
 -- =============================================
 
--- Scope tables (L1 through L7)
-
-CREATE TABLE IF NOT EXISTS hazo_scopes_l1 (
+-- 1. Create unified hazo_scopes table (with branding columns)
+CREATE TABLE IF NOT EXISTS hazo_scopes (
     id TEXT PRIMARY KEY,
-    seq TEXT NOT NULL,
-    org TEXT NOT NULL,
+    parent_id TEXT REFERENCES hazo_scopes(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
+    level TEXT NOT NULL,
+    logo_url TEXT,
+    primary_color TEXT,
+    secondary_color TEXT,
+    tagline TEXT,
+    slug TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     changed_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE TABLE IF NOT EXISTS hazo_scopes_l2 (
-    id TEXT PRIMARY KEY,
-    seq TEXT NOT NULL,
-    org TEXT NOT NULL,
-    name TEXT NOT NULL,
-    parent_scope_id TEXT REFERENCES hazo_scopes_l1(id) ON DELETE CASCADE,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
+-- 2. Create indexes for hierarchy traversal
+CREATE INDEX IF NOT EXISTS idx_hazo_scopes_parent ON hazo_scopes(parent_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_scopes_level ON hazo_scopes(level);
+CREATE INDEX IF NOT EXISTS idx_hazo_scopes_slug ON hazo_scopes(slug);
 
-CREATE TABLE IF NOT EXISTS hazo_scopes_l3 (
-    id TEXT PRIMARY KEY,
-    seq TEXT NOT NULL,
-    org TEXT NOT NULL,
-    name TEXT NOT NULL,
-    parent_scope_id TEXT REFERENCES hazo_scopes_l2(id) ON DELETE CASCADE,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
+-- 3. Create system scopes
+INSERT OR IGNORE INTO hazo_scopes (id, parent_id, name, level, created_at, changed_at)
+VALUES ('00000000-0000-0000-0000-000000000000', NULL, 'Super Admin', 'system', datetime('now'), datetime('now'));
 
-CREATE TABLE IF NOT EXISTS hazo_scopes_l4 (
-    id TEXT PRIMARY KEY,
-    seq TEXT NOT NULL,
-    org TEXT NOT NULL,
-    name TEXT NOT NULL,
-    parent_scope_id TEXT REFERENCES hazo_scopes_l3(id) ON DELETE CASCADE,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
+INSERT OR IGNORE INTO hazo_scopes (id, parent_id, name, level, created_at, changed_at)
+VALUES ('00000000-0000-0000-0000-000000000001', NULL, 'System', 'default', datetime('now'), datetime('now'));
 
-CREATE TABLE IF NOT EXISTS hazo_scopes_l5 (
-    id TEXT PRIMARY KEY,
-    seq TEXT NOT NULL,
-    org TEXT NOT NULL,
-    name TEXT NOT NULL,
-    parent_scope_id TEXT REFERENCES hazo_scopes_l4(id) ON DELETE CASCADE,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS hazo_scopes_l6 (
-    id TEXT PRIMARY KEY,
-    seq TEXT NOT NULL,
-    org TEXT NOT NULL,
-    name TEXT NOT NULL,
-    parent_scope_id TEXT REFERENCES hazo_scopes_l5(id) ON DELETE CASCADE,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS hazo_scopes_l7 (
-    id TEXT PRIMARY KEY,
-    seq TEXT NOT NULL,
-    org TEXT NOT NULL,
-    name TEXT NOT NULL,
-    parent_scope_id TEXT REFERENCES hazo_scopes_l6(id) ON DELETE CASCADE,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- User scopes junction table
+-- 4. Create user scopes junction table (membership-based multi-tenancy)
 CREATE TABLE IF NOT EXISTS hazo_user_scopes (
     user_id TEXT NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
-    scope_id TEXT NOT NULL,
-    scope_seq TEXT NOT NULL,
-    scope_type TEXT NOT NULL CHECK(scope_type IN ('hazo_scopes_l1','hazo_scopes_l2','hazo_scopes_l3','hazo_scopes_l4','hazo_scopes_l5','hazo_scopes_l6','hazo_scopes_l7')),
+    scope_id TEXT NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    root_scope_id TEXT NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    role_id TEXT NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'ACTIVE' CHECK (status IN ('INVITED', 'ACTIVE', 'SUSPENDED', 'DEPARTED')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     changed_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (user_id, scope_type, scope_id)
+    PRIMARY KEY (user_id, scope_id)
 );
 
--- Scope labels table
-CREATE TABLE IF NOT EXISTS hazo_scope_labels (
+CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_scope ON hazo_user_scopes(scope_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_root ON hazo_user_scopes(root_scope_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_role ON hazo_user_scopes(role_id);
+
+-- 5. Create invitations table (for onboarding new users)
+CREATE TABLE IF NOT EXISTS hazo_invitations (
     id TEXT PRIMARY KEY,
-    org TEXT NOT NULL,
-    scope_type TEXT NOT NULL CHECK(scope_type IN ('hazo_scopes_l1','hazo_scopes_l2','hazo_scopes_l3','hazo_scopes_l4','hazo_scopes_l5','hazo_scopes_l6','hazo_scopes_l7')),
-    label TEXT NOT NULL,
+    email_address TEXT NOT NULL,
+    scope_id TEXT NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    role_id TEXT NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED')),
+    invited_by TEXT REFERENCES hazo_users(id) ON DELETE SET NULL,
+    expires_at TEXT NOT NULL,
+    accepted_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    changed_at TEXT NOT NULL DEFAULT (datetime('now')),
-    UNIQUE(org, scope_type)
+    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE INDEX IF NOT EXISTS idx_hazo_invitations_email ON hazo_invitations(email_address);
+CREATE INDEX IF NOT EXISTS idx_hazo_invitations_scope ON hazo_invitations(scope_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_invitations_status ON hazo_invitations(status);
 ```
 
 ### Step 7.4: Verify HRBAC Tables
@@ -1662,14 +1520,13 @@ CREATE TABLE IF NOT EXISTS hazo_scope_labels (
 #### PostgreSQL
 ```sql
 SELECT table_name FROM information_schema.tables
-WHERE table_name LIKE 'hazo_scopes_%'
-   OR table_name IN ('hazo_user_scopes', 'hazo_scope_labels');
--- Expected: 9 tables (7 scope tables + user_scopes + scope_labels)
+WHERE table_name IN ('hazo_scopes', 'hazo_user_scopes', 'hazo_invitations');
+-- Expected: 3 tables (hazo_scopes, hazo_user_scopes, hazo_invitations)
 ```
 
 #### SQLite
 ```bash
-sqlite3 data/hazo_auth.sqlite ".tables" | grep -E "hazo_scopes|hazo_user_scopes|hazo_scope_labels"
+sqlite3 data/hazo_auth.sqlite ".tables" | grep -E "hazo_scopes|hazo_user_scopes|hazo_invitations"
 ```
 
 ### Step 7.5: Add Slug Column to hazo_scopes (Optional - for Tenant Auth)
@@ -1710,13 +1567,14 @@ CREATE INDEX IF NOT EXISTS idx_hazo_scopes_slug ON hazo_scopes(slug);
 **HRBAC Checklist:**
 - [ ] `enable_hrbac = true` in config
 - [ ] HRBAC permissions added to defaults
-- [ ] All 9 HRBAC tables created:
-  - [ ] `hazo_scopes_l1` through `hazo_scopes_l7` (with org_id, root_org_id FKs)
-  - [ ] `hazo_user_scopes` (junction table)
-  - [ ] `hazo_scope_labels` (custom labels per org)
-- [ ] Scope ID generator function created (PostgreSQL)
+- [ ] All HRBAC tables created:
+  - [ ] `hazo_scopes` (unified scope hierarchy with branding)
+  - [ ] `hazo_user_scopes` (user-scope-role assignments)
+  - [ ] `hazo_invitations` (user invitation flow)
+- [ ] System scopes exist:
+  - [ ] Super Admin scope (00000000-0000-0000-0000-000000000000)
+  - [ ] Default System scope (00000000-0000-0000-0000-000000000001)
 - [ ] Grants applied (PostgreSQL)
-- [ ] `slug` column added to hazo_scopes (optional, for tenant auth)
 - [ ] HRBAC tabs visible in User Management
 - [ ] Scope test page works
 
@@ -1896,6 +1754,50 @@ curl -H "Cookie: hazo_auth_session=YOUR_TOKEN; hazo_auth_scope_id=SCOPE_UUID" \
 ---
 
 ## Troubleshooting
+
+### Issue: "User is inactive" or "auth_utility_fetch_user_failed" errors
+
+**Symptoms:** Users can't log in, error logs show `auth_utility_fetch_user_failed` or "User is inactive" even for newly created users.
+
+**Cause:** Your database has an `is_active` column instead of the required `status` column. The code expects `status TEXT` with value `'ACTIVE'`.
+
+**Solutions:**
+
+1. **Run the status migration** (recommended):
+   ```bash
+   npm run migrate migrations/011_fix_status_case_to_uppercase.sql
+   ```
+
+2. **Or manually add the status column:**
+
+   **SQLite:**
+   ```sql
+   -- Add status column
+   ALTER TABLE hazo_users ADD COLUMN status TEXT DEFAULT 'ACTIVE';
+
+   -- Migrate is_active values to status
+   UPDATE hazo_users SET status = CASE
+     WHEN is_active = 1 OR is_active = TRUE THEN 'ACTIVE'
+     ELSE 'BLOCKED'
+   END WHERE status IS NULL;
+   ```
+
+   **PostgreSQL:**
+   ```sql
+   -- Add status column
+   ALTER TABLE hazo_users ADD COLUMN status TEXT NOT NULL DEFAULT 'ACTIVE';
+
+   -- Migrate is_active values to status
+   UPDATE hazo_users SET status = CASE
+     WHEN is_active = TRUE THEN 'ACTIVE'
+     ELSE 'BLOCKED'
+   END;
+
+   -- Create index
+   CREATE INDEX IF NOT EXISTS idx_hazo_users_status ON hazo_users(status);
+   ```
+
+**Note:** The `status` column uses text values: `'PENDING'`, `'ACTIVE'`, or `'BLOCKED'`.
 
 ### Issue: Email not sending
 

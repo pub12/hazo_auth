@@ -453,11 +453,8 @@ Run the following SQL scripts in your PostgreSQL database:
 -- Enum type for profile picture source
 CREATE TYPE hazo_enum_profile_source_enum AS ENUM ('gravatar', 'custom', 'predefined');
 
--- Scope types enum (for HRBAC)
-CREATE TYPE hazo_enum_scope_types AS ENUM (
-    'hazo_scopes_l1', 'hazo_scopes_l2', 'hazo_scopes_l3',
-    'hazo_scopes_l4', 'hazo_scopes_l5', 'hazo_scopes_l6', 'hazo_scopes_l7'
-);
+-- Note: hazo_enum_scope_types was removed in v5.0
+-- The unified hazo_scopes table uses a TEXT "level" column instead
 ```
 
 #### 2. Create the Organization Table (Multi-Tenancy)
@@ -612,10 +609,7 @@ For convenience, here's the complete SQL script to create all tables at once:
 
 -- 1. Create enum types
 CREATE TYPE hazo_enum_profile_source_enum AS ENUM ('gravatar', 'custom', 'predefined');
-CREATE TYPE hazo_enum_scope_types AS ENUM (
-    'hazo_scopes_l1', 'hazo_scopes_l2', 'hazo_scopes_l3',
-    'hazo_scopes_l4', 'hazo_scopes_l5', 'hazo_scopes_l6', 'hazo_scopes_l7'
-);
+-- Note: hazo_enum_scope_types was removed in v5.0 (uses unified hazo_scopes table)
 
 -- 2. Create organization table (multi-tenancy)
 CREATE TABLE hazo_org (
@@ -1932,23 +1926,25 @@ enable_hrbac = true
 scope_cache_ttl_minutes = 15
 scope_cache_max_entries = 5000
 
-# Optional: customize default labels for each scope level
-default_label_l1 = Company
-default_label_l2 = Division
-default_label_l3 = Department
-default_label_l4 = Team
-default_label_l5 = Project
-default_label_l6 = Sub-project
-default_label_l7 = Task
+# Note: In v5.0+, scope levels are stored as the "level" column in hazo_scopes
+# Examples: "HQ", "Division", "Department", "Team", etc.
+# The level field is a descriptive string, not a fixed L1-L7 hierarchy
 ```
 
 ### Database Setup
 
-HRBAC requires additional database tables. See `SETUP_CHECKLIST.md` for full PostgreSQL and SQLite scripts, including:
-- `hazo_scopes_l1` through `hazo_scopes_l7` - Scope tables with parent_scope_id references
-- `hazo_user_scopes` - User-scope assignments
-- `hazo_scope_labels` - Custom labels per organization
-- `hazo_enum_scope_types` - Enum type for scope validation
+HRBAC requires additional database tables. Run the scope consolidation migration:
+
+```bash
+npm run migrate migrations/009_scope_consolidation.sql
+```
+
+This creates:
+- `hazo_scopes` - Unified scope hierarchy with branding support
+- `hazo_user_scopes` - User-scope-role assignments
+- `hazo_invitations` - User invitation flow
+
+See `SETUP_CHECKLIST.md` for full PostgreSQL and SQLite scripts.
 
 ### Using hazo_get_auth with Scope Options
 
@@ -1962,8 +1958,7 @@ export async function GET(request: NextRequest) {
   try {
     const authResult = await hazo_get_auth(request, {
       required_permissions: ["view_reports"],
-      scope_type: "hazo_scopes_l3",  // Check access to Level 3 scope
-      scope_seq: "L3_001",           // Scope identifier (or use scope_id for UUID)
+      scope_id: "uuid-of-scope",     // Check access to specific scope
       strict: true,                   // Throws ScopeAccessError if denied
     });
 

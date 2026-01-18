@@ -1,11 +1,13 @@
 -- file_description: migration to consolidate multi-tenancy to unified scopes with invitations
 -- This migration:
--- 1. Drops legacy 7-level scope tables (if they exist)
+-- 1. Drops legacy 7-level scope tables (hazo_scopes_l1 through hazo_scopes_l7) if they exist
 -- 2. Drops hazo_org table (if exists)
 -- 3. Removes org columns from hazo_users (if they exist)
--- 4. Creates super admin and default system scopes
--- 5. Creates hazo_invitations table for user invitation flow
--- 6. Creates firm_admin role for firm creators
+-- 4. Creates unified hazo_scopes table (with branding columns)
+-- 5. Creates super admin and default system scopes
+-- 6. Creates hazo_user_scopes table for user-scope-role assignments
+-- 7. Creates hazo_invitations table for user invitation flow
+-- 8. Creates firm_admin role for firm creators
 
 -- ===========================================
 -- PostgreSQL Version
@@ -38,11 +40,25 @@ DROP INDEX IF EXISTS idx_hazo_org_name;
 DROP INDEX IF EXISTS idx_hazo_users_org_id;
 DROP INDEX IF EXISTS idx_hazo_users_root_org_id;
 
--- 5. Ensure hazo_scopes table has correct structure
--- (Table should already exist with id, parent_id, name, level, created_at, changed_at)
--- Add index on parent_id for hierarchy traversal if not exists
+-- 5. Create unified hazo_scopes table (with branding columns included)
+CREATE TABLE IF NOT EXISTS hazo_scopes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_id UUID REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  level TEXT NOT NULL,
+  logo_url TEXT,
+  primary_color TEXT,
+  secondary_color TEXT,
+  tagline TEXT,
+  slug TEXT,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Add indexes on hazo_scopes for hierarchy traversal
 CREATE INDEX IF NOT EXISTS idx_hazo_scopes_parent ON hazo_scopes(parent_id);
 CREATE INDEX IF NOT EXISTS idx_hazo_scopes_level ON hazo_scopes(level);
+CREATE INDEX IF NOT EXISTS idx_hazo_scopes_slug ON hazo_scopes(slug);
 
 -- 6. Create super admin scope (special UUID with all zeros)
 INSERT INTO hazo_scopes (id, parent_id, name, level, created_at, changed_at)
@@ -54,7 +70,23 @@ INSERT INTO hazo_scopes (id, parent_id, name, level, created_at, changed_at)
 VALUES ('00000000-0000-0000-0000-000000000001', NULL, 'System', 'default', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
--- 8. Create hazo_invitations table
+-- 8. Create hazo_user_scopes table (membership-based multi-tenancy)
+CREATE TABLE IF NOT EXISTS hazo_user_scopes (
+  user_id UUID NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
+  scope_id UUID NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+  root_scope_id UUID NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+  role_id UUID NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+  status TEXT DEFAULT 'ACTIVE' CHECK (status IN ('INVITED', 'ACTIVE', 'SUSPENDED', 'DEPARTED')),
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, scope_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_scope ON hazo_user_scopes(scope_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_root ON hazo_user_scopes(root_scope_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_role ON hazo_user_scopes(role_id);
+
+-- 9. Create hazo_invitations table
 CREATE TABLE IF NOT EXISTS hazo_invitations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email_address TEXT NOT NULL,
@@ -68,14 +100,14 @@ CREATE TABLE IF NOT EXISTS hazo_invitations (
   changed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
--- 9. Create indexes for hazo_invitations
+-- 10. Create indexes for hazo_invitations
 CREATE INDEX IF NOT EXISTS idx_hazo_invitations_email ON hazo_invitations(email_address);
 CREATE INDEX IF NOT EXISTS idx_hazo_invitations_scope ON hazo_invitations(scope_id);
 CREATE INDEX IF NOT EXISTS idx_hazo_invitations_status ON hazo_invitations(status);
 CREATE INDEX IF NOT EXISTS idx_hazo_invitations_expires ON hazo_invitations(expires_at);
 CREATE INDEX IF NOT EXISTS idx_hazo_invitations_email_status ON hazo_invitations(email_address, status);
 
--- 10. Create firm_admin role (for firm creators)
+-- 11. Create firm_admin role (for firm creators)
 INSERT INTO hazo_roles (id, role_name, created_at, changed_at)
 VALUES (gen_random_uuid(), 'firm_admin', NOW(), NOW())
 ON CONFLICT DO NOTHING;
@@ -99,19 +131,51 @@ ON CONFLICT DO NOTHING;
 -- -- 2. Note: SQLite doesn't support DROP COLUMN in older versions
 -- -- You may need to recreate the hazo_users table without org columns
 --
--- -- 3. Create indexes
+-- -- 3. Create unified hazo_scopes table (with branding columns included)
+-- CREATE TABLE IF NOT EXISTS hazo_scopes (
+--   id TEXT PRIMARY KEY,
+--   parent_id TEXT REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+--   name TEXT NOT NULL,
+--   level TEXT NOT NULL,
+--   logo_url TEXT,
+--   primary_color TEXT,
+--   secondary_color TEXT,
+--   tagline TEXT,
+--   slug TEXT,
+--   created_at TEXT NOT NULL DEFAULT (datetime('now')),
+--   changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+-- );
+--
+-- -- 4. Create indexes on hazo_scopes
 -- CREATE INDEX IF NOT EXISTS idx_hazo_scopes_parent ON hazo_scopes(parent_id);
 -- CREATE INDEX IF NOT EXISTS idx_hazo_scopes_level ON hazo_scopes(level);
+-- CREATE INDEX IF NOT EXISTS idx_hazo_scopes_slug ON hazo_scopes(slug);
 --
--- -- 4. Create super admin scope
+-- -- 5. Create super admin scope
 -- INSERT OR IGNORE INTO hazo_scopes (id, parent_id, name, level, created_at, changed_at)
 -- VALUES ('00000000-0000-0000-0000-000000000000', NULL, 'Super Admin', 'system', datetime('now'), datetime('now'));
 --
--- -- 5. Create default system scope
+-- -- 6. Create default system scope
 -- INSERT OR IGNORE INTO hazo_scopes (id, parent_id, name, level, created_at, changed_at)
 -- VALUES ('00000000-0000-0000-0000-000000000001', NULL, 'System', 'default', datetime('now'), datetime('now'));
 --
--- -- 6. Create hazo_invitations table
+-- -- 7. Create hazo_user_scopes table
+-- CREATE TABLE IF NOT EXISTS hazo_user_scopes (
+--   user_id TEXT NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
+--   scope_id TEXT NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+--   root_scope_id TEXT NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+--   role_id TEXT NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+--   status TEXT DEFAULT 'ACTIVE' CHECK (status IN ('INVITED', 'ACTIVE', 'SUSPENDED', 'DEPARTED')),
+--   created_at TEXT NOT NULL DEFAULT (datetime('now')),
+--   changed_at TEXT NOT NULL DEFAULT (datetime('now')),
+--   PRIMARY KEY (user_id, scope_id)
+-- );
+--
+-- CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_scope ON hazo_user_scopes(scope_id);
+-- CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_root ON hazo_user_scopes(root_scope_id);
+-- CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_role ON hazo_user_scopes(role_id);
+--
+-- -- 8. Create hazo_invitations table
 -- CREATE TABLE IF NOT EXISTS hazo_invitations (
 --   id TEXT PRIMARY KEY,
 --   email_address TEXT NOT NULL,
