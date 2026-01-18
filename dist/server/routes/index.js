@@ -35,3 +35,7 @@ export { GET as appUserDataSchemaGET } from "./app_user_data_schema.js";
 export { GET as invitationsGET, POST as invitationsPOST, PATCH as invitationsPATCH, DELETE as invitationsDELETE } from "./invitations.js";
 // Create firm routes (for new users creating their firm)
 export { POST as createFirmPOST } from "./create_firm.js";
+// OAuth routes
+export { GET as nextauthGET, POST as nextauthPOST } from "./nextauth.js";
+export { GET as oauthGoogleCallbackGET } from "./oauth_google_callback.js";
+export { POST as setPasswordPOST } from "./set_password.js";

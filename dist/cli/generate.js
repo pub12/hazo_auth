@@ -36,6 +36,11 @@ const ROUTES = [
     { name: "user_management_users_roles", path: "api/hazo_auth/user_management/users/roles", method: "GET", export_name: "userManagementUsersRolesGET" },
     { name: "user_management_users_roles_post", path: "api/hazo_auth/user_management/users/roles", method: "POST", export_name: "userManagementUsersRolesPOST" },
     { name: "user_management_users_roles_put", path: "api/hazo_auth/user_management/users/roles", method: "PUT", export_name: "userManagementUsersRolesPUT" },
+    // OAuth routes
+    { name: "nextauth", path: "api/auth/[...nextauth]", method: "GET", export_name: "nextauthGET" },
+    { name: "nextauth_post", path: "api/auth/[...nextauth]", method: "POST", export_name: "nextauthPOST" },
+    { name: "oauth_google_callback", path: "api/hazo_auth/oauth/google/callback", method: "GET", export_name: "oauthGoogleCallbackGET" },
+    { name: "set_password", path: "api/hazo_auth/set_password", method: "POST", export_name: "setPasswordPOST" },
 ];
 const PAGES = [
     { name: "login", path: "hazo_auth/login", component_name: "LoginPage", import_path: "hazo_auth/pages/login" },

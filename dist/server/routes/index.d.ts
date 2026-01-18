@@ -24,4 +24,7 @@ export { GET as appUserDataGET, PATCH as appUserDataPATCH, PUT as appUserDataPUT
 export { GET as appUserDataSchemaGET } from "./app_user_data_schema.js";
 export { GET as invitationsGET, POST as invitationsPOST, PATCH as invitationsPATCH, DELETE as invitationsDELETE } from "./invitations.js";
 export { POST as createFirmPOST } from "./create_firm.js";
+export { GET as nextauthGET, POST as nextauthPOST } from "./nextauth.js";
+export { GET as oauthGoogleCallbackGET } from "./oauth_google_callback.js";
+export { POST as setPasswordPOST } from "./set_password.js";
 //# sourceMappingURL=index.d.ts.map
