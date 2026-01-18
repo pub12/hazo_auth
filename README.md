@@ -921,6 +921,19 @@ auto_link_unverified_accounts = true
 # Customize button text (optional)
 google_button_text = Continue with Google
 oauth_divider_text = or
+
+# Post-Login Redirect Configuration (v5.1.16+)
+# URL for users who need to create a firm (default: /hazo_auth/create_firm)
+# create_firm_url = /hazo_auth/create_firm
+
+# Default redirect after OAuth login for users with scopes (default: /)
+# default_redirect = /
+
+# Skip invitation table check (set true if not using invitations)
+# skip_invitation_check = false
+
+# Redirect when skip_invitation_check=true and user has no scope (default: /)
+# no_scope_redirect = /
 ```
 
 ### Step 5: Create NextAuth API Routes
@@ -1033,6 +1046,13 @@ Google OAuth adds one new dependency:
 - Check browser console for errors
 - Verify `/api/hazo_auth/oauth/google/callback` route exists
 - Check server logs for errors during session creation
+
+**404 after Google OAuth login (v5.1.16+ fix):**
+- If users get 404 after Google OAuth, the `hazo_invitations` table may be missing
+- **Option 1:** Run migration `009_scope_consolidation.sql` to create the table
+- **Option 2:** Set `skip_invitation_check = true` in `[hazo_auth__oauth]` if not using invitations
+- Check logs for `invitation_table_missing` warnings
+- If using custom paths, set `create_firm_url` to your app's create firm page URL
 
 ---
 

@@ -124,6 +124,14 @@ export declare const DEFAULT_OAUTH: {
     readonly google_button_text: "Continue with Google";
     /** Text displayed on the divider between OAuth and email/password form */
     readonly oauth_divider_text: "or continue with email";
+    /** URL for users who need to create a firm (default: /hazo_auth/create_firm) */
+    readonly create_firm_url: "/hazo_auth/create_firm";
+    /** Default redirect after OAuth login for users with scopes */
+    readonly default_redirect: "/";
+    /** Skip invitation table check (set true if not using invitations) */
+    readonly skip_invitation_check: false;
+    /** Redirect when skip_invitation_check=true and user has no scope */
+    readonly no_scope_redirect: "/";
 };
 export declare const DEFAULT_NAVBAR: {
     /** Enable navbar on auth pages */
@@ -314,6 +322,14 @@ export declare const HAZO_AUTH_DEFAULTS: {
         readonly google_button_text: "Continue with Google";
         /** Text displayed on the divider between OAuth and email/password form */
         readonly oauth_divider_text: "or continue with email";
+        /** URL for users who need to create a firm (default: /hazo_auth/create_firm) */
+        readonly create_firm_url: "/hazo_auth/create_firm";
+        /** Default redirect after OAuth login for users with scopes */
+        readonly default_redirect: "/";
+        /** Skip invitation table check (set true if not using invitations) */
+        readonly skip_invitation_check: false;
+        /** Redirect when skip_invitation_check=true and user has no scope */
+        readonly no_scope_redirect: "/";
     };
     readonly devLock: {
         /** Enable the development lock screen (also requires HAZO_AUTH_DEV_LOCK_ENABLED env var) */

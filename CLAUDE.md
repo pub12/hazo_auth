@@ -337,6 +337,27 @@ google_button_text = Continue with Google
 - `GET /api/hazo_auth/oauth/google/callback` - Creates hazo_auth session after OAuth
 - `POST /api/hazo_auth/set_password` - Allows Google-only users to set a password
 
+**Post-Login Redirect Configuration:**
+```ini
+[hazo_auth__oauth]
+# URL for users who need to create a firm (default: /hazo_auth/create_firm)
+create_firm_url = /hazo_auth/create_firm
+
+# Default redirect after OAuth login for users with scopes
+default_redirect = /
+
+# Skip invitation table check (set true if not using invitations)
+skip_invitation_check = false
+
+# Redirect when skip_invitation_check=true and user has no scope
+no_scope_redirect = /
+```
+
+**Troubleshooting:**
+- If users get 404 after Google OAuth, check if `hazo_invitations` table exists
+- Run migration `009_scope_consolidation.sql` or set `skip_invitation_check = true`
+- Check logs for `invitation_table_missing` warnings
+
 ### Component Architecture
 
 Components follow a layered structure:

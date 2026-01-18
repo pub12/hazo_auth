@@ -9,6 +9,14 @@ export type OAuthConfig = {
     google_button_text: string;
     /** Text displayed on the divider between OAuth and email/password form */
     oauth_divider_text: string;
+    /** URL for users who need to create a firm (default: /hazo_auth/create_firm) */
+    create_firm_url: string;
+    /** Default redirect after OAuth login for users with scopes */
+    default_redirect: string;
+    /** Skip invitation table check (set true if not using invitations) */
+    skip_invitation_check: boolean;
+    /** Redirect when skip_invitation_check=true and user has no scope */
+    no_scope_redirect: string;
 };
 /**
  * Reads OAuth configuration from hazo_auth_config.ini file

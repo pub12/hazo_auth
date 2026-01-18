@@ -16,12 +16,20 @@ export function get_oauth_config() {
     const auto_link_unverified_accounts = get_config_boolean(SECTION_NAME, "auto_link_unverified_accounts", DEFAULT_OAUTH.auto_link_unverified_accounts);
     const google_button_text = get_config_value(SECTION_NAME, "google_button_text", DEFAULT_OAUTH.google_button_text);
     const oauth_divider_text = get_config_value(SECTION_NAME, "oauth_divider_text", DEFAULT_OAUTH.oauth_divider_text);
+    const create_firm_url = get_config_value(SECTION_NAME, "create_firm_url", DEFAULT_OAUTH.create_firm_url);
+    const default_redirect = get_config_value(SECTION_NAME, "default_redirect", DEFAULT_OAUTH.default_redirect);
+    const skip_invitation_check = get_config_boolean(SECTION_NAME, "skip_invitation_check", DEFAULT_OAUTH.skip_invitation_check);
+    const no_scope_redirect = get_config_value(SECTION_NAME, "no_scope_redirect", DEFAULT_OAUTH.no_scope_redirect);
     return {
         enable_google,
         enable_email_password,
         auto_link_unverified_accounts,
         google_button_text,
         oauth_divider_text,
+        create_firm_url,
+        default_redirect,
+        skip_invitation_check,
+        no_scope_redirect,
     };
 }
 /**

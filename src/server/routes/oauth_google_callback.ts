@@ -9,6 +9,7 @@ import { get_login_config } from "../../lib/login_config.server.js";
 import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../lib/cookies_config.server.js";
 import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server.js";
 import { get_post_login_redirect } from "../../lib/services/post_verification_service.js";
+import { get_oauth_config } from "../../lib/oauth_config.server.js";
 
 // section: types
 type NextAuthToken = {
@@ -83,16 +84,32 @@ export async function GET(request: NextRequest) {
 
     // Get redirect URL based on user's scope/invitation status
     const loginConfig = get_login_config();
-    const default_redirect = loginConfig.redirectRoute || "/";
+    const oauthConfig = get_oauth_config();
 
     // Check if user needs onboarding (no scope, no invitation = create firm)
     const hazoConnect = get_hazo_connect_instance();
-    const { redirect_url: determined_redirect, needs_onboarding } = await get_post_login_redirect(
-      hazoConnect,
-      user_id,
-      email,
-      default_redirect,
-    );
+    const {
+      redirect_url: determined_redirect,
+      needs_onboarding,
+      invitation_check_skipped,
+      invitation_table_error,
+    } = await get_post_login_redirect(hazoConnect, user_id, email, {
+      default_redirect: oauthConfig.default_redirect || loginConfig.redirectRoute || "/",
+      create_firm_url: oauthConfig.create_firm_url,
+      skip_invitation_check: oauthConfig.skip_invitation_check,
+      no_scope_redirect: oauthConfig.no_scope_redirect,
+    });
+
+    // Log warning if invitation table is missing
+    if (invitation_table_error) {
+      logger.warn("invitation_table_missing", {
+        filename: get_filename(),
+        line_number: get_line_number(),
+        user_id,
+        email,
+        note: "hazo_invitations table does not exist - run migration or set skip_invitation_check=true in [hazo_auth__oauth]",
+      });
+    }
 
     logger.info("google_callback_post_login_redirect", {
       filename: get_filename(),
@@ -101,6 +118,8 @@ export async function GET(request: NextRequest) {
       email,
       redirect_url: determined_redirect,
       needs_onboarding,
+      invitation_check_skipped,
+      invitation_table_error,
     });
 
     // Create redirect response

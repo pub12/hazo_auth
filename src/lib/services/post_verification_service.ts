@@ -27,6 +27,28 @@ export type PostVerificationOptions = {
   create_firm_url?: string; // Default: "/hazo_auth/create_firm"
 };
 
+export type PostLoginRedirectOptions = {
+  /** Default redirect for users with scopes (default: "/") */
+  default_redirect?: string;
+  /** URL for users who need to create a firm (default: "/hazo_auth/create_firm") */
+  create_firm_url?: string;
+  /** Skip invitation table check (set true if not using invitations) */
+  skip_invitation_check?: boolean;
+  /** Redirect when skip_invitation_check=true and user has no scope */
+  no_scope_redirect?: string;
+};
+
+export type PostLoginRedirectResult = {
+  /** The URL to redirect the user to */
+  redirect_url: string;
+  /** True if user needs onboarding (no scope, create firm, etc.) */
+  needs_onboarding: boolean;
+  /** True if invitation check was skipped due to config */
+  invitation_check_skipped?: boolean;
+  /** True if invitation table query failed (table missing) */
+  invitation_table_error?: boolean;
+};
+
 // section: constants
 
 const DEFAULT_REDIRECT_URL = "/";
@@ -181,36 +203,71 @@ export async function needs_onboarding(
 
 /**
  * Gets the appropriate redirect URL for a user after login
- * Takes into account scope status and url_on_logon
+ * Takes into account scope status, invitations, and url_on_logon
+ *
+ * @param adapter - HazoConnect adapter
+ * @param user_id - User ID
+ * @param user_email - User email (for invitation lookup)
+ * @param options - Configuration options (or string for backwards compatibility)
  */
 export async function get_post_login_redirect(
   adapter: HazoConnectAdapter,
   user_id: string,
   user_email: string,
-  default_redirect: string = DEFAULT_REDIRECT_URL,
-): Promise<{ redirect_url: string; needs_onboarding: boolean }> {
+  options?: PostLoginRedirectOptions | string,
+): Promise<PostLoginRedirectResult> {
+  // Handle backwards compatibility: if options is a string, treat it as default_redirect
+  const opts: PostLoginRedirectOptions = typeof options === "string"
+    ? { default_redirect: options }
+    : options || {};
+
+  const default_redirect = opts.default_redirect || DEFAULT_REDIRECT_URL;
+  const create_firm_url = opts.create_firm_url || CREATE_FIRM_URL;
+  const skip_invitation_check = opts.skip_invitation_check || false;
+  const no_scope_redirect = opts.no_scope_redirect || DEFAULT_REDIRECT_URL;
+
   try {
     // Check if user has scope
     const has_scope = await user_has_any_scope(adapter, user_id);
 
     if (!has_scope) {
+      // User has no scope - check invitations (unless skipped)
+      if (skip_invitation_check) {
+        // Invitation check skipped via config - redirect to no_scope_redirect
+        return {
+          redirect_url: no_scope_redirect,
+          needs_onboarding: true,
+          invitation_check_skipped: true,
+        };
+      }
+
       // Check for invitation
       const invitation_result = await get_pending_invitation_by_email(
         adapter,
         user_email,
       );
 
+      // Check if invitation table is missing
+      if (invitation_result.table_missing) {
+        // Table doesn't exist - redirect to create_firm_url but flag the error
+        return {
+          redirect_url: create_firm_url,
+          needs_onboarding: true,
+          invitation_table_error: true,
+        };
+      }
+
       if (invitation_result.success && invitation_result.invitation) {
         // Has invitation - they need to complete the flow
         return {
-          redirect_url: CREATE_FIRM_URL,
+          redirect_url: create_firm_url,
           needs_onboarding: true,
         };
       }
 
       // No scope, no invitation - needs to create firm
       return {
-        redirect_url: CREATE_FIRM_URL,
+        redirect_url: create_firm_url,
         needs_onboarding: true,
       };
     }

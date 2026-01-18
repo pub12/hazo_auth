@@ -1,1 +1,1 @@
-{"version":3,"file":"oauth_google_callback.d.ts","sourceRoot":"","sources":["../../../src/server/routes/oauth_google_callback.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,WAAW,EAAE,YAAY,EAAE,MAAM,aAAa,CAAC;AAsBxD;;;;GAIG;AACH,wBAAsB,GAAG,CAAC,OAAO,EAAE,WAAW,kCA8H7C"}
+{"version":3,"file":"oauth_google_callback.d.ts","sourceRoot":"","sources":["../../../src/server/routes/oauth_google_callback.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,WAAW,EAAE,YAAY,EAAE,MAAM,aAAa,CAAC;AAuBxD;;;;GAIG;AACH,wBAAsB,GAAG,CAAC,OAAO,EAAE,WAAW,kCAgJ7C"}

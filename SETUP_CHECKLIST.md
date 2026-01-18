@@ -723,6 +723,19 @@ auto_link_unverified_accounts = true
 # Customize button text (optional)
 google_button_text = Continue with Google
 oauth_divider_text = or
+
+# Post-Login Redirect Configuration (v5.1.16+)
+# URL for users who need to create a firm (default: /hazo_auth/create_firm)
+# create_firm_url = /hazo_auth/create_firm
+
+# Default redirect after OAuth login for users with scopes (default: /)
+# default_redirect = /
+
+# Skip invitation table check (set true if not using invitations)
+# skip_invitation_check = false
+
+# Redirect when skip_invitation_check=true and user has no scope (default: /)
+# no_scope_redirect = /
 ```
 
 **Configuration Options:**
@@ -785,6 +798,7 @@ ls app/api/hazo_auth/set_password/route.ts
 - [ ] OAuth migration applied (google_id and auth_providers columns added)
 - [ ] `[hazo_auth__oauth]` section configured in `hazo_auth_config.ini`
 - [ ] OAuth API routes created (`[...nextauth]`, `oauth/google/callback`, `set_password`)
+- [ ] Post-login redirect configured (if not using invitations, set `skip_invitation_check = true`)
 
 ---
 
@@ -1956,6 +1970,31 @@ curl -H "Cookie: hazo_auth_session=YOUR_TOKEN; hazo_auth_scope_id=SCOPE_UUID" \
 1. Verify `JWT_SECRET` is set in `.env.local`
 2. Check cookies are being set (inspect browser devtools > Application > Cookies)
 3. Ensure API routes are on same domain (no CORS issues)
+
+### Issue: 404 after Google OAuth login
+
+**Symptoms:** User completes Google sign-in but gets redirected to 404 page (typically `/hazo_auth/create_firm`).
+
+**Solutions:**
+1. **If not using invitations system:** Set `skip_invitation_check = true` in `[hazo_auth__oauth]`:
+   ```ini
+   [hazo_auth__oauth]
+   skip_invitation_check = true
+   no_scope_redirect = /
+   ```
+
+2. **If using invitations system:** Run the migration to create `hazo_invitations` table:
+   ```bash
+   npm run migrate migrations/009_scope_consolidation.sql
+   ```
+
+3. **If using custom paths:** Set `create_firm_url` to your app's create firm page:
+   ```ini
+   [hazo_auth__oauth]
+   create_firm_url = /my-app/create-organization
+   ```
+
+4. **Check logs** for `invitation_table_missing` warnings - this indicates the table doesn't exist
 
 ### Issue: Navbar logo or company name not showing
 

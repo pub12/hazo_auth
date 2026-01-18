@@ -17,6 +17,8 @@ export type InvitationServiceResult = {
     invitation?: InvitationRecord;
     invitations?: InvitationRecord[];
     error?: string;
+    /** Set to true when the hazo_invitations table doesn't exist */
+    table_missing?: boolean;
 };
 export type CreateInvitationData = {
     email_address: string;

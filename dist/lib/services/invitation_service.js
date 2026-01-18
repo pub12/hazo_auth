@@ -112,6 +112,29 @@ export async function get_pending_invitation_by_email(adapter, email_address) {
     }
     catch (error) {
         const logger = create_app_logger();
+        // Check if the error indicates the table doesn't exist
+        const error_string = error instanceof Error ? error.message : String(error);
+        const is_table_missing = 
+        // SQLite: "no such table: hazo_invitations"
+        error_string.toLowerCase().includes("no such table") ||
+            // PostgreSQL: 'relation "hazo_invitations" does not exist'
+            (error_string.toLowerCase().includes("relation") && error_string.toLowerCase().includes("does not exist")) ||
+            // PostgREST: 404 response for missing table
+            (error_string.includes("404") && error_string.includes("hazo_invitations"));
+        if (is_table_missing) {
+            logger.warn("invitation_table_missing", {
+                filename: "invitation_service.ts",
+                line_number: 0,
+                operation: "get_pending_invitation_by_email",
+                email_address,
+                note: "hazo_invitations table does not exist - run migration or set skip_invitation_check=true",
+            });
+            return {
+                success: false,
+                error: "Invitation table not found",
+                table_missing: true,
+            };
+        }
         const error_message = sanitize_error_for_user(error, {
             logToConsole: true,
             logToLogger: true,
