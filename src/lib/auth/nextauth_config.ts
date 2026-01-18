@@ -2,7 +2,9 @@
 // section: imports
 import type { AuthOptions, Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
-import GoogleProvider from "next-auth/providers/google";
+// ESM/CJS interop: next-auth providers are CommonJS, handle both export scenarios
+import GoogleProviderImport from "next-auth/providers/google";
+const GoogleProvider = (GoogleProviderImport as any).default || GoogleProviderImport;
 import { get_oauth_config } from "../oauth_config.server";
 import { handle_google_oauth_login } from "../services/oauth_service";
 import { get_hazo_connect_instance } from "../hazo_connect_instance.server";

@@ -1,4 +1,6 @@
-import GoogleProvider from "next-auth/providers/google";
+// ESM/CJS interop: next-auth providers are CommonJS, handle both export scenarios
+import GoogleProviderImport from "next-auth/providers/google";
+const GoogleProvider = GoogleProviderImport.default || GoogleProviderImport;
 import { get_oauth_config } from "../oauth_config.server.js";
 import { handle_google_oauth_login } from "../services/oauth_service.js";
 import { get_hazo_connect_instance } from "../hazo_connect_instance.server.js";
