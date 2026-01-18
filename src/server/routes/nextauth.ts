@@ -1,6 +1,8 @@
 // file_description: NextAuth.js route handler for OAuth authentication (for re-export by consuming apps)
 // section: imports
-import NextAuth from "next-auth";
+// ESM/CJS interop: next-auth is CommonJS, handle both export scenarios
+import NextAuthImport from "next-auth";
+const NextAuth = (NextAuthImport as any).default || NextAuthImport;
 import { get_nextauth_config } from "../../lib/auth/nextauth_config.js";
 
 // section: types
