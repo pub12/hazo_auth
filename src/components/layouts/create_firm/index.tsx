@@ -3,6 +3,7 @@
 "use client";
 
 // section: imports
+import React from "react";
 import type { StaticImageData } from "next/image";
 import { Input } from "../../ui/input";
 import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
@@ -99,6 +100,15 @@ export default function CreateFirmLayout({
   };
 
   const renderFields = (formState: UseCreateFirmFormResult) => {
+    // Handler that works with both onChange and onInput events
+    const handleInput = (
+      field: "firm_name" | "org_structure",
+      e: React.ChangeEvent<HTMLInputElement> | React.FormEvent<HTMLInputElement>
+    ) => {
+      const value = (e.target as HTMLInputElement).value;
+      formState.handleFieldChange(field, value);
+    };
+
     return (
       <>
         <FormFieldWrapper
@@ -109,9 +119,8 @@ export default function CreateFirmLayout({
               id="firm_name"
               type="text"
               value={formState.values.firm_name}
-              onChange={(e) =>
-                formState.handleFieldChange("firm_name", e.target.value)
-              }
+              onChange={(e) => handleInput("firm_name", e)}
+              onInput={(e) => handleInput("firm_name", e)}
               placeholder={firm_name_placeholder}
               aria-label={firm_name_label}
               className="cls_create_firm_layout_field_input"
@@ -128,9 +137,8 @@ export default function CreateFirmLayout({
               id="org_structure"
               type="text"
               value={formState.values.org_structure}
-              onChange={(e) =>
-                formState.handleFieldChange("org_structure", e.target.value)
-              }
+              onChange={(e) => handleInput("org_structure", e)}
+              onInput={(e) => handleInput("org_structure", e)}
               placeholder={org_structure_placeholder}
               aria-label={org_structure_label}
               className="cls_create_firm_layout_field_input"

@@ -28,7 +28,12 @@ export default function CreateFirmLayout({ image_src, image_alt = "Create your f
         cancelText: (button_colors === null || button_colors === void 0 ? void 0 : button_colors.cancelText) || "text-gray-700",
     };
     const renderFields = (formState) => {
-        return (_jsxs(_Fragment, { children: [_jsx(FormFieldWrapper, { fieldId: "firm_name", label: firm_name_label, input: _jsx(Input, { id: "firm_name", type: "text", value: formState.values.firm_name, onChange: (e) => formState.handleFieldChange("firm_name", e.target.value), placeholder: firm_name_placeholder, "aria-label": firm_name_label, className: "cls_create_firm_layout_field_input", autoComplete: "organization" }), errorMessage: formState.errors.firm_name }), _jsx(FormFieldWrapper, { fieldId: "org_structure", label: org_structure_label, input: _jsx(Input, { id: "org_structure", type: "text", value: formState.values.org_structure, onChange: (e) => formState.handleFieldChange("org_structure", e.target.value), placeholder: org_structure_placeholder, "aria-label": org_structure_label, className: "cls_create_firm_layout_field_input" }), errorMessage: formState.errors.org_structure })] }));
+        // Handler that works with both onChange and onInput events
+        const handleInput = (field, e) => {
+            const value = e.target.value;
+            formState.handleFieldChange(field, value);
+        };
+        return (_jsxs(_Fragment, { children: [_jsx(FormFieldWrapper, { fieldId: "firm_name", label: firm_name_label, input: _jsx(Input, { id: "firm_name", type: "text", value: formState.values.firm_name, onChange: (e) => handleInput("firm_name", e), onInput: (e) => handleInput("firm_name", e), placeholder: firm_name_placeholder, "aria-label": firm_name_label, className: "cls_create_firm_layout_field_input", autoComplete: "organization" }), errorMessage: formState.errors.firm_name }), _jsx(FormFieldWrapper, { fieldId: "org_structure", label: org_structure_label, input: _jsx(Input, { id: "org_structure", type: "text", value: formState.values.org_structure, onChange: (e) => handleInput("org_structure", e), onInput: (e) => handleInput("org_structure", e), placeholder: org_structure_placeholder, "aria-label": org_structure_label, className: "cls_create_firm_layout_field_input" }), errorMessage: formState.errors.org_structure })] }));
     };
     // Show success message after firm creation
     if (form.isSuccess) {
