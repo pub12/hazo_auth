@@ -2,7 +2,7 @@
 "use client";
 
 // section: imports
-import { useState, useCallback, FormEvent } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo, FormEvent } from "react";
 
 // section: types
 export type CreateFirmFormValues = {
@@ -36,6 +36,12 @@ export type UseCreateFirmFormResult = {
   isSubmitDisabled: boolean;
   handleFieldChange: (field: keyof CreateFirmFormValues, value: string) => void;
   handleSubmit: (e: FormEvent) => Promise<void>;
+  /** Ref to attach to firm_name input for DOM value sync */
+  firmNameRef: React.RefObject<HTMLInputElement>;
+  /** Ref to attach to org_structure input for DOM value sync */
+  orgStructureRef: React.RefObject<HTMLInputElement>;
+  /** Sync React state from DOM values (call on autofill detection) */
+  syncFromDOM: () => void;
 };
 
 // section: hook
@@ -58,6 +64,74 @@ export function use_create_firm_form(
   const [errors, setErrors] = useState<CreateFirmFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Refs for DOM value sync (handles browser autocomplete, password managers, etc.)
+  const firmNameRef = useRef<HTMLInputElement>(null);
+  const orgStructureRef = useRef<HTMLInputElement>(null);
+  // Counter to force re-evaluation of isSubmitDisabled after sync
+  const [syncCounter, setSyncCounter] = useState(0);
+
+  // Sync React state from DOM values (call when autofill detected or on focus)
+  const syncFromDOM = useCallback(() => {
+    let didSync = false;
+
+    if (firmNameRef.current) {
+      const domValue = firmNameRef.current.value;
+      if (domValue !== values.firm_name) {
+        setValues((prev) => ({ ...prev, firm_name: domValue }));
+        didSync = true;
+      }
+    }
+
+    if (orgStructureRef.current) {
+      const domValue = orgStructureRef.current.value;
+      if (domValue !== values.org_structure) {
+        setValues((prev) => ({ ...prev, org_structure: domValue }));
+        didSync = true;
+      }
+    }
+
+    // Force re-evaluation even if React state didn't change (DOM might have)
+    if (didSync) {
+      setSyncCounter((c) => c + 1);
+    }
+  }, [values.firm_name, values.org_structure]);
+
+  // Effect to detect browser autofill via animationstart event
+  // Chrome triggers animationstart on autofilled inputs if CSS animation is defined
+  useEffect(() => {
+    const handleAutofill = (e: AnimationEvent) => {
+      if (e.animationName === "onAutoFillStart") {
+        // Delay to allow browser to populate the value
+        setTimeout(syncFromDOM, 50);
+      }
+    };
+
+    const firmNameInput = firmNameRef.current;
+    const orgStructureInput = orgStructureRef.current;
+
+    firmNameInput?.addEventListener("animationstart", handleAutofill as EventListener);
+    orgStructureInput?.addEventListener("animationstart", handleAutofill as EventListener);
+
+    // Also sync on focus (catches form restoration, manual paste, etc.)
+    const handleFocus = () => {
+      // Small delay to let browser complete any pending value changes
+      setTimeout(syncFromDOM, 10);
+    };
+
+    firmNameInput?.addEventListener("focus", handleFocus);
+    orgStructureInput?.addEventListener("focus", handleFocus);
+
+    // Initial sync after mount (catches pre-populated values)
+    setTimeout(syncFromDOM, 100);
+
+    return () => {
+      firmNameInput?.removeEventListener("animationstart", handleAutofill as EventListener);
+      orgStructureInput?.removeEventListener("animationstart", handleAutofill as EventListener);
+      firmNameInput?.removeEventListener("focus", handleFocus);
+      orgStructureInput?.removeEventListener("focus", handleFocus);
+    };
+  }, [syncFromDOM]);
 
   const handleFieldChange = useCallback(
     (field: keyof CreateFirmFormValues, value: string) => {
@@ -149,8 +223,28 @@ export function use_create_firm_form(
     [values, validateForm, onSuccess, redirectRoute, apiBasePath, logger]
   );
 
-  const isSubmitDisabled =
-    isSubmitting || !values.firm_name.trim() || !values.org_structure.trim();
+  // Calculate disabled state using both React state AND refs as fallback
+  // This handles cases where DOM is populated but React state hasn't caught up
+  // (browser autocomplete, password managers, form restoration, etc.)
+  const isSubmitDisabled = useMemo(() => {
+    if (isSubmitting) return true;
+
+    // Check React state first
+    const firmNameFromState = values.firm_name.trim();
+    const orgStructureFromState = values.org_structure.trim();
+
+    // Also check DOM refs as fallback (may have values React doesn't know about)
+    const firmNameFromDom = firmNameRef.current?.value?.trim() || "";
+    const orgStructureFromDom = orgStructureRef.current?.value?.trim() || "";
+
+    // Use whichever has a value (prefer state, fall back to DOM)
+    const effectiveFirmName = firmNameFromState || firmNameFromDom;
+    const effectiveOrgStructure = orgStructureFromState || orgStructureFromDom;
+
+    return !effectiveFirmName || !effectiveOrgStructure;
+    // syncCounter included to force re-evaluation after DOM sync
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSubmitting, values.firm_name, values.org_structure, syncCounter]);
 
   return {
     values,
@@ -160,5 +254,8 @@ export function use_create_firm_form(
     isSubmitDisabled,
     handleFieldChange,
     handleSubmit,
+    firmNameRef,
+    orgStructureRef,
+    syncFromDOM,
   };
 }

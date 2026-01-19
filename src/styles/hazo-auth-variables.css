@@ -59,3 +59,26 @@
   --hazo-ring-light: #1e3a5f;     /* blue-900-ish */
 }
 
+/* section: autofill_detection
+ * Chrome and Safari trigger animationstart on inputs when browser autofill occurs.
+ * This allows JS to detect autofill and sync React state with DOM values.
+ * Used by create_firm and other forms to fix button state sync issues.
+ */
+@keyframes onAutoFillStart {
+  from { /* empty */ }
+  to { /* empty */ }
+}
+
+@keyframes onAutoFillCancel {
+  from { /* empty */ }
+  to { /* empty */ }
+}
+
+/* Apply to inputs with the detection class */
+.hazo-autofill-detect:-webkit-autofill {
+  animation-name: onAutoFillStart;
+}
+
+.hazo-autofill-detect:not(:-webkit-autofill) {
+  animation-name: onAutoFillCancel;
+}

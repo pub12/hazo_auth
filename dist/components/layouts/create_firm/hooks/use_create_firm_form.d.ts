@@ -27,6 +27,12 @@ export type UseCreateFirmFormResult = {
     isSubmitDisabled: boolean;
     handleFieldChange: (field: keyof CreateFirmFormValues, value: string) => void;
     handleSubmit: (e: FormEvent) => Promise<void>;
+    /** Ref to attach to firm_name input for DOM value sync */
+    firmNameRef: React.RefObject<HTMLInputElement>;
+    /** Ref to attach to org_structure input for DOM value sync */
+    orgStructureRef: React.RefObject<HTMLInputElement>;
+    /** Sync React state from DOM values (call on autofill detection) */
+    syncFromDOM: () => void;
 };
 export declare function use_create_firm_form(options?: UseCreateFirmFormOptions): UseCreateFirmFormResult;
 //# sourceMappingURL=use_create_firm_form.d.ts.map

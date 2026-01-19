@@ -117,13 +117,14 @@ export default function CreateFirmLayout({
           input={
             <Input
               id="firm_name"
+              ref={formState.firmNameRef}
               type="text"
               value={formState.values.firm_name}
               onChange={(e) => handleInput("firm_name", e)}
               onInput={(e) => handleInput("firm_name", e)}
               placeholder={firm_name_placeholder}
               aria-label={firm_name_label}
-              className="cls_create_firm_layout_field_input"
+              className="cls_create_firm_layout_field_input hazo-autofill-detect"
               autoComplete="organization"
             />
           }
@@ -135,13 +136,14 @@ export default function CreateFirmLayout({
           input={
             <Input
               id="org_structure"
+              ref={formState.orgStructureRef}
               type="text"
               value={formState.values.org_structure}
               onChange={(e) => handleInput("org_structure", e)}
               onInput={(e) => handleInput("org_structure", e)}
               placeholder={org_structure_placeholder}
               aria-label={org_structure_label}
-              className="cls_create_firm_layout_field_input"
+              className="cls_create_firm_layout_field_input hazo-autofill-detect"
             />
           }
           errorMessage={formState.errors.org_structure}
