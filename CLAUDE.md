@@ -136,6 +136,132 @@ npm run migrate migrations/003_add_url_on_logon_to_hazo_users.sql
 
 Migrations are executed via `scripts/apply_migration.ts` which supports both SQLite and PostgREST.
 
+**Complete v5.x SQLite Schema Reference:**
+
+Consuming apps must use this exact schema. The primary key structure and column names are critical.
+
+```sql
+-- Core user table
+CREATE TABLE IF NOT EXISTS hazo_users (
+    id TEXT PRIMARY KEY,
+    email_address TEXT NOT NULL UNIQUE,
+    password_hash TEXT,
+    name TEXT,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACTIVE', 'SUSPENDED', 'DELETED')),
+    email_verified INTEGER NOT NULL DEFAULT 0,
+    profile_picture_url TEXT,
+    url_on_logon TEXT,
+    google_id TEXT,
+    auth_providers TEXT,
+    user_type TEXT,
+    app_user_data TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Password reset / email verification tokens
+CREATE TABLE IF NOT EXISTS hazo_refresh_tokens (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
+    token TEXT NOT NULL UNIQUE,
+    token_type TEXT NOT NULL DEFAULT 'refresh' CHECK (token_type IN ('refresh', 'password_reset', 'email_verification')),
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Role definitions
+CREATE TABLE IF NOT EXISTS hazo_roles (
+    id TEXT PRIMARY KEY,
+    role_name TEXT NOT NULL UNIQUE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Permission definitions
+CREATE TABLE IF NOT EXISTS hazo_permissions (
+    id TEXT PRIMARY KEY,
+    permission_name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Role-permission junction table (COMPOSITE PRIMARY KEY, NO id COLUMN)
+CREATE TABLE IF NOT EXISTS hazo_role_permissions (
+    role_id TEXT NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    permission_id TEXT NOT NULL REFERENCES hazo_permissions(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (role_id, permission_id)
+);
+
+-- Unified scope hierarchy
+CREATE TABLE IF NOT EXISTS hazo_scopes (
+    id TEXT PRIMARY KEY,
+    parent_id TEXT REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    level TEXT NOT NULL,
+    logo_url TEXT,
+    primary_color TEXT,
+    secondary_color TEXT,
+    tagline TEXT,
+    slug TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_hazo_scopes_parent ON hazo_scopes(parent_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_scopes_level ON hazo_scopes(level);
+CREATE INDEX IF NOT EXISTS idx_hazo_scopes_slug ON hazo_scopes(slug);
+
+-- User-scope-role assignments (COMPOSITE PRIMARY KEY, NO id COLUMN)
+-- CRITICAL: Must have root_scope_id and role_id columns
+CREATE TABLE IF NOT EXISTS hazo_user_scopes (
+    user_id TEXT NOT NULL REFERENCES hazo_users(id) ON DELETE CASCADE,
+    scope_id TEXT NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    root_scope_id TEXT NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    role_id TEXT NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    status TEXT DEFAULT 'ACTIVE' CHECK (status IN ('INVITED', 'ACTIVE', 'SUSPENDED', 'DEPARTED')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, scope_id)
+);
+CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_scope ON hazo_user_scopes(scope_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_root ON hazo_user_scopes(root_scope_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_user_scopes_role ON hazo_user_scopes(role_id);
+
+-- Invitation system
+CREATE TABLE IF NOT EXISTS hazo_invitations (
+    id TEXT PRIMARY KEY,
+    email_address TEXT NOT NULL,
+    scope_id TEXT NOT NULL REFERENCES hazo_scopes(id) ON DELETE CASCADE,
+    role_id TEXT NOT NULL REFERENCES hazo_roles(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED')),
+    invited_by TEXT REFERENCES hazo_users(id) ON DELETE SET NULL,
+    expires_at TEXT NOT NULL,
+    accepted_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    changed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_hazo_invitations_email ON hazo_invitations(email_address);
+CREATE INDEX IF NOT EXISTS idx_hazo_invitations_scope ON hazo_invitations(scope_id);
+CREATE INDEX IF NOT EXISTS idx_hazo_invitations_status ON hazo_invitations(status);
+CREATE INDEX IF NOT EXISTS idx_hazo_invitations_email_status ON hazo_invitations(email_address, status);
+
+-- Insert required system scopes
+INSERT OR IGNORE INTO hazo_scopes (id, parent_id, name, level, created_at, changed_at)
+VALUES ('00000000-0000-0000-0000-000000000000', NULL, 'Super Admin', 'system', datetime('now'), datetime('now'));
+INSERT OR IGNORE INTO hazo_scopes (id, parent_id, name, level, created_at, changed_at)
+VALUES ('00000000-0000-0000-0000-000000000001', NULL, 'System', 'default', datetime('now'), datetime('now'));
+```
+
+**CRITICAL v5.x Schema Requirements:**
+1. `hazo_user_scopes` MUST have `root_scope_id` and `role_id` columns
+2. `hazo_role_permissions` uses composite primary key `(role_id, permission_id)` with NO `id` column
+3. `hazo_scopes` table MUST exist with the columns shown above
+4. Super admin scope `00000000-0000-0000-0000-000000000000` must be inserted
+5. All IDs are TEXT (UUIDs), not INTEGER
+
 ### Scope-Based Multi-Tenancy (v5.0+)
 
 The scope system provides a flexible, membership-based multi-tenancy model where users are assigned to scopes (firms, companies, organizations, etc.). **v5.0 completely removed the organization-based multi-tenancy** in favor of this unified approach.

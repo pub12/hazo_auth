@@ -82,7 +82,7 @@ export async function ensure_owner_role(adapter) {
 async function assign_owner_permissions(adapter, role_id) {
     try {
         const permission_service = createCrudService(adapter, "hazo_permissions");
-        const role_permission_service = createCrudService(adapter, "hazo_role_permissions");
+        const role_permission_service = createCrudService(adapter, "hazo_role_permissions", { primaryKeys: ["role_id", "permission_id"], autoId: false });
         // Default permissions for firm owner
         // firm_admin is a PERMISSION that grants administrative rights within a firm
         const permission_names = [

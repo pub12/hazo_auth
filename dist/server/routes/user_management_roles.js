@@ -19,7 +19,10 @@ export async function GET(request) {
         const hazoConnect = get_hazo_connect_instance();
         const roles_service = createCrudService(hazoConnect, "hazo_roles");
         const permissions_service = createCrudService(hazoConnect, "hazo_permissions");
-        const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions");
+        const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions", {
+            primaryKeys: ["role_id", "permission_id"],
+            autoId: false,
+        });
         // Fetch all roles (empty object means no filter - get all records)
         const roles = await roles_service.findBy({});
         const permissions = await permissions_service.findBy({});
@@ -152,7 +155,10 @@ export async function PUT(request) {
         const hazoConnect = get_hazo_connect_instance();
         const roles_service = createCrudService(hazoConnect, "hazo_roles");
         const permissions_service = createCrudService(hazoConnect, "hazo_permissions");
-        const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions");
+        const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions", {
+            primaryKeys: ["role_id", "permission_id"],
+            autoId: false,
+        });
         // Get all permissions to build name-to-id map (empty object means no filter - get all records)
         const all_permissions = await permissions_service.findBy({});
         if (!Array.isArray(all_permissions)) {

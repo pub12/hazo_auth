@@ -122,6 +122,7 @@ async function assign_owner_permissions(
     const role_permission_service = createCrudService(
       adapter,
       "hazo_role_permissions",
+      { primaryKeys: ["role_id", "permission_id"], autoId: false },
     );
 
     // Default permissions for firm owner

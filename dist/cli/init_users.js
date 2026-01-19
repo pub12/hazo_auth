@@ -107,7 +107,10 @@ export async function handle_init_users(options = {}) {
         const hazoConnect = get_hazo_connect_instance();
         const permissions_service = createCrudService(hazoConnect, "hazo_permissions");
         const roles_service = createCrudService(hazoConnect, "hazo_roles");
-        const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions");
+        const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions", {
+            primaryKeys: ["role_id", "permission_id"],
+            autoId: false,
+        });
         const users_service = createCrudService(hazoConnect, "hazo_users");
         // v5.x: Removed hazo_user_roles - roles are now assigned via hazo_user_scopes
         const scopes_service = createCrudService(hazoConnect, "hazo_scopes");

@@ -108,7 +108,7 @@ async function fetch_user_data_from_db(user_id) {
     // v5.x: Use hazo_user_scopes instead of hazo_user_roles
     // Roles are now assigned per-scope via hazo_user_scopes.role_id
     const user_scopes_service = createCrudService(hazoConnect, "hazo_user_scopes", USER_SCOPES_CRUD_OPTIONS);
-    const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions");
+    const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions", { primaryKeys: ["role_id", "permission_id"], autoId: false });
     const permissions_service = createCrudService(hazoConnect, "hazo_permissions");
     // Fetch user
     const users = await users_service.findBy({ id: user_id });

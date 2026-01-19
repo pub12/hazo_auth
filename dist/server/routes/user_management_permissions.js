@@ -226,7 +226,10 @@ export async function DELETE(request) {
         }
         const hazoConnect = get_hazo_connect_instance();
         const permissions_service = createCrudService(hazoConnect, "hazo_permissions");
-        const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions");
+        const role_permissions_service = createCrudService(hazoConnect, "hazo_role_permissions", {
+            primaryKeys: ["role_id", "permission_id"],
+            autoId: false,
+        });
         // Check if permission is used in any role
         const role_permissions = await role_permissions_service.findBy({
             permission_id: permission_id_num,

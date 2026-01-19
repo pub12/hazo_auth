@@ -152,6 +152,7 @@ async function fetch_user_data_from_db(user_id: string): Promise<{
   const role_permissions_service = createCrudService(
     hazoConnect,
     "hazo_role_permissions",
+    { primaryKeys: ["role_id", "permission_id"], autoId: false },
   );
   const permissions_service = createCrudService(
     hazoConnect,

@@ -103,7 +103,10 @@ export async function GET(request: NextRequest) {
       const role_ids = Array.from(role_ids_set);
 
       // Get permissions for each role
-      const role_perms_service = createCrudService(adapter, "hazo_role_permissions");
+      const role_perms_service = createCrudService(adapter, "hazo_role_permissions", {
+        primaryKeys: ["role_id", "permission_id"],
+        autoId: false,
+      });
       for (const role_id of role_ids) {
         const perms_result = await role_perms_service.findBy({ role_id });
 
