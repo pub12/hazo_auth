@@ -34,6 +34,8 @@ export type UseCreateFirmFormResult = {
   isSubmitting: boolean;
   isSuccess: boolean;
   isSubmitDisabled: boolean;
+  /** True when Chrome autofill preview is shown but value not yet committed */
+  hasAutofillPreview: boolean;
   handleFieldChange: (field: keyof CreateFirmFormValues, value: string) => void;
   handleSubmit: (e: FormEvent) => Promise<void>;
   /** Ref to attach to firm_name input for DOM value sync */
@@ -70,6 +72,8 @@ export function use_create_firm_form(
   const orgStructureRef = useRef<HTMLInputElement>(null);
   // Counter to force re-evaluation of isSubmitDisabled after sync
   const [syncCounter, setSyncCounter] = useState(0);
+  // Track Chrome autofill preview state (visual overlay without DOM value)
+  const [hasAutofillPreview, setHasAutofillPreview] = useState(false);
 
   // Sync React state from DOM values (call when autofill detected or on focus)
   const syncFromDOM = useCallback(() => {
@@ -104,6 +108,7 @@ export function use_create_firm_form(
       if (e.animationName === "onAutoFillStart") {
         // Delay to allow browser to populate the value
         setTimeout(syncFromDOM, 50);
+        setHasAutofillPreview(false); // Autofill committed
       }
     };
 
@@ -117,10 +122,51 @@ export function use_create_firm_form(
     const handleFocus = () => {
       // Small delay to let browser complete any pending value changes
       setTimeout(syncFromDOM, 10);
+      setHasAutofillPreview(false); // User interacted, preview committed
     };
 
     firmNameInput?.addEventListener("focus", handleFocus);
     orgStructureInput?.addEventListener("focus", handleFocus);
+
+    // Handle change event - fires when autofill commits
+    const handleChange = () => {
+      setTimeout(syncFromDOM, 10);
+      setHasAutofillPreview(false);
+    };
+
+    firmNameInput?.addEventListener("change", handleChange);
+    orgStructureInput?.addEventListener("change", handleChange);
+
+    // Handle input event with inputType check for autofill
+    const handleInput = (e: Event) => {
+      const inputEvent = e as InputEvent;
+      if (inputEvent.inputType === "insertReplacementText") {
+        // Autofill occurred - sync immediately
+        setTimeout(syncFromDOM, 10);
+        setHasAutofillPreview(false);
+      }
+    };
+
+    firmNameInput?.addEventListener("input", handleInput);
+    orgStructureInput?.addEventListener("input", handleInput);
+
+    // Check for :-webkit-autofill preview state periodically
+    // This detects Chrome's visual preview before user commits
+    const checkAutofillPreview = () => {
+      const firmNameHasPreview = firmNameInput?.matches?.(":-webkit-autofill") ?? false;
+      const firmNameValueEmpty = !firmNameInput?.value?.trim();
+
+      // Preview is showing if Chrome applies :-webkit-autofill but DOM value is empty
+      if (firmNameHasPreview && firmNameValueEmpty) {
+        setHasAutofillPreview(true);
+      } else if (!firmNameHasPreview || !firmNameValueEmpty) {
+        setHasAutofillPreview(false);
+      }
+    };
+
+    // Check periodically for autofill preview state (Chrome applies it asynchronously)
+    const previewCheckInterval = setInterval(checkAutofillPreview, 500);
+    checkAutofillPreview(); // Initial check
 
     // Initial sync after mount (catches pre-populated values)
     setTimeout(syncFromDOM, 100);
@@ -130,6 +176,11 @@ export function use_create_firm_form(
       orgStructureInput?.removeEventListener("animationstart", handleAutofill as EventListener);
       firmNameInput?.removeEventListener("focus", handleFocus);
       orgStructureInput?.removeEventListener("focus", handleFocus);
+      firmNameInput?.removeEventListener("change", handleChange);
+      orgStructureInput?.removeEventListener("change", handleChange);
+      firmNameInput?.removeEventListener("input", handleInput);
+      orgStructureInput?.removeEventListener("input", handleInput);
+      clearInterval(previewCheckInterval);
     };
   }, [syncFromDOM]);
 
@@ -252,6 +303,7 @@ export function use_create_firm_form(
     isSubmitting,
     isSuccess,
     isSubmitDisabled,
+    hasAutofillPreview,
     handleFieldChange,
     handleSubmit,
     firmNameRef,

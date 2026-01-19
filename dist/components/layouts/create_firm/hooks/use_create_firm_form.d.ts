@@ -25,6 +25,8 @@ export type UseCreateFirmFormResult = {
     isSubmitting: boolean;
     isSuccess: boolean;
     isSubmitDisabled: boolean;
+    /** True when Chrome autofill preview is shown but value not yet committed */
+    hasAutofillPreview: boolean;
     handleFieldChange: (field: keyof CreateFirmFormValues, value: string) => void;
     handleSubmit: (e: FormEvent) => Promise<void>;
     /** Ref to attach to firm_name input for DOM value sync */

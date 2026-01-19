@@ -17,6 +17,8 @@ export function use_create_firm_form(options = {}) {
     const orgStructureRef = useRef(null);
     // Counter to force re-evaluation of isSubmitDisabled after sync
     const [syncCounter, setSyncCounter] = useState(0);
+    // Track Chrome autofill preview state (visual overlay without DOM value)
+    const [hasAutofillPreview, setHasAutofillPreview] = useState(false);
     // Sync React state from DOM values (call when autofill detected or on focus)
     const syncFromDOM = useCallback(() => {
         let didSync = false;
@@ -46,6 +48,7 @@ export function use_create_firm_form(options = {}) {
             if (e.animationName === "onAutoFillStart") {
                 // Delay to allow browser to populate the value
                 setTimeout(syncFromDOM, 50);
+                setHasAutofillPreview(false); // Autofill committed
             }
         };
         const firmNameInput = firmNameRef.current;
@@ -56,9 +59,45 @@ export function use_create_firm_form(options = {}) {
         const handleFocus = () => {
             // Small delay to let browser complete any pending value changes
             setTimeout(syncFromDOM, 10);
+            setHasAutofillPreview(false); // User interacted, preview committed
         };
         firmNameInput === null || firmNameInput === void 0 ? void 0 : firmNameInput.addEventListener("focus", handleFocus);
         orgStructureInput === null || orgStructureInput === void 0 ? void 0 : orgStructureInput.addEventListener("focus", handleFocus);
+        // Handle change event - fires when autofill commits
+        const handleChange = () => {
+            setTimeout(syncFromDOM, 10);
+            setHasAutofillPreview(false);
+        };
+        firmNameInput === null || firmNameInput === void 0 ? void 0 : firmNameInput.addEventListener("change", handleChange);
+        orgStructureInput === null || orgStructureInput === void 0 ? void 0 : orgStructureInput.addEventListener("change", handleChange);
+        // Handle input event with inputType check for autofill
+        const handleInput = (e) => {
+            const inputEvent = e;
+            if (inputEvent.inputType === "insertReplacementText") {
+                // Autofill occurred - sync immediately
+                setTimeout(syncFromDOM, 10);
+                setHasAutofillPreview(false);
+            }
+        };
+        firmNameInput === null || firmNameInput === void 0 ? void 0 : firmNameInput.addEventListener("input", handleInput);
+        orgStructureInput === null || orgStructureInput === void 0 ? void 0 : orgStructureInput.addEventListener("input", handleInput);
+        // Check for :-webkit-autofill preview state periodically
+        // This detects Chrome's visual preview before user commits
+        const checkAutofillPreview = () => {
+            var _a, _b, _c;
+            const firmNameHasPreview = (_b = (_a = firmNameInput === null || firmNameInput === void 0 ? void 0 : firmNameInput.matches) === null || _a === void 0 ? void 0 : _a.call(firmNameInput, ":-webkit-autofill")) !== null && _b !== void 0 ? _b : false;
+            const firmNameValueEmpty = !((_c = firmNameInput === null || firmNameInput === void 0 ? void 0 : firmNameInput.value) === null || _c === void 0 ? void 0 : _c.trim());
+            // Preview is showing if Chrome applies :-webkit-autofill but DOM value is empty
+            if (firmNameHasPreview && firmNameValueEmpty) {
+                setHasAutofillPreview(true);
+            }
+            else if (!firmNameHasPreview || !firmNameValueEmpty) {
+                setHasAutofillPreview(false);
+            }
+        };
+        // Check periodically for autofill preview state (Chrome applies it asynchronously)
+        const previewCheckInterval = setInterval(checkAutofillPreview, 500);
+        checkAutofillPreview(); // Initial check
         // Initial sync after mount (catches pre-populated values)
         setTimeout(syncFromDOM, 100);
         return () => {
@@ -66,6 +105,11 @@ export function use_create_firm_form(options = {}) {
             orgStructureInput === null || orgStructureInput === void 0 ? void 0 : orgStructureInput.removeEventListener("animationstart", handleAutofill);
             firmNameInput === null || firmNameInput === void 0 ? void 0 : firmNameInput.removeEventListener("focus", handleFocus);
             orgStructureInput === null || orgStructureInput === void 0 ? void 0 : orgStructureInput.removeEventListener("focus", handleFocus);
+            firmNameInput === null || firmNameInput === void 0 ? void 0 : firmNameInput.removeEventListener("change", handleChange);
+            orgStructureInput === null || orgStructureInput === void 0 ? void 0 : orgStructureInput.removeEventListener("change", handleChange);
+            firmNameInput === null || firmNameInput === void 0 ? void 0 : firmNameInput.removeEventListener("input", handleInput);
+            orgStructureInput === null || orgStructureInput === void 0 ? void 0 : orgStructureInput.removeEventListener("input", handleInput);
+            clearInterval(previewCheckInterval);
         };
     }, [syncFromDOM]);
     const handleFieldChange = useCallback((field, value) => {
@@ -168,6 +212,7 @@ export function use_create_firm_form(options = {}) {
         isSubmitting,
         isSuccess,
         isSubmitDisabled,
+        hasAutofillPreview,
         handleFieldChange,
         handleSubmit,
         firmNameRef,

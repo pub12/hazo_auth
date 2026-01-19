@@ -216,6 +216,13 @@ export default function CreateFirmLayout({
               </div>
             )}
 
+            {/* Autofill preview hint - shown when Chrome displays autofill but value not committed */}
+            {form.hasAutofillPreview && !form.values.firm_name && (
+              <div className="cls_create_firm_layout_autofill_hint rounded-md bg-amber-50 p-3 text-sm text-amber-700">
+                Click in the firm name field to confirm the autofilled value
+              </div>
+            )}
+
             <FormActionButtons
               submitLabel={submit_button_label}
               buttonPalette={resolvedButtonPalette}
