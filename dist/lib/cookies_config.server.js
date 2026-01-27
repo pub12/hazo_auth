@@ -1,4 +1,6 @@
 // file_description: server-only helper to read cookie configuration from hazo_auth_config.ini
+// section: server-only-guard
+import "server-only";
 import { read_config_section } from "./config/config_loader.server.js";
 // section: defaults
 const DEFAULT_CONFIG = {

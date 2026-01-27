@@ -1,3 +1,4 @@
+import "server-only";
 import { NextRequest } from "next/server";
 import type { TenantAuthOptions, TenantAuthResult, RequiredTenantAuthResult } from "./auth_types";
 /**

@@ -1,3 +1,4 @@
+import "server-only";
 export type FileTypesConfig = {
     allowed_image_extensions: string[];
     allowed_image_mime_types: string[];

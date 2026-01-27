@@ -1,4 +1,6 @@
-// file_description: client-accessible wrapper for the main app logging service using hazo_logs
+// file_description: server-only wrapper for the main app logging service using hazo_logs
+// section: server-only-guard
+import "server-only";
 // section: imports
 import { createLogger } from "hazo_logs";
 // section: logger_instance

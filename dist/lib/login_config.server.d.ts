@@ -1,3 +1,4 @@
+import "server-only";
 import { type OAuthConfig } from "./oauth_config.server.js";
 export type LoginConfig = {
     redirectRoute?: string;

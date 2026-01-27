@@ -1,3 +1,4 @@
+import "server-only";
 export type MySettingsConfig = {
     userFields: {
         show_name_field: boolean;

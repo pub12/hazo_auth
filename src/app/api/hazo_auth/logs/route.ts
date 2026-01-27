@@ -5,4 +5,5 @@ import { createLogApiHandler } from "hazo_logs/ui/server";
 // section: handler
 const handler = createLogApiHandler();
 
-export const { GET } = handler;
+// GET for log viewer, POST for client-side logging
+export const { GET, POST } = handler;

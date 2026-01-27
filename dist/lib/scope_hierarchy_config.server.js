@@ -1,4 +1,6 @@
 // file_description: server-only helper to read HRBAC scope hierarchy configuration from hazo_auth_config.ini
+// section: server-only-guard
+import "server-only";
 // section: imports
 import { get_config_value, get_config_number, get_config_boolean, } from "./config/config_loader.server.js";
 import { SUPER_ADMIN_SCOPE_ID, DEFAULT_SYSTEM_SCOPE_ID } from "./services/scope_service.js";

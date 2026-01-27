@@ -1,3 +1,4 @@
+import "server-only";
 export type ProfilePictureConfig = {
     allow_photo_upload: boolean;
     upload_photo_path?: string;

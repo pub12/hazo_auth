@@ -1,3 +1,4 @@
+import "server-only";
 export type AlreadyLoggedInConfig = {
     message: string;
     showLogoutButton: boolean;

@@ -1,4 +1,7 @@
 // file_description: singleton instance of hazo_connect adapter - initialized once and reused across all routes
+// section: server-only-guard
+import "server-only";
+
 // This ensures all routes/components use the same database connection
 // Uses the new hazo_connect singleton API from hazo_connect/nextjs/setup
 // Reads configuration from hazo_auth_config.ini using hazo_config

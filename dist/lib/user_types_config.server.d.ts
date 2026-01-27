@@ -1,3 +1,4 @@
+import "server-only";
 /**
  * Badge color preset names supported by the UserTypeBadge component
  */

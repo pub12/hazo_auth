@@ -1,4 +1,7 @@
 // file_description: server-side implementation of hazo_get_auth utility for API routes
+// section: server-only-guard
+import "server-only";
+
 // section: imports
 import { NextRequest } from "next/server";
 import { get_hazo_connect_instance } from "../hazo_connect_instance.server";

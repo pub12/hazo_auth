@@ -1,5 +1,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // file_description: Zero-config MySettingsPage server component - drop in and use with no configuration required
+// section: server-only-guard
+import "server-only";
 // section: imports
 import { get_my_settings_config } from "../lib/my_settings_config.server.js";
 import MySettingsLayout from "../components/layouts/my_settings/index.js";

@@ -1,3 +1,4 @@
+import "server-only";
 export type MessagesConfig = {
     photo_upload_disabled_message: string;
     gravatar_setup_message: string;

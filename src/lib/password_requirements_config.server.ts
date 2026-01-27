@@ -1,4 +1,7 @@
 // file_description: server-only helper to read shared password requirements configuration from hazo_auth_config.ini
+// section: server-only-guard
+import "server-only";
+
 // section: imports
 import { get_config_number, get_config_boolean } from "./config/config_loader.server";
 import { DEFAULT_PASSWORD_REQUIREMENTS } from "./config/default_config";

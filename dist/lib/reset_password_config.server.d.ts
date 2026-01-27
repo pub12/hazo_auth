@@ -1,3 +1,4 @@
+import "server-only";
 export type ResetPasswordConfig = {
     errorMessage: string;
     successMessage: string;

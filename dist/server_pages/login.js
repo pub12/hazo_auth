@@ -1,5 +1,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // file_description: Zero-config LoginPage server component - drop in and use with no configuration required
+// section: server-only-guard
+import "server-only";
 // section: imports
 import { get_login_config } from "../lib/login_config.server.js";
 import { LoginClientWrapper } from "./login_client_wrapper.js";

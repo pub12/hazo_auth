@@ -1,3 +1,4 @@
+import "server-only";
 export type UserFieldsConfig = {
     show_name_field: boolean;
     show_email_field: boolean;

@@ -1,3 +1,4 @@
+import "server-only";
 export type DevLockConfig = {
     /** Enable the development lock screen */
     enable: boolean;

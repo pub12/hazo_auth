@@ -1,3 +1,4 @@
+import "server-only";
 /**
  * Auth utility configuration options
  */

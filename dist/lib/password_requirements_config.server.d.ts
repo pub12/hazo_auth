@@ -1,3 +1,4 @@
+import "server-only";
 export type PasswordRequirementsConfig = {
     minimum_length: number;
     require_uppercase: boolean;

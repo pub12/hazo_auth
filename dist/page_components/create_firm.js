@@ -1,5 +1,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // file_description: zero-config page component for create firm
+// section: server-only-guard
+import "server-only";
 // section: imports
 import CreateFirmLayout from "../components/layouts/create_firm/index.js";
 import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell.js";

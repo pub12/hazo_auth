@@ -1,4 +1,6 @@
 // file_description: load ui shell layout settings from hazo_auth_config.ini
+// section: server-only-guard
+import "server-only";
 // section: imports
 import { get_config_value } from "./config/config_loader.server.js";
 import { get_navbar_config } from "./navbar_config.server.js";

@@ -1,3 +1,4 @@
+import "server-only";
 /**
  * A single app permission declaration
  */

@@ -1,4 +1,7 @@
 // file_description: shared utility for reading configuration from hazo_auth_config.ini using hazo_config
+// section: server-only-guard
+import "server-only";
+
 // section: imports
 import { HazoConfig } from "hazo_config/dist/lib";
 import path from "path";

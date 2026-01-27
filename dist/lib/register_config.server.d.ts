@@ -1,3 +1,4 @@
+import "server-only";
 export type RegisterConfig = {
     showNameField: boolean;
     passwordRequirements: {

@@ -1,4 +1,6 @@
 // file_description: server-only helper to read app_user_data schema configuration from hazo_auth_config.ini
+// section: server-only-guard
+import "server-only";
 // Enables schema-based editing of app_user_data in User Management
 // section: imports
 import { get_config_value, get_config_boolean, read_config_section, } from "./config/config_loader.server.js";

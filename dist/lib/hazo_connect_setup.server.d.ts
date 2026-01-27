@@ -1,3 +1,4 @@
+import "server-only";
 /**
  * Server-only function to create hazo_connect adapter
  * Reads configuration from hazo_auth_config.ini using hazo_config, falls back to environment variables

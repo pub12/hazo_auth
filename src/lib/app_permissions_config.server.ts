@@ -1,4 +1,7 @@
 // file_description: server-only helper to read app permissions configuration from hazo_auth_config.ini
+// section: server-only-guard
+import "server-only";
+
 // This allows consuming apps to declare their required permissions with descriptions for debugging
 // section: imports
 import { read_config_section } from "./config/config_loader.server";

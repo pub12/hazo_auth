@@ -1,3 +1,4 @@
+import "server-only";
 export type CookiesConfig = {
     /** Prefix for all hazo_auth cookies (e.g., "myapp_" results in "myapp_hazo_auth_session") */
     cookie_prefix: string;

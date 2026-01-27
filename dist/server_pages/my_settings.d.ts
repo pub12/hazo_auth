@@ -1,3 +1,4 @@
+import "server-only";
 export type MySettingsPageProps = {
     /**
      * Optional className for custom styling

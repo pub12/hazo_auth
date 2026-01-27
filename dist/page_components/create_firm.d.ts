@@ -1,3 +1,4 @@
+import "server-only";
 export type CreateFirmPageProps = {
     /** Disable the navbar wrapper */
     disableNavbar?: boolean;

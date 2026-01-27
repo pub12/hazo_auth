@@ -1,3 +1,4 @@
+import "server-only";
 export type NavbarConfig = {
     /** Enable navbar on auth pages */
     enable_navbar: boolean;

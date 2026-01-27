@@ -1,3 +1,4 @@
+import "server-only";
 export type EmailVerificationConfig = {
     alreadyLoggedInMessage: string;
     showLogoutButton: boolean;

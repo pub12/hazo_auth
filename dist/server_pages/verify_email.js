@@ -1,5 +1,7 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 // file_description: Zero-config VerifyEmailPage server component - drop in and use with no configuration required
+// section: server-only-guard
+import "server-only";
 // section: imports
 import { get_email_verification_config } from "../lib/email_verification_config.server.js";
 import { VerifyEmailClientWrapper } from "./verify_email_client_wrapper.js";

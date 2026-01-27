@@ -1,3 +1,4 @@
+import "server-only";
 /**
  * Returns the hazo_auth logger instance
  * Uses hazo_logs for consistent logging across hazo packages

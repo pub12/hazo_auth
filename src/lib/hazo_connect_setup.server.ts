@@ -1,4 +1,7 @@
 // file_description: server-only helper to create hazo_connect instance (imports server-side code)
+// section: server-only-guard
+import "server-only";
+
 // This file should only be imported in server contexts (API routes, server components)
 // Reads configuration from hazo_auth_config.ini using hazo_config
 // section: imports

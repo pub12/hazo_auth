@@ -1,4 +1,7 @@
 // file_description: server-side authentication utilities for checking login status in API routes
+// section: server-only-guard
+import "server-only";
+
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
 import { get_hazo_connect_instance } from "../hazo_connect_instance.server";

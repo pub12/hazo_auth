@@ -1,3 +1,4 @@
+import "server-only";
 export type UserManagementConfig = {
     application_permission_list_defaults: string[];
 };

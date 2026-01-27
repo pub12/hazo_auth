@@ -1,3 +1,4 @@
+import "server-only";
 export type MenuItemType = "info" | "link" | "separator";
 export type ProfilePicMenuMenuItem = {
     type: MenuItemType;

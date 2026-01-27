@@ -1,3 +1,4 @@
+import "server-only";
 import { type NavbarConfig } from "./navbar_config.server.js";
 export type UiShellLayoutMode = "test_sidebar" | "standalone";
 export type UiShellConfig = {

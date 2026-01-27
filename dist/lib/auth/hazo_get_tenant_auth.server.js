@@ -1,3 +1,6 @@
+// file_description: tenant-aware authentication function that extracts scope from request headers/cookies
+// section: server-only-guard
+import "server-only";
 import { hazo_get_auth } from "./hazo_get_auth.server.js";
 import { get_auth_cache } from "./auth_cache.js";
 import { get_scope_by_id } from "../services/scope_service.js";

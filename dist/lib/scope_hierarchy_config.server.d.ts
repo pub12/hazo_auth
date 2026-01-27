@@ -1,3 +1,4 @@
+import "server-only";
 /**
  * Scope hierarchy configuration options for HRBAC
  * Uses unified hazo_scopes table with parent_id for hierarchy

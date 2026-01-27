@@ -1,3 +1,4 @@
+import "server-only";
 export type UISizesConfig = {
     gravatar_size: number;
     profile_picture_size: number;

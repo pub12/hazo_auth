@@ -1,4 +1,7 @@
 // file_description: tenant-aware authentication function that extracts scope from request headers/cookies
+// section: server-only-guard
+import "server-only";
+
 // section: imports
 import { NextRequest } from "next/server";
 import { hazo_get_auth } from "./hazo_get_auth.server";

@@ -1,3 +1,4 @@
+import "server-only";
 import type { StaticImageData } from "next/image";
 export type ForgotPasswordPageProps = {
     /**

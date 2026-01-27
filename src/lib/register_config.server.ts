@@ -1,4 +1,7 @@
 // file_description: server-only helper to read register layout configuration from hazo_auth_config.ini
+// section: server-only-guard
+import "server-only";
+
 // section: imports
 import { get_config_boolean, get_config_value, read_config_section } from "./config/config_loader.server";
 import { get_password_requirements_config } from "./password_requirements_config.server";

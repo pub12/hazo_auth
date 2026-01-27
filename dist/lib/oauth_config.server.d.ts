@@ -1,3 +1,4 @@
+import "server-only";
 export type OAuthConfig = {
     /** Enable Google OAuth login */
     enable_google: boolean;

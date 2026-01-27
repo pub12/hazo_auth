@@ -1,3 +1,4 @@
+import "server-only";
 /**
  * JSON Schema property definition (simplified subset)
  */

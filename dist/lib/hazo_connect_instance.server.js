@@ -1,3 +1,6 @@
+// file_description: singleton instance of hazo_connect adapter - initialized once and reused across all routes
+// section: server-only-guard
+import "server-only";
 import { getHazoConnectSingleton } from "hazo_connect/nextjs/setup";
 import { create_sqlite_hazo_connect_server, get_hazo_connect_config_options } from "./hazo_connect_setup.server.js";
 import { initializeAdminService, getSqliteAdminService } from "hazo_connect/server";

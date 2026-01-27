@@ -1,4 +1,7 @@
 // file_description: zero-config page component for create firm
+// section: server-only-guard
+import "server-only";
+
 // section: imports
 import CreateFirmLayout from "../components/layouts/create_firm/index";
 import { AuthPageShell } from "../components/layouts/shared/components/auth_page_shell";

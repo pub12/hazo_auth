@@ -16,4 +16,16 @@ const customJestConfig: Config = {
   setupFilesAfterEnv: ["@testing-library/jest-dom"],
 };
 
-export default createJestConfig(customJestConfig);
+// Wrap to override transformIgnorePatterns from next/jest
+const jestConfig = async () => {
+  const baseConfig = await createJestConfig(customJestConfig)();
+  return {
+    ...baseConfig,
+    // Transform ESM modules from hazo packages - must override next/jest's default
+    transformIgnorePatterns: [
+      "/node_modules/(?!(hazo_logs)/)",
+    ],
+  };
+};
+
+export default jestConfig;

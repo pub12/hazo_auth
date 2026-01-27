@@ -1,4 +1,6 @@
 // file_description: server-only helper to read my settings layout configuration from hazo_auth_config.ini
+// section: server-only-guard
+import "server-only";
 // section: imports
 import { get_config_value } from "./config/config_loader.server.js";
 import { get_user_fields_config } from "./user_fields_config.server.js";

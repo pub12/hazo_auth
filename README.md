@@ -2,6 +2,22 @@
 
 A reusable authentication UI component package powered by Next.js, TailwindCSS, and shadcn. It integrates `hazo_config` for configuration management and `hazo_connect` for data access, enabling future components to stay aligned with platform conventions.
 
+### What's New in v5.1.23 🔧
+
+**FIX: Server/Client Bundling Issue** - Resolved "Module not found: Can't resolve 'fs'" errors in consuming apps.
+
+**Key Changes:**
+- ✅ **Server-Only Guards** - Added `import "server-only"` to all server files preventing accidental client bundling
+- ✅ **hazo_logs v1.0.10** - Upgraded with conditional exports for browser/node environments
+- ✅ **Client Logging Support** - Logs API route now exports POST for client-side log ingestion
+
+**Root Cause:** Server files that import `hazo_logs` (which uses winston/fs) were being bundled into client code through the import chain. The `server-only` package now throws an immediate build error if server files are incorrectly imported in client components.
+
+**Files Protected:**
+- All `*.server.ts` config loaders
+- Server page components (`server_pages/*.tsx`)
+- `app_logger.ts`
+
 ### What's New in v5.1.5 🐛
 
 **CRITICAL BUGFIX**: Fixed incomplete migration from v4.x to v5.x - several files were still referencing the deprecated `hazo_user_roles` table instead of `hazo_user_scopes`. This release completes the scope-based role assignment architecture introduced in v5.0.
@@ -103,6 +119,19 @@ npm run dev
 ```
 
 That's it! Visit `http://localhost:3000/hazo_auth/login` to see the login page.
+
+### Tailwind v4 Setup (Required for Tailwind v4 Users)
+
+If you're using Tailwind v4, add this to your `globals.css` AFTER the tailwindcss import:
+
+```css
+@import "tailwindcss";
+
+/* Required: Enable Tailwind to scan hazo_auth package classes */
+@source "../node_modules/hazo_auth/dist";
+```
+
+**Important:** Without this directive, Tailwind classes in hazo_auth components (hover states, colors, spacing) will not be compiled, resulting in broken styling.
 
 ### CLI Commands
 

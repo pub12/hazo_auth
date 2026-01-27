@@ -1,3 +1,4 @@
+import "server-only";
 import { NextRequest } from "next/server";
 import type { HazoAuthResult, HazoAuthOptions } from "./auth_types";
 /**

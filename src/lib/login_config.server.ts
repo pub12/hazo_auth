@@ -1,4 +1,7 @@
 // file_description: server-only helper to read login layout configuration from hazo_auth_config.ini
+// section: server-only-guard
+import "server-only";
+
 // section: imports
 import { get_config_value } from "./config/config_loader.server";
 import { get_already_logged_in_config } from "./already_logged_in_config.server";

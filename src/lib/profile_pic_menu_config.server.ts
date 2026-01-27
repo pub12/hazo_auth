@@ -1,4 +1,7 @@
 // file_description: server-only helper to read profile picture menu configuration from hazo_auth_config.ini
+// section: server-only-guard
+import "server-only";
+
 // section: imports
 import { get_config_value, get_config_boolean, get_config_array } from "./config/config_loader.server";
 

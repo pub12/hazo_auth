@@ -1,4 +1,7 @@
 // file_description: Zero-config ResetPasswordPage server component - drop in and use with no configuration required
+// section: server-only-guard
+import "server-only";
+
 
 // section: imports
 import { get_reset_password_config } from "../lib/reset_password_config.server";

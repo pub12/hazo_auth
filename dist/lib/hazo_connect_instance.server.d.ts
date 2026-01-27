@@ -1,3 +1,4 @@
+import "server-only";
 import type { HazoConnectAdapter } from "hazo_connect";
 /**
  * Gets or creates the singleton hazo_connect adapter instance

@@ -1,4 +1,7 @@
 // file_description: Zero-config RegisterPage server component - drop in and use with no configuration required
+// section: server-only-guard
+import "server-only";
+
 
 // section: imports
 import { get_register_config } from "../lib/register_config.server";

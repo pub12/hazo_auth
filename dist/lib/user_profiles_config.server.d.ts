@@ -1,3 +1,4 @@
+import "server-only";
 /**
  * User profiles cache configuration options
  */

@@ -1,3 +1,4 @@
+import "server-only";
 /**
  * Reads a section from the config file
  * @param section_name - Name of the section to read (e.g., "hazo_auth__register_layout")
