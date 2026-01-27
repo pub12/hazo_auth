@@ -3,7 +3,7 @@
 import fs from "fs";
 import path from "path";
 import axios from "axios";
-import { HazoConfig } from "hazo_config/dist/lib";
+import { HazoConfig } from "hazo_config/server";
 import { createLogger } from "hazo_logs";
 const is_string_record = (value) => !!value &&
     typeof value === "object" &&

@@ -2,7 +2,7 @@
 // section: server-only-guard
 import "server-only";
 // section: imports
-import { HazoConfig } from "hazo_config/dist/lib";
+import { HazoConfig } from "hazo_config/server";
 import path from "path";
 import fs from "fs";
 import { create_app_logger } from "../app_logger.js";
