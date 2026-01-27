@@ -7,8 +7,8 @@ This checklist provides step-by-step instructions for setting up the `hazo_auth`
 The fastest way to set up hazo_auth:
 
 ```bash
-# 1. Install the package
-npm install hazo_auth
+# 1. Install the package and peer dependencies
+npm install hazo_auth hazo_config hazo_connect hazo_logs
 
 # 2. Initialize project (creates directories, copies config files)
 npx hazo_auth init
@@ -55,11 +55,13 @@ node --version
 
 ## Phase 1: Installation & Config Files
 
-### Step 1.1: Install the package
+### Step 1.1: Install the package and peer dependencies
 
 ```bash
-npm install hazo_auth
+npm install hazo_auth hazo_config hazo_connect hazo_logs
 ```
+
+**Note (v5.2.0+):** `hazo_config`, `hazo_connect`, and `hazo_logs` are now peer dependencies. You must install them in your project.
 
 **Verify installation:**
 ```bash
@@ -1602,7 +1604,7 @@ Replace `hazo_get_auth` with `hazo_get_tenant_auth` in your API routes:
 
 **Before (standard auth):**
 ```typescript
-import { hazo_get_auth } from "hazo_auth";
+import { hazo_get_auth } from "hazo_auth/server-lib";
 
 export async function GET(request: NextRequest) {
   const auth = await hazo_get_auth(request);
@@ -1612,7 +1614,7 @@ export async function GET(request: NextRequest) {
 
 **After (tenant auth):**
 ```typescript
-import { hazo_get_tenant_auth } from "hazo_auth";
+import { hazo_get_tenant_auth } from "hazo_auth/server-lib";
 
 export async function GET(request: NextRequest) {
   const auth = await hazo_get_tenant_auth(request);
@@ -1627,7 +1629,7 @@ export async function GET(request: NextRequest) {
 
 **Or use strict mode with error handling:**
 ```typescript
-import { require_tenant_auth, HazoAuthError } from "hazo_auth";
+import { require_tenant_auth, HazoAuthError } from "hazo_auth/server-lib";
 
 export async function GET(request: NextRequest) {
   try {

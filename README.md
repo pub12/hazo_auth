@@ -2,21 +2,47 @@
 
 A reusable authentication UI component package powered by Next.js, TailwindCSS, and shadcn. It integrates `hazo_config` for configuration management and `hazo_connect` for data access, enabling future components to stay aligned with platform conventions.
 
+### What's New in v5.2.0 ⚠️ BREAKING CHANGE
+
+**Server/Client Module Separation** - Complete fix for "Module not found: Can't resolve 'fs'" errors.
+
+**Breaking Change - New Import Path:**
+```typescript
+// BEFORE (v5.1.x) - Server imports from main entry
+import { hazo_get_auth, get_login_config } from "hazo_auth";
+
+// AFTER (v5.2.0) - Server imports from dedicated entry point
+import { hazo_get_auth, get_login_config } from "hazo_auth/server-lib";
+
+// Client imports unchanged
+import { ProfilePicMenu, use_auth_status } from "hazo_auth/client";
+import { cn } from "hazo_auth"; // Still works
+```
+
+**Key Changes:**
+- ✅ **New `hazo_auth/server-lib` entry point** - All server-only exports (auth functions, services, config loaders) now here
+- ✅ **Clean main entry** - `hazo_auth` is now client-safe (components, types, utilities only)
+- ✅ **Peer dependencies** - `hazo_config` and `hazo_connect` are now peer dependencies (install in your app)
+- ✅ **Fixed import path** - Uses `hazo_config/server` (not deprecated `hazo_config/dist/lib`)
+
+**Required Migration:**
+```bash
+# 1. Install peer dependencies
+npm install hazo_config hazo_connect hazo_logs
+
+# 2. Update imports in your server-side code
+# Change: import { hazo_get_auth } from "hazo_auth"
+# To:     import { hazo_get_auth } from "hazo_auth/server-lib"
+```
+
 ### What's New in v5.1.23 🔧
 
-**FIX: Server/Client Bundling Issue** - Resolved "Module not found: Can't resolve 'fs'" errors in consuming apps.
+**FIX: Server/Client Bundling Issue** - Added `import "server-only"` guards to prevent accidental client bundling.
 
 **Key Changes:**
 - ✅ **Server-Only Guards** - Added `import "server-only"` to all server files preventing accidental client bundling
 - ✅ **hazo_logs v1.0.10** - Upgraded with conditional exports for browser/node environments
 - ✅ **Client Logging Support** - Logs API route now exports POST for client-side log ingestion
-
-**Root Cause:** Server files that import `hazo_logs` (which uses winston/fs) were being bundled into client code through the import chain. The `server-only` package now throws an immediate build error if server files are incorrectly imported in client components.
-
-**Files Protected:**
-- All `*.server.ts` config loaders
-- Server page components (`server_pages/*.tsx`)
-- `app_logger.ts`
 
 ### What's New in v5.1.5 🐛
 
@@ -342,19 +368,19 @@ import {
 For server-side code (API routes, Server Components):
 
 ```typescript
-// Use the main hazo_auth export for server-side code
-import { hazo_get_auth, get_config_value } from "hazo_auth";
-import { hazo_get_user_profiles } from "hazo_auth";
+// Use hazo_auth/server-lib for server-side code
+import { hazo_get_auth, get_config_value } from "hazo_auth/server-lib";
+import { hazo_get_user_profiles } from "hazo_auth/server-lib";
 ```
 
 ### Why This Matters
 
-If you import from the main `hazo_auth` entry in a client component, you'll get bundling errors like:
-```
-Module not found: Can't resolve 'fs'
-```
+Server-only code (Node.js APIs like `fs`, `path`, database access) must be kept separate from client bundles. The `hazo_auth/server-lib` entry point:
+- Contains all server-only exports (auth functions, services, config loaders)
+- Includes `import "server-only"` guard that throws build errors if imported in client code
+- Uses peer dependencies (`hazo_config`, `hazo_connect`, `hazo_logs`) from your app
 
-Use `hazo_auth/client` to avoid this.
+If you accidentally import from `hazo_auth/server-lib` in a client component, you'll get a helpful build error instead of a cryptic "Can't resolve 'fs'" message.
 
 ---
 

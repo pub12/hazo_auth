@@ -41,6 +41,10 @@
       "types": "./dist/client.d.ts",
       "import": "./dist/client.js"
     },
+    "./server-lib": {
+      "types": "./dist/server-lib.d.ts",
+      "import": "./dist/server-lib.js"
+    },
     "./components/layouts/login": {
       "types": "./dist/components/layouts/login/index.d.ts",
       "import": "./dist/components/layouts/login/index.js"
@@ -172,7 +176,7 @@
     "cli-src/**/*",
     "public/profile_pictures/library/**/*",
     "public/hazo_auth/images/**/*",
-    "config/**/*",
+    "config/**/*.example.ini",
     "README.md",
     "SETUP_CHECKLIST.md",
     "LICENSE"
@@ -222,8 +226,6 @@
     "express-rate-limit": "^8.2.1",
     "gravatar-url": "^4.0.1",
     "handlebars": "^4.7.8",
-    "hazo_config": "^1.3.0",
-    "hazo_connect": "^2.3.5",
     "hazo_notify": "^1.0.0",
     "hazo_ui": "^2.0.0",
     "helmet": "^8.1.0",
@@ -247,9 +249,24 @@
     "zod": "^4.1.12"
   },
   "peerDependencies": {
-    "hazo_logs": "^1.0.0"
+    "hazo_config": "^1.4.0",
+    "hazo_connect": "^2.4.0",
+    "hazo_logs": "^1.0.10"
+  },
+  "peerDependenciesMeta": {
+    "hazo_config": {
+      "optional": false
+    },
+    "hazo_connect": {
+      "optional": false
+    },
+    "hazo_logs": {
+      "optional": false
+    }
   },
   "devDependencies": {
+    "hazo_config": "^1.4.2",
+    "hazo_connect": "^2.4.2",
     "@chromatic-com/storybook": "^4.1.2",
     "@storybook/addon-a11y": "^10.0.6",
     "@storybook/addon-docs": "^10.0.6",

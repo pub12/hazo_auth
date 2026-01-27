@@ -6,7 +6,7 @@ import "server-only";
 // Reads configuration from hazo_auth_config.ini using hazo_config
 // section: imports
 import { createHazoConnect } from "hazo_connect/server";
-import { HazoConfig } from "hazo_config/dist/lib";
+import { HazoConfig } from "hazo_config/server";
 import path from "path";
 import fs from "fs";
 import { create_app_logger } from "./app_logger";
