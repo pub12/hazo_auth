@@ -1734,6 +1734,90 @@ export async function GET(request: NextRequest) {
 }
 ```
 
+#### `withAuth` / `withOptionalAuth` (Route Handler Wrappers)
+
+Higher-order functions that eliminate auth boilerplate from API routes. Handles authentication, permission checks, param resolution, and error responses automatically.
+
+**Before (manual boilerplate):**
+```typescript
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const auth = await hazo_get_tenant_auth(request);
+    if (!auth.authenticated) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { id } = await params;
+    // ... handler logic
+  } catch (error) {
+    if (error instanceof HazoAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status_code });
+    }
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+```
+
+**After (with `withAuth`):**
+```typescript
+import { withAuth } from "hazo_auth/server-lib";
+
+// Simple authenticated route
+export const GET = withAuth(async (request, auth, params) => {
+  return NextResponse.json({ user: auth.user });
+});
+
+// With URL params and permissions
+export const DELETE = withAuth<{ id: string }>(
+  async (request, auth, { id }) => {
+    await deleteItem(id);
+    return NextResponse.json({ success: true });
+  },
+  { required_permissions: ["admin_system"] }
+);
+
+// With tenant requirement (auth.organization guaranteed non-null)
+export const GET = withAuth<{ id: string }>(
+  async (request, auth, { id }) => {
+    const data = await getData(auth.organization.id, id);
+    return NextResponse.json(data);
+  },
+  { require_tenant: true }
+);
+```
+
+**`withOptionalAuth`** - for public routes where auth is optional:
+```typescript
+import { withOptionalAuth } from "hazo_auth/server-lib";
+
+export const GET = withOptionalAuth(async (request, auth, params) => {
+  if (auth.authenticated) {
+    return NextResponse.json({ user: auth.user, data: getPrivateData() });
+  }
+  return NextResponse.json({ data: getPublicData() });
+});
+```
+
+**Permission helpers** for fine-grained checks inside handlers:
+```typescript
+import { withAuth, hasPermission, requirePermission } from "hazo_auth/server-lib";
+
+export const PATCH = withAuth(async (request, auth, params) => {
+  // Boolean check
+  const canEdit = hasPermission(auth, "edit_content");
+
+  // Throws PermissionError (caught by wrapper, returns 403)
+  requirePermission(auth, "admin_system");
+});
+```
+
+**Available exports:**
+- `withAuth<TParams>(handler, options?)` - requires authentication
+- `withOptionalAuth<TParams>(handler, options?)` - auth optional
+- `hasPermission(auth, permission)` - boolean check
+- `hasAllPermissions(auth, permissions)` - all must match
+- `hasAnyPermission(auth, permissions)` - any must match
+- `requirePermission(auth, permission)` - throws if missing
+- `requireAllPermissions(auth, permissions)` - throws if any missing
+- Types: `AuthenticatedTenantAuth`, `AuthenticatedTenantAuthWithOrg`, `WithAuthOptions`
+
 #### `hazo_get_auth` (Standard Auth)
 
 The primary authentication utility for server-side use in API routes. Returns user details, permissions, and optionally checks required permissions.

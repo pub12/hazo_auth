@@ -9,6 +9,8 @@ export { hazo_get_tenant_auth, require_tenant_auth, extract_scope_id_from_reques
 export { HazoAuthError, AuthenticationRequiredError, TenantRequiredError, TenantAccessDeniedError, } from "./auth_types.js";
 // section: client_exports
 export { get_server_auth_user } from "./server_auth.js";
+// section: with_auth_exports
+export { withAuth, withOptionalAuth, hasPermission, hasAllPermissions, hasAnyPermission, requirePermission, requireAllPermissions, } from "./with_auth.server.js";
 // section: cache_exports
 export { get_auth_cache, reset_auth_cache } from "./auth_cache.js";
 // section: rate_limiter_exports

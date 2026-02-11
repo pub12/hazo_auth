@@ -35,6 +35,22 @@ export {
 export { get_server_auth_user } from "./server_auth";
 export type { ServerAuthResult } from "./server_auth";
 
+// section: with_auth_exports
+export {
+  withAuth,
+  withOptionalAuth,
+  hasPermission,
+  hasAllPermissions,
+  hasAnyPermission,
+  requirePermission,
+  requireAllPermissions,
+} from "./with_auth.server";
+export type {
+  AuthenticatedTenantAuth,
+  AuthenticatedTenantAuthWithOrg,
+  WithAuthOptions,
+} from "./with_auth.server";
+
 // section: cache_exports
 export { get_auth_cache, reset_auth_cache } from "./auth_cache";
 

@@ -7,6 +7,8 @@ export type { ScopeDetails, TenantOrganization, TenantAuthOptions, TenantAuthRes
 export { HazoAuthError, AuthenticationRequiredError, TenantRequiredError, TenantAccessDeniedError, } from "./auth_types.js";
 export { get_server_auth_user } from "./server_auth.js";
 export type { ServerAuthResult } from "./server_auth";
+export { withAuth, withOptionalAuth, hasPermission, hasAllPermissions, hasAnyPermission, requirePermission, requireAllPermissions, } from "./with_auth.server.js";
+export type { AuthenticatedTenantAuth, AuthenticatedTenantAuthWithOrg, WithAuthOptions, } from "./with_auth.server";
 export { get_auth_cache, reset_auth_cache } from "./auth_cache.js";
 export { get_rate_limiter, reset_rate_limiter } from "./auth_rate_limiter.js";
 //# sourceMappingURL=index.d.ts.map

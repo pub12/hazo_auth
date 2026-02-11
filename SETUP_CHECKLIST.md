@@ -1648,6 +1648,22 @@ export async function GET(request: NextRequest) {
 }
 ```
 
+**Or use `withAuth` wrapper to eliminate boilerplate:**
+```typescript
+import { withAuth } from "hazo_auth/server-lib";
+
+// Auth + params + error handling all automatic
+export const GET = withAuth<{ id: string }>(
+  async (request, auth, { id }) => {
+    const data = await getData(auth.organization.id, id);
+    return NextResponse.json(data);
+  },
+  { require_tenant: true }
+);
+```
+
+See the README for full `withAuth` / `withOptionalAuth` documentation.
+
 ### Step 8.3: Set Scope Context from Frontend
 
 The frontend needs to send the current scope ID via header or cookie.
