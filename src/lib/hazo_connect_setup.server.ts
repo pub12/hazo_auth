@@ -69,8 +69,8 @@ function get_hazo_connect_config(): {
 
       // Normalize the path to ensure consistency (resolves .., ., etc.)
       sqlite_path = path.normalize(sqlite_path);
-    } else {
-      // Fallback to test fixture database
+    } else if (process.env.NODE_ENV === "test") {
+      // Only fall back to test fixture in test environment
       const fallback_sqlite_path = path.resolve(
         process.cwd(),
         "__tests__",
@@ -78,10 +78,39 @@ function get_hazo_connect_config(): {
         "hazo_auth.sqlite"
       );
       sqlite_path = path.normalize(fallback_sqlite_path);
+    } else {
+      throw new Error(
+        "[hazo_auth] sqlite_path not configured. Set sqlite_path in [hazo_connect] section of config/hazo_auth_config.ini, " +
+        "or set HAZO_CONNECT_SQLITE_PATH environment variable."
+      );
     }
 
-    // Log the resolved path for debugging
-    logger.debug("hazo_connect_sqlite_path_resolved", {
+    // Validate config keys for typos
+    if (hazo_connect_section) {
+      const known_keys = ["type", "sqlite_path", "enable_admin_ui", "read_only", "postgrest_url"];
+      for (const key of Object.keys(hazo_connect_section)) {
+        if (!known_keys.includes(key)) {
+          // Simple similarity check for common typos
+          const suggestions = known_keys.filter((k) => {
+            // Check if the key contains the known key or vice versa
+            return k.includes(key.replace(/_/g, "").slice(0, 6)) ||
+              key.includes(k.replace(/_/g, "").slice(0, 6));
+          });
+          const suggestion_text = suggestions.length > 0
+            ? ` Did you mean: ${suggestions.join(", ")}?`
+            : ` Known keys: ${known_keys.join(", ")}`;
+          logger.warn("hazo_connect_unknown_config_key", {
+            filename: "hazo_connect_setup.server.ts",
+            line_number: 0,
+            key,
+            message: `Unrecognized key "${key}" in [hazo_connect] config section.${suggestion_text}`,
+          });
+        }
+      }
+    }
+
+    // Log the resolved path so consumers can see which DB file is being used
+    logger.info("hazo_connect_sqlite_path_resolved", {
       filename: "hazo_connect_setup.server.ts",
       line_number: 0,
       sqlite_path,

@@ -3,6 +3,7 @@ import { create_app_logger } from "../app_logger.js";
 import { sanitize_error_for_user } from "../utils/error_sanitizer.js";
 import { user_has_any_scope } from "./user_scope_service.js";
 import { get_pending_invitation_by_email, accept_invitation, } from "./invitation_service.js";
+import { is_multi_tenancy_enabled } from "../multi_tenancy_config.server.js";
 // section: constants
 const DEFAULT_REDIRECT_URL = "/";
 const CREATE_FIRM_URL = "/hazo_auth/create_firm";
@@ -44,6 +45,14 @@ export async function handle_post_verification(adapter, user_id, user_email, opt
     try {
         const default_redirect = (options === null || options === void 0 ? void 0 : options.default_redirect_url) || DEFAULT_REDIRECT_URL;
         const create_firm_url = (options === null || options === void 0 ? void 0 : options.create_firm_url) || CREATE_FIRM_URL;
+        // If multi-tenancy is disabled, skip all scope/invitation checks
+        if (!is_multi_tenancy_enabled()) {
+            return {
+                success: true,
+                action: "redirect",
+                redirect_url: default_redirect,
+            };
+        }
         // Step 1: Check if user already has a scope assignment
         const has_scope = await user_has_any_scope(adapter, user_id);
         if (has_scope) {
@@ -117,6 +126,10 @@ export async function handle_post_verification(adapter, user_id, user_email, opt
  * Returns true if user has no scope assignment (needs to create firm or check invitation)
  */
 export async function needs_onboarding(adapter, user_id) {
+    // If multi-tenancy is disabled, no onboarding needed
+    if (!is_multi_tenancy_enabled()) {
+        return false;
+    }
     try {
         return !(await user_has_any_scope(adapter, user_id));
     }
@@ -142,6 +155,13 @@ export async function get_post_login_redirect(adapter, user_id, user_email, opti
     const create_firm_url = opts.create_firm_url || CREATE_FIRM_URL;
     const skip_invitation_check = opts.skip_invitation_check || false;
     const no_scope_redirect = opts.no_scope_redirect || DEFAULT_REDIRECT_URL;
+    // If multi-tenancy is disabled, skip all scope/invitation checks
+    if (!is_multi_tenancy_enabled()) {
+        return {
+            redirect_url: default_redirect,
+            needs_onboarding: false,
+        };
+    }
     try {
         // Check if user has scope
         const has_scope = await user_has_any_scope(adapter, user_id);

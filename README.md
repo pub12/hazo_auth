@@ -2,6 +2,16 @@
 
 A reusable authentication UI component package powered by Next.js, TailwindCSS, and shadcn. It integrates `hazo_config` for configuration management and `hazo_connect` for data access, enabling future components to stay aligned with platform conventions.
 
+### What's New in v5.1.26
+
+**Consumer Setup Improvements** - Five fixes that improve the out-of-box experience for new consumers:
+
+- **Multi-tenancy bypass** - `enable_multi_tenancy = false` (the default) now correctly skips scope/invitation checks in OAuth and post-verification flows. No more redirect loops to `/hazo_auth/create_firm` for simple apps.
+- **Clear SQLite errors** - Missing `sqlite_path` in config now throws a clear error instead of silently falling back to a test fixture database. Unrecognized config keys produce warnings with typo suggestions.
+- **Auto-schema creation** - `npx hazo_auth init` now creates the SQLite database with all required tables automatically. Also available standalone via `npx hazo_auth init-db`. Use `npx hazo_auth schema` to print the canonical SQL.
+- **Auth page images** - `npx hazo_auth init` now copies default login/register/forgot-password images to `public/hazo_auth/images/`.
+- **Graceful image fallback** - Visual panels on auth pages fall back to a colored background instead of crashing when images are missing.
+
 ### What's New in v5.2.0 ⚠️ BREAKING CHANGE
 
 **Server/Client Module Separation** - Complete fix for "Module not found: Can't resolve 'fs'" errors.
@@ -117,8 +127,11 @@ See [CHANGE_LOG.md](./CHANGE_LOG.md) for detailed migration guide, rationale, an
 ## Installation
 
 ```bash
-npm install hazo_auth
+# Install hazo_auth and required peer dependencies
+npm install hazo_auth hazo_config hazo_connect hazo_logs
 ```
+
+**Note:** `hazo_config`, `hazo_connect`, and `hazo_logs` are required peer dependencies.
 
 ---
 
@@ -127,20 +140,23 @@ npm install hazo_auth
 The fastest way to get started is using the CLI commands:
 
 ```bash
-# 1. Install the package
-npm install hazo_auth
+# 1. Install the package and peer dependencies
+npm install hazo_auth hazo_config hazo_connect hazo_logs
 
-# 2. Initialize your project (creates directories, copies config files)
+# 2. Initialize your project (directories, config, database, images)
 npx hazo_auth init
 
-# 3. Generate API routes and pages
+# 3. Set up environment variables
+cp .env.local.example .env.local
+# Edit .env.local and add ZEPTOMAIL_API_KEY and JWT_SECRET
+
+# 4. Initialize default permissions and roles
+npx hazo_auth init-users
+
+# 5. Generate API routes and pages
 npx hazo_auth generate-routes --pages
 
-# 4. Set up environment variables
-cp .env.local.example .env.local
-# Edit .env.local and add your ZEPTOMAIL_API_KEY
-
-# 5. Start your dev server
+# 6. Start your dev server
 npm run dev
 ```
 

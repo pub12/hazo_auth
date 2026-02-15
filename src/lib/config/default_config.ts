@@ -209,6 +209,18 @@ export const DEFAULT_USER_TYPES = {
   default_user_type: "",
 } as const;
 
+// section: multi_tenancy
+export const DEFAULT_MULTI_TENANCY = {
+  /** Whether multi-tenancy is enabled (default: false) */
+  enable_multi_tenancy: false,
+  /** Cache TTL in minutes for org lookups (default: 15) */
+  org_cache_ttl_minutes: 15,
+  /** Maximum entries in org cache (default: 1000) */
+  org_cache_max_entries: 1000,
+  /** Default user limit per organization (0 = unlimited) */
+  default_user_limit: 0,
+} as const;
+
 // section: dev_lock
 export const DEFAULT_DEV_LOCK = {
   /** Enable the development lock screen (also requires HAZO_AUTH_DEV_LOCK_ENABLED env var) */
@@ -267,6 +279,7 @@ export const HAZO_AUTH_DEFAULTS = {
   devLock: DEFAULT_DEV_LOCK,
   navbar: DEFAULT_NAVBAR,
   userTypes: DEFAULT_USER_TYPES,
+  multiTenancy: DEFAULT_MULTI_TENANCY,
 } as const;
 
 // section: types

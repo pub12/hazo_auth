@@ -138,7 +138,7 @@ ZEPTOMAIL_API_KEY=your_zeptomail_api_key_here
 }
 
 // section: main
-export function handle_init(): void {
+export async function handle_init(): Promise<void> {
   const project_root = get_project_root();
   const package_root = get_package_root();
   
@@ -211,7 +211,32 @@ export function handle_init(): void {
     result.skipped.push("library images (source not found)");
   }
   
-  // Step 4: Create .gitkeep files for empty directories
+  // Step 4: Copy default auth page images
+  console.log("\n\x1b[1m🖼️  Copying auth page images...\x1b[0m\n");
+
+  const images_source = path.join(package_root, "public", "hazo_auth", "images");
+  const images_target = path.join(project_root, "public", "hazo_auth", "images");
+
+  // Also check cli-src assets (when running from package via npx)
+  const cli_images_source = path.join(package_root, "cli-src", "assets", "images");
+  const actual_images_source = fs.existsSync(images_source) ? images_source : cli_images_source;
+
+  if (fs.existsSync(actual_images_source)) {
+    const copied_count = copy_directory(actual_images_source, images_target);
+
+    if (copied_count > 0) {
+      console.log(`\x1b[32m[COPY]\x1b[0m ${copied_count} auth page images to public/hazo_auth/images/`);
+      result.files_copied.push(`${copied_count} auth page images`);
+    } else {
+      console.log(`\x1b[33m[EXISTS]\x1b[0m Auth page images already present`);
+      result.skipped.push("auth page images");
+    }
+  } else {
+    console.log(`\x1b[33m[SKIP]\x1b[0m Auth images not found at: ${actual_images_source}`);
+    result.skipped.push("auth page images (source not found)");
+  }
+
+  // Step 5: Create .gitkeep files for empty directories
   console.log("\n\x1b[1m📌 Creating .gitkeep files...\x1b[0m\n");
   
   const empty_dirs = ["public/profile_pictures/uploads", "data"];
@@ -224,7 +249,7 @@ export function handle_init(): void {
     }
   }
   
-  // Step 5: Create .env.local.example template
+  // Step 6: Create .env.local.example template
   console.log("\n\x1b[1m🔑 Creating environment template...\x1b[0m\n");
   
   if (create_env_template(project_root)) {
@@ -235,6 +260,83 @@ export function handle_init(): void {
     result.skipped.push(".env.local.example");
   }
   
+  // Step 7: Create SQLite database with schema
+  console.log("\n\x1b[1m🗄️  Creating SQLite database...\x1b[0m\n");
+
+  try {
+    // Read sqlite_path from the config file that was just copied
+    const config_file = path.join(project_root, "config", "hazo_auth_config.ini");
+    let sqlite_path_raw = "./data/hazo_auth.sqlite";
+
+    if (fs.existsSync(config_file)) {
+      const content = fs.readFileSync(config_file, "utf-8");
+      const match = content.match(/^\s*sqlite_path\s*=\s*(.+)$/m);
+      if (match) {
+        sqlite_path_raw = match[1].trim();
+      }
+    }
+
+    const sqlite_path = path.isAbsolute(sqlite_path_raw)
+      ? sqlite_path_raw
+      : path.resolve(project_root, sqlite_path_raw);
+
+    // Ensure parent directory exists
+    const db_dir = path.dirname(sqlite_path);
+    if (!fs.existsSync(db_dir)) {
+      fs.mkdirSync(db_dir, { recursive: true });
+    }
+
+    // Check if DB already has tables
+    let needs_schema = true;
+    if (fs.existsSync(sqlite_path)) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const Database = require("better-sqlite3");
+        const db = new Database(sqlite_path);
+        const row = db
+          .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='hazo_users'")
+          .get();
+        db.close();
+        if (row) {
+          needs_schema = false;
+          console.log(`\x1b[33m[EXISTS]\x1b[0m Database already has hazo_users table`);
+          result.skipped.push("SQLite database");
+        }
+      } catch {
+        // If we can't open/check, assume we need to create
+      }
+    }
+
+    if (needs_schema) {
+      const { SQLITE_SCHEMA } = await import("../lib/schema/sqlite_schema.js");
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Database = require("better-sqlite3");
+      const db = new Database(sqlite_path);
+      db.pragma("journal_mode = WAL");
+      db.pragma("foreign_keys = ON");
+      db.exec(SQLITE_SCHEMA);
+
+      const tables = db
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+        .all() as { name: string }[];
+      db.close();
+
+      const hazo_tables = tables.map((t: { name: string }) => t.name).filter((n: string) => n.startsWith("hazo_"));
+      for (const table of hazo_tables) {
+        console.log(`\x1b[32m[CREATE]\x1b[0m Table: ${table}`);
+      }
+      result.files_copied.push(`SQLite database (${hazo_tables.length} tables)`);
+    }
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes("Cannot find module") || msg.includes("better-sqlite3")) {
+      console.log(`\x1b[33m[SKIP]\x1b[0m better-sqlite3 not found - run \x1b[36mnpx hazo_auth init-db\x1b[0m after installing it`);
+    } else {
+      console.log(`\x1b[31m[ERROR]\x1b[0m Database creation failed: ${msg}`);
+      result.errors.push("SQLite database");
+    }
+  }
+
   // Summary
   console.log("\n" + "=".repeat(50));
   console.log("\x1b[1mSummary:\x1b[0m");
@@ -249,7 +351,8 @@ export function handle_init(): void {
   console.log("\nNext steps:");
   console.log("  1. Edit \x1b[36mconfig/hazo_auth_config.ini\x1b[0m with your settings");
   console.log("  2. Copy \x1b[36m.env.local.example\x1b[0m to \x1b[36m.env.local\x1b[0m and add your API keys");
-  console.log("  3. Run \x1b[36mnpx hazo_auth generate-routes --pages\x1b[0m to generate routes and pages");
-  console.log("  4. Run \x1b[36mnpx hazo_auth validate\x1b[0m to check your setup");
+  console.log("  3. Run \x1b[36mnpx hazo_auth init-users\x1b[0m to create default roles/permissions");
+  console.log("  4. Run \x1b[36mnpx hazo_auth generate-routes --pages\x1b[0m to generate routes and pages");
+  console.log("  5. Run \x1b[36mnpx hazo_auth validate\x1b[0m to check your setup");
   console.log();
 }

@@ -7,6 +7,7 @@ import { run_validation } from "./validate.js";
 import { generate_routes, type GenerateOptions } from "./generate.js";
 import { handle_init } from "./init.js";
 import { handle_init_users, show_init_users_help } from "./init_users.js";
+import { handle_init_db } from "./init_db.js";
 import { handle_init_permissions, show_init_permissions_help } from "./init_permissions.js";
 
 // section: constants
@@ -18,11 +19,13 @@ const HELP_TEXT = `
 Usage: hazo_auth <command> [options]
 
 Commands:
-  init               Initialize hazo_auth in your project (creates directories, copies config)
+  init               Initialize hazo_auth in your project (creates directories, copies config, DB)
+  init-db            Create SQLite database with hazo_auth schema (standalone)
   init-permissions   Create default permissions from config (no user required)
   init-users         Initialize permissions, roles, and super user from config
   validate           Check your hazo_auth setup and configuration
   generate-routes    Generate API route files and pages in your project
+  schema             Print the canonical SQLite schema SQL
 
 Options:
   --help, -h         Show this help message
@@ -30,12 +33,14 @@ Options:
 
 Examples:
   npx hazo_auth init
+  npx hazo_auth init-db
   npx hazo_auth init-permissions
   npx hazo_auth init-users
   npx hazo_auth validate
   npx hazo_auth generate-routes
   npx hazo_auth generate-routes --pages
   npx hazo_auth generate-routes --all --dir=src/app
+  npx hazo_auth schema
 
 Documentation:
   https://github.com/your-repo/hazo_auth/blob/main/SETUP_CHECKLIST.md
@@ -150,12 +155,41 @@ Actions:
   - Creates data/ directory (for SQLite)
   - Copies hazo_auth_config.ini and hazo_notify_config.ini
   - Copies profile picture library images
+  - Copies default auth page images (login, register, etc.)
   - Creates .env.local.example template
+  - Creates SQLite database with schema (if better-sqlite3 is installed)
 `);
         return;
       }
-      handle_init();
+      await handle_init();
       break;
+
+    case "init-db":
+      if (help) {
+        console.log(`
+hazo_auth init-db
+
+Create SQLite database with the hazo_auth schema.
+
+This command:
+  - Reads sqlite_path from config/hazo_auth_config.ini (default: ./data/hazo_auth.sqlite)
+  - Creates the database file if it doesn't exist
+  - Creates all required tables (hazo_users, hazo_roles, hazo_scopes, etc.)
+  - Skips if tables already exist
+
+Requires: better-sqlite3 (npm install better-sqlite3)
+`);
+        return;
+      }
+      handle_init_db();
+      break;
+
+    case "schema": {
+      // Dynamic import to avoid bundling the schema in the main CLI entry
+      const { SQLITE_SCHEMA } = await import("../lib/schema/sqlite_schema.js");
+      console.log(SQLITE_SCHEMA);
+      break;
+    }
 
     case "init-permissions": {
       if (help) {

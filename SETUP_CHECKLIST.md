@@ -10,24 +10,27 @@ The fastest way to set up hazo_auth:
 # 1. Install the package and peer dependencies
 npm install hazo_auth hazo_config hazo_connect hazo_logs
 
-# 2. Initialize project (creates directories, copies config files)
+# 2. Initialize project (creates directories, config files, database, images)
 npx hazo_auth init
 
-# 3. Generate API routes and pages
-npx hazo_auth generate-routes --pages
-
-# 4. Set up environment variables
+# 3. Set up environment variables
 cp .env.local.example .env.local
 # Edit .env.local and add ZEPTOMAIL_API_KEY and JWT_SECRET
 
-# 5. Configure navbar logo and company name (IMPORTANT)
-# Edit hazo_auth_config.ini and set:
+# 4. Initialize default permissions and roles
+npx hazo_auth init-users
+
+# 5. Generate API routes and pages
+npx hazo_auth generate-routes --pages
+
+# 6. Configure navbar logo and company name (IMPORTANT)
+# Edit config/hazo_auth_config.ini and set:
 #   [hazo_auth__navbar]
 #   logo_path = /logo.png
 #   company_name = My Company
 # Note: Copy your logo to public/logo.png
 
-# 6. Start dev server and test
+# 7. Start dev server and test
 npm run dev
 # Visit http://localhost:3000/hazo_auth/login
 ```
@@ -178,7 +181,18 @@ This command:
 - Creates `data/` directory (for SQLite database)
 - Copies `hazo_auth_config.ini` and `hazo_notify_config.ini`
 - Copies profile picture library images
+- Copies default auth page images (login, register, forgot password, etc.)
 - Creates `.env.local.example` template
+- Creates SQLite database with all required tables (if `better-sqlite3` is installed)
+
+**Additional CLI commands:**
+```bash
+# Create/recreate SQLite database with schema (standalone)
+npx hazo_auth init-db
+
+# Print the canonical SQLite schema SQL
+npx hazo_auth schema
+```
 
 ### Step 1.2b: Manual config setup (Alternative)
 

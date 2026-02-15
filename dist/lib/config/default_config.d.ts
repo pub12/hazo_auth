@@ -163,6 +163,16 @@ export declare const DEFAULT_USER_TYPES: {
     /** Default user type for new users (empty = no default) */
     readonly default_user_type: "";
 };
+export declare const DEFAULT_MULTI_TENANCY: {
+    /** Whether multi-tenancy is enabled (default: false) */
+    readonly enable_multi_tenancy: false;
+    /** Cache TTL in minutes for org lookups (default: 15) */
+    readonly org_cache_ttl_minutes: 15;
+    /** Maximum entries in org cache (default: 1000) */
+    readonly org_cache_max_entries: 1000;
+    /** Default user limit per organization (0 = unlimited) */
+    readonly default_user_limit: 0;
+};
 export declare const DEFAULT_DEV_LOCK: {
     /** Enable the development lock screen (also requires HAZO_AUTH_DEV_LOCK_ENABLED env var) */
     readonly enable: false;
@@ -388,6 +398,16 @@ export declare const HAZO_AUTH_DEFAULTS: {
         readonly enable_user_types: false;
         /** Default user type for new users (empty = no default) */
         readonly default_user_type: "";
+    };
+    readonly multiTenancy: {
+        /** Whether multi-tenancy is enabled (default: false) */
+        readonly enable_multi_tenancy: false;
+        /** Cache TTL in minutes for org lookups (default: 15) */
+        readonly org_cache_ttl_minutes: 15;
+        /** Maximum entries in org cache (default: 1000) */
+        readonly org_cache_max_entries: 1000;
+        /** Default user limit per organization (0 = unlimited) */
+        readonly default_user_limit: 0;
     };
 };
 /**

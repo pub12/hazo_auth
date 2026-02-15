@@ -9,6 +9,7 @@ import {
   get_pending_invitation_by_email,
   accept_invitation,
 } from "./invitation_service";
+import { is_multi_tenancy_enabled } from "../multi_tenancy_config.server";
 
 // section: types
 
@@ -104,6 +105,15 @@ export async function handle_post_verification(
     const default_redirect = options?.default_redirect_url || DEFAULT_REDIRECT_URL;
     const create_firm_url = options?.create_firm_url || CREATE_FIRM_URL;
 
+    // If multi-tenancy is disabled, skip all scope/invitation checks
+    if (!is_multi_tenancy_enabled()) {
+      return {
+        success: true,
+        action: "redirect",
+        redirect_url: default_redirect,
+      };
+    }
+
     // Step 1: Check if user already has a scope assignment
     const has_scope = await user_has_any_scope(adapter, user_id);
 
@@ -194,6 +204,11 @@ export async function needs_onboarding(
   adapter: HazoConnectAdapter,
   user_id: string,
 ): Promise<boolean> {
+  // If multi-tenancy is disabled, no onboarding needed
+  if (!is_multi_tenancy_enabled()) {
+    return false;
+  }
+
   try {
     return !(await user_has_any_scope(adapter, user_id));
   } catch {
@@ -225,6 +240,14 @@ export async function get_post_login_redirect(
   const create_firm_url = opts.create_firm_url || CREATE_FIRM_URL;
   const skip_invitation_check = opts.skip_invitation_check || false;
   const no_scope_redirect = opts.no_scope_redirect || DEFAULT_REDIRECT_URL;
+
+  // If multi-tenancy is disabled, skip all scope/invitation checks
+  if (!is_multi_tenancy_enabled()) {
+    return {
+      redirect_url: default_redirect,
+      needs_onboarding: false,
+    };
+  }
 
   try {
     // Check if user has scope

@@ -7,7 +7,7 @@ export declare function GET(request: NextRequest): Promise<NextResponse<{
     message: string;
     user_id: string | undefined;
     email: string | undefined;
-    action: import("../../lib/services").PostVerificationAction;
+    action: import("../../server-lib").PostVerificationAction;
     redirect_url: string | undefined;
     invitation_accepted: boolean | undefined;
 }>>;

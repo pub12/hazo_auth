@@ -1,2 +1,2 @@
-export declare function handle_init(): void;
+export declare function handle_init(): Promise<void>;
 //# sourceMappingURL=init.d.ts.map
