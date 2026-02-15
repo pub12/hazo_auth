@@ -21,7 +21,7 @@ export declare function POST(request: NextRequest): Promise<NextResponse<{
     error: string;
 }> | NextResponse<{
     success: boolean;
-    invitation: import("../../lib/services").InvitationRecord | undefined;
+    invitation: import("../../server-lib").InvitationRecord | undefined;
 }>>;
 /**
  * PATCH - Update invitation (revoke)
@@ -31,7 +31,7 @@ export declare function PATCH(request: NextRequest): Promise<NextResponse<{
     error: string;
 }> | NextResponse<{
     success: boolean;
-    invitation: import("../../lib/services").InvitationRecord | undefined;
+    invitation: import("../../server-lib").InvitationRecord | undefined;
 }>>;
 /**
  * DELETE - Delete/revoke an invitation

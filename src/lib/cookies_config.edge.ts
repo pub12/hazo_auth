@@ -14,10 +14,23 @@ export const BASE_COOKIE_NAMES = {
 /**
  * Gets the cookie prefix from environment variable
  * For Edge runtime, use HAZO_AUTH_COOKIE_PREFIX env var
- * @returns Cookie prefix string (empty string if not set)
+ * REQUIRED - throws if not set
+ * @returns Cookie prefix string
  */
 export function get_cookie_prefix_edge(): string {
-  return process.env.HAZO_AUTH_COOKIE_PREFIX || "";
+  const prefix = process.env.HAZO_AUTH_COOKIE_PREFIX || "";
+
+  if (!prefix) {
+    throw new Error(
+      "[hazo_auth] HAZO_AUTH_COOKIE_PREFIX environment variable is required but not set.\n" +
+      "Add to your .env.local:\n\n" +
+      "  HAZO_AUTH_COOKIE_PREFIX=myapp_\n\n" +
+      "This must match the cookie_prefix in [hazo_auth__cookies] section of hazo_auth_config.ini.\n" +
+      "Edge runtime (middleware/proxy) cannot read config files, so the env var is required."
+    );
+  }
+
+  return prefix;
 }
 
 /**

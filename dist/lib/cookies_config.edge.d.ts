@@ -7,7 +7,8 @@ export declare const BASE_COOKIE_NAMES: {
 /**
  * Gets the cookie prefix from environment variable
  * For Edge runtime, use HAZO_AUTH_COOKIE_PREFIX env var
- * @returns Cookie prefix string (empty string if not set)
+ * REQUIRED - throws if not set
+ * @returns Cookie prefix string
  */
 export declare function get_cookie_prefix_edge(): string;
 /**

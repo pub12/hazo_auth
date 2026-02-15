@@ -13,24 +13,32 @@ npm install hazo_auth hazo_config hazo_connect hazo_logs
 # 2. Initialize project (creates directories, config files, database, images)
 npx hazo_auth init
 
-# 3. Set up environment variables
-cp .env.local.example .env.local
-# Edit .env.local and add ZEPTOMAIL_API_KEY and JWT_SECRET
+# 3. Configure cookie prefix (REQUIRED)
+# Edit config/hazo_auth_config.ini and set a unique prefix:
+#   [hazo_auth__cookies]
+#   cookie_prefix = myapp_
 
-# 4. Initialize default permissions and roles
+# 4. Set up environment variables
+cp .env.local.example .env.local
+# Edit .env.local and set:
+#   HAZO_AUTH_COOKIE_PREFIX=myapp_   (MUST match cookie_prefix above)
+#   JWT_SECRET=<generate with: openssl rand -base64 32>
+#   ZEPTOMAIL_API_KEY=your_key_here
+
+# 5. Initialize default permissions and roles
 npx hazo_auth init-users
 
-# 5. Generate API routes and pages
+# 6. Generate API routes and pages
 npx hazo_auth generate-routes --pages
 
-# 6. Configure navbar logo and company name (IMPORTANT)
+# 7. Configure navbar logo and company name (IMPORTANT)
 # Edit config/hazo_auth_config.ini and set:
 #   [hazo_auth__navbar]
 #   logo_path = /logo.png
 #   company_name = My Company
 # Note: Copy your logo to public/logo.png
 
-# 7. Start dev server and test
+# 8. Start dev server and test
 npm run dev
 # Visit http://localhost:3000/hazo_auth/login
 ```
@@ -72,26 +80,11 @@ ls node_modules/hazo_auth/package.json
 # Expected: file exists
 ```
 
-### Step 1.2: Install Required shadcn/ui Components
+### Step 1.2: Add Toast Notifications
 
-hazo_auth uses shadcn/ui components. Install the required dependencies:
+All shadcn/ui components are bundled with hazo_auth — you do NOT need to install them separately.
 
-**For all auth pages (login, register, etc.):**
-```bash
-npx shadcn@latest add button input label
-```
-
-**For My Settings page:**
-```bash
-npx shadcn@latest add dialog tabs switch avatar dropdown-menu
-```
-
-**For toast notifications:**
-```bash
-npx shadcn@latest add sonner
-```
-
-**Add Toaster to your app layout:**
+**Add Toaster to your app layout** (required for toast notifications):
 
 Edit `app/layout.tsx` and add the Toaster component:
 
@@ -252,18 +245,20 @@ layout_mode = standalone
 Create `.env.local` in your project root:
 
 ```env
+# REQUIRED: Cookie prefix (MUST match cookie_prefix in hazo_auth_config.ini)
+# Each app using hazo_auth needs a unique prefix to prevent cookie conflicts
+HAZO_AUTH_COOKIE_PREFIX=myapp_
+
+# Required for JWT authentication
+JWT_SECRET=your_secure_random_string_at_least_32_characters
+
 # Required for email functionality (Zeptomail)
 ZEPTOMAIL_API_KEY=your_zeptomail_api_key_here
 
 # Required for PostgreSQL/PostgREST (if using)
 HAZO_CONNECT_POSTGREST_API_KEY=your_postgrest_api_key_here
 
-# Required for JWT authentication
-JWT_SECRET=your_secure_random_string_at_least_32_characters
-# Note: JWT_SECRET is required for JWT session token functionality (Edge-compatible proxy/middleware authentication)
-
-# Optional: Cookie customization (prevents conflicts when running multiple apps)
-HAZO_AUTH_COOKIE_PREFIX=myapp_
+# Optional: Cookie domain (for cross-subdomain sharing)
 HAZO_AUTH_COOKIE_DOMAIN=
 ```
 
@@ -272,17 +267,25 @@ HAZO_AUTH_COOKIE_DOMAIN=
 openssl rand -base64 32
 ```
 
-**Cookie Customization (Optional):**
-If you're running multiple apps that use hazo_auth on localhost (different ports), set `HAZO_AUTH_COOKIE_PREFIX` to prevent cookie conflicts. For example:
-- App 1 (port 3000): `HAZO_AUTH_COOKIE_PREFIX=app1_`
-- App 2 (port 3001): `HAZO_AUTH_COOKIE_PREFIX=app2_`
+**Cookie Prefix (REQUIRED):**
+Every app using hazo_auth MUST set a unique cookie prefix. This prevents cookie conflicts between apps. The value must be set in TWO places:
 
-Also configure in `hazo_auth_config.ini`:
-```ini
-[hazo_auth__cookies]
-cookie_prefix = myapp_
-cookie_domain =
-```
+1. **Config file** (`config/hazo_auth_config.ini`):
+   ```ini
+   [hazo_auth__cookies]
+   cookie_prefix = myapp_
+   ```
+
+2. **Environment variable** (`.env.local`):
+   ```env
+   HAZO_AUTH_COOKIE_PREFIX=myapp_
+   ```
+
+Both values MUST match. The env var is needed because Edge runtime (middleware/proxy) cannot read config files.
+
+**Examples for multiple apps:**
+- App 1 (port 3000): `cookie_prefix = app1_` / `HAZO_AUTH_COOKIE_PREFIX=app1_`
+- App 2 (port 3001): `cookie_prefix = app2_` / `HAZO_AUTH_COOKIE_PREFIX=app2_`
 
 ### Step 2.2: Configure email settings
 
@@ -296,8 +299,9 @@ from_name = Your App Name
 
 **Checklist:**
 - [ ] `.env.local` file created
+- [ ] `HAZO_AUTH_COOKIE_PREFIX` set (REQUIRED - must match config file)
+- [ ] `JWT_SECRET` set (required for JWT session tokens)
 - [ ] `ZEPTOMAIL_API_KEY` set (or email will not work)
-- [ ] `JWT_SECRET` set (required for JWT session tokens - Edge-compatible proxy/middleware authentication)
 - [ ] `from_email` configured in `hazo_notify_config.ini`
 
 ---
@@ -1122,20 +1126,23 @@ If you prefer a simpler approach without JWT validation:
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// Cookie prefix must match HAZO_AUTH_COOKIE_PREFIX env var
+const COOKIE_PREFIX = process.env.HAZO_AUTH_COOKIE_PREFIX || "";
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
+
   if (pathname.startsWith("/members")) {
-    const user_id = request.cookies.get("hazo_auth_user_id")?.value;
-    const user_email = request.cookies.get("hazo_auth_user_email")?.value;
-    
+    const user_id = request.cookies.get(`${COOKIE_PREFIX}hazo_auth_user_id`)?.value;
+    const user_email = request.cookies.get(`${COOKIE_PREFIX}hazo_auth_user_email`)?.value;
+
     if (!user_id || !user_email) {
       const login_url = new URL("/hazo_auth/login", request.url);
       login_url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(login_url);
     }
   }
-  
+
   return NextResponse.next();
 }
 ```
@@ -1964,8 +1971,10 @@ curl -H "Cookie: hazo_auth_session=YOUR_TOKEN; hazo_auth_scope_id=SCOPE_UUID" \
 
 **Configuration:**
 - [ ] `hazo_auth_config.ini` configured
+- [ ] `cookie_prefix` set in `[hazo_auth__cookies]` section (REQUIRED)
+- [ ] `HAZO_AUTH_COOKIE_PREFIX` env var matches `cookie_prefix` (REQUIRED)
 - [ ] `hazo_notify_config.ini` configured
-- [ ] `.env.local` with all required variables (ZEPTOMAIL_API_KEY, JWT_SECRET)
+- [ ] `.env.local` with all required variables (HAZO_AUTH_COOKIE_PREFIX, JWT_SECRET, ZEPTOMAIL_API_KEY)
 - [ ] Navbar configured with logo and company name (see Step 1.4)
 
 **Database:**

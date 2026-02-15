@@ -126,8 +126,16 @@ function create_env_template(project_root: string): boolean {
   const content = `# hazo_auth environment variables
 # Copy this file to .env.local and fill in the values
 
+# Required: Cookie prefix (MUST match cookie_prefix in hazo_auth_config.ini)
+# Each app using hazo_auth needs a unique prefix to prevent cookie conflicts
+HAZO_AUTH_COOKIE_PREFIX=myapp_
+
 # Required for email functionality (email verification, password reset)
 ZEPTOMAIL_API_KEY=your_zeptomail_api_key_here
+
+# Required for JWT authentication (min 32 chars)
+# Generate with: openssl rand -base64 32
+JWT_SECRET=your_secure_random_string_at_least_32_characters
 
 # Optional: Database path (defaults to data/hazo_auth.sqlite)
 # HAZO_AUTH_DB_PATH=./data/hazo_auth.sqlite
@@ -349,10 +357,11 @@ export async function handle_init(): Promise<void> {
   
   console.log("\n\x1b[32m🦊 Initialization complete!\x1b[0m");
   console.log("\nNext steps:");
-  console.log("  1. Edit \x1b[36mconfig/hazo_auth_config.ini\x1b[0m with your settings");
-  console.log("  2. Copy \x1b[36m.env.local.example\x1b[0m to \x1b[36m.env.local\x1b[0m and add your API keys");
-  console.log("  3. Run \x1b[36mnpx hazo_auth init-users\x1b[0m to create default roles/permissions");
-  console.log("  4. Run \x1b[36mnpx hazo_auth generate-routes --pages\x1b[0m to generate routes and pages");
-  console.log("  5. Run \x1b[36mnpx hazo_auth validate\x1b[0m to check your setup");
+  console.log("  1. Edit \x1b[36mconfig/hazo_auth_config.ini\x1b[0m — set \x1b[1mcookie_prefix\x1b[0m in [hazo_auth__cookies] (REQUIRED)");
+  console.log("  2. Copy \x1b[36m.env.local.example\x1b[0m to \x1b[36m.env.local\x1b[0m and set \x1b[1mHAZO_AUTH_COOKIE_PREFIX\x1b[0m to match");
+  console.log("  3. Add \x1b[1mJWT_SECRET\x1b[0m and \x1b[1mZEPTOMAIL_API_KEY\x1b[0m to \x1b[36m.env.local\x1b[0m");
+  console.log("  4. Run \x1b[36mnpx hazo_auth init-users\x1b[0m to create default roles/permissions");
+  console.log("  5. Run \x1b[36mnpx hazo_auth generate-routes --pages\x1b[0m to generate routes and pages");
+  console.log("  6. Run \x1b[36mnpx hazo_auth validate\x1b[0m to check your setup");
   console.log();
 }

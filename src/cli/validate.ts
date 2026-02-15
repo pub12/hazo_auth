@@ -27,6 +27,7 @@ const REQUIRED_CONFIG_FILES = [
 ];
 
 const REQUIRED_ENV_VARS = [
+  { name: "HAZO_AUTH_COOKIE_PREFIX", required: true, description: "Cookie prefix (must match cookie_prefix in hazo_auth_config.ini)" },
   { name: "JWT_SECRET", required: true, description: "JWT signing secret" },
   { name: "ZEPTOMAIL_API_KEY", required: false, description: "Email API key (required for email)" },
   { name: "HAZO_CONNECT_POSTGREST_API_KEY", required: false, description: "PostgREST API key (if using PostgreSQL)" },
@@ -199,6 +200,22 @@ function check_config_values(project_root: string): CheckResult[] {
         name: "Database type configured",
         status: "fail",
         message: "type not set in [hazo_connect] section",
+      });
+    }
+
+    // Check cookie_prefix (REQUIRED)
+    const cookie_prefix = hazo_config["hazo_auth__cookies"]?.["cookie_prefix"];
+    if (cookie_prefix && cookie_prefix.trim().length > 0) {
+      results.push({
+        name: "Cookie prefix configured",
+        status: "pass",
+        message: `Using: "${cookie_prefix}"`,
+      });
+    } else {
+      results.push({
+        name: "Cookie prefix configured",
+        status: "fail",
+        message: "cookie_prefix not set in [hazo_auth__cookies] section. This is REQUIRED to prevent cookie conflicts. Also set HAZO_AUTH_COOKIE_PREFIX env var to the same value.",
       });
     }
 

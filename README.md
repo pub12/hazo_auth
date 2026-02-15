@@ -2,6 +2,16 @@
 
 A reusable authentication UI component package powered by Next.js, TailwindCSS, and shadcn. It integrates `hazo_config` for configuration management and `hazo_connect` for data access, enabling future components to stay aligned with platform conventions.
 
+### What's New in v5.1.27
+
+**Mandatory Cookie Prefix** - `cookie_prefix` is now required for all consuming apps.
+
+- **Breaking:** `get_cookies_config()` throws if `cookie_prefix` is not set in `[hazo_auth__cookies]` config section
+- **Breaking:** `get_cookie_prefix_edge()` throws if `HAZO_AUTH_COOKIE_PREFIX` env var is not set
+- **Validation:** `npx hazo_auth validate` now checks for cookie_prefix configuration
+- **Init:** `.env.local.example` template includes `HAZO_AUTH_COOKIE_PREFIX` as required
+- **Docs:** shadcn/ui components are bundled — consumers do NOT need to install them separately
+
 ### What's New in v5.1.26
 
 **Consumer Setup Improvements** - Five fixes that improve the out-of-box experience for new consumers:
@@ -146,17 +156,25 @@ npm install hazo_auth hazo_config hazo_connect hazo_logs
 # 2. Initialize your project (directories, config, database, images)
 npx hazo_auth init
 
-# 3. Set up environment variables
-cp .env.local.example .env.local
-# Edit .env.local and add ZEPTOMAIL_API_KEY and JWT_SECRET
+# 3. Configure cookie prefix (REQUIRED)
+# Edit config/hazo_auth_config.ini and set a unique prefix:
+#   [hazo_auth__cookies]
+#   cookie_prefix = myapp_
 
-# 4. Initialize default permissions and roles
+# 4. Set up environment variables
+cp .env.local.example .env.local
+# Edit .env.local and set:
+#   HAZO_AUTH_COOKIE_PREFIX=myapp_   (MUST match cookie_prefix above)
+#   JWT_SECRET=<your-secret>
+#   ZEPTOMAIL_API_KEY=<your-key>
+
+# 5. Initialize default permissions and roles
 npx hazo_auth init-users
 
-# 5. Generate API routes and pages
+# 6. Generate API routes and pages
 npx hazo_auth generate-routes --pages
 
-# 6. Start your dev server
+# 7. Start your dev server
 npm run dev
 ```
 
@@ -325,22 +343,14 @@ import { hazo_get_auth } from "hazo_auth/lib/auth/hazo_get_auth.server";
 
 ## Required Dependencies
 
-**Note:** The `jose` package is now included as a dependency for Edge-compatible JWT operations. This is automatically installed when you run `npm install hazo_auth`.
-
-hazo_auth uses shadcn/ui components. Install the required dependencies in your project:
-
+**Peer Dependencies (Required):**
 ```bash
-# Required for all auth pages
-npx shadcn@latest add button input label
-
-# Required for My Settings page
-npx shadcn@latest add dialog tabs switch avatar dropdown-menu
-
-# Required for toast notifications
-npx shadcn@latest add sonner
+npm install hazo_config hazo_connect hazo_logs
 ```
 
-**Add Toaster to your app layout:**
+**UI Components:** All shadcn/ui components are bundled with hazo_auth. You do NOT need to install them separately.
+
+**Toast Notifications:** Add the Toaster component to your app layout:
 
 ```tsx
 // app/layout.tsx

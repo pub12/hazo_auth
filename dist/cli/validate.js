@@ -8,6 +8,7 @@ const REQUIRED_CONFIG_FILES = [
     "config/hazo_notify_config.ini",
 ];
 const REQUIRED_ENV_VARS = [
+    { name: "HAZO_AUTH_COOKIE_PREFIX", required: true, description: "Cookie prefix (must match cookie_prefix in hazo_auth_config.ini)" },
     { name: "JWT_SECRET", required: true, description: "JWT signing secret" },
     { name: "ZEPTOMAIL_API_KEY", required: false, description: "Email API key (required for email)" },
     { name: "HAZO_CONNECT_POSTGREST_API_KEY", required: false, description: "PostgREST API key (if using PostgreSQL)" },
@@ -116,7 +117,7 @@ function check_config_files(project_root) {
     return results;
 }
 function check_config_values(project_root) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g;
     const results = [];
     const hazo_config_path = path.join(project_root, "config", "hazo_auth_config.ini");
     const hazo_config = read_ini_file(hazo_config_path);
@@ -170,7 +171,23 @@ function check_config_values(project_root) {
                 message: "type not set in [hazo_connect] section",
             });
         }
-        const layout_mode = (_d = hazo_config["hazo_auth__ui_shell"]) === null || _d === void 0 ? void 0 : _d["layout_mode"];
+        // Check cookie_prefix (REQUIRED)
+        const cookie_prefix = (_d = hazo_config["hazo_auth__cookies"]) === null || _d === void 0 ? void 0 : _d["cookie_prefix"];
+        if (cookie_prefix && cookie_prefix.trim().length > 0) {
+            results.push({
+                name: "Cookie prefix configured",
+                status: "pass",
+                message: `Using: "${cookie_prefix}"`,
+            });
+        }
+        else {
+            results.push({
+                name: "Cookie prefix configured",
+                status: "fail",
+                message: "cookie_prefix not set in [hazo_auth__cookies] section. This is REQUIRED to prevent cookie conflicts. Also set HAZO_AUTH_COOKIE_PREFIX env var to the same value.",
+            });
+        }
+        const layout_mode = (_e = hazo_config["hazo_auth__ui_shell"]) === null || _e === void 0 ? void 0 : _e["layout_mode"];
         if (layout_mode === "standalone") {
             results.push({
                 name: "UI shell mode",
@@ -196,8 +213,8 @@ function check_config_values(project_root) {
     const notify_config_path = path.join(project_root, "config", "hazo_notify_config.ini");
     const notify_config = read_ini_file(notify_config_path);
     if (notify_config) {
-        const from_email = (_e = notify_config["emailer"]) === null || _e === void 0 ? void 0 : _e["from_email"];
-        const from_name = (_f = notify_config["emailer"]) === null || _f === void 0 ? void 0 : _f["from_name"];
+        const from_email = (_f = notify_config["emailer"]) === null || _f === void 0 ? void 0 : _f["from_email"];
+        const from_name = (_g = notify_config["emailer"]) === null || _g === void 0 ? void 0 : _g["from_name"];
         if (from_email && !from_email.includes("example.com")) {
             results.push({
                 name: "Email from_email configured",

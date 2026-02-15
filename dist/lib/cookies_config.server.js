@@ -20,17 +20,24 @@ export const BASE_COOKIE_NAMES = {
 // section: main_function
 /**
  * Reads cookie configuration from hazo_auth_config.ini file
- * Falls back to defaults if hazo_auth_config.ini is not found or section is missing
+ * cookie_prefix is REQUIRED - throws if not configured
  * @returns CookiesConfig object with all cookie settings
  */
 export function get_cookies_config() {
     const section = read_config_section(SECTION_NAME);
-    if (!section) {
-        return DEFAULT_CONFIG;
+    const cookie_prefix = (section === null || section === void 0 ? void 0 : section.cookie_prefix) || "";
+    if (!cookie_prefix) {
+        throw new Error("[hazo_auth] cookie_prefix is required but not configured.\n" +
+            "Set cookie_prefix in [hazo_auth__cookies] section of config/hazo_auth_config.ini:\n\n" +
+            "  [hazo_auth__cookies]\n" +
+            "  cookie_prefix = myapp_\n\n" +
+            "Also set the matching environment variable for Edge runtime (middleware):\n" +
+            "  HAZO_AUTH_COOKIE_PREFIX=myapp_\n\n" +
+            "This prevents cookie conflicts between apps using hazo_auth.");
     }
     return {
-        cookie_prefix: section.cookie_prefix || DEFAULT_CONFIG.cookie_prefix,
-        cookie_domain: section.cookie_domain || DEFAULT_CONFIG.cookie_domain,
+        cookie_prefix,
+        cookie_domain: (section === null || section === void 0 ? void 0 : section.cookie_domain) || DEFAULT_CONFIG.cookie_domain,
     };
 }
 /**

@@ -14,7 +14,7 @@ export declare const BASE_COOKIE_NAMES: {
 };
 /**
  * Reads cookie configuration from hazo_auth_config.ini file
- * Falls back to defaults if hazo_auth_config.ini is not found or section is missing
+ * cookie_prefix is REQUIRED - throws if not configured
  * @returns CookiesConfig object with all cookie settings
  */
 export declare function get_cookies_config(): CookiesConfig;
