@@ -1965,6 +1965,94 @@ curl -H "Cookie: hazo_auth_session=YOUR_TOKEN; hazo_auth_scope_id=SCOPE_UUID" \
 
 **Note:** By default, `logo_path` and `company_name` are empty strings, so nothing displays until you configure them.
 
+### Issue: Migrating from v4 to v5 schema
+
+**Symptoms:** Permissions resolve to `[]`, "Access Denied" on all admin pages, 403 responses from withAuth, despite user having roles assigned.
+
+**Cause:** v5 replaced `hazo_user_roles` with `hazo_user_scopes` (scope-based role assignments) and requires several new tables. If your database still has v4 schema, the permission lookup finds no role assignments.
+
+**Key schema differences (v4 vs v5):**
+- `hazo_user_roles` replaced by `hazo_user_scopes` (with `root_scope_id` and `role_id` columns)
+- `hazo_org` replaced by `hazo_scopes` (unified hierarchical scope model)
+- All ID columns must be TEXT (UUID), not INTEGER
+- `hazo_role_permissions` uses composite PK `(role_id, permission_id)` with no `id` column
+
+**Solution:**
+1. Run `npx hazo_auth validate` to identify schema issues
+2. Run migration 009: `npm run migrate migrations/009_scope_consolidation.sql`
+3. Migrate existing role assignments:
+   ```sql
+   -- Example: migrate hazo_user_roles data to hazo_user_scopes
+   INSERT INTO hazo_user_scopes (user_id, scope_id, root_scope_id, role_id, status)
+   SELECT
+     ur.user_id,
+     '00000000-0000-0000-0000-000000000001',  -- default system scope
+     '00000000-0000-0000-0000-000000000001',  -- default system scope
+     ur.role_id,
+     'ACTIVE'
+   FROM hazo_user_roles ur;
+   ```
+4. Run `npx hazo_auth init-permissions` to ensure all admin permissions exist
+
+### Issue: Understanding permission configuration
+
+**Symptoms:** Confusion about which config sections control permissions and how they relate.
+
+**Explanation:** Permissions are configured in three related places:
+
+1. **`[hazo_auth__app_permissions]`** - Declares app-level permission names with descriptions (for documentation/UI display):
+   ```ini
+   app_permission_1 = can_view_reports:View analytical reports
+   app_permission_2 = can_export_data:Export data to CSV
+   ```
+
+2. **`[hazo_auth__user_management] application_permission_list_defaults`** - Comma-separated list of permission names to create in the DB when running `npx hazo_auth init-permissions`:
+   ```ini
+   application_permission_list_defaults = admin_user_management,admin_role_management,admin_permission_management,can_view_reports,can_export_data
+   ```
+
+3. **Built-in admin permissions** (required by `UserManagementLayout` component): `admin_user_management`, `admin_role_management`, `admin_permission_management`, `admin_scope_hierarchy_management`, `admin_user_scope_assignment`, `admin_system`, `admin_test_access`. These are available programmatically via:
+   ```typescript
+   import { HAZO_AUTH_PERMISSIONS, ALL_ADMIN_PERMISSIONS } from "hazo_auth/client";
+   ```
+
+### Issue: Database ID type mismatches (silent permission failures)
+
+**Symptoms:** User is authenticated but permissions array is always empty. No errors in console. `hazo_get_auth` returns `permissions: []` even though roles and permissions exist in the database.
+
+**Cause:** SQLite drivers may return numeric values for columns defined as `INTEGER PRIMARY KEY`. v5 uses strict string comparison for role_id and permission_id matching. If the DB returns `role_id: 1` (number) but the code expects `"1"` (string), the comparison fails silently.
+
+**Solutions:**
+1. **Ensure all ID columns are TEXT type** in your schema. v5 requires TEXT (UUID) IDs:
+   ```sql
+   -- CORRECT (v5)
+   CREATE TABLE hazo_roles (id TEXT PRIMARY KEY, ...);
+
+   -- WRONG (v4 legacy)
+   CREATE TABLE hazo_roles (id INTEGER PRIMARY KEY, ...);
+   ```
+2. Run `npx hazo_auth validate` — the schema check will flag INTEGER ID columns
+3. If you cannot change the schema, v5.1.28+ applies `String()` normalization to role_id and permission_id comparisons, which handles mixed types
+
+**Note for PostgreSQL users:** PostgREST typically returns UUID values as strings, so this issue primarily affects SQLite with INTEGER PKs.
+
+### Issue: CLI commands fail with "server-only" import error
+
+**Symptoms:** Running `npx hazo_auth validate`, `npx hazo_auth init-permissions`, etc. throws:
+```
+Error: This module cannot be imported from a Client Component module.
+It should only be used from a Server Component.
+```
+
+**Cause:** The `server-only` package throws when imported outside a React Server Component context. CLI commands run in plain Node.js.
+
+**Solution (v5.1.28+):** Fixed automatically — the CLI wrapper now sets `--conditions react-server` in NODE_OPTIONS.
+
+**Workaround for older versions:** Set the condition manually:
+```bash
+NODE_OPTIONS='--conditions react-server' npx hazo_auth validate
+```
+
 ---
 
 ## Final Checklist

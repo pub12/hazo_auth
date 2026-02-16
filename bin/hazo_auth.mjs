@@ -18,10 +18,17 @@ const args = process.argv.slice(2);
 // Use tsx to run the TypeScript source directly
 // This avoids ESM module resolution issues with compiled JS
 // tsx is a dependency of hazo_auth so it should be available
+const existingNodeOptions = process.env.NODE_OPTIONS || '';
+const reactServerCondition = '--conditions react-server';
+const nodeOptions = existingNodeOptions.includes(reactServerCondition)
+  ? existingNodeOptions
+  : `${existingNodeOptions} ${reactServerCondition}`.trim();
+
 const child = spawn('npx', ['tsx', cliPath, ...args], {
   stdio: 'inherit',
   cwd: process.cwd(),
-  shell: true
+  shell: true,
+  env: { ...process.env, NODE_OPTIONS: nodeOptions },
 });
 
 child.on('exit', (code) => {

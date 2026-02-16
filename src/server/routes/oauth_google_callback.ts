@@ -2,14 +2,14 @@
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { create_app_logger } from "../../lib/app_logger.js";
-import { create_session_token } from "../../lib/services/session_token_service.js";
-import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers.js";
-import { get_login_config } from "../../lib/login_config.server.js";
-import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../lib/cookies_config.server.js";
-import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server.js";
-import { get_post_login_redirect } from "../../lib/services/post_verification_service.js";
-import { get_oauth_config } from "../../lib/oauth_config.server.js";
+import { create_app_logger } from "../../lib/app_logger";
+import { create_session_token } from "../../lib/services/session_token_service";
+import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers";
+import { get_login_config } from "../../lib/login_config.server";
+import { get_cookie_name, get_cookie_options, BASE_COOKIE_NAMES } from "../../lib/cookies_config.server";
+import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server";
+import { get_post_login_redirect } from "../../lib/services/post_verification_service";
+import { get_oauth_config } from "../../lib/oauth_config.server";
 
 // section: types
 type NextAuthToken = {

@@ -2,14 +2,14 @@
 // section: imports
 import { NextRequest, NextResponse } from "next/server";
 import argon2 from "argon2";
-import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server.js";
-import { create_app_logger } from "../../lib/app_logger.js";
-import { hazo_get_auth } from "../../lib/auth/hazo_get_auth.server.js";
-import { user_has_password, set_user_password } from "../../lib/services/oauth_service.js";
-import { get_password_requirements_config } from "../../lib/password_requirements_config.server.js";
-import { validate_password } from "../../lib/utils/password_validator.js";
-import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers.js";
-import { get_auth_cache } from "../../lib/auth/auth_cache.js";
+import { get_hazo_connect_instance } from "../../lib/hazo_connect_instance.server";
+import { create_app_logger } from "../../lib/app_logger";
+import { hazo_get_auth } from "../../lib/auth/hazo_get_auth.server";
+import { user_has_password, set_user_password } from "../../lib/services/oauth_service";
+import { get_password_requirements_config } from "../../lib/password_requirements_config.server";
+import { validate_password } from "../../lib/utils/password_validator";
+import { get_filename, get_line_number } from "../../lib/utils/api_route_helpers";
+import { get_auth_cache } from "../../lib/auth/auth_cache";
 
 // section: api_handler
 /**

@@ -140,7 +140,7 @@ async function fetch_user_data_from_db(user_id) {
         for (const us of user_scopes) {
             const role_id = us.role_id;
             if (role_id) {
-                role_ids_set.add(role_id);
+                role_ids_set.add(String(role_id));
             }
         }
     }
@@ -151,7 +151,7 @@ async function fetch_user_data_from_db(user_id) {
         const role_permissions = await role_permissions_service.findBy({});
         if (Array.isArray(role_permissions)) {
             // Filter role_permissions for user's roles (role_id is string UUID in v5.x)
-            const user_role_permissions = role_permissions.filter((rp) => role_ids.includes(rp.role_id));
+            const user_role_permissions = role_permissions.filter((rp) => role_ids.includes(String(rp.role_id)));
             // Get permission IDs (can be string or number depending on database)
             const permission_ids = new Set();
             for (const rp of user_role_permissions) {

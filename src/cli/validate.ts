@@ -524,6 +524,198 @@ function check_database(project_root: string): CheckResult[] {
   return results;
 }
 
+// section: schema_checks
+const REQUIRED_TABLES = [
+  "hazo_users",
+  "hazo_scopes",
+  "hazo_user_scopes",
+  "hazo_roles",
+  "hazo_permissions",
+  "hazo_role_permissions",
+  "hazo_invitations",
+  "hazo_refresh_tokens",
+];
+
+const TEXT_ID_TABLES = [
+  "hazo_users",
+  "hazo_roles",
+  "hazo_permissions",
+  "hazo_scopes",
+  "hazo_invitations",
+  "hazo_refresh_tokens",
+];
+
+const V4_REMNANT_TABLES = [
+  "hazo_user_roles",
+  "hazo_org",
+  "hazo_scopes_l1",
+  "hazo_scopes_l2",
+  "hazo_scopes_l3",
+];
+
+const BUILT_IN_ADMIN_PERMISSIONS = [
+  "admin_user_management",
+  "admin_role_management",
+  "admin_permission_management",
+  "admin_scope_hierarchy_management",
+  "admin_user_scope_assignment",
+  "admin_system",
+  "admin_test_access",
+];
+
+function check_schema(project_root: string): CheckResult[] {
+  const results: CheckResult[] = [];
+
+  const hazo_config_path = path.join(project_root, "config", "hazo_auth_config.ini");
+  const hazo_config = read_ini_file(hazo_config_path);
+
+  if (!hazo_config) return results;
+
+  const db_type = hazo_config["hazo_connect"]?.["type"];
+  if (db_type !== "sqlite") {
+    results.push({
+      name: "Schema validation",
+      status: "warn",
+      message: "Schema checks only available for SQLite - skipping for " + (db_type || "unknown"),
+    });
+    return results;
+  }
+
+  const sqlite_path = hazo_config["hazo_connect"]?.["sqlite_path"];
+  if (!sqlite_path) return results;
+
+  const full_path = path.isAbsolute(sqlite_path)
+    ? sqlite_path
+    : path.join(project_root, sqlite_path);
+
+  if (!file_exists(full_path)) return results;
+
+  let Database: any;
+  try {
+    Database = require("better-sqlite3");
+  } catch {
+    results.push({
+      name: "Schema validation",
+      status: "warn",
+      message: "better-sqlite3 not available - install it to enable schema checks: npm install -D better-sqlite3",
+    });
+    return results;
+  }
+
+  let db: any;
+  try {
+    db = new Database(full_path, { readonly: true });
+  } catch (err) {
+    results.push({
+      name: "Schema validation",
+      status: "fail",
+      message: `Could not open database: ${err instanceof Error ? err.message : String(err)}`,
+    });
+    return results;
+  }
+
+  try {
+    // 1. Check required tables exist
+    const existing_tables: string[] = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'hazo_%'")
+      .all()
+      .map((r: any) => r.name);
+
+    const missing_tables = REQUIRED_TABLES.filter((t) => !existing_tables.includes(t));
+    if (missing_tables.length === 0) {
+      results.push({
+        name: `Required tables (${REQUIRED_TABLES.length}/${REQUIRED_TABLES.length})`,
+        status: "pass",
+        message: "All required hazo_* tables present",
+      });
+    } else {
+      results.push({
+        name: `Required tables (${REQUIRED_TABLES.length - missing_tables.length}/${REQUIRED_TABLES.length})`,
+        status: "fail",
+        message: `Missing: ${missing_tables.join(", ")}. Run migration 009_scope_consolidation.sql`,
+      });
+    }
+
+    // 2. Check key ID columns are TEXT (not INTEGER)
+    let type_issues: string[] = [];
+    for (const table of TEXT_ID_TABLES) {
+      if (!existing_tables.includes(table)) continue;
+      const columns: any[] = db.prepare(`PRAGMA table_info(${table})`).all();
+      const id_col = columns.find((c: any) => c.name === "id");
+      if (id_col && id_col.type.toUpperCase() === "INTEGER") {
+        type_issues.push(`${table}.id is INTEGER (expected TEXT)`);
+      }
+    }
+    if (type_issues.length === 0) {
+      results.push({
+        name: "ID column types",
+        status: "pass",
+        message: "All ID columns are TEXT type",
+      });
+    } else {
+      results.push({
+        name: "ID column types",
+        status: "fail",
+        message: type_issues.join("; ") + ". v5 requires TEXT (UUID) IDs - recreate tables with TEXT PRIMARY KEY",
+      });
+    }
+
+    // 3. Check hazo_user_scopes has root_scope_id and role_id
+    if (existing_tables.includes("hazo_user_scopes")) {
+      const us_columns: any[] = db.prepare("PRAGMA table_info(hazo_user_scopes)").all();
+      const col_names = us_columns.map((c: any) => c.name);
+      const missing_cols = ["root_scope_id", "role_id"].filter((c) => !col_names.includes(c));
+      if (missing_cols.length === 0) {
+        results.push({
+          name: "hazo_user_scopes schema",
+          status: "pass",
+          message: "Has required root_scope_id and role_id columns",
+        });
+      } else {
+        results.push({
+          name: "hazo_user_scopes schema",
+          status: "fail",
+          message: `Missing columns: ${missing_cols.join(", ")}. Run migration 009_scope_consolidation.sql`,
+        });
+      }
+    }
+
+    // 4. Check built-in admin permissions exist
+    if (existing_tables.includes("hazo_permissions")) {
+      const perms: any[] = db.prepare("SELECT permission_name FROM hazo_permissions").all();
+      const perm_names = perms.map((p: any) => p.permission_name);
+      const missing_perms = BUILT_IN_ADMIN_PERMISSIONS.filter((p) => !perm_names.includes(p));
+      if (missing_perms.length === 0) {
+        results.push({
+          name: `Admin permissions (${BUILT_IN_ADMIN_PERMISSIONS.length}/${BUILT_IN_ADMIN_PERMISSIONS.length})`,
+          status: "pass",
+          message: "All built-in admin permissions exist",
+        });
+      } else {
+        results.push({
+          name: `Admin permissions (${BUILT_IN_ADMIN_PERMISSIONS.length - missing_perms.length}/${BUILT_IN_ADMIN_PERMISSIONS.length})`,
+          status: "warn",
+          message: `Missing: ${missing_perms.join(", ")}. Run: npx hazo_auth init-permissions`,
+        });
+      }
+    }
+
+    // 5. Warn about v4 remnant tables
+    const v4_found = V4_REMNANT_TABLES.filter((t) => existing_tables.includes(t));
+    if (v4_found.length > 0) {
+      results.push({
+        name: "v4 remnant tables",
+        status: "warn",
+        message: `Found v4 tables: ${v4_found.join(", ")}. v5 uses hazo_user_scopes instead of hazo_user_roles, and hazo_scopes instead of hazo_org/hazo_scopes_l*`,
+      });
+    }
+  } finally {
+    db.close();
+  }
+
+  return results;
+}
+
 // section: main
 export function run_validation(): ValidationSummary {
   const project_root = get_project_root();
@@ -555,6 +747,12 @@ export function run_validation(): ValidationSummary {
   const db_results = check_database(project_root);
   db_results.forEach(print_result);
   all_results.push(...db_results);
+  console.log();
+
+  console.log("\x1b[1m🔍 Schema Validation\x1b[0m");
+  const schema_results = check_schema(project_root);
+  schema_results.forEach(print_result);
+  all_results.push(...schema_results);
   console.log();
 
   console.log("\x1b[1m🛤️  API Routes\x1b[0m");

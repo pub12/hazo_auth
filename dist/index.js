@@ -12,3 +12,5 @@ export * from "./components/index.js";
 export { AuthenticationRequiredError, TenantRequiredError, TenantAccessDeniedError, } from "./lib/auth/auth_types.js";
 // section: utility_exports (client-safe)
 export { cn, merge_class_names } from "./lib/utils.js";
+// section: constant_exports
+export { HAZO_AUTH_PERMISSIONS, ALL_ADMIN_PERMISSIONS } from "./lib/constants.js";

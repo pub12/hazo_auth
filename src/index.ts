@@ -33,4 +33,7 @@ export {
 // section: utility_exports (client-safe)
 export { cn, merge_class_names } from "./lib/utils";
 
+// section: constant_exports
+export { HAZO_AUTH_PERMISSIONS, ALL_ADMIN_PERMISSIONS } from "./lib/constants";
+
 

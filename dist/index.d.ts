@@ -4,4 +4,5 @@ export * from "./components/index.js";
 export type { HazoAuthUser, HazoAuthResult, HazoAuthError, HazoAuthOptions, ScopeDetails, TenantOrganization, TenantAuthOptions, TenantAuthResult, RequiredTenantAuthResult, } from "./lib/auth/auth_types";
 export { AuthenticationRequiredError, TenantRequiredError, TenantAccessDeniedError, } from "./lib/auth/auth_types.js";
 export { cn, merge_class_names } from "./lib/utils.js";
+export { HAZO_AUTH_PERMISSIONS, ALL_ADMIN_PERMISSIONS } from "./lib/constants.js";
 //# sourceMappingURL=index.d.ts.map

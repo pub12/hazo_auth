@@ -21,6 +21,8 @@ export * from "./lib/auth/auth_types.js";
 export { use_auth_status, trigger_auth_status_refresh } from "./components/layouts/shared/hooks/use_auth_status.js";
 export { use_hazo_auth, trigger_hazo_auth_refresh } from "./components/layouts/shared/hooks/use_hazo_auth.js";
 export { use_firm_branding, use_current_user_branding } from "./components/layouts/shared/hooks/use_firm_branding.js";
+// section: constant_exports
+export { HAZO_AUTH_PERMISSIONS, ALL_ADMIN_PERMISSIONS } from "./lib/constants.js";
 // section: validation_exports
 // Client-side validation utilities
 export * from "./components/layouts/shared/utils/validation.js";

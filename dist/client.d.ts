@@ -6,5 +6,6 @@ export { use_hazo_auth, trigger_hazo_auth_refresh } from "./components/layouts/s
 export type { UseHazoAuthOptions, UseHazoAuthResult } from "./components/layouts/shared/hooks/use_hazo_auth";
 export { use_firm_branding, use_current_user_branding } from "./components/layouts/shared/hooks/use_firm_branding.js";
 export type { FirmBranding, UseFirmBrandingOptions, UseFirmBrandingResult } from "./components/layouts/shared/hooks/use_firm_branding";
+export { HAZO_AUTH_PERMISSIONS, ALL_ADMIN_PERMISSIONS } from "./lib/constants.js";
 export * from "./components/layouts/shared/utils/validation.js";
 //# sourceMappingURL=client.d.ts.map

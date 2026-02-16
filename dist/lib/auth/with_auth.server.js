@@ -42,11 +42,12 @@ export function withAuth(handler, options = {}) {
             }
             // Check permissions if required_permissions were specified
             if (((_a = options.required_permissions) === null || _a === void 0 ? void 0 : _a.length) && !auth.permission_ok) {
-                return NextResponse.json({
-                    error: "Insufficient permissions",
-                    code: "PERMISSION_DENIED",
-                    missing_permissions: auth.missing_permissions,
-                }, { status: 403 });
+                return NextResponse.json(Object.assign({ error: "Insufficient permissions", code: "PERMISSION_DENIED", missing_permissions: auth.missing_permissions }, (process.env.NODE_ENV === "development" && {
+                    debug: {
+                        user_permissions: auth.permissions,
+                        required_permissions: options.required_permissions,
+                    },
+                })), { status: 403 });
             }
             // Check tenant requirement
             if (options.require_tenant && !auth.organization) {

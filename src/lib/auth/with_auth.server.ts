@@ -215,6 +215,12 @@ export function withAuth<TParams = Record<string, never>>(
             error: "Insufficient permissions",
             code: "PERMISSION_DENIED",
             missing_permissions: auth.missing_permissions,
+            ...(process.env.NODE_ENV === "development" && {
+              debug: {
+                user_permissions: auth.permissions,
+                required_permissions: options.required_permissions,
+              },
+            }),
           },
           { status: 403 },
         );

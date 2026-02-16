@@ -3,7 +3,7 @@
 // ESM/CJS interop: next-auth is CommonJS, handle both export scenarios
 import NextAuthImport from "next-auth";
 const NextAuth = (NextAuthImport as any).default || NextAuthImport;
-import { get_nextauth_config } from "../../lib/auth/nextauth_config.js";
+import { get_nextauth_config } from "../../lib/auth/nextauth_config";
 
 // section: types
 type NextAuthContext = {

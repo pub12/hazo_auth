@@ -2,6 +2,18 @@
 
 A reusable authentication UI component package powered by Next.js, TailwindCSS, and shadcn. It integrates `hazo_config` for configuration management and `hazo_connect` for data access, enabling future components to stay aligned with platform conventions.
 
+### What's New in v5.1.28
+
+**Schema Validation, Permission Constants & DX Improvements**
+
+- **Schema validation** - `npx hazo_auth validate` now checks SQLite schema: required tables, TEXT ID types, `hazo_user_scopes` columns, admin permissions, and warns about v4 remnant tables
+- **Permission constants** - New `HAZO_AUTH_PERMISSIONS` and `ALL_ADMIN_PERMISSIONS` exports from both `hazo_auth` and `hazo_auth/client` for programmatic permission checks
+- **CLI fix** - CLI wrapper now sets `--conditions react-server` in NODE_OPTIONS, fixing "server-only" import errors when running `npx hazo_auth validate`, `init-permissions`, etc.
+- **Silent permission fix** - `hazo_get_auth` now applies `String()` normalization to role_id/permission_id comparisons, fixing empty permissions when SQLite returns INTEGER IDs
+- **DB-generated IDs** - `init-permissions` no longer generates UUIDs client-side; lets the database generate IDs (supports both TEXT UUID and INTEGER PK schemas)
+- **Dev debug info** - `withAuth` 403 responses and `UserManagementLayout` "Access Denied" view now include permission debug details in development mode
+- **Import cleanup** - Removed `.js` extensions from internal imports for better TypeScript/bundler compatibility
+
 ### What's New in v5.1.27
 
 **Mandatory Cookie Prefix** - `cookie_prefix` is now required for all consuming apps.

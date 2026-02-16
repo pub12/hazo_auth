@@ -28,6 +28,9 @@ export type { UseHazoAuthOptions, UseHazoAuthResult } from "./components/layouts
 export { use_firm_branding, use_current_user_branding } from "./components/layouts/shared/hooks/use_firm_branding";
 export type { FirmBranding, UseFirmBrandingOptions, UseFirmBrandingResult } from "./components/layouts/shared/hooks/use_firm_branding";
 
+// section: constant_exports
+export { HAZO_AUTH_PERMISSIONS, ALL_ADMIN_PERMISSIONS } from "./lib/constants";
+
 // section: validation_exports
 // Client-side validation utilities
 export * from "./components/layouts/shared/utils/validation";

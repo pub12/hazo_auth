@@ -1,6 +1,5 @@
 // file_description: CLI command to initialize permissions from configuration
 // section: imports
-import { randomUUID } from "crypto";
 import { get_hazo_connect_instance } from "../lib/hazo_connect_instance.server.js";
 import { createCrudService } from "hazo_connect/server";
 import { get_user_management_config } from "../lib/user_management_config.server.js";
@@ -93,18 +92,17 @@ export async function handle_init_permissions(): Promise<void> {
         summary.existing.push(trimmed_name);
         console.log(`⊙ Permission already exists: ${trimmed_name} (ID: ${perm_id})`);
       } else {
-        // Insert new permission with generated UUID
-        const perm_id = randomUUID();
-        await permissions_service.insert({
-          id: perm_id,
+        // Insert new permission - let DB generate the ID (supports both TEXT UUID and INTEGER PK schemas)
+        const result = await permissions_service.insert({
           permission_name: trimmed_name,
           description: `Permission for ${trimmed_name}`,
           created_at: now,
           changed_at: now,
         });
 
+        const inserted_id = Array.isArray(result) ? (result[0] as Record<string, unknown>)?.id ?? "(auto)" : "(auto)";
         summary.inserted.push(trimmed_name);
-        console.log(`✓ Inserted permission: ${trimmed_name} (ID: ${perm_id})`);
+        console.log(`✓ Inserted permission: ${trimmed_name} (ID: ${inserted_id})`);
       }
     }
 

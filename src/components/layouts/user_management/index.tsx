@@ -739,6 +739,21 @@ export function UserManagementLayout({ className, hrbacEnabled = false, userType
           <p className="text-sm text-muted-foreground text-center">
             You don&apos;t have permission to access User Management. Please contact your administrator.
           </p>
+          {process.env.NODE_ENV === "development" && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md text-xs text-left w-full max-w-lg">
+              <p className="font-semibold text-yellow-800 mb-2">Dev Debug Info</p>
+              <p className="text-yellow-700">
+                <span className="font-medium">Your permissions:</span>{" "}
+                {authResult.authenticated && authResult.permissions.length > 0
+                  ? authResult.permissions.join(", ")
+                  : "(none)"}
+              </p>
+              <p className="text-yellow-700 mt-1">
+                <span className="font-medium">Required (any of):</span>{" "}
+                admin_user_management, admin_role_management, admin_permission_management, admin_scope_hierarchy_management, admin_user_scope_assignment, admin_system
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         <Tabs
