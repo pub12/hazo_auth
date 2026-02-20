@@ -46,4 +46,6 @@ next-env.d.ts
 storybook-static
 cli-src
 *.logs
+*.log
 *-audit.json
+logs/
