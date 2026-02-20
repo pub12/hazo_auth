@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Login Page: `show_create_account_link` config & OAuth error display
+
+**1. `show_create_account_link` config option:**
+- New `show_create_account_link` option in `[hazo_auth__login_layout]` INI section (default: `true`)
+- When set to `false`, hides the "Create account" link on the login page
+- Useful for OAuth-only apps where email/password registration is not available
+- Affects both the inline link (inside email/password form) and the standalone link (OAuth-only mode)
+
+**2. OAuth error banner on login page:**
+- Login page now reads `?error=` query param from URL (set by NextAuth on OAuth failures)
+- Displays a styled red error banner with user-friendly messages for common OAuth errors:
+  - `AccessDenied` — "Access was denied. You may have cancelled the sign-in or your account is not authorized."
+  - `OAuthSignin` / `OAuthCallback` / `OAuthCreateAccount` — "Something went wrong with Google sign-in. Please try again."
+  - Other errors — "An error occurred during sign-in. Please try again."
+
 ### Added - Tenant-Aware Authentication Functions
 
 **New Feature**: Multi-tenant authentication with scope context extraction from request headers or cookies.

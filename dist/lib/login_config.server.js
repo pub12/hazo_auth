@@ -26,6 +26,7 @@ export function get_login_config() {
     const forgotPasswordLabel = get_config_value(section, "forgot_password_label", "Forgot password?");
     const createAccountPath = get_config_value(section, "create_account_path", "/hazo_auth/register");
     const createAccountLabel = get_config_value(section, "create_account_label", "Create account");
+    const showCreateAccountLink = get_config_value(section, "show_create_account_link", "true") === "true";
     // Get shared already logged in config
     const alreadyLoggedInConfig = get_already_logged_in_config();
     // Read image configuration
@@ -48,6 +49,7 @@ export function get_login_config() {
         forgotPasswordLabel,
         createAccountPath,
         createAccountLabel,
+        showCreateAccountLink,
         imageSrc,
         imageAlt,
         imageBackgroundColor,

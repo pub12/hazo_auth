@@ -36,9 +36,11 @@ export type LoginLayoutProps<TClient = unknown> = {
     forgot_password_label?: string;
     create_account_path?: string;
     create_account_label?: string;
+    /** Show/hide "Create account" link (default: true) */
+    show_create_account_link?: boolean;
     urlOnLogon?: string;
     /** OAuth configuration */
     oauth?: OAuthLayoutConfig;
 };
-export default function login_layout<TClient>({ image_src, image_alt, image_background_color, field_overrides, labels, button_colors, data_client, logger, redirectRoute, successMessage, alreadyLoggedInMessage, showLogoutButton, showReturnHomeButton, returnHomeButtonLabel, returnHomePath, forgot_password_path, forgot_password_label, create_account_path, create_account_label, urlOnLogon, oauth, }: LoginLayoutProps<TClient>): import("react/jsx-runtime").JSX.Element;
+export default function login_layout<TClient>({ image_src, image_alt, image_background_color, field_overrides, labels, button_colors, data_client, logger, redirectRoute, successMessage, alreadyLoggedInMessage, showLogoutButton, showReturnHomeButton, returnHomeButtonLabel, returnHomePath, forgot_password_path, forgot_password_label, create_account_path, create_account_label, show_create_account_link, urlOnLogon, oauth, }: LoginLayoutProps<TClient>): import("react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=index.d.ts.map

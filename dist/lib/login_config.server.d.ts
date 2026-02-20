@@ -12,6 +12,7 @@ export type LoginConfig = {
     forgotPasswordLabel: string;
     createAccountPath: string;
     createAccountLabel: string;
+    showCreateAccountLink: boolean;
     imageSrc: string;
     imageAlt: string;
     imageBackgroundColor: string;

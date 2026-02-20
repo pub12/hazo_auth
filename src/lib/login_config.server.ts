@@ -25,6 +25,7 @@ export type LoginConfig = {
   forgotPasswordLabel: string;
   createAccountPath: string;
   createAccountLabel: string;
+  showCreateAccountLink: boolean;
   imageSrc: string;
   imageAlt: string;
   imageBackgroundColor: string;
@@ -64,6 +65,7 @@ export function get_login_config(): LoginConfig {
     "create_account_label",
     "Create account"
   );
+  const showCreateAccountLink = get_config_value(section, "show_create_account_link", "true") === "true";
 
   // Get shared already logged in config
   const alreadyLoggedInConfig = get_already_logged_in_config();
@@ -103,6 +105,7 @@ export function get_login_config(): LoginConfig {
     forgotPasswordLabel,
     createAccountPath,
     createAccountLabel,
+    showCreateAccountLink,
     imageSrc,
     imageAlt,
     imageBackgroundColor,

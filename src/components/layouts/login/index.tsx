@@ -4,6 +4,7 @@
 
 // section: imports
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import type { StaticImageData } from "next/image";
 import { Input } from "../../ui/input";
 import { PasswordField } from "../shared/components/password_field";
@@ -11,7 +12,7 @@ import { FormFieldWrapper } from "../shared/components/form_field_wrapper";
 import { FormHeader } from "../shared/components/form_header";
 import { FormActionButtons } from "../shared/components/form_action_buttons";
 import { TwoColumnAuthLayout } from "../shared/components/two_column_auth_layout";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, AlertCircle } from "lucide-react";
 import { AlreadyLoggedInGuard } from "../shared/components/already_logged_in_guard";
 import { GoogleSignInButton } from "../shared/components/google_sign_in_button";
 import { OAuthDivider } from "../shared/components/oauth_divider";
@@ -69,6 +70,8 @@ export type LoginLayoutProps<TClient = unknown> = {
   forgot_password_label?: string;
   create_account_path?: string;
   create_account_label?: string;
+  /** Show/hide "Create account" link (default: true) */
+  show_create_account_link?: boolean;
   urlOnLogon?: string;
   /** OAuth configuration */
   oauth?: OAuthLayoutConfig;
@@ -102,6 +105,7 @@ export default function login_layout<TClient>({
   forgot_password_label = "Forgot password?",
   create_account_path = "/hazo_auth/register",
   create_account_label = "Create account",
+  show_create_account_link = true,
   urlOnLogon,
   oauth,
 }: LoginLayoutProps<TClient>) {
@@ -112,6 +116,24 @@ export default function login_layout<TClient>({
     google_button_text: "Continue with Google",
     oauth_divider_text: "or continue with email",
   };
+
+  // Read OAuth error from URL query params (e.g., ?error=AccessDenied)
+  const searchParams = useSearchParams();
+  const oauthError = searchParams.get("error");
+
+  const getOAuthErrorMessage = (error: string): string => {
+    switch (error) {
+      case "AccessDenied":
+        return "Access was denied. You may have cancelled the sign-in or your account is not authorized.";
+      case "OAuthSignin":
+      case "OAuthCallback":
+      case "OAuthCreateAccount":
+        return "Something went wrong with Google sign-in. Please try again.";
+      default:
+        return "An error occurred during sign-in. Please try again.";
+    }
+  };
+
   const fieldDefinitions = createLoginFieldDefinitions(field_overrides);
   const resolvedLabels = resolveLoginLabels(labels);
   const resolvedButtonPalette = resolveLoginButtonPalette(button_colors);
@@ -236,6 +258,14 @@ export default function login_layout<TClient>({
               subHeading={resolvedLabels.subHeading}
             />
 
+            {/* OAuth Error Banner */}
+            {oauthError && (
+              <div className="cls_login_layout_oauth_error flex items-center gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{getOAuthErrorMessage(oauthError)}</span>
+              </div>
+            )}
+
             {/* OAuth Section - Google Sign-In Button */}
             {oauthConfig.enable_google && (
               <div className="cls_login_layout_oauth_section">
@@ -275,19 +305,21 @@ export default function login_layout<TClient>({
                   >
                     {forgot_password_label}
                   </Link>
-                  <Link
-                    href={create_account_path}
-                    className="cls_login_layout_create_account_link text-primary underline-offset-4 hover:underline"
-                    aria-label="Go to create account page"
-                  >
-                    {create_account_label}
-                  </Link>
+                  {show_create_account_link && (
+                    <Link
+                      href={create_account_path}
+                      className="cls_login_layout_create_account_link text-primary underline-offset-4 hover:underline"
+                      aria-label="Go to create account page"
+                    >
+                      {create_account_label}
+                    </Link>
+                  )}
                 </div>
               </form>
             )}
 
             {/* Create account link - Only show if email/password is disabled but OAuth is enabled */}
-            {!oauthConfig.enable_email_password && oauthConfig.enable_google && (
+            {show_create_account_link && !oauthConfig.enable_email_password && oauthConfig.enable_google && (
               <div className="cls_login_layout_support_links mt-4 text-center text-sm text-muted-foreground">
                 <Link
                   href={create_account_path}

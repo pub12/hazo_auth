@@ -13,10 +13,12 @@ import type { OAuthLayoutConfig } from "../components/layouts/login/index";
 // section: types
 import type { StaticImageData } from "next/image";
 
-export type LoginClientWrapperProps = Omit<LoginConfig, 'imageSrc' | 'imageAlt' | 'imageBackgroundColor' | 'oauth'> & {
+export type LoginClientWrapperProps = Omit<LoginConfig, 'imageSrc' | 'imageAlt' | 'imageBackgroundColor' | 'oauth' | 'showCreateAccountLink'> & {
   image_src: string | StaticImageData;
   image_alt: string;
   image_background_color: string;
+  /** Show/hide "Create account" link (default: true) */
+  showCreateAccountLink?: boolean;
   /** OAuth configuration */
   oauth?: OAuthLayoutConfig;
 };
@@ -41,6 +43,7 @@ export function LoginClientWrapper({
   forgotPasswordLabel,
   createAccountPath,
   createAccountLabel,
+  showCreateAccountLink = true,
   oauth,
 }: LoginClientWrapperProps) {
   const [dataClient, setDataClient] = useState<LayoutDataClient<unknown> | null>(null);
@@ -79,6 +82,7 @@ export function LoginClientWrapper({
       forgot_password_label={forgotPasswordLabel}
       create_account_path={createAccountPath}
       create_account_label={createAccountLabel}
+      show_create_account_link={showCreateAccountLink}
       oauth={oauth}
     />
   );

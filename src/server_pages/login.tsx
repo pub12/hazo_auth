@@ -84,6 +84,7 @@ export default function LoginPage({
         forgotPasswordLabel={config.forgotPasswordLabel}
         createAccountPath={config.createAccountPath}
         createAccountLabel={config.createAccountLabel}
+        showCreateAccountLink={config.showCreateAccountLink}
         oauth={{
           enable_google: config.oauth.enable_google,
           enable_email_password: config.oauth.enable_email_password,

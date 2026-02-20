@@ -1091,6 +1091,12 @@ enable_google = true
 enable_email_password = false
 ```
 
+**Hide "Create account" link (e.g., OAuth-only apps with no email registration):**
+```ini
+[hazo_auth__login_layout]
+show_create_account_link = false
+```
+
 **Disable Google OAuth (email/password only):**
 ```ini
 [hazo_auth__oauth]
@@ -1125,6 +1131,7 @@ Google OAuth adds one new dependency:
 - Check `NEXTAUTH_URL` matches your current URL
 
 **OAuth callback error:**
+- OAuth errors (e.g., `AccessDenied`, `OAuthSignin`) are automatically displayed as a banner on the login page via `?error=` query param
 - Verify redirect URI in Google Cloud Console matches exactly: `http://localhost:3000/api/auth/callback/google`
 - Check `NEXTAUTH_SECRET` is set and at least 32 characters
 - Verify API routes are created: `/api/auth/[...nextauth]/route.ts` and `/api/hazo_auth/oauth/google/callback/route.ts`
