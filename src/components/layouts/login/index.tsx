@@ -297,29 +297,33 @@ export default function login_layout<TClient>({
                   submitAriaLabel="Submit login form"
                   cancelAriaLabel="Cancel login form"
                 />
-                <div className="cls_login_layout_support_links flex flex-col gap-1 text-sm text-muted-foreground">
-                  <Link
-                    href={forgot_password_path}
-                    className="cls_login_layout_forgot_password_link text-primary underline-offset-4 hover:underline"
-                    aria-label="Go to forgot password page"
-                  >
-                    {forgot_password_label}
-                  </Link>
-                  {show_create_account_link && (
-                    <Link
-                      href={create_account_path}
-                      className="cls_login_layout_create_account_link text-primary underline-offset-4 hover:underline"
-                      aria-label="Go to create account page"
-                    >
-                      {create_account_label}
-                    </Link>
-                  )}
-                </div>
+                {((forgot_password_path && forgot_password_label) || (show_create_account_link && create_account_path && create_account_label)) && (
+                  <div className="cls_login_layout_support_links flex flex-col gap-1 text-sm text-muted-foreground">
+                    {forgot_password_path && forgot_password_label && (
+                      <Link
+                        href={forgot_password_path}
+                        className="cls_login_layout_forgot_password_link text-primary underline-offset-4 hover:underline"
+                        aria-label="Go to forgot password page"
+                      >
+                        {forgot_password_label}
+                      </Link>
+                    )}
+                    {show_create_account_link && create_account_path && create_account_label && (
+                      <Link
+                        href={create_account_path}
+                        className="cls_login_layout_create_account_link text-primary underline-offset-4 hover:underline"
+                        aria-label="Go to create account page"
+                      >
+                        {create_account_label}
+                      </Link>
+                    )}
+                  </div>
+                )}
               </form>
             )}
 
             {/* Create account link - Only show if email/password is disabled but OAuth is enabled */}
-            {show_create_account_link && !oauthConfig.enable_email_password && oauthConfig.enable_google && (
+            {show_create_account_link && create_account_path && create_account_label && !oauthConfig.enable_email_password && oauthConfig.enable_google && (
               <div className="cls_login_layout_support_links mt-4 text-center text-sm text-muted-foreground">
                 <Link
                   href={create_account_path}

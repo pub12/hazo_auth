@@ -68,6 +68,24 @@ export function get_config_value(section_name, key, default_value, file_path) {
     return section[key].trim() || default_value;
 }
 /**
+ * Gets a single config value from a section, preserving empty strings.
+ * Unlike get_config_value, this returns "" when the INI key exists with an empty value,
+ * rather than falling back to the default. Useful for config keys where "" means
+ * "intentionally empty" (e.g., hiding a link by setting its path to empty).
+ * @param section_name - Name of the section
+ * @param key - Key name within the section
+ * @param default_value - Default value if key is not found in config
+ * @param file_path - Optional custom config file path
+ * @returns Config value as string, or "" if key exists but empty, or default_value if key missing
+ */
+export function get_config_value_allow_empty(section_name, key, default_value, file_path) {
+    const section = read_config_section(section_name, file_path);
+    if (!section || section[key] === undefined) {
+        return default_value;
+    }
+    return section[key].trim();
+}
+/**
  * Gets a boolean config value from a section
  * @param section_name - Name of the section
  * @param key - Key name within the section

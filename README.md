@@ -1097,6 +1097,18 @@ enable_email_password = false
 show_create_account_link = false
 ```
 
+**Hide links by setting path/label to empty (v5.1.30+):**
+```ini
+[hazo_auth__login_layout]
+; Hide "Forgot password?" link
+forgot_password_path =
+forgot_password_label =
+
+; Hide "Create account" link (alternative to show_create_account_link = false)
+create_account_path =
+create_account_label =
+```
+
 **Disable Google OAuth (email/password only):**
 ```ini
 [hazo_auth__oauth]

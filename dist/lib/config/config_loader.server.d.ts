@@ -16,6 +16,18 @@ export declare function read_config_section(section_name: string, file_path?: st
  */
 export declare function get_config_value(section_name: string, key: string, default_value: string, file_path?: string): string;
 /**
+ * Gets a single config value from a section, preserving empty strings.
+ * Unlike get_config_value, this returns "" when the INI key exists with an empty value,
+ * rather than falling back to the default. Useful for config keys where "" means
+ * "intentionally empty" (e.g., hiding a link by setting its path to empty).
+ * @param section_name - Name of the section
+ * @param key - Key name within the section
+ * @param default_value - Default value if key is not found in config
+ * @param file_path - Optional custom config file path
+ * @returns Config value as string, or "" if key exists but empty, or default_value if key missing
+ */
+export declare function get_config_value_allow_empty(section_name: string, key: string, default_value: string, file_path?: string): string;
+/**
  * Gets a boolean config value from a section
  * @param section_name - Name of the section
  * @param key - Key name within the section

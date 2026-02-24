@@ -2,7 +2,7 @@
 // section: server-only-guard
 import "server-only";
 // section: imports
-import { get_config_value } from "./config/config_loader.server.js";
+import { get_config_value, get_config_value_allow_empty } from "./config/config_loader.server.js";
 import { get_already_logged_in_config } from "./already_logged_in_config.server.js";
 import { get_oauth_config } from "./oauth_config.server.js";
 // Default image path - consuming apps should either:
@@ -22,10 +22,11 @@ export function get_login_config() {
     const redirectRoute = redirectRouteValue || undefined;
     // Read success message (defaults to "Successfully logged in")
     const successMessage = get_config_value(section, "success_message", "Successfully logged in");
-    const forgotPasswordPath = get_config_value(section, "forgot_password_path", "/hazo_auth/forgot_password");
-    const forgotPasswordLabel = get_config_value(section, "forgot_password_label", "Forgot password?");
-    const createAccountPath = get_config_value(section, "create_account_path", "/hazo_auth/register");
-    const createAccountLabel = get_config_value(section, "create_account_label", "Create account");
+    // Use allow_empty variant so that setting path/label to "" in config hides the link
+    const forgotPasswordPath = get_config_value_allow_empty(section, "forgot_password_path", "/hazo_auth/forgot_password");
+    const forgotPasswordLabel = get_config_value_allow_empty(section, "forgot_password_label", "Forgot password?");
+    const createAccountPath = get_config_value_allow_empty(section, "create_account_path", "/hazo_auth/register");
+    const createAccountLabel = get_config_value_allow_empty(section, "create_account_label", "Create account");
     const showCreateAccountLink = get_config_value(section, "show_create_account_link", "true") === "true";
     // Get shared already logged in config
     const alreadyLoggedInConfig = get_already_logged_in_config();
